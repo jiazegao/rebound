@@ -64,7 +64,7 @@ export interface AppData {
   seen: Record<string, Record<string, number>>;
   attempts: SoloAttempt[];
   reports: ProblemReport[];
-  settings: { sound: boolean; readingWpm: number; soloPlayerId: string | null };
+  settings: { sound: boolean; readingWpm: number; soloPlayerId: string | null; answerTimer: boolean };
   lastExportAt: string | null;
 }
 
@@ -77,7 +77,7 @@ export function emptyData(): AppData {
     seen: {},
     attempts: [],
     reports: [],
-    settings: { sound: true, readingWpm: 200, soloPlayerId: null },
+    settings: { sound: true, readingWpm: 200, soloPlayerId: null, answerTimer: true },
     lastExportAt: null,
   };
 }

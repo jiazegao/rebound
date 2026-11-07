@@ -207,6 +207,48 @@ async function main() {
       if (!text.includes('8 / 8')) throw new Error(`expected solo 8 / 8 in: ${text}`);
     });
 
+    await step('solo reading shows letters one at a time, current word fainter', async () => {
+      await page.goto(`${BASE}#/try`);
+      await page.locator('#who').selectOption('');
+      await page.locator('#set').selectOption('doe-hs-99');
+      await page.locator('#round').selectOption('doe-hs-99-r01');
+      await page.locator('#wpm').fill('120');
+      await page.getByRole('button', { name: 'Start' }).click();
+      await page.locator('.stem').first().waitFor();
+      const lengths = [];
+      let sawCurrent = false;
+      for (let i = 0; i < 8; i++) {
+        await page.waitForTimeout(150);
+        lengths.push((await page.locator('.stem').first().innerText()).length);
+        if ((await page.locator('.reading-current').count()) > 0) sawCurrent = true;
+      }
+      if (!(lengths[7] > lengths[0])) throw new Error(`text did not grow: ${lengths}`);
+      // At 120 words per minute (about 83 ms per letter), each 150 ms sample adds only a letter or two.
+      const steps = lengths.slice(1).map((l, i) => l - lengths[i]);
+      if (!steps.some((d) => d >= 1 && d <= 3)) throw new Error(`reveal is not letter by letter: ${lengths}`);
+      if (!sawCurrent) throw new Error('the word being read is never shown fainter');
+      await shot('12-solo-reveal');
+    });
+
+    await step('answer timer: no typing within 2 seconds is a stall', async () => {
+      await key('Space'); // buzz (an interrupt, the question is still being read)
+      await page.locator('#answer').waitFor();
+      await see('Start typing');
+      await page.waitForTimeout(2400);
+      await see('Stall');
+      await shot('13-solo-stall');
+      await key('Space'); // next toss-up
+    });
+
+    await step('answer timer: the typed answer is taken at 5 seconds', async () => {
+      await page.getByRole('button', { name: /Buzz/ }).waitFor();
+      await key('Space');
+      await page.locator('#answer').pressSequentially('basi');
+      await see('Finish your answer');
+      await page.waitForTimeout(5300);
+      await see('Time: your answer was taken');
+    });
+
     await step('library and rules pages', async () => {
       await page.goto(`${BASE}#/library/doe-hs-99/doe-hs-99-r01`);
       await see('Heard by');

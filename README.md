@@ -13,7 +13,7 @@ Rebound is an unofficial study tool, not affiliated with or endorsed by the U.S.
 | **Team** | Create the team, add players, give each a primary and secondary subject, see "who covers what". |
 | **Play → Reader console** | Run an in-person practice game from one laptop: question in large type, answer for the reader, 5 s / 20 s answer clocks, game clock, two-tap scoring under the **2027 rules** (interrupts, blurts, rebounds, double interrupts, halves, tiebreakers), undo, keyboard shortcuts. Every toss-up is logged. |
 | **Game summary**, **Stats** | Per-player toss-up accuracy by subject, interrupts, points given away, median buzz time, bonus conversion; CSV export. |
-| **Practice (solo)** | Questions revealed word by word; buzz with Space, type the answer, and the answer checker grades it (close calls go to "your call"). |
+| **Practice (solo)** | Questions appear letter by letter at a moderator's pace (the words-per-minute setting is converted to letters using the library's average word length, about 6 characters with the space); the word still appearing is shown fainter. Buzz with Space, start typing within 2 seconds (NSB's natural pause) and finish within 5, and the answer checker grades it (close calls go to "your call"). The answer timer can be switched off. |
 | **Library** | Every DOE high school sample set, by set and round, searchable, printable, with links to the original PDFs and a "report a problem" button. Shows which questions the team has already heard. |
 | **NSB rules at a glance** | Generated from the same rule presets the game engine uses. |
 | **For coaches**, **For school IT staff**, **Privacy, terms and credits**, **Data and backup** | Setup guide, network needs, credits, export/import/delete. |

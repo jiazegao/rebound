@@ -567,6 +567,10 @@ th.num {
   color: var(--muted);
   font-style: italic;
 }
+/* The word still appearing in solo practice; finished words are shown at full strength. */
+.reading-current {
+  opacity: 0.45;
+}
 
 /* ---------- reader console ---------- */
 .scorebar {

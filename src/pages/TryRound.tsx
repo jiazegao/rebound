@@ -1,15 +1,19 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnswerBox, Choices, QuestionMeta, RichText } from '../components/QuestionView';
 import { Countdown, LoadError, Loading, Notice, PageHeader, useTicker } from '../components/ui';
 import { judgeAnswer, type JudgeResult } from '../core/judge/judge';
-import { CORE_SUBJECTS, LETTERS, SUBJECT_LABELS, type CoreSubject, type Question, type QuestionPair, type QuestionSet } from '../core/schema';
+import { CORE_SUBJECTS, SUBJECT_LABELS, type CoreSubject, type Question, type QuestionPair, type QuestionSet } from '../core/schema';
 import { loadSetById, setLabel, useIndex } from '../lib/library';
+import { buildReading, lettersPerMinute, readingDurationMs, revealedCount, splitRevealed, type Reading } from '../lib/reading';
 import { href } from '../lib/router';
 import { addAttempt, markSeen, updateSettings, useData } from '../lib/store';
 
 const TOSSUP_WINDOW_S = 5;
 const BONUS_WINDOW_S = 20;
 const BONUS_WARNING_S = 15;
+/** After buzzing: start typing within 2 s (NSB's "natural pause", Rule 5-3) and finish within 5 s. */
+const ANSWER_START_S = 2;
+const ANSWER_TOTAL_S = 5;
 
 interface Item {
   pair: QuestionPair;
@@ -19,7 +23,7 @@ interface Item {
 type Step =
   | { kind: 'tossup_reading'; startedAt: number }
   | { kind: 'tossup_open'; openedAt: number }
-  | { kind: 'tossup_answering'; interrupt: boolean; latencyMs: number | null; shownWords: number }
+  | { kind: 'tossup_answering'; interrupt: boolean; latencyMs: number | null; shownChars: number; buzzedAt: number; typingAt: number | null }
   | { kind: 'tossup_result'; response: string; result: JudgeResult | null; interrupt: boolean; latencyMs: number | null; decided: boolean | null }
   | { kind: 'bonus_reading'; startedAt: number }
   | { kind: 'bonus_open'; openedAt: number }
@@ -38,28 +42,21 @@ interface Tally {
 
 const emptyTally = (): Tally => ({ tossupsHeard: 0, tossupsCorrect: 0, interrupts: 0, interruptsWrong: 0, bonusesHeard: 0, bonusesCorrect: 0, points: 0, missed: [] });
 
-function words(q: Question): string[] {
-  const out = q.stem.split(/\s+/).filter(Boolean);
-  if (q.choices) {
-    for (const L of LETTERS) {
-      out.push('\n', `${L})`, ...q.choices[L].split(/\s+/).filter(Boolean));
-    }
-  }
-  return out;
-}
-
-function Revealed({ list, count }: { list: string[]; count: number }) {
-  const shown = list.slice(0, count);
-  const parts: ReactNode[] = [];
-  let line: string[] = [];
-  shown.forEach((w) => {
-    if (w === '\n') {
-      parts.push(<RichText key={parts.length} text={line.join(' ')} />, <br key={`br${parts.length}`} />);
-      line = [];
-    } else line.push(w);
-  });
-  parts.push(<RichText key={parts.length} text={line.join(' ')} />);
-  return <p className="stem" aria-live="off">{parts}</p>;
+/** The question as read so far: finished words at full strength, the word still appearing fainter. */
+function Revealed({ reading, count }: { reading: Reading; count: number }) {
+  const { done, current } = splitRevealed(reading, count);
+  const lines = done.split('\n');
+  return (
+    <p className="stem" aria-live="off">
+      {lines.map((line, i) => (
+        <Fragment key={i}>
+          {i > 0 && <br />}
+          <RichText text={line} />
+          {i === lines.length - 1 && current && <span className="reading-current">{current}</span>}
+        </Fragment>
+      ))}
+    </p>
+  );
 }
 
 const UNGRADABLE = ['answer-missing', 'choices-missing'];
@@ -87,12 +84,22 @@ interface Settings {
   subject: CoreSubject;
   count: number;
   wpm: number;
+  answerTimer: boolean;
 }
 
 function Setup({ onStart, initial }: { onStart: (items: Item[], s: Settings) => void; initial: Partial<Settings> }) {
   const data = useData();
   const index = useIndex();
-  const [s, setS] = useState<Settings>({ mode: 'round', setId: '', roundId: '', subject: 'biology', count: 10, wpm: data.settings.readingWpm, ...initial });
+  const [s, setS] = useState<Settings>({
+    mode: 'round',
+    setId: '',
+    roundId: '',
+    subject: 'biology',
+    count: 10,
+    wpm: data.settings.readingWpm,
+    answerTimer: data.settings.answerTimer,
+    ...initial,
+  });
   const [set, setSet] = useState<QuestionSet | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [busy, setBusy] = useState(false);
@@ -135,7 +142,7 @@ function Setup({ onStart, initial }: { onStart: (items: Item[], s: Settings) => 
         const fresh = pool.filter((i) => !seen[i.pair.tossup.id]);
         items = shuffle(fresh.length >= settings.count ? fresh : pool).slice(0, settings.count);
       }
-      updateSettings({ readingWpm: settings.wpm });
+      updateSettings({ readingWpm: settings.wpm, answerTimer: settings.answerTimer });
       onStart(items, settings);
     } catch (err) {
       setError(err instanceof Error ? err : new Error(String(err)));
@@ -148,9 +155,10 @@ function Setup({ onStart, initial }: { onStart: (items: Item[], s: Settings) => 
     <div className="container narrow">
       <PageHeader title={data.team ? 'Solo practice' : 'Try a round'}>
         <p>
-          Questions appear word by word, the way a moderator reads them. Press <span className="kbd">Space</span> to buzz, type your answer, and
-          press <span className="kbd">Enter</span>. You get {TOSSUP_WINDOW_S} seconds after the reading to buzz, and {BONUS_WINDOW_S} seconds on
-          bonuses.
+          Questions appear letter by letter, at the pace a moderator reads them. Press <span className="kbd">Space</span> to buzz, type your
+          answer, and press <span className="kbd">Enter</span>. You get {TOSSUP_WINDOW_S} seconds after the reading to buzz and{' '}
+          {BONUS_WINDOW_S} seconds on bonuses. After you buzz, start typing within {ANSWER_START_S} seconds and finish within {ANSWER_TOTAL_S},
+          since NSB only allows a short natural pause before answering.
         </p>
       </PageHeader>
       {index.loading && <Loading what="Loading the library" />}
@@ -234,10 +242,19 @@ function Setup({ onStart, initial }: { onStart: (items: Item[], s: Settings) => 
             )}
           </div>
           <div className="field">
-            <label htmlFor="wpm">Reading speed: {s.wpm} words per minute</label>
+            <label htmlFor="wpm">
+              Reading speed: {s.wpm} words per minute (about {lettersPerMinute(s.wpm).toLocaleString()} letters per minute)
+            </label>
             <input id="wpm" type="range" min={120} max={320} step={10} value={s.wpm} onChange={(e) => setS({ ...s, wpm: Number(e.target.value) })} />
-            <span className="hint">Moderators usually read at roughly 160–220 words per minute.</span>
+            <span className="hint">
+              Moderators usually read at roughly 160–220 words per minute. Letters per minute uses the average DOE question word: about 5 letters
+              plus a space.
+            </span>
           </div>
+          <label className="checkbox">
+            <input type="checkbox" checked={s.answerTimer} onChange={(e) => setS({ ...s, answerTimer: e.target.checked })} />
+            Time my answers: start typing within {ANSWER_START_S} seconds of buzzing and finish within {ANSWER_TOTAL_S}
+          </label>
           <div>
             <button className="btn btn-primary btn-big" onClick={() => void start()} disabled={busy}>
               {busy ? 'Loading…' : 'Start'}
@@ -280,7 +297,19 @@ function Verdict({ result, decided, onDecide }: { result: JudgeResult | null; de
   );
 }
 
-function Play({ items, wpm, onDone, onQuit }: { items: Item[]; wpm: number; onDone: (t: Tally) => void; onQuit: () => void }) {
+function Play({
+  items,
+  wpm,
+  answerTimer,
+  onDone,
+  onQuit,
+}: {
+  items: Item[];
+  wpm: number;
+  answerTimer: boolean;
+  onDone: (t: Tally) => void;
+  onQuit: () => void;
+}) {
   const data = useData();
   const playerId = data.team ? data.settings.soloPlayerId : null;
   const [index, setIndex] = useState(0);
@@ -292,10 +321,16 @@ function Play({ items, wpm, onDone, onQuit }: { items: Item[]; wpm: number; onDo
   const item = items[index];
   const tossup = item.pair.tossup;
   const bonus = item.pair.bonus;
-  const msPerWord = 60_000 / wpm;
-  const tossupWords = useMemo(() => words(tossup), [tossup]);
-  const bonusWords = useMemo(() => (bonus ? words(bonus) : []), [bonus]);
-  const timed = step.kind === 'tossup_reading' || step.kind === 'tossup_open' || step.kind === 'bonus_reading' || step.kind === 'bonus_open';
+  const tossupReading = useMemo(() => buildReading(tossup), [tossup]);
+  const bonusReading = useMemo(() => (bonus ? buildReading(bonus) : null), [bonus]);
+  const tossupLength = tossupReading.text.length;
+  const bonusLength = bonusReading?.text.length ?? 0;
+  const timed =
+    step.kind === 'tossup_reading' ||
+    step.kind === 'tossup_open' ||
+    step.kind === 'bonus_reading' ||
+    step.kind === 'bonus_open' ||
+    (answerTimer && step.kind === 'tossup_answering');
   const now = useTicker(timed, 50);
 
   // Record that the player has heard the questions.
@@ -311,19 +346,27 @@ function Play({ items, wpm, onDone, onQuit }: { items: Item[]; wpm: number; onDo
     [playerId],
   );
 
-  const shownTossupWords =
-    step.kind === 'tossup_reading' ? Math.min(tossupWords.length, Math.floor((now - step.startedAt) / msPerWord) + 1) : step.kind === 'tossup_answering' ? step.shownWords : tossupWords.length;
-  const shownBonusWords = step.kind === 'bonus_reading' ? Math.min(bonusWords.length, Math.floor((now - step.startedAt) / msPerWord) + 1) : bonusWords.length;
+  const shownTossup =
+    step.kind === 'tossup_reading'
+      ? revealedCount(tossupReading, now - step.startedAt, wpm)
+      : step.kind === 'tossup_answering'
+        ? step.shownChars
+        : tossupLength;
+  const shownBonus = step.kind === 'bonus_reading' && bonusReading ? revealedCount(bonusReading, now - step.startedAt, wpm) : bonusLength;
 
-  // Automatic transitions: end of reading opens the window; windows time out.
+  // Automatic transitions: the end of the reading opens the window; windows and the answer timer run out.
   useEffect(() => {
-    if (step.kind === 'tossup_reading' && shownTossupWords >= tossupWords.length) {
-      setStep({ kind: 'tossup_open', openedAt: step.startedAt + tossupWords.length * msPerWord });
+    if (step.kind === 'tossup_reading' && shownTossup >= tossupLength) {
+      setStep({ kind: 'tossup_open', openedAt: step.startedAt + readingDurationMs(tossupReading, wpm) });
     } else if (step.kind === 'tossup_open' && now - step.openedAt >= TOSSUP_WINDOW_S * 1000) {
       setTally((t) => ({ ...t, tossupsHeard: t.tossupsHeard + 1, missed: [...t.missed, tossup] }));
       setStep({ kind: 'tossup_result', response: '', result: null, interrupt: false, latencyMs: null, decided: false });
-    } else if (step.kind === 'bonus_reading' && shownBonusWords >= bonusWords.length) {
-      setStep({ kind: 'bonus_open', openedAt: step.startedAt + bonusWords.length * msPerWord });
+    } else if (step.kind === 'tossup_answering' && answerTimer) {
+      const elapsed = now - step.buzzedAt;
+      if (step.typingAt === null && !response.trim() && elapsed >= ANSWER_START_S * 1000) stall();
+      else if (elapsed >= ANSWER_TOTAL_S * 1000) submitTossup(response, true);
+    } else if (step.kind === 'bonus_reading' && bonusReading && shownBonus >= bonusLength) {
+      setStep({ kind: 'bonus_open', openedAt: step.startedAt + readingDurationMs(bonusReading, wpm) });
     } else if (step.kind === 'bonus_open' && now - step.openedAt >= BONUS_WINDOW_S * 1000) {
       submitBonus(response);
     }
@@ -331,21 +374,31 @@ function Play({ items, wpm, onDone, onQuit }: { items: Item[]; wpm: number; onDo
   }, [now, step]);
 
   const buzz = useCallback(() => {
+    const buzzedAt = Date.now();
     if (step.kind === 'tossup_reading') {
-      setStep({ kind: 'tossup_answering', interrupt: true, latencyMs: null, shownWords: shownTossupWords });
+      setStep({ kind: 'tossup_answering', interrupt: true, latencyMs: null, shownChars: shownTossup, buzzedAt, typingAt: null });
     } else if (step.kind === 'tossup_open') {
-      setStep({ kind: 'tossup_answering', interrupt: false, latencyMs: Date.now() - step.openedAt, shownWords: tossupWords.length });
+      setStep({ kind: 'tossup_answering', interrupt: false, latencyMs: buzzedAt - step.openedAt, shownChars: tossupLength, buzzedAt, typingAt: null });
     } else return;
     setResponse('');
     setTimeout(() => inputRef.current?.focus(), 0);
-  }, [step, shownTossupWords, tossupWords.length]);
+  }, [step, shownTossup, tossupLength]);
 
-  const submitTossup = (text: string) => {
+  const submitTossup = (text: string, timedOut = false) => {
     if (step.kind !== 'tossup_answering') return;
-    const result = judgeAnswer(tossup, text);
+    const judged = judgeAnswer(tossup, text);
+    const result = timedOut ? { ...judged, reason: `Time: your answer was taken ${ANSWER_TOTAL_S} seconds after the buzz. ${judged.reason}` } : judged;
     const decided = result.verdict === 'review' ? null : result.verdict === 'correct';
     setStep({ kind: 'tossup_result', response: text, result, interrupt: step.interrupt, latencyMs: step.latencyMs, decided });
     if (decided !== null) applyTossup(decided, step.interrupt);
+  };
+
+  /** Nothing typed within the natural pause: a stall counts as a wrong answer (Rule 5-3). */
+  const stall = () => {
+    if (step.kind !== 'tossup_answering') return;
+    const result: JudgeResult = { verdict: 'incorrect', reason: `Stall: start answering within ${ANSWER_START_S} seconds of buzzing (NSB Rule 5-3).` };
+    setStep({ kind: 'tossup_result', response: '', result, interrupt: step.interrupt, latencyMs: step.latencyMs, decided: false });
+    applyTossup(false, step.interrupt);
   };
 
   /** Update the running tally; `undoPrevious` reverses an earlier decision on the same question first. */
@@ -503,7 +556,7 @@ function Play({ items, wpm, onDone, onQuit }: { items: Item[]; wpm: number; onDo
               <Choices q={tossup} />
             </>
           ) : (
-            <Revealed list={tossupWords} count={shownTossupWords} />
+            <Revealed reading={tossupReading} count={shownTossup} />
           )}
         </article>
       ) : (
@@ -518,7 +571,7 @@ function Play({ items, wpm, onDone, onQuit }: { items: Item[]; wpm: number; onDo
                 <Choices q={bonus} />
               </>
             ) : (
-              <Revealed list={bonusWords} count={shownBonusWords} />
+              bonusReading && <Revealed reading={bonusReading} count={shownBonus} />
             )}
           </article>
         )
@@ -548,6 +601,13 @@ function Play({ items, wpm, onDone, onQuit }: { items: Item[]; wpm: number; onDo
             className="stack"
           >
             {step.kind === 'tossup_answering' && step.interrupt && <span className="badge">Interrupt: a wrong answer gives the other team 4 points</span>}
+            {step.kind === 'tossup_answering' &&
+              answerTimer &&
+              (step.typingAt === null ? (
+                <Countdown openedAt={step.buzzedAt} seconds={ANSWER_START_S} now={now} label="Start typing" />
+              ) : (
+                <Countdown openedAt={step.buzzedAt} seconds={ANSWER_TOTAL_S} now={now} label="Finish your answer" />
+              ))}
             {step.kind === 'bonus_open' && <Countdown openedAt={step.openedAt} seconds={BONUS_WINDOW_S} warningAt={BONUS_WARNING_S} now={now} label="Bonus" />}
             <label htmlFor="answer" className="label">
               {step.kind === 'tossup_answering' ? 'Your answer' : 'Bonus answer (you can start typing while it is read)'}
@@ -562,7 +622,11 @@ function Play({ items, wpm, onDone, onQuit }: { items: Item[]; wpm: number; onDo
                 autoCorrect="off"
                 spellCheck={false}
                 value={response}
-                onChange={(e) => setResponse(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setResponse(value);
+                  if (step.kind === 'tossup_answering' && step.typingAt === null && value.trim()) setStep({ ...step, typingAt: Date.now() });
+                }}
                 autoFocus
               />
               <button className="btn btn-primary" type="submit">
@@ -656,6 +720,7 @@ export function TryRound({ query }: { query: URLSearchParams }) {
         key={runKey}
         items={items}
         wpm={settings.wpm}
+        answerTimer={settings.answerTimer}
         onDone={(t) => {
           setTally(t);
           setStage('done');
