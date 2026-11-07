@@ -177,6 +177,8 @@ export interface Player {
   primarySubject?: CoreSubject;
   secondarySubject?: CoreSubject;
   active: boolean;
+  /** Year the player graduates (for planning who takes over each subject). */
+  gradYear?: number;
 }
 
 export interface Team {
@@ -185,5 +187,75 @@ export interface Team {
   level: Level;
   createdAt: string;
   /** The next competition, which shapes every player's daily plan. `date` is "YYYY-MM-DD". */
-  nextEvent?: { name: string; date: string };
+  nextEvent?: { name: string; date: string; lineupId?: string };
+}
+
+/** A saved lineup: up to four starters in seat order, and alternates. */
+export interface Lineup {
+  id: string;
+  name: string;
+  starters: string[];
+  alternates: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A packet the team made from the library (a scrimmage) or uploaded (private questions). */
+export interface TeamPacket {
+  id: string;
+  kind: 'scrimmage' | 'upload';
+  title: string;
+  createdAt: string;
+  /** Scrimmage: library toss-up and bonus ids, in reading order. */
+  pairs?: Array<{ tossupId: string; bonusId?: string }>;
+  /** Scrimmage settings, for the packet's description. */
+  options?: { level: 'early' | 'late' | 'any'; forPlayers: string[]; size: number };
+  /** Upload: the questions themselves. They stay in the team's own data and are never published. */
+  set?: QuestionSet;
+}
+
+/** A concept card written by the team (one per concept id). */
+export interface ConceptCard {
+  id: string;
+  /** 150 words or fewer. */
+  summary: string;
+  facts: string[];
+  traps: string;
+  sources: Array<{ title: string; url?: string }>;
+  authorId: string | null;
+  reviewerId: string | null;
+  status: 'draft' | 'reviewed';
+  updatedAt: string;
+}
+
+export type AssignmentKind = 'drill' | 'packet' | 'concept' | 'review';
+
+/** Work a captain or coach assigns to players. */
+export interface Assignment {
+  id: string;
+  kind: AssignmentKind;
+  title: string;
+  note?: string;
+  /** Drill: subject, optional topic and number of questions. */
+  subject?: CoreSubject;
+  topic?: string;
+  count?: number;
+  /** Packet: a team packet to play solo. */
+  packetId?: string;
+  /** Concept: the card to read. */
+  conceptId?: string;
+  playerIds: string[];
+  /** "YYYY-MM-DD" */
+  due: string;
+  createdAt: string;
+  createdBy: string | null;
+}
+
+/** One player finishing one assignment (a record of its own, so players never overwrite each other). */
+export interface Completion {
+  /** `${assignmentId}:${playerId}` */
+  id: string;
+  assignmentId: string;
+  playerId: string;
+  at: string;
 }

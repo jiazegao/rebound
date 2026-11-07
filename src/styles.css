@@ -884,6 +884,11 @@ details[open] > summary {
 .hbar-label {
   font-size: 0.93rem;
 }
+.hero-figure {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
 .hbar-chart.fixed-labels {
   grid-template-columns: 17rem 1fr;
 }

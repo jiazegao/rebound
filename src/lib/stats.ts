@@ -34,6 +34,8 @@ export interface PlayerLine {
   bonusesCorrect: number;
   soloAnswered: number;
   soloCorrect: number;
+  /** Toss-ups answered after the other team got it wrong. */
+  rebounds: { attempts: number; correct: number };
 }
 
 function emptyLine(playerId: string): PlayerLine {
@@ -52,15 +54,24 @@ function emptyLine(playerId: string): PlayerLine {
     bonusesCorrect: 0,
     soloAnswered: 0,
     soloCorrect: 0,
+    rebounds: { attempts: 0, correct: 0 },
   };
 }
 
 function addLog(lines: Map<string, PlayerLine>, game: GameRecord, log: LogEntry[]): void {
+  // Teams that already answered each toss-up wrong, to recognize rebounds.
+  const wrongBy = new Map<number, Set<number>>();
   for (const entry of log) {
     if (entry.kind === 'tossup') {
       const line = lines.get(entry.playerId) ?? emptyLine(entry.playerId);
       lines.set(entry.playerId, line);
       const subject = game.pairs[entry.pairIndex]?.subject;
+      const wrongTeams = wrongBy.get(entry.pairIndex) ?? new Set<number>();
+      if (wrongTeams.has(entry.team === 0 ? 1 : 0)) {
+        line.rebounds.attempts += 1;
+        if (entry.result === 'correct') line.rebounds.correct += 1;
+      }
+      if (entry.result !== 'correct') wrongBy.set(entry.pairIndex, wrongTeams.add(entry.team));
       line.tossupAttempts += 1;
       if (entry.interrupt) line.interrupts += 1;
       if (entry.result === 'correct') {
@@ -140,3 +151,67 @@ export function bonusLines(state: MatchState): Array<{ heard: number; correct: n
 }
 
 export const STAT_SUBJECTS = CORE_SUBJECTS;
+
+/* ---------------- uncertainty and trends ---------------- */
+
+/** True when a rate rests on too few answers to compare players (fewer than 10). */
+export function fewAnswers(n: number): boolean {
+  return n < 10;
+}
+
+/** Net points per interrupt: +4 for a right one, −4 (given to the other team) for a wrong one. */
+export function netPerInterrupt(line: Pick<PlayerLine, 'interrupts' | 'interruptCorrect'>): number | null {
+  if (line.interrupts === 0) return null;
+  const wrong = line.interrupts - line.interruptCorrect;
+  return (4 * line.interruptCorrect - 4 * wrong) / line.interrupts;
+}
+
+export interface WeekLine {
+  /** Monday of the week, "YYYY-MM-DD". */
+  week: string;
+  games: number;
+  tossupsRead: number;
+  tossupsAnswered: number;
+  bonusesHeard: number;
+  bonusesCorrect: number;
+  wrongInterrupts: number;
+  points: number;
+}
+
+function mondayOf(t: number): string {
+  const d = new Date(t);
+  const day = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - day);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Finished practice games week by week: how much got answered, bonus conversion, wrong interrupts, points. */
+export function weeklyTrend(data: AppData): WeekLine[] {
+  const weeks = new Map<string, WeekLine>();
+  for (const game of data.games) {
+    if (game.status !== 'finished') continue;
+    const state = gameState(game);
+    if (!state) continue;
+    const key = mondayOf(new Date(game.createdAt).getTime());
+    const w = weeks.get(key) ?? { week: key, games: 0, tossupsRead: 0, tossupsAnswered: 0, bonusesHeard: 0, bonusesCorrect: 0, wrongInterrupts: 0, points: 0 };
+    weeks.set(key, w);
+    w.games += 1;
+    w.points += state.scores[0] + state.scores[1];
+    const answered = new Set<number>();
+    const read = new Set<number>();
+    for (const e of state.log) {
+      if (e.kind === 'tossup') {
+        read.add(e.pairIndex);
+        if (e.result === 'correct') answered.add(e.pairIndex);
+        if (e.interrupt && e.result !== 'correct') w.wrongInterrupts += 1;
+      } else if (e.kind === 'tossup_dead') read.add(e.pairIndex);
+      else if (e.kind === 'bonus') {
+        w.bonusesHeard += 1;
+        if (e.result === 'correct') w.bonusesCorrect += 1;
+      }
+    }
+    w.tossupsRead += read.size;
+    w.tossupsAnswered += answered.size;
+  }
+  return [...weeks.values()].sort((a, b) => b.week.localeCompare(a.week));
+}

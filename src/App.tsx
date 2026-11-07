@@ -8,6 +8,7 @@ import { TodayPage } from './pages/Today';
 import { ReviewPage } from './pages/Review';
 import { ProgressPage } from './pages/Progress';
 import { TopicsPage } from './pages/Topics';
+import { LineupsPage } from './pages/Lineups';
 import { TeamPage } from './pages/Team';
 import { LibraryPage } from './pages/Library';
 import { ReaderSetup } from './pages/ReaderSetup';
@@ -83,7 +84,7 @@ export function App() {
       page = <ReviewPage query={route.query} />;
       break;
     case 'progress':
-      page = <ProgressPage />;
+      page = <ProgressPage query={route.query} />;
       break;
     case 'library':
       page = second === 'topics' ? <TopicsPage /> : <LibraryPage setId={second} roundId={third} print={route.query.get('print') === '1'} />;
@@ -97,6 +98,9 @@ export function App() {
     case 'team':
       page = <TeamPage />;
       break;
+    case 'lineups':
+      page = <LineupsPage />;
+      break;
     case 'stats':
       page = <StatsPage />;
       break;
@@ -109,7 +113,7 @@ export function App() {
 
   const nav = data.team ? TEAM_NAV : PUBLIC_NAV;
   const section = first ?? '';
-  const sectionAliases: Record<string, string> = { games: 'reader', stats: 'team', data: 'team', progress: 'today' };
+  const sectionAliases: Record<string, string> = { games: 'reader', stats: 'team', data: 'team', progress: 'today', lineups: 'team' };
   const activeSection = sectionAliases[section] ?? section;
 
   return (

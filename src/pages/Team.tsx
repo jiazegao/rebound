@@ -1,11 +1,16 @@
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { PageHeader, SubjectTag, Notice } from '../components/ui';
+import { useTip } from '../components/VizTip';
+import { topicName, topicsForSubject } from '../core/taxonomy';
+import { catalogById, useCatalog } from '../lib/library';
+import { graduatingClass, MIN_TOPIC_ANSWERS, succession, teamPlayers, topicCoverage, useTeamModels } from '../lib/team';
 import { daysUntil, FINAL_WEEKS_DAYS } from '../core/review';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type CoreSubject, type Level, type Player, type Role } from '../core/schema';
 import { href } from '../lib/router';
 import { addPlayer, createTeam, removePlayer, renameTeam, setNextEvent, updatePlayer, useData } from '../lib/store';
 
 const ROLES: Role[] = ['member', 'captain', 'coach'];
+const GRAD_YEARS = Array.from({ length: 6 }, (_, i) => graduatingClass(Date.now()) + i);
 const SQUADS = ['', 'A', 'B', 'C', 'D'];
 
 function SubjectSelect({ value, onChange, label }: { value?: CoreSubject; onChange: (v?: CoreSubject) => void; label: string }) {
@@ -125,6 +130,16 @@ function PlayerRow({ p }: { p: Player }) {
       <td>
         <SubjectSelect value={p.secondarySubject} onChange={(v) => updatePlayer(p.id, { secondarySubject: v })} label={`Secondary subject for ${p.name}`} />
       </td>
+      <td>
+        <select aria-label={`Graduation year for ${p.name}`} value={p.gradYear ?? ''} onChange={(e) => updatePlayer(p.id, { gradYear: e.target.value ? Number(e.target.value) : undefined })}>
+          <option value="">—</option>
+          {GRAD_YEARS.map((y) => (
+            <option key={y} value={y}>
+              {y}
+            </option>
+          ))}
+        </select>
+      </td>
       <td className="center">
         <input type="checkbox" aria-label={`${p.name} is active`} checked={p.active} onChange={(e) => updatePlayer(p.id, { active: e.target.checked })} />
       </td>
@@ -139,6 +154,27 @@ function PlayerRow({ p }: { p: Player }) {
         </button>
       </td>
     </tr>
+  );
+}
+
+function EventLineup() {
+  const data = useData();
+  const lineup = data.lineups.find((l) => l.id === data.team?.nextEvent?.lineupId);
+  const name = (id: string) => data.players.find((p) => p.id === id)?.name ?? 'Former player';
+  if (!lineup) {
+    return (
+      <p className="small">
+        No lineup chosen yet. <a href={href('/lineups')}>Choose one on the Lineups page</a>.
+      </p>
+    );
+  }
+  return (
+    <p className="small">
+      <strong>Lineup: </strong>
+      {lineup.starters.map(name).join(', ')}
+      {lineup.alternates.length > 0 && ` (alternate${lineup.alternates.length > 1 ? 's' : ''}: ${lineup.alternates.map(name).join(', ')})`} ·{' '}
+      <a href={href('/lineups')}>Change</a>
+    </p>
   );
 }
 
@@ -195,11 +231,19 @@ function NextEvent() {
           {saved.name || 'The competition'} is {days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`}.
         </p>
       )}
+      {saved && days !== null && <EventLineup />}
     </form>
   );
 }
 
 function Coverage({ players }: { players: Player[] }) {
+  const data = useData();
+  const catalog = useCatalog();
+  const catalogMap = useMemo(() => (catalog.data ? catalogById(catalog.data) : null), [catalog.data]);
+  const models = useTeamModels(data, catalogMap);
+  const playing = teamPlayers(data);
+  const plan = succession(playing, models, Date.now());
+  const year = graduatingClass(Date.now());
   const active = players.filter((p) => p.active && p.role !== 'coach');
   return (
     <div className="table-wrap">
@@ -209,12 +253,14 @@ function Coverage({ players }: { players: Player[] }) {
             <th>Subject</th>
             <th>Primary</th>
             <th>Secondary</th>
+            <th>Next season</th>
           </tr>
         </thead>
         <tbody>
           {CORE_SUBJECTS.map((s) => {
             const primary = active.filter((p) => p.primarySubject === s);
             const secondary = active.filter((p) => p.secondarySubject === s);
+            const next = plan.find((x) => x.subject === s)!;
             return (
               <tr key={s}>
                 <td>
@@ -222,12 +268,126 @@ function Coverage({ players }: { players: Player[] }) {
                 </td>
                 <td>{primary.length ? primary.map((p) => p.name).join(', ') : <span style={{ color: 'var(--bad)' }}>Nobody yet</span>}</td>
                 <td>{secondary.length ? secondary.map((p) => p.name).join(', ') : <span className="muted">—</span>}</td>
+                <td>
+                  {next.owners.length > 0 && next.leaving.length < next.owners.length ? (
+                    <span className="muted">Covered</span>
+                  ) : next.successor ? (
+                    <>
+                      {next.leaving.length > 0 && <>{next.leaving.map((p) => p.name).join(', ')} graduates in {year}. </>}
+                      Best placed to take over: <strong>{next.successor.player.name}</strong>
+                    </>
+                  ) : (
+                    <span style={{ color: 'var(--bad)' }}>Nobody to take over</span>
+                  )}
+                </td>
               </tr>
             );
           })}
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** The team's best mastery in every topic, so gaps stand out ("nobody is above 60% on optics"). */
+function TopicCoverageMap() {
+  const data = useData();
+  const catalog = useCatalog();
+  const catalogMap = useMemo(() => (catalog.data ? catalogById(catalog.data) : null), [catalog.data]);
+  const models = useTeamModels(data, catalogMap);
+  const coverage = topicCoverage(models);
+  const { ref, node, handlers } = useTip();
+  const [table, setTable] = useState(false);
+  const name = (id: string) => data.players.find((p) => p.id === id)?.name ?? 'Former player';
+  const bin = (p: number) => (p >= 0.8 ? 5 : p >= 0.65 ? 4 : p >= 0.5 ? 3 : p >= 0.35 ? 2 : 1);
+  const gaps = coverage.filter((c) => !c.best || c.best.line.p < 0.6);
+  return (
+    <figure className="card viz" ref={ref} style={{ marginInline: 0, marginBottom: 0 }}>
+      <div className="row spread">
+        <h3 style={{ margin: 0 }}>The team's best in every topic</h3>
+        <button className="btn btn-small btn-ghost" onClick={() => setTable((t) => !t)} aria-pressed={table}>
+          {table ? 'Show map' : 'Show table'}
+        </button>
+      </div>
+      <figcaption className="small muted" style={{ margin: '0.25rem 0 0.5rem' }}>
+        Each topic shows the player with the highest mastery there, once they have answered at least {MIN_TOPIC_ANSWERS} of its questions.{' '}
+        {gaps.length} of {coverage.length} topics have nobody above 60% yet.
+      </figcaption>
+      {table ? (
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>Topic</th>
+                <th>Best player</th>
+                <th className="num">Mastery</th>
+                <th className="num">Players with data</th>
+              </tr>
+            </thead>
+            <tbody>
+              {coverage.map((c) => (
+                <tr key={c.topicId}>
+                  <td>{SUBJECT_LABELS[c.subject]}</td>
+                  <td>{topicName(c.topicId)}</td>
+                  <td>{c.best ? name(c.best.playerId) : '–'}</td>
+                  <td className="num">{c.best ? `${Math.round(c.best.line.p * 100)}%` : '–'}</td>
+                  <td className="num">{c.players}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <>
+          <div className="scale-legend" aria-label="Color scale">
+            {['under 35%', '35–50%', '50–65%', '65–80%', '80% and up'].map((label, i) => (
+              <span key={label}>
+                <i style={{ background: `var(--viz-seq-${i + 1})` }} aria-hidden="true" />
+                {label}
+              </span>
+            ))}
+            <span>
+              <i style={{ boxShadow: 'inset 0 0 0 1px var(--border)' }} aria-hidden="true" />
+              No data yet
+            </span>
+          </div>
+          {CORE_SUBJECTS.map((s) => (
+            <section key={s} className="heat-subject" aria-label={SUBJECT_LABELS[s]}>
+              <h4 style={{ margin: '0 0 0.4rem' }}>{SUBJECT_LABELS[s]}</h4>
+              <div className="heat-grid">
+                {topicsForSubject(s).map((t) => {
+                  const c = coverage.find((x) => x.topicId === t.id)!;
+                  const text = c.best
+                    ? `${name(c.best.playerId)}: ${Math.round(c.best.line.p * 100)}% from ${c.best.line.n} answers`
+                    : 'Nobody has answered enough questions here yet';
+                  return (
+                    <div
+                      key={t.id}
+                      className="heat-cell"
+                      data-bin={c.best ? bin(c.best.line.p) : 0}
+                      tabIndex={0}
+                      role="img"
+                      aria-label={`${t.name}: ${text}`}
+                      {...handlers(
+                        <>
+                          <strong>{c.best ? `${Math.round(c.best.line.p * 100)}%` : 'No data'}</strong>
+                          {t.name} · {text}
+                        </>,
+                      )}
+                    >
+                      <span>{t.name}</span>
+                      <span className="due">{c.best ? name(c.best.playerId) : ''}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+          {node}
+        </>
+      )}
+    </figure>
   );
 }
 
@@ -254,6 +414,9 @@ export function TeamPage() {
           >
             {editing ? 'Close' : 'Edit team'}
           </button>
+          <a className="btn btn-small" href={href('/lineups')}>
+            Lineups
+          </a>
           <a className="btn btn-small" href={href('/stats')}>
             Stats
           </a>
@@ -305,6 +468,7 @@ export function TeamPage() {
                 <th>Sub-team</th>
                 <th>Primary subject</th>
                 <th>Secondary subject</th>
+                <th>Graduates</th>
                 <th>Active</th>
                 <th>
                   <span className="sr-only">Actions</span>
@@ -324,8 +488,14 @@ export function TeamPage() {
       </div>
 
       <h2>Who covers what</h2>
-      <p className="muted">Each subject should have a primary owner. Strong teams also give every starter a secondary subject so coverage overlaps.</p>
+      <p className="muted">
+        Each subject should have a primary owner. Strong teams also give every starter a secondary subject so coverage overlaps. Add graduation
+        years to the roster to see who takes over each subject next season.
+      </p>
       <Coverage players={data.players} />
+      <div style={{ marginTop: '1rem' }}>
+        <TopicCoverageMap />
+      </div>
     </div>
   );
 }

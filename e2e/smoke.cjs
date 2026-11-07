@@ -238,6 +238,24 @@ async function main() {
       await see('Regional is in 10 days');
     });
 
+    await step('the captain sets a regional lineup from the Team pages', async () => {
+      await page.goto(`${BASE}#/team`);
+      await page.getByRole('link', { name: 'Lineups', exact: true }).click();
+      await see('Suggested lineups');
+      await page.locator('.plan-item').first().getByRole('button', { name: 'Use' }).click();
+      await page.locator('.hero-figure').waitFor();
+      const points = Number(await page.locator('.hero-figure').innerText());
+      if (!(points > 0 && points < 200)) throw new Error(`unexpected estimate: ${points}`);
+      await page.locator('#lineup-name').fill('Regional A');
+      await page.getByRole('button', { name: 'Save lineup' }).click();
+      await page.getByRole('button', { name: 'Use for Regional' }).click();
+      await page.getByText('For Regional', { exact: true }).waitFor();
+      await shot('12a-lineups');
+      await page.goto(`${BASE}#/team`);
+      await see('Lineup:');
+      await see("The team's best in every topic");
+    });
+
     await step("Today shows each player's plan with reasons", async () => {
       await page.goto(`${BASE}#/today`);
       await see("Ann's plan");

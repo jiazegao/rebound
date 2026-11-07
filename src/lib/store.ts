@@ -22,7 +22,7 @@ import {
   type ReviewCard,
 } from '../core/review';
 import type { MatchEvent } from '../core/rules/engine';
-import type { Player, QuestionKind, Subject, Team } from '../core/schema';
+import type { Assignment, Completion, ConceptCard, Lineup, Player, QuestionKind, Subject, Team, TeamPacket } from '../core/schema';
 import { newId } from './format';
 import { attemptOutcome, gameOutcomes } from './outcomes';
 
@@ -84,6 +84,13 @@ export interface AppData {
   cards: Record<string, ReviewCard>;
   /** Each player's plan for the current day, keyed by player id. */
   plans: Record<string, DayPlan>;
+  lineups: Lineup[];
+  packets: TeamPacket[];
+  /** Concept cards, keyed by concept id. */
+  conceptCards: Record<string, ConceptCard>;
+  assignments: Assignment[];
+  /** Keyed by `${assignmentId}:${playerId}`. */
+  completions: Record<string, Completion>;
   settings: { sound: boolean; readingWpm: number; soloPlayerId: string | null; answerTimer: boolean; dailyMinutes: number };
   lastExportAt: string | null;
 }
@@ -99,6 +106,11 @@ export function emptyData(): AppData {
     reports: [],
     cards: {},
     plans: {},
+    lineups: [],
+    packets: [],
+    conceptCards: {},
+    assignments: [],
+    completions: {},
     settings: { sound: true, readingWpm: 200, soloPlayerId: null, answerTimer: true, dailyMinutes: 30 },
     lastExportAt: null,
   };
@@ -375,8 +387,9 @@ export function completePlanItem(playerId: string, day: string, itemId: string):
 export function setNextEvent(event: { name: string; date: string } | null): void {
   update((d) => {
     if (!d.team) return;
-    if (event && /^\d{4}-\d{2}-\d{2}$/.test(event.date)) d.team.nextEvent = { name: event.name.trim(), date: event.date };
-    else delete d.team.nextEvent;
+    if (event && /^\d{4}-\d{2}-\d{2}$/.test(event.date)) {
+      d.team.nextEvent = { name: event.name.trim(), date: event.date, lineupId: d.team.nextEvent?.lineupId };
+    } else delete d.team.nextEvent;
     // Today's plans are rebuilt (keeping what is done) when the date moves them into another season phase.
   });
 }
@@ -429,4 +442,35 @@ export async function resetAll(): Promise<void> {
   } catch {
     /* storage unavailable: nothing to delete */
   }
+}
+
+/* ---------------- lineups ---------------- */
+
+/** Save a lineup (new when `id` is missing). Returns its id. */
+export function saveLineup(fields: { id?: string; name: string; starters: string[]; alternates: string[] }): string {
+  const id = fields.id ?? newId('l');
+  const now = new Date().toISOString();
+  update((d) => {
+    const existing = d.lineups.find((l) => l.id === id);
+    const name = fields.name.trim() || 'Lineup';
+    if (existing) Object.assign(existing, { name, starters: fields.starters, alternates: fields.alternates, updatedAt: now });
+    else d.lineups.unshift({ id, name, starters: fields.starters, alternates: fields.alternates, createdAt: now, updatedAt: now });
+  });
+  return id;
+}
+
+export function deleteLineup(id: string): void {
+  update((d) => {
+    d.lineups = d.lineups.filter((l) => l.id !== id);
+    if (d.team?.nextEvent?.lineupId === id) delete d.team.nextEvent.lineupId;
+  });
+}
+
+/** Make a saved lineup the one for the team's next competition (or clear it with null). */
+export function setEventLineup(id: string | null): void {
+  update((d) => {
+    if (!d.team?.nextEvent) return;
+    if (id) d.team.nextEvent.lineupId = id;
+    else delete d.team.nextEvent.lineupId;
+  });
 }

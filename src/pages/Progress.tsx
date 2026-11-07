@@ -367,9 +367,12 @@ function ActivityChart({ days }: { days: DayCount[] }) {
 
 /* ---------------- page ---------------- */
 
-export function ProgressPage() {
+export function ProgressPage({ query }: { query?: URLSearchParams }) {
   const data = useData();
-  const player = useCurrentPlayer();
+  const current = useCurrentPlayer();
+  // A captain can open any player's progress from Team stats without switching who is practicing on this device.
+  const asked = query?.get('player');
+  const player = (asked && data.players.find((p) => p.id === asked)) || current;
   const catalog = useCatalog();
   const catalogMap = useMemo(() => (catalog.data ? catalogById(catalog.data) : null), [catalog.data]);
   const model = usePlayerModel(data, player?.id ?? null, catalogMap);
@@ -419,7 +422,13 @@ export function ProgressPage() {
           show memory of a question you have already seen.
         </p>
       </PageHeader>
-      <PlayerSwitch label="Progress for" />
+      {player && current?.id !== player.id ? (
+        <p>
+          Showing <strong>{player.name}</strong>'s progress. <a href={href('/progress')}>Back to {current ? 'yours' : 'the player picker'}</a>
+        </p>
+      ) : (
+        <PlayerSwitch label="Progress for" />
+      )}
       {!player && <Notice>Choose your name to see your progress.</Notice>}
       {player && model && summary && (
         <div className="stack" style={{ marginTop: '1rem' }}>

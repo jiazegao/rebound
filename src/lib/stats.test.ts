@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MatchEvent } from '../core/rules/engine';
-import { bonusLines, gameLines, gameState, median, playerLines } from './stats';
+import { bonusLines, fewAnswers, gameLines, gameState, median, netPerInterrupt, playerLines, weeklyTrend } from './stats';
 import { emptyData, type GameRecord } from './store';
 
 function game(events: MatchEvent[]): GameRecord {
@@ -82,5 +82,30 @@ describe('stats', () => {
     expect(median([])).toBeNull();
     expect(median([3, 1, 2])).toBe(2);
     expect(median([4, 1, 2, 3])).toBe(2.5);
+  });
+});
+
+describe('stats v2', () => {
+  it('counts rebounds and nets interrupts', () => {
+    const g = game(events);
+    const state = gameState(g)!;
+    const lines = gameLines(g, state);
+    const abe = lines.find((l) => l.playerId === 'abe')!;
+    // Abe answered toss-up 2 after Bea's wrong interrupt: a rebound.
+    expect(abe.rebounds).toEqual({ attempts: 1, correct: 1 });
+    const bea = lines.find((l) => l.playerId === 'bea')!;
+    expect(netPerInterrupt(bea)).toBe(-4);
+    expect(netPerInterrupt({ interrupts: 4, interruptCorrect: 3 })).toBe(2);
+    expect(netPerInterrupt({ interrupts: 0, interruptCorrect: 0 })).toBeNull();
+    expect(fewAnswers(9)).toBe(true);
+    expect(fewAnswers(10)).toBe(false);
+  });
+
+  it('summarizes finished games week by week', () => {
+    const data = emptyData();
+    data.games = [{ ...game(events), status: 'finished' }];
+    const [week] = weeklyTrend(data);
+    expect(week).toMatchObject({ games: 1, tossupsRead: 2, tossupsAnswered: 2, bonusesHeard: 2, bonusesCorrect: 1, wrongInterrupts: 1, points: 22 });
+    expect(week.week).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 });
