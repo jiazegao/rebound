@@ -12,7 +12,7 @@ Rebound is an unofficial study tool, not affiliated with or endorsed by the U.S.
 |---|---|
 | **Home**, **Try a round** | Public pages. Anyone can play a DOE round solo without an account. |
 | **Today** | Each player picks their name and gets a plan for 15, 30 or 45 minutes: due reviews (capped at a third of the time), a targeted drill on a weak, high-frequency topic in their primary subject, one in their secondary subject, and a mixed round. Every item says why it is there. The mix shifts toward timed mixed rounds in the last three weeks before the team's next competition (set on the Team page). |
-| **Review** | Timed review of misses, wrong interrupts, slow correct answers, toss-ups nobody got in your subject, and bonuses your team missed, from solo practice and Reader console games. Scheduled with FSRS ([ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs)) in whole days; the grade comes from correctness and buzz time. Cards pause while their question has an open problem report. |
+| **Review** | Timed review of misses, wrong interrupts, slow correct answers, toss-ups nobody got in your subject, and bonuses your team missed, from solo practice and Reader console games. Scheduled with FSRS ([ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs)) in whole days; the grade comes from correctness and buzz time. New misses join a few a day (wrong interrupts and the player's own subjects first), and a question answered right after a month's gap is learned and leaves the queue, so the daily load stays steady. Cards pause while their question has an open problem report. |
 | **Practice → drills** | Subject and topic drills drawn from the whole library (fresh questions first, aimed at a 70–85% expected success rate, from a few set files), an option to add Energy questions that test the subject, and balanced mixed toss-ups. |
 | **My progress** | Mastery by subject and a topic map (difficulty-adjusted ratings from each player's first answers), buzz speed, the review queue and daily activity, each with a table view. |
 | **Offline** | A service worker keeps the site available offline after the first visit; **Data → Save all questions for offline use** stores the whole library (about 9 MB) for drills and reviews without a connection. The site can be installed to a home screen. |
@@ -48,6 +48,7 @@ npm run build      # type-check and build the static site into dist/
 npm run preview    # serve dist/ at http://localhost:4173
 node e2e/smoke.cjs # browser walkthrough against the preview server (needs Playwright + Chromium)
 npx tsx scripts/checks/judge-self-check.ts   # grade every printed answer in the library against itself
+npx tsx scripts/checks/review-load.ts 30 0.6 # simulate 90 days of reviews for a 30-minute plan and a 60% player
 ```
 
 The unit tests include a check that the answer checker accepts at least 99.9% of the 19,000+ printed answers and

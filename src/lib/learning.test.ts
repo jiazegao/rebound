@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MatchEvent } from '../core/rules/engine';
 import { cardId } from '../core/review';
 import { freshTopicCounts, planFor, playerDue, playerObservations } from './learning';
@@ -53,6 +53,15 @@ function game(): GameRecord {
   };
 }
 
+// The store stamps new cards with the clock, so tests run on a fixed clock.
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(T + 2 * 60 * 60 * 1000);
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 function seed() {
   update((d) => {
     Object.assign(d, emptyData());
@@ -99,9 +108,9 @@ describe('review cards from games and practice', () => {
     const before = JSON.stringify(getData().cards);
     finishGame('g1', [0, 0]);
     expect(JSON.stringify(getData().cards)).toBe(before);
-    // Misses come back the next day.
+    // New cards can first come up the next practice day.
     expect(playerDue(getData(), 'bea', T)).toHaveLength(0);
-    expect(playerDue(getData(), 'bea', T + DAY + 60_000)).toHaveLength(2);
+    expect(playerDue(getData(), 'bea', T + DAY + 60_000).map((c) => c.reason)).toEqual(['interrupt', 'dead']);
   });
 
   it('adds cards from solo misses and manual adds, and pauses disputed questions', () => {
@@ -110,11 +119,21 @@ describe('review cards from games and practice', () => {
     addAttempt({ playerId: 'ann', questionId: 'doe-hs-17-r02-t05', subject: 'chemistry', kind: 'tossup', correct: true, interrupt: false, latencyMs: 800, overridden: false, t: T });
     addToReview('ann', { id: 'doe-hs-17-r02-b06', subject: 'chemistry', kind: 'bonus' });
     expect(Object.keys(getData().cards).filter((id) => id.startsWith('ann:'))).toHaveLength(2);
-    expect(playerDue(getData(), 'ann')).toHaveLength(1);
+    // The added question is due now; the miss waits for the next practice day.
+    expect(playerDue(getData(), 'ann').map((c) => c.reason)).toEqual(['manual']);
+    expect(playerDue(getData(), 'ann', T + DAY).map((c) => c.reason)).toEqual(['manual', 'missed']);
     update((d) => {
       d.reports.push({ id: 'r', questionId: 'doe-hs-17-r02-b06', note: 'wrong key', createdAt: '', status: 'open' });
     });
     expect(playerDue(getData(), 'ann')).toHaveLength(0);
+  });
+
+  it('drops new cards that waited two weeks when new answers come in', () => {
+    seed();
+    addAttempt({ playerId: 'ann', questionId: 'doe-hs-17-r02-t04', subject: 'chemistry', kind: 'tossup', correct: false, interrupt: false, latencyMs: 2000, overridden: false, t: T });
+    vi.setSystemTime(T + 20 * DAY);
+    addAttempt({ playerId: 'ann', questionId: 'doe-hs-17-r02-t05', subject: 'chemistry', kind: 'tossup', correct: false, interrupt: false, latencyMs: 2000, overridden: false, t: T + 20 * DAY });
+    expect(Object.keys(getData().cards)).toEqual([cardId('ann', 'doe-hs-17-r02-t05')]);
   });
 });
 

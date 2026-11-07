@@ -464,7 +464,7 @@ export function ProgressPage() {
             <Stat
               label="Review queue"
               value={`${summary.dueToday} due`}
-              hint={`${summary.total} question${summary.total === 1 ? '' : 's'} in all${summary.mature ? `, ${summary.mature} remembered for 3+ weeks` : ''}`}
+              hint={`${summary.total} in the queue${summary.learned ? `, ${summary.learned} learned` : ''}`}
             />
           </div>
           {obs.length === 0 ? (

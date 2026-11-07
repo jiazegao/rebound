@@ -5,7 +5,19 @@
 import { useMemo } from 'react';
 import { playerModel, type Observation, type PlayerModel } from '../core/mastery';
 import { buildPlan, resizePlan, type DayPlan } from '../core/plan';
-import { dueCards, practiceDay, seasonPhase, summarizeCards, type CardSummary, type Outcome, type ReviewCard } from '../core/review';
+import {
+  dueToday,
+  newCardsPerDay,
+  practiceDay,
+  reviewQueue,
+  seasonPhase,
+  summarizeCards,
+  type CardOwner,
+  type CardSummary,
+  type DueToday,
+  type Outcome,
+  type ReviewCard,
+} from '../core/review';
 import type { CatalogRow, Player } from '../core/schema';
 import { attemptOutcome, gameOutcomes } from './outcomes';
 import type { AppData, GameRecord } from './store';
@@ -72,12 +84,28 @@ export function playerCards(data: AppData): ReviewCard[] {
   return Object.values(data.cards);
 }
 
+/** The player's cards in subjects order, for the new-card priority. Unknown players get no subjects. */
+function ownerOf(data: AppData, playerId: string): CardOwner {
+  const p = data.players.find((x) => x.id === playerId);
+  return { id: playerId, primarySubject: p?.primarySubject, secondarySubject: p?.secondarySubject };
+}
+
+function cardOptions(data: AppData) {
+  return { newPerDay: newCardsPerDay(data.settings.dailyMinutes), disputed: disputedQuestions(data) };
+}
+
+/** Today's due reviews and new cards for a player. */
+export function playerDueToday(data: AppData, playerId: string, now = Date.now()): DueToday {
+  return dueToday(playerCards(data), ownerOf(data, playerId), now, cardOptions(data));
+}
+
+/** Today's review session for a player, in order: due reviews, then new cards. */
 export function playerDue(data: AppData, playerId: string, now = Date.now()): ReviewCard[] {
-  return dueCards(playerCards(data), playerId, now, disputedQuestions(data));
+  return reviewQueue(playerDueToday(data, playerId, now));
 }
 
 export function playerCardSummary(data: AppData, playerId: string, now = Date.now()): CardSummary {
-  return summarizeCards(playerCards(data), playerId, now, disputedQuestions(data));
+  return summarizeCards(playerCards(data), ownerOf(data, playerId), now, cardOptions(data));
 }
 
 /** Questions per topic the player has not heard yet. */

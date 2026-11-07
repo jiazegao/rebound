@@ -5,7 +5,10 @@ import { Countdown, LoadError, Loading, Notice, PageHeader, Stat, useTicker } fr
 import { Verdict } from '../components/Verdict';
 import { judgeAnswer, type JudgeResult } from '../core/judge/judge';
 import {
+  cardStage,
   gradeCard,
+  LEARNED_DAYS,
+  newCardsPerDay,
   Rating,
   REASON_TEXT,
   reviewGrade,
@@ -163,7 +166,7 @@ function ReviewItem({
   const grade = phase.kind === 'result' && final !== null ? reviewGrade(final, phase.ms, timing) : null;
   const event: CardEvent | null =
     phase.kind === 'result' && grade !== null ? { t: Date.now(), grade, via: 'review', correct: final === true, ms: phase.ms } : null;
-  const preview = useMemo(() => (event ? gradeCard(card, event, retentionAt(getData(), event.t)).fsrs.due : null), [card, event?.grade]); // eslint-disable-line react-hooks/exhaustive-deps
+  const preview = useMemo(() => (event ? gradeCard(card, event, retentionAt(getData(), event.t)) : null), [card, event?.grade]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const decide = (right: boolean) => {
     if (phase.kind !== 'result' || !phase.result) return;
@@ -208,6 +211,7 @@ function ReviewItem({
       <div className="row spread" style={{ marginBottom: '0.5rem' }}>
         <span className="muted small">
           Review {position} of {total} · {REASON_TEXT[card.reason]}
+          {cardStage(card) === 'new' && ' · first review'}
         </span>
         <button className="btn btn-small btn-ghost" onClick={onQuit}>
           Stop
@@ -290,7 +294,8 @@ function ReviewItem({
               <p className="small">
                 <strong>{GRADE_TEXT[grade]}</strong>
                 {phase.ms !== null && grade !== Rating.Again && ` · ${q.kind === 'tossup' ? 'buzzed' : 'answered'} after ${(phase.ms / 1000).toFixed(1)} s`}
-                {preview !== null && ` · back ${untilText(preview, Date.now())}`}
+                {preview !== null &&
+                  (cardStage(preview) === 'learned' ? ' · learned: it leaves your review queue' : ` · back ${untilText(preview.fsrs.due, Date.now())}`)}
               </p>
             )}
             {event && (
@@ -339,7 +344,7 @@ function CardList({ playerId }: { playerId: string }) {
               <th>Question</th>
               <th>Subject</th>
               <th>Why</th>
-              <th>Next review</th>
+              <th>Status</th>
               <th>Reviews</th>
               <th aria-label="Actions" />
             </tr>
@@ -355,7 +360,17 @@ function CardList({ playerId }: { playerId: string }) {
                   </td>
                   <td>{SUBJECT_LABELS[c.subject]}</td>
                   <td>{REASON_TEXT[c.reason]}</td>
-                  <td>{disputed.has(c.questionId) ? 'Paused: problem reported' : c.fsrs.due <= now ? 'Due' : dateText(new Date(c.fsrs.due).toISOString())}</td>
+                  <td>
+                    {disputed.has(c.questionId)
+                      ? 'Paused: problem reported'
+                      : cardStage(c) === 'learned'
+                        ? 'Learned'
+                        : cardStage(c) === 'new'
+                          ? 'New, waiting'
+                          : c.fsrs.due <= now
+                            ? 'Due'
+                            : `Next: ${dateText(new Date(c.fsrs.due).toISOString())}`}
+                  </td>
                   <td>{c.log.filter((e) => e.via === 'review').length}</td>
                   <td>
                     <button className="btn btn-small btn-ghost" onClick={() => removeFromReview(c.id)}>
@@ -449,9 +464,11 @@ export function ReviewPage({ query }: { query: URLSearchParams }) {
     <div className="container narrow">
       <PageHeader title="Review">
         <p>
-          Questions you missed, gave away on an interrupt, or answered too slowly come back here: the next day, then after a few days, then weeks
-          apart, using FSRS (the scheduler Anki uses). Every review is timed. Buzz while you are still reading for "Easy", within the 5-second
-          window for "Good"; a slow right answer counts as "Hard" and comes back sooner.
+          Questions you missed, gave away on an interrupt, or answered too slowly come back here, spaced out with FSRS (the scheduler Anki
+          uses): soon after a miss, then days and weeks apart. Every review is timed. Buzz while you are still reading for "Easy", within the
+          5-second window for "Good"; a slow right answer counts as "Hard" and comes back sooner. A few new questions join each day (
+          {newCardsPerDay(data.settings.dailyMinutes)} with a {data.settings.dailyMinutes}-minute plan), wrong interrupts and your own subjects
+          first; once a right answer earns a gap of {LEARNED_DAYS} days, the question is learned and leaves the queue.
         </p>
       </PageHeader>
       <PlayerSwitch />
@@ -471,7 +488,13 @@ export function ReviewPage({ query }: { query: URLSearchParams }) {
           <div className="grid" style={{ marginTop: '1rem' }}>
             <Stat label="Due today" value={summary.dueToday} hint={summary.dueToday === 0 && summary.nextDue ? `Next: ${untilText(summary.nextDue, now)}` : undefined} />
             <Stat label="Reviewed today" value={summary.reviewedToday} />
-            <Stat label="In your queue" value={summary.total} hint={summary.mature > 0 ? `${summary.mature} remembered for 3+ weeks` : undefined} />
+            <Stat
+              label="In your queue"
+              value={summary.total}
+              hint={[summary.waiting > 0 ? `${summary.waiting} new ones waiting` : '', summary.learned > 0 ? `${summary.learned} learned` : '']
+                .filter(Boolean)
+                .join(' · ') || undefined}
+            />
           </div>
           {summary.suspended > 0 && (
             <p className="small muted">

@@ -3,9 +3,16 @@
  *
  * A question becomes a review card for a player when they miss it, give it away on an interrupt,
  * get it right too slowly, or (for a subject owner) when nobody in a practice game could answer it.
- * The scheduler is FSRS (ts-fsrs, the algorithm Anki uses), working in whole days: a miss comes
- * back the next day, then after a few days, then weeks. Each review is timed, and the time decides
- * the grade, because a correct answer that would have lost the buzzer race is not yet learned.
+ *
+ * A card's life:
+ * 1. New: it waits for a free place. Each day a few new cards join the reviews (wrong interrupts,
+ *    added questions and the player's own subjects first), because every card comes back several
+ *    times and the review time is capped. New cards left waiting for two weeks are dropped.
+ * 2. In review: FSRS (ts-fsrs, the algorithm Anki uses) schedules it in whole days, sooner after
+ *    a miss or a slow answer. Each review is timed, and the time decides the grade, because a
+ *    correct answer that would have lost the buzzer race is not learned yet.
+ * 3. Learned: once a right answer earns a gap of a month or more, the card retires. Missing the
+ *    question again later (in a drill or a game) brings it back.
  *
  * Everything here is pure: functions take cards and return new cards, so the store, the tests
  * and a future server can share them.
@@ -69,7 +76,31 @@ export interface ReviewCard {
   /** Keys of the practice answers and game entries already counted, so nothing is counted twice. */
   sources: string[];
   fsrs: FsrsState;
+  /** The answers that made the card, then every grade. */
   log: CardEvent[];
+  /** When the card was first reviewed; null while it waits as a new card. */
+  introducedAt: number | null;
+  /** When the card was retired as learned; null while it is in the queue. */
+  retiredAt: number | null;
+}
+
+/** A right answer that earns a gap at least this long retires the card as learned. */
+export const LEARNED_DAYS = 30;
+/** New cards left waiting this long are dropped (missing the question again brings it back). */
+export const NEW_CARD_TTL_DAYS = 14;
+
+export type CardStage = 'new' | 'review' | 'learned';
+
+export function cardStage(card: ReviewCard): CardStage {
+  if (card.retiredAt != null) return 'learned';
+  if (card.introducedAt === undefined) return card.fsrs.state === State.New ? 'new' : 'review';
+  return card.introducedAt === null ? 'new' : 'review';
+}
+
+/** Cards saved before cards had stages count as in review. */
+export function normalizeCard(card: ReviewCard): ReviewCard {
+  if (card.introducedAt !== undefined && card.retiredAt !== undefined) return card;
+  return { ...card, introducedAt: card.introducedAt ?? (card.fsrs.state === State.New ? null : card.createdAt), retiredAt: card.retiredAt ?? null };
 }
 
 export function cardId(playerId: string, questionId: string): string {
@@ -166,10 +197,21 @@ export function newFsrsState(at: number): FsrsState {
   return fromCard(createEmptyCard(new Date(at)));
 }
 
-/** Grade a card and schedule its next review. */
+/**
+ * Grade a card and schedule its next review. A right answer that earns a gap of LEARNED_DAYS or
+ * more retires the card; a wrong one brings a retired card back.
+ */
 export function gradeCard(card: ReviewCard, event: CardEvent, retention: number): ReviewCard {
   const { card: next } = scheduler(retention).next(toCard(card.fsrs), new Date(event.t), event.grade);
-  return { ...card, fsrs: fromCard(next), log: [...card.log, event] };
+  const fsrsState = fromCard(next);
+  const learned = event.correct && fsrsState.scheduledDays >= LEARNED_DAYS;
+  return {
+    ...card,
+    fsrs: fsrsState,
+    log: [...card.log, event],
+    introducedAt: card.introducedAt ?? event.t,
+    retiredAt: learned ? event.t : event.correct ? card.retiredAt : null,
+  };
 }
 
 /** Chance (0–1) that the player still remembers the card at `now`. New cards return null. */
@@ -278,6 +320,14 @@ export function applyOutcome(existing: ReviewCard | undefined, o: Outcome, reten
   if (existing) {
     if (existing.sources.includes(o.key)) return null;
     const withSource = { ...existing, sources: [...existing.sources, o.key] };
+    const stage = cardStage(existing);
+    // A new card is still waiting for its first review: note the answer, and a miss renews its place in line.
+    if (stage === 'new') {
+      if (o.correct) return withSource;
+      return { ...withSource, createdAt: Math.max(existing.createdAt, o.t), log: [...existing.log, event] };
+    }
+    // A learned card stays learned unless the player misses it again.
+    if (stage === 'learned' && o.correct) return withSource;
     const last = existing.fsrs.lastReview;
     if (last !== null && o.t - last < MIN_REGRADE_GAP_MS) return withSource;
     // A game finished late can report answers older than the last review; schedules only move forward.
@@ -285,7 +335,8 @@ export function applyOutcome(existing: ReviewCard | undefined, o: Outcome, reten
   }
   const reason = reasonFor(o);
   if (!reason) return null;
-  const card: ReviewCard = {
+  // A new card: the answer that made it is in the log, and it can first come up the next practice day.
+  return {
     id: cardId(o.playerId, o.questionId),
     playerId: o.playerId,
     questionId: o.questionId,
@@ -294,10 +345,11 @@ export function applyOutcome(existing: ReviewCard | undefined, o: Outcome, reten
     reason,
     createdAt: o.t,
     sources: [o.key],
-    fsrs: newFsrsState(o.t),
-    log: [],
+    fsrs: { ...newFsrsState(o.t), due: endOfPracticeDay(o.t) },
+    log: [event],
+    introducedAt: null,
+    retiredAt: null,
   };
-  return gradeCard(card, event, retention);
 }
 
 /** A card the player asked for: due straight away, with no answer counted yet. */
@@ -313,6 +365,8 @@ export function manualCard(playerId: string, q: { id: string; subject: Subject; 
     sources: [],
     fsrs: newFsrsState(at),
     log: [],
+    introducedAt: null,
+    retiredAt: null,
   };
 }
 
@@ -341,43 +395,123 @@ export function isSuspended(card: ReviewCard, disputed: ReadonlySet<string>): bo
   return disputed.has(card.questionId);
 }
 
-/** The player's cards due by the end of today, most overdue first. */
-export function dueCards(cards: Iterable<ReviewCard>, playerId: string, now: number, disputed: ReadonlySet<string> = new Set()): ReviewCard[] {
+/** How many new cards may join the reviews each day, for a daily plan of `minutes`. */
+export function newCardsPerDay(minutes: number): number {
+  return Math.max(2, Math.round(minutes / 7.5));
+}
+
+/** Who the cards are for: their subjects decide which new cards come first. */
+export interface CardOwner {
+  id: string;
+  primarySubject?: Subject;
+  secondarySubject?: Subject;
+}
+
+/** Higher comes first: questions the player added, wrong interrupts, then their own subjects. */
+export function newCardPriority(card: ReviewCard, owner: CardOwner): number {
+  let p = 0;
+  if (card.reason === 'manual') p += 10;
+  // A wrong interrupt hands the other team 4 points: it comes ahead of an ordinary miss, even in your own subject.
+  if (card.reason === 'interrupt') p += 5;
+  if (card.subject === owner.primarySubject) p += 3;
+  else if (card.subject === owner.secondarySubject) p += 2;
+  if (card.reason === 'missed' || card.reason === 'dead') p += 1;
+  return p;
+}
+
+/** True for a new card that has waited too long (added questions never expire). */
+export function isStale(card: ReviewCard, now: number): boolean {
+  return cardStage(card) === 'new' && card.reason !== 'manual' && now - card.createdAt > NEW_CARD_TTL_DAYS * DAY_MS;
+}
+
+export interface DueToday {
+  /** Cards in review that are due by the end of today, most overdue first. */
+  reviews: ReviewCard[];
+  /** New cards joining today, best first (up to what is left of today's allowance). */
+  fresh: ReviewCard[];
+  /** New cards still waiting after today's allowance. */
+  waiting: number;
+}
+
+export function dueToday(
+  cards: Iterable<ReviewCard>,
+  owner: CardOwner,
+  now: number,
+  options: { newPerDay: number; disputed?: ReadonlySet<string> },
+): DueToday {
+  const disputed = options.disputed ?? new Set<string>();
   const end = endOfPracticeDay(now);
-  const due: ReviewCard[] = [];
-  for (const c of cards) {
-    if (c.playerId === playerId && c.fsrs.due < end && !isSuspended(c, disputed)) due.push(c);
+  const start = end - DAY_MS;
+  const reviews: ReviewCard[] = [];
+  const pending: ReviewCard[] = [];
+  let introducedToday = 0;
+  for (const raw of cards) {
+    if (raw.playerId !== owner.id) continue;
+    const c = normalizeCard(raw);
+    const stage = cardStage(c);
+    if (c.introducedAt !== null && c.introducedAt >= start && c.introducedAt < end) introducedToday += 1;
+    if (stage === 'learned' || isSuspended(c, disputed)) continue;
+    if (stage === 'review' && c.fsrs.due < end) reviews.push(c);
+    else if (stage === 'new' && c.fsrs.due <= now && !isStale(c, now)) pending.push(c);
   }
-  return due.sort((a, b) => a.fsrs.due - b.fsrs.due || a.id.localeCompare(b.id));
+  reviews.sort((a, b) => a.fsrs.due - b.fsrs.due || a.id.localeCompare(b.id));
+  pending.sort((a, b) => newCardPriority(b, owner) - newCardPriority(a, owner) || b.createdAt - a.createdAt || a.id.localeCompare(b.id));
+  const allowance = Math.max(0, options.newPerDay - introducedToday);
+  return { reviews, fresh: pending.slice(0, allowance), waiting: Math.max(0, pending.length - allowance) };
+}
+
+/** Today's review queue in session order: due reviews first, then the new cards. */
+export function reviewQueue(due: DueToday): ReviewCard[] {
+  return [...due.reviews, ...due.fresh];
 }
 
 export interface CardSummary {
+  /** Cards in the queue: in review or waiting as new (not learned, not dropped). */
   total: number;
+  /** Due reviews plus today's new cards. */
   dueToday: number;
+  /** New cards waiting for a later day. */
+  waiting: number;
+  /** Cards retired as learned. */
+  learned: number;
   suspended: number;
-  /** Cards remembered for three weeks or longer. */
-  mature: number;
   /** Reviews done today. */
   reviewedToday: number;
-  /** The next card that comes due after today, if any. */
+  /** The next card in review that comes due after today, if any. */
   nextDue: number | null;
 }
 
-export function summarizeCards(cards: Iterable<ReviewCard>, playerId: string, now: number, disputed: ReadonlySet<string> = new Set()): CardSummary {
+export function summarizeCards(
+  cards: Iterable<ReviewCard>,
+  owner: CardOwner,
+  now: number,
+  options: { newPerDay: number; disputed?: ReadonlySet<string> },
+): CardSummary {
+  const list = [...cards].filter((c) => c.playerId === owner.id).map(normalizeCard);
+  const disputed = options.disputed ?? new Set<string>();
+  const due = dueToday(list, owner, now, options);
   const end = endOfPracticeDay(now);
   const start = end - DAY_MS;
-  const s: CardSummary = { total: 0, dueToday: 0, suspended: 0, mature: 0, reviewedToday: 0, nextDue: null };
-  for (const c of cards) {
-    if (c.playerId !== playerId) continue;
-    s.total += 1;
-    if (isSuspended(c, disputed)) {
-      s.suspended += 1;
+  const s: CardSummary = {
+    total: 0,
+    dueToday: due.reviews.length + due.fresh.length,
+    waiting: due.waiting,
+    learned: 0,
+    suspended: 0,
+    reviewedToday: 0,
+    nextDue: null,
+  };
+  for (const c of list) {
+    s.reviewedToday += c.log.filter((e) => e.via === 'review' && e.t >= start && e.t < end).length;
+    const stage = cardStage(c);
+    if (stage === 'learned') {
+      s.learned += 1;
       continue;
     }
-    if (c.fsrs.due < end) s.dueToday += 1;
-    else if (s.nextDue === null || c.fsrs.due < s.nextDue) s.nextDue = c.fsrs.due;
-    if (c.fsrs.stability >= 21) s.mature += 1;
-    s.reviewedToday += c.log.filter((e) => e.via === 'review' && e.t >= start && e.t < end).length;
+    if (isStale(c, now)) continue;
+    s.total += 1;
+    if (isSuspended(c, disputed)) s.suspended += 1;
+    else if (stage === 'review' && c.fsrs.due >= end && (s.nextDue === null || c.fsrs.due < s.nextDue)) s.nextDue = c.fsrs.due;
   }
   return s;
 }

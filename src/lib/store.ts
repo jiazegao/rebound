@@ -7,7 +7,20 @@
 import { useSyncExternalStore } from 'react';
 import { del, get, set } from 'idb-keyval';
 import type { DayPlan } from '../core/plan';
-import { applyOutcome, cardId, gradeCard, manualCard, RETENTION, seasonPhase, type CardEvent, type Outcome, type ReviewCard } from '../core/review';
+import {
+  applyOutcome,
+  cardId,
+  cardStage,
+  gradeCard,
+  isStale,
+  manualCard,
+  normalizeCard,
+  RETENTION,
+  seasonPhase,
+  type CardEvent,
+  type Outcome,
+  type ReviewCard,
+} from '../core/review';
 import type { MatchEvent } from '../core/rules/engine';
 import type { Player, QuestionKind, Subject, Team } from '../core/schema';
 import { newId } from './format';
@@ -129,7 +142,7 @@ function scheduleSave() {
 export async function initStore(): Promise<void> {
   try {
     const saved = await get<AppData>(KEY);
-    if (saved && saved.version === 1) data = { ...emptyData(), ...saved, settings: { ...emptyData().settings, ...saved.settings } };
+    if (saved && saved.version === 1) data = normalize({ ...emptyData(), ...saved, settings: { ...emptyData().settings, ...saved.settings } });
   } catch {
     status = { ...status, persistent: false };
   }
@@ -281,23 +294,40 @@ export function retentionAt(d: AppData, t: number): number {
   return RETENTION[seasonPhase(t, d.team?.nextEvent?.date)];
 }
 
+/** Fill in fields that data saved by an earlier version lacks. */
+function normalize(d: AppData): AppData {
+  for (const id of Object.keys(d.cards)) d.cards[id] = normalizeCard(d.cards[id]);
+  return d;
+}
+
 function applyOutcomes(d: AppData, outcomes: Outcome[]): void {
+  const players = new Set<string>();
   for (const o of [...outcomes].sort((a, b) => a.t - b.t)) {
     const id = cardId(o.playerId, o.questionId);
     const next = applyOutcome(d.cards[id], o, retentionAt(d, o.t));
     if (next) d.cards[id] = next;
+    players.add(o.playerId);
+  }
+  // New cards that waited too long are dropped; a later miss brings the question back.
+  const now = Date.now();
+  for (const [id, card] of Object.entries(d.cards)) {
+    if (players.has(card.playerId) && isStale(card, now)) delete d.cards[id];
   }
 }
 
-/** Put a question in a player's review queue (due now). */
+/** Put a question in a player's review queue: it comes up in the next review session. */
 export function addToReview(playerId: string, q: { id: string; subject: Subject; kind: QuestionKind }): void {
   update((d) => {
     const id = cardId(playerId, q.id);
     const existing = d.cards[id];
-    if (existing) {
-      // Already a card: bring it forward to today.
-      if (existing.fsrs.due > Date.now()) d.cards[id] = { ...existing, fsrs: { ...existing.fsrs, due: Date.now() } };
-    } else d.cards[id] = manualCard(playerId, q, Date.now());
+    const now = Date.now();
+    if (!existing || cardStage(existing) === 'new') {
+      // An added question goes to the front of the new cards (see newCardPriority).
+      d.cards[id] = { ...manualCard(playerId, q, now), sources: existing?.sources ?? [], log: existing?.log ?? [] };
+    } else {
+      // In review or learned: due today again.
+      d.cards[id] = { ...existing, retiredAt: null, fsrs: { ...existing.fsrs, due: Math.min(existing.fsrs.due, now) } };
+    }
   });
 }
 
@@ -377,6 +407,7 @@ export function importData(json: string): void {
   }
   update((d) => {
     Object.assign(d, emptyData(), incoming, { settings: { ...emptyData().settings, ...incoming.settings } });
+    normalize(d);
   });
 }
 
