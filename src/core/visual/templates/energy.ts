@@ -328,7 +328,9 @@ const solarIv: VisualTemplate = {
         .filter((a) => c.p100 % (10 * Math.round(100 * a)) === 0)
         .map((a) => ({ panel: c, area: a, answer: c.p100 / (10 * Math.round(100 * a)) }));
     });
-    const { panel, area, answer } = rng.pick(pool);
+    // Choose the answer first, so that values shared by many panels do not crowd out the rest.
+    const want = rng.pick([...new Set(pool.map((x) => x.answer))].sort((a, b) => a - b));
+    const { panel, area, answer } = rng.pick(pool.filter((x) => x.answer === want));
     const { voc, isc, vmp, imp, m, p } = panel;
     const xMax = Math.ceil((voc * 1.32) / 5) * 5;
     const yMax = Math.ceil(isc * 1.3);

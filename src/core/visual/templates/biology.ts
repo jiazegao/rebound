@@ -3,10 +3,9 @@
  * Each template draws a figure (svg.ts) and asks a bonus question about it with an exact answer.
  * See src/core/visual/README.md for the rules every template follows.
  */
-import { multipleChoice } from '../choices';
 import { decimalText, fractionText, gcd } from '../exact';
 import type { Rng } from '../rng';
-import { ACCENT, INK, PAPER, SOFT, arrow, circle, figure, line, path, rect, num, text } from '../svg';
+import { ACCENT, INK, PAPER, SOFT, arrow, figure, line, path, rect, num, text } from '../svg';
 import type { VisualTemplate } from '../types';
 import { commas, textWidth } from './earth_bio_kit';
 
@@ -355,12 +354,8 @@ const alleleFrequency: VisualTemplate = {
       const N = rng.pick([100, 200, 400, 500]);
       const g = N / 20;
       const k = rng.int(4, 16); // p = k/20
-      const lo = Math.max(1, k - 19);
-      const hi = Math.floor((k - 1) / 1) >= 1 ? k - 1 : 1;
-      // AA = g·m with 1 ≤ m, Aa = 2g(k − m) ≥ g, aa = g(20 − 2k + m) ≥ g.
-      const mMin = Math.max(lo, 2 * k - 19);
-      const mMax = Math.min(hi, k - 1);
-      const m = rng.int(mMin, mMax);
+      // AA = g·m, Aa = 2g(k − m), aa = g(20 − 2k + m): all at least g when 1 ≤ m, m ≤ k − 1 and m ≥ 2k − 19.
+      const m = rng.int(Math.max(1, 2 * k - 19), k - 1);
       const counts = { AA: g * m, Aa: 2 * g * (k - m), aa: g * (20 - 2 * k + m) };
       const askDominant = rng.chance(0.5);
       const nA = 2 * counts.AA + counts.Aa;
@@ -519,9 +514,8 @@ const cellCycle: VisualTemplate = {
     let percents: number[] = [];
     if (percentMode) {
       total = rng.pick([20, 40]);
-      const stepPct = 5;
       for (;;) {
-        const m = rng.pick([5, 10]);
+        const m = total === 20 ? rng.pick([5, 10]) : 5;
         const g2 = rng.pick([10, 15, 20]);
         const s = rng.pick([25, 30, 35, 40]);
         const g1 = 100 - m - g2 - s;
@@ -531,7 +525,6 @@ const cellCycle: VisualTemplate = {
         }
       }
       hours = percents.map((p) => (p * total) / 100);
-      void stepPct;
     } else {
       hours = [rng.int(5, 14), rng.int(5, 9), rng.int(2, 5), rng.int(1, 2)];
       total = hours.reduce((a, b) => a + b, 0);
@@ -555,10 +548,10 @@ const cellCycle: VisualTemplate = {
       } else {
         const i = rng.int(0, 3);
         const unit = total / gcd(total, hours[i]!);
-        const mult = Math.max(1, Math.ceil(200 / unit));
-        const n = unit * (mult + rng.int(0, 3) * Math.max(1, Math.round(100 / unit)));
+        const sizes = [120, 150, 180, 200, 240, 300, 360, 400, 480, 500, 600, 720, 800, 900, 1000, 1200].filter((x) => x % unit === 0);
+        const n = sizes.length ? rng.pick(sizes) : unit * rng.int(10, 20);
         answer = commas((n * hours[i]!) / total);
-        stem = `The pie chart shows how many hours the cells of a culture spend in each phase of their cell cycle. If ${commas(n)} cells in the culture are dividing out of step with one another, how many would you expect to be in ${i === 3 ? 'the M phase' : i === 1 ? 'the S phase' : PHASE_NAMES[i]} at any moment?`;
+        stem = `The pie chart shows how many hours the cells of a culture spend in each phase of their cell cycle. If the number of cells in each phase is proportional to the time spent in it, how many of ${commas(n)} cells would you expect to be in ${i === 3 ? 'the M phase' : i === 1 ? 'the S phase' : PHASE_NAMES[i]}?`;
       }
     }
 
@@ -608,6 +601,3 @@ const cellCycle: VisualTemplate = {
 
 export const BIOLOGY_TEMPLATES: VisualTemplate[] = [dihybridPunnett, foodWeb, alleleFrequency, transcription, cellCycle];
 
-// Keep the import list honest for helpers used only in some templates.
-void circle;
-void multipleChoice;

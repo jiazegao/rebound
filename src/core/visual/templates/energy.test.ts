@@ -75,9 +75,9 @@ describe('energy answers for seeds checked by hand', () => {
     ['energy-carnot-engine', 7919, '1700'], // 5100 J · 300/900
     ['energy-carnot-engine', 15838, '3000'], // 2300 J ÷ (920/1200)
     ['energy-carnot-engine', 31676, '60'], // 1 − 360/900
-    ['energy-solar-iv-curve', 7919, '74'], // (37 · 9)/(45 · 10)
-    ['energy-solar-iv-curve', 15838, '18'], // 40 · 9 W over 2 m² at 1000 W/m²
-    ['energy-solar-iv-curve', 31676, '342'], // 36 V · 9.5 A
+    ['energy-solar-iv-curve', 7919, '78'], // fill factor (34 · 7.8)/(40 · 8.5)
+    ['energy-solar-iv-curve', 15838, '20'], // 40 V · 9.5 A over 1.9 m² at 1000 W/m²
+    ['energy-solar-iv-curve', 31676, '328'], // 40 V · 8.2 A
     ['energy-household-load', 7919, '10.5'], // 2·2 + 1·3 + 0.5·2 + 2.5·1
     ['energy-household-load', 15838, '17'],
     ['energy-generation-mix', 7919, '50'], // fossil 100 of 200 TWh
