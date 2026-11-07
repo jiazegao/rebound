@@ -26,7 +26,7 @@ export function FigureView({ q, large = false, note = true }: { q: Pick<Question
         <img className="qfig-art" src={fig.src} alt={fig.alt} loading="lazy" />
       )}
       <figcaption className="qfig-caption small muted">
-        {note && <span>Figures may not be drawn to scale. </span>}
+        {note && !q.id.startsWith('vph-') && <span>Figures may not be drawn to scale. </span>}
         {fig.kind === 'image' && fig.credit && (
           <span>
             Photo:{' '}

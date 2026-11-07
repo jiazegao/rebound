@@ -100,7 +100,7 @@ export function ItStaffPage() {
         <li>It uses no cookies, ads, analytics or trackers, and makes no requests to any other domain.</li>
         <li>Team data is stored in the browser's IndexedDB on the device and, for teams that share, on the team server.</li>
         <li>
-          A service worker keeps a copy of the site (and, if a player chooses, the question files, about 9 MB) in the browser's Cache Storage
+          A service worker keeps a copy of the site (and, if a player chooses, the question files and the Visual lab's photos, about 12 MB) in the browser's Cache Storage
           so practice works offline. It only caches files from Rebound's own domain.
         </li>
         <li>

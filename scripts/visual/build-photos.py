@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 """Build the public-domain photo set for Rebound's photo identification visual bonuses.
 
-Reads scripts/visual/photo-list.json, asks Wikimedia Commons for each file's imageinfo, refuses any file
-that is not public domain (or that carries restrictions such as insignia, personality rights or trademarks),
-downloads the 900-pixel thumbnail, converts it to WebP (longest side at most 900 px) and writes
+Reads scripts/visual/photo-list.json, asks Wikimedia Commons for each file's imageinfo (iiurlwidth=900),
+refuses any file that is not public domain (or that carries restrictions such as insignia, personality rights
+or trademarks), downloads its thumbnail, converts it to WebP (longest side at most 900 px) and writes
 
   public/data/visual/photos/<id>.webp
   public/data/visual/photos.json   { generatedAt, groups, photos: [{ id, group, answer, accept, file, width,
                                      height, alt, credit, source, license }] }
+
+Thumbnails only: Commons serves thumbnails in standard widths (it rounds a 900-pixel request up to 960) and
+throttles automated downloads of original files hard. A file narrower than 960 px has no 960 thumbnail (the
+API then offers the original), so the script asks again for the largest standard width below the file's own
+width (500 or 330 px, say) and downloads that. It never downloads an original.
 
 Usage (from the repository root; -I because the script reads downloaded files):
 
@@ -19,8 +24,8 @@ Usage (from the repository root; -I because the script reads downloaded files):
 Re-runnable: the same list gives the same files. photos.json keeps its previous generatedAt when nothing
 else in it changed, and WebP files are rewritten only when their bytes change.
 
-Polite: one request at a time, at least 1 s apart (more for media), with the project User-Agent; on HTTP 429
-or 503 it waits as long as Retry-After asks, and longer on repeated refusals.
+Polite: one request at a time, at least 1 s apart (3 s for media), with the project User-Agent; on HTTP 429
+or 503 it waits exactly as long as Retry-After asks before trying again, for up to an hour per request.
 """
 from __future__ import annotations
 
@@ -50,6 +55,7 @@ OUT_DIR = ROOT / 'public' / 'data' / 'visual'
 PHOTO_DIR = OUT_DIR / 'photos'
 
 MAX_SIDE = 900
+THUMB_STEPS = (120, 250, 330, 500, 960)  # Commons' standard thumbnail widths up to the 900 px we need
 QUALITY = 72
 TARGET_BYTES = 110 * 1024
 SUBJECTS = {'earth_space', 'biology', 'energy', 'chemistry', 'physics', 'math'}
@@ -68,10 +74,11 @@ class Polite:
     """One request at a time, spaced out, identified, and waiting as long as the servers ask.
 
     Wikimedia answers HTTP 429 with a Retry-After that counts down to the end of its rate-limit window;
-    a refused request is retried once, exactly when that window ends, until `budget` seconds have passed.
+    a refused request is retried exactly when that window ends (never sooner), as often as needed, until
+    `budget` seconds have passed.
     """
 
-    def __init__(self, budget: float = 1800) -> None:
+    def __init__(self, budget: float = 3600) -> None:
         self.last = 0.0
         self.count = 0
         self.budget = budget
@@ -93,7 +100,7 @@ class Polite:
                 if error.code not in (429, 500, 502, 503, 504) or time.monotonic() - start > self.budget:
                     raise BuildError(f'HTTP {error.code} for {url}') from None
                 try:
-                    pause = max(2, min(300, int(error.headers.get('Retry-After') or 30))) + 1
+                    pause = max(2, min(1800, int(error.headers.get('Retry-After') or 30))) + 1
                 except ValueError:
                     pause = 30
                 refusals += 1
@@ -108,7 +115,7 @@ class Polite:
             time.sleep(pause)
 
 
-def fetch_imageinfo(net: Polite, titles: list[str]) -> dict[str, dict]:
+def fetch_imageinfo(net: Polite, titles: list[str], width: int = MAX_SIDE) -> dict[str, dict]:
     """imageinfo for each requested title (50 per request), keyed by the title as written in the list."""
     found: dict[str, dict] = {}
     for start in range(0, len(titles), 50):
@@ -116,7 +123,7 @@ def fetch_imageinfo(net: Polite, titles: list[str]) -> dict[str, dict]:
         params = {
             'action': 'query', 'format': 'json', 'formatversion': '2', 'redirects': '1',
             'titles': '|'.join(batch), 'prop': 'imageinfo', 'iiprop': 'url|extmetadata|size|mime',
-            'iiurlwidth': str(MAX_SIDE), 'iiextmetadatafilter': METADATA, 'iiextmetadatalanguage': 'en',
+            'iiurlwidth': str(width), 'iiextmetadatafilter': METADATA, 'iiextmetadatalanguage': 'en',
         }
         data = json.loads(net.get(API + '?' + urllib.parse.urlencode(params)))
         query = data.get('query') or {}
@@ -134,11 +141,31 @@ def fetch_imageinfo(net: Polite, titles: list[str]) -> dict[str, dict]:
     return found
 
 
+def is_thumbnail(url: str | None) -> bool:
+    return '/thumb/' in urllib.parse.urlsplit(url or '').path
+
+
+def use_standard_thumbnails(net: Polite, infos: dict[str, dict]) -> None:
+    """Point files narrower than 960 px (whose 'thumbnail' is the original) at a smaller standard thumbnail."""
+    by_step: dict[int, list[str]] = {}
+    for title, info in infos.items():
+        if not is_thumbnail(info.get('thumburl')):
+            steps = [s for s in THUMB_STEPS if s < int(info.get('width') or 0)]
+            if steps:
+                by_step.setdefault(steps[-1], []).append(title)
+    for step, titles in sorted(by_step.items()):
+        for title, info in fetch_imageinfo(net, titles, width=step).items():
+            if is_thumbnail(info.get('thumburl')):
+                infos[title]['thumburl'] = info['thumburl']
+
+
 def canonical_url(url: str) -> str:
     """thumb.wikimedia.org serves the same paths as upload.wikimedia.org; drop the tracking query string."""
     parts = urllib.parse.urlsplit(url)
     if parts.netloc not in ('upload.wikimedia.org', 'thumb.wikimedia.org'):
         raise BuildError(f'unexpected media host in {url}')
+    if not is_thumbnail(url):
+        raise BuildError(f'refusing to download an original file: {url}')
     return urllib.parse.urlunsplit(('https', 'upload.wikimedia.org', parts.path, '', ''))
 
 
@@ -175,7 +202,7 @@ def credit_for(entry: dict, info: dict) -> str:
         return entry['credit']
     for key in ('Artist', 'Credit'):
         text = meta(info, key)
-        if text and text.lower() not in ('unknown author', 'unknown', 'own work'):
+        if text and not text.lower().startswith('unknown') and text.lower() != 'own work':
             return text[:160].rstrip() + ('…' if len(text) > 160 else '')
     raise BuildError(f'{entry["id"]}: no author or credit on Commons; add a "credit" to the list entry')
 
@@ -245,6 +272,8 @@ def load_list() -> tuple[list[dict], list[dict]]:
 # ---------------------------------------------------------------------------------------------- images
 
 def to_webp(raw: bytes) -> tuple[bytes, int, int, int]:
+    """WebP with the longest side at most 900 px: quality 72, stepping down to 56 and then shrinking the image
+    in 10% steps (not below 600 px) until it fits in TARGET_BYTES. Deterministic for the same input."""
     with Image.open(io.BytesIO(raw)) as source:
         image = ImageOps.exif_transpose(source)
         if image.mode in ('RGBA', 'LA') or (image.mode == 'P' and 'transparency' in image.info):
@@ -253,15 +282,19 @@ def to_webp(raw: bytes) -> tuple[bytes, int, int, int]:
             image.paste(rgba, mask=rgba.getchannel('A'))
         else:
             image = image.convert('RGB')
-        image.thumbnail((MAX_SIDE, MAX_SIDE), Image.Resampling.LANCZOS)
-        quality = QUALITY
-        while True:
+    side = MAX_SIDE
+    while True:
+        sized = image.copy()
+        sized.thumbnail((side, side), Image.Resampling.LANCZOS)
+        for quality in range(QUALITY, 55, -4):
             buffer = io.BytesIO()
-            image.save(buffer, 'WEBP', quality=quality, method=6)
+            sized.save(buffer, 'WEBP', quality=quality, method=6)
             data = buffer.getvalue()
-            if len(data) <= TARGET_BYTES or quality <= 50:
-                return data, image.width, image.height, quality
-            quality -= 4
+            if len(data) <= TARGET_BYTES:
+                return data, sized.width, sized.height, quality
+        if max(sized.size) <= 600:
+            return data, sized.width, sized.height, quality
+        side = int(max(sized.size) * 0.9)
 
 
 def write_if_changed(path: Path, data: bytes) -> bool:
@@ -302,6 +335,7 @@ def main() -> int:
         print(f'list and licenses OK ({net.count} requests)')
         return 0
 
+    use_standard_thumbnails(net, infos)
     PHOTO_DIR.mkdir(parents=True, exist_ok=True)
     temp = None
     if args.cache_dir:
@@ -315,7 +349,7 @@ def main() -> int:
     try:
         for photo in photos:
             info = infos[photo['commonsFile']]
-            url = canonical_url(info.get('thumburl') or info['url'])
+            url = canonical_url(info.get('thumburl') or '')
             cached = cache / cache_name(url)
             if cached.exists():
                 raw = cached.read_bytes()

@@ -1,0 +1,1144 @@
+{
+  "generatedAt": "2026-11-07T22:38:19.857Z",
+  "groups": [
+    {
+      "id": "cloud-genus",
+      "subject": "earth_space",
+      "topic": "earth_space.meteorology-climate",
+      "question": "Identify the cloud genus shown in the photo.",
+      "mcQuestion": "Which of the following cloud genera is shown in the photo?"
+    },
+    {
+      "id": "rock",
+      "subject": "earth_space",
+      "topic": "earth_space.minerals-rocks",
+      "question": "Identify the rock shown in the photo.",
+      "mcQuestion": "Which of the following rocks is shown in the photo?"
+    },
+    {
+      "id": "mineral",
+      "subject": "earth_space",
+      "topic": "earth_space.minerals-rocks",
+      "question": "Identify the mineral shown in the photo.",
+      "mcQuestion": "Which of the following minerals is shown in the photo?"
+    },
+    {
+      "id": "planet",
+      "subject": "earth_space",
+      "topic": "earth_space.solar-system",
+      "question": "Identify the planet shown in the image.",
+      "mcQuestion": "Which of the following planets is shown in the image?"
+    },
+    {
+      "id": "moon",
+      "subject": "earth_space",
+      "topic": "earth_space.solar-system",
+      "question": "Identify the moon shown in the image.",
+      "mcQuestion": "Which of the following moons is shown in the image?"
+    },
+    {
+      "id": "galaxy-type",
+      "subject": "earth_space",
+      "topic": "earth_space.galaxies-cosmology",
+      "question": "In the Hubble classification, what type of galaxy is shown in the image?",
+      "mcQuestion": "In the Hubble classification, which of the following types of galaxy is shown in the image?"
+    },
+    {
+      "id": "volcano-type",
+      "subject": "earth_space",
+      "topic": "earth_space.tectonics-structure",
+      "question": "Identify the type of volcano or volcanic landform shown in the photo.",
+      "mcQuestion": "Which of the following types of volcano or volcanic landform is shown in the photo?"
+    },
+    {
+      "id": "animal-phylum",
+      "subject": "biology",
+      "topic": "biology.organism-diversity",
+      "question": "Identify the phylum of the animal shown in the photo.",
+      "mcQuestion": "To which of the following phyla does the animal shown in the photo belong?"
+    },
+    {
+      "id": "bacteria-shape",
+      "subject": "biology",
+      "topic": "biology.microbiology-immunology",
+      "question": "What term describes the shape of the bacterial cells shown in the micrograph?",
+      "mcQuestion": "Which of the following terms describes the shape of the bacterial cells shown in the micrograph?"
+    },
+    {
+      "id": "energy-technology",
+      "subject": "energy",
+      "topic": "energy.renewables",
+      "question": "Identify the energy technology shown in the photo.",
+      "mcQuestion": "Which of the following energy technologies is shown in the photo?"
+    }
+  ],
+  "photos": [
+    {
+      "id": "altocumulus-1",
+      "group": "cloud-genus",
+      "answer": "ALTOCUMULUS",
+      "accept": [
+        "ALTOCUMULUS CLOUD"
+      ],
+      "file": "photos/altocumulus-1.webp",
+      "width": 500,
+      "height": 385,
+      "alt": "Rows of rounded, gray-shaded cloudlets packed in a patchy layer across the sky above a dark hill",
+      "credit": "NOAA",
+      "source": "https://commons.wikimedia.org/wiki/File:Altocumulus_stratiformis_01.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "altostratus-1",
+      "group": "cloud-genus",
+      "answer": "ALTOSTRATUS",
+      "accept": [
+        "ALTOSTRATUS CLOUD"
+      ],
+      "file": "photos/altostratus-1.webp",
+      "width": 500,
+      "height": 332,
+      "alt": "A thin, uniform gray sheet of cloud covering the whole sky, through which the sun shows only as a dim, blurred disk, above round buildings with antennas",
+      "credit": "NOAA",
+      "source": "https://commons.wikimedia.org/wiki/File:Altostratus.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "cirrocumulus-1",
+      "group": "cloud-genus",
+      "answer": "CIRROCUMULUS",
+      "accept": [
+        "CIRROCUMULUS CLOUD"
+      ],
+      "file": "photos/cirrocumulus-1.webp",
+      "width": 500,
+      "height": 313,
+      "alt": "A high sheet of very small, grain-like white cloudlets arranged in fine ripples, covering much of a blue sky",
+      "credit": "NOAA",
+      "source": "https://commons.wikimedia.org/wiki/File:Cirrocumulus2.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "cirrus-1",
+      "group": "cloud-genus",
+      "answer": "CIRRUS",
+      "accept": [
+        "CIRRUS CLOUD"
+      ],
+      "file": "photos/cirrus-1.webp",
+      "width": 900,
+      "height": 675,
+      "alt": "Thin, white, wispy streaks and a hooked curl of cloud high in a blue sky above a ridge with conifers",
+      "credit": "Steve Redman, National Park Service",
+      "source": "https://commons.wikimedia.org/wiki/File:Cirrus_(ea71de8cac4c4beca382bda0e79b63d8).JPG",
+      "license": "Public domain"
+    },
+    {
+      "id": "cumulonimbus-1",
+      "group": "cloud-genus",
+      "answer": "CUMULONIMBUS",
+      "accept": [
+        "CUMULONIMBUS CLOUD",
+        "THUNDERHEAD",
+        "THUNDERSTORM CLOUD"
+      ],
+      "file": "photos/cumulonimbus-1.webp",
+      "width": 900,
+      "height": 707,
+      "alt": "A single enormous cloud tower rising from a dark, rainy base and spreading at the top into a broad, flat, fibrous canopy, with small puffy clouds below it over a desert",
+      "credit": "Mr. Herbert Campbell",
+      "source": "https://commons.wikimedia.org/wiki/File:Cumulonimbus_NOAA_gov.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "cumulus-1",
+      "group": "cloud-genus",
+      "answer": "CUMULUS",
+      "accept": [
+        "CUMULUS CLOUD"
+      ],
+      "file": "photos/cumulus-1.webp",
+      "width": 500,
+      "height": 327,
+      "alt": "Scattered, puffy white clouds with flat bases and rounded, cauliflower-like tops in a bright blue sky above palm trees",
+      "credit": "NOAA",
+      "source": "https://commons.wikimedia.org/wiki/File:Cumulus.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "stratus-1",
+      "group": "cloud-genus",
+      "answer": "STRATUS",
+      "accept": [
+        "STRATUS CLOUD"
+      ],
+      "file": "photos/stratus-1.webp",
+      "width": 500,
+      "height": 334,
+      "alt": "A dull, uniform gray layer of low cloud covering the whole sky and hiding the tops of the mountains behind a city of tall buildings",
+      "credit": "NOAA",
+      "source": "https://commons.wikimedia.org/wiki/File:Stratus.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "basalt-1",
+      "group": "rock",
+      "answer": "BASALT",
+      "accept": [],
+      "file": "photos/basalt-1.webp",
+      "width": 330,
+      "height": 239,
+      "alt": "A dark gray, fine-grained rock with a rough, dull surface and no visible crystals, on a blue cloth",
+      "credit": "U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:BasaltUSGOV.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "conglomerate-1",
+      "group": "rock",
+      "answer": "CONGLOMERATE",
+      "accept": [],
+      "file": "photos/conglomerate-1.webp",
+      "width": 330,
+      "height": 227,
+      "alt": "A rock made of many small, rounded pebbles of different colors cemented together in a finer brownish matrix",
+      "credit": "U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:ConglomerateUSGOV.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "gneiss-1",
+      "group": "rock",
+      "answer": "GNEISS",
+      "accept": [],
+      "file": "photos/gneiss-1.webp",
+      "width": 330,
+      "height": 194,
+      "alt": "An elongated rock with alternating dark and light, wavy mineral bands running along its length",
+      "credit": "U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:GneissUSGOV.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "granite-1",
+      "group": "rock",
+      "answer": "GRANITE",
+      "accept": [],
+      "file": "photos/granite-1.webp",
+      "width": 810,
+      "height": 564,
+      "alt": "A coarse-grained, speckled rock made of interlocking white, gray and black mineral grains with a patch of pink grains, next to a 1 cm scale bar",
+      "credit": "B.W. Hallett et al., U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:Granite_82mw0001.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "limestone-1",
+      "group": "rock",
+      "answer": "LIMESTONE",
+      "accept": [
+        "FOSSILIFEROUS LIMESTONE"
+      ],
+      "file": "photos/limestone-1.webp",
+      "width": 330,
+      "height": 325,
+      "alt": "A light gray rock with many ribbed, fan-shaped fossil shells embedded in it",
+      "credit": "U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:LimestoneWithFossilUSGOV.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "marble-1",
+      "group": "rock",
+      "answer": "MARBLE",
+      "accept": [],
+      "file": "photos/marble-1.webp",
+      "width": 330,
+      "height": 278,
+      "alt": "A white, sugary-textured, crystalline rock with a faint bluish tint, on a blue cloth",
+      "credit": "U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:MarbleUSGOV.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "obsidian-1",
+      "group": "rock",
+      "answer": "OBSIDIAN",
+      "accept": [
+        "VOLCANIC GLASS"
+      ],
+      "file": "photos/obsidian-1.webp",
+      "width": 500,
+      "height": 312,
+      "alt": "A hand holding a rock that is glossy black and glassy where broken, with smooth, curved, shell-like fracture surfaces and a rough tan crust",
+      "credit": "USGS",
+      "source": "https://commons.wikimedia.org/wiki/File:Obsidian_from_Obsidian_cliff.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "sandstone-1",
+      "group": "rock",
+      "answer": "SANDSTONE",
+      "accept": [
+        "QUARTZ SANDSTONE"
+      ],
+      "file": "photos/sandstone-1.webp",
+      "width": 330,
+      "height": 318,
+      "alt": "A tan, gritty-looking rock with fine, slanting layers of slightly different shades, on a blue cloth",
+      "credit": "U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:Sandstone(quartz)USGOV.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "schist-1",
+      "group": "rock",
+      "answer": "SCHIST",
+      "accept": [],
+      "file": "photos/schist-1.webp",
+      "width": 330,
+      "height": 264,
+      "alt": "A brownish, sparkly rock made of thin, wavy, shiny flakes aligned in layers, next to a paper clip for scale",
+      "credit": "U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:SchistUSGOV.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "shale-1",
+      "group": "rock",
+      "answer": "SHALE",
+      "accept": [],
+      "file": "photos/shale-1.webp",
+      "width": 330,
+      "height": 269,
+      "alt": "A dark gray-brown rock made of thin, flaky layers stacked along one side, on a white background",
+      "credit": "U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:ShaleUSGOV.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "slate-1",
+      "group": "rock",
+      "answer": "SLATE",
+      "accept": [],
+      "file": "photos/slate-1.webp",
+      "width": 330,
+      "height": 290,
+      "alt": "A fine-grained, gray-green rock with a flat, smooth splitting surface and no visible grains, on a blue cloth",
+      "credit": "U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:SlateUSGOV.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "fluorite-1",
+      "group": "mineral",
+      "answer": "FLUORITE",
+      "accept": [
+        "FLUORSPAR"
+      ],
+      "file": "photos/fluorite-1.webp",
+      "width": 500,
+      "height": 341,
+      "alt": "A block of purple, glassy, cube-shaped crystals, partly covered in the middle by a sparkly brassy crust, on a blue background",
+      "credit": "Ken Hammond, U.S. Department of Agriculture",
+      "source": "https://commons.wikimedia.org/wiki/File:USDA_Mineral_Flourite_93c3962.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "galena-1",
+      "group": "mineral",
+      "answer": "GALENA",
+      "accept": [
+        "LEAD SULFIDE"
+      ],
+      "file": "photos/galena-1.webp",
+      "width": 330,
+      "height": 309,
+      "alt": "A heavy-looking, dark metallic gray mineral with blocky, stair-stepped faces at right angles and a patch of white rock on top, on a blue cloth",
+      "credit": "U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:Galena.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "garnet-1",
+      "group": "mineral",
+      "answer": "GARNET",
+      "accept": [],
+      "file": "photos/garnet-1.webp",
+      "width": 900,
+      "height": 900,
+      "alt": "A cluster of glassy, orange-brown crystals, each a rounded solid with many flat, diamond-shaped faces, on a black background",
+      "credit": "U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:GarnetCrystalUSGOV.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "gypsum-1",
+      "group": "mineral",
+      "answer": "GYPSUM",
+      "accept": [
+        "SELENITE"
+      ],
+      "file": "photos/gypsum-1.webp",
+      "width": 330,
+      "height": 313,
+      "alt": "A clear, glassy, blade-like crystal block with fine parallel striations running along its length, on a blue cloth",
+      "credit": "U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:SeleniteGypsumUSGOV.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "halite-1",
+      "group": "mineral",
+      "answer": "HALITE",
+      "accept": [
+        "ROCK SALT",
+        "SODIUM CHLORIDE"
+      ],
+      "file": "photos/halite-1.webp",
+      "width": 330,
+      "height": 283,
+      "alt": "A clear to milky, glassy block with straight edges and right-angled, cube-like faces, on a blue cloth",
+      "credit": "U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:Halite(Salt)USGOV.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "malachite-1",
+      "group": "mineral",
+      "answer": "MALACHITE",
+      "accept": [],
+      "file": "photos/malachite-1.webp",
+      "width": 330,
+      "height": 291,
+      "alt": "A rough chunk of rock coated with bright green to blue-green mineral, with patches of rusty brown, on a blue cloth",
+      "credit": "U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:MalachiteUSGOV.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "muscovite-1",
+      "group": "mineral",
+      "answer": "MUSCOVITE",
+      "accept": [
+        "MUSCOVITE MICA",
+        "WHITE MICA"
+      ],
+      "file": "photos/muscovite-1.webp",
+      "width": 330,
+      "height": 283,
+      "alt": "A thin, transparent sheet of mineral with straight edges, held up by tweezers against a blue background",
+      "credit": "U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:MuscoviteLayerUSGOV.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "pyrite-1",
+      "group": "mineral",
+      "answer": "PYRITE",
+      "accept": [
+        "FOOL'S GOLD",
+        "IRON PYRITE"
+      ],
+      "file": "photos/pyrite-1.webp",
+      "width": 900,
+      "height": 585,
+      "alt": "A pale brassy-yellow, metallic mineral mass made of many small crystals with flat, finely striated faces, on a black background",
+      "credit": "Sam Droege, U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:Fools_Gold,_NA,_NA,_NA_2013-08-19-15.29.57_ZS_PMax_(9550402166).jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "quartz-1",
+      "group": "mineral",
+      "answer": "QUARTZ",
+      "accept": [
+        "ROCK CRYSTAL"
+      ],
+      "file": "photos/quartz-1.webp",
+      "width": 500,
+      "height": 330,
+      "alt": "A cluster of clear, glassy, six-sided crystals with pointed tips, on a purple background",
+      "credit": "Ken Hammond, U.S. Department of Agriculture",
+      "source": "https://commons.wikimedia.org/wiki/File:USDA_Mineral_Quartz_Crystal_93c3951.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "sulfur-1",
+      "group": "mineral",
+      "answer": "SULFUR",
+      "accept": [
+        "SULPHUR",
+        "NATIVE SULFUR",
+        "BRIMSTONE"
+      ],
+      "file": "photos/sulfur-1.webp",
+      "width": 330,
+      "height": 324,
+      "alt": "A pale yellow, crystalline mineral chunk with a slightly greasy luster, on a blue cloth",
+      "credit": "U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:SulfurUSGOV.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "earth-1",
+      "group": "planet",
+      "answer": "EARTH",
+      "accept": [
+        "THE EARTH"
+      ],
+      "file": "photos/earth-1.webp",
+      "width": 899,
+      "height": 900,
+      "alt": "A blue globe with swirling white clouds, a large brown landmass across the top and center, and a broad white ice cap at the bottom",
+      "credit": "NASA/Apollo 17 crew; taken by either Harrison Schmitt or Ron Evans",
+      "source": "https://commons.wikimedia.org/wiki/File:The_Earth_seen_from_Apollo_17.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "jupiter-1",
+      "group": "planet",
+      "answer": "JUPITER",
+      "accept": [],
+      "file": "photos/jupiter-1.webp",
+      "width": 900,
+      "height": 850,
+      "alt": "A globe striped with tan, brown and white bands, with a large reddish oval storm at lower right and a small round black shadow on its face",
+      "credit": "NASA/JPL/University of Arizona",
+      "source": "https://commons.wikimedia.org/wiki/File:Jupiter_by_Cassini-Huygens.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "mars-1",
+      "group": "planet",
+      "answer": "MARS",
+      "accept": [],
+      "file": "photos/mars-1.webp",
+      "width": 900,
+      "height": 900,
+      "alt": "A tan-orange globe with an enormous canyon system stretching across its middle and three dark round spots near the left edge",
+      "credit": "NASA / USGS",
+      "source": "https://commons.wikimedia.org/wiki/File:Mars_Valles_Marineris.jpeg",
+      "license": "Public domain"
+    },
+    {
+      "id": "mercury-1",
+      "group": "planet",
+      "answer": "MERCURY",
+      "accept": [],
+      "file": "photos/mercury-1.webp",
+      "width": 900,
+      "height": 900,
+      "alt": "A gray, heavily cratered globe, partly in shadow on the left, with bright streaks radiating from a few fresh craters",
+      "credit": "NASA/Johns Hopkins University Applied Physics Laboratory/Arizona State University/Carnegie Institution of Washington",
+      "source": "https://commons.wikimedia.org/wiki/File:Mercury_in_true_color.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "neptune-1",
+      "group": "planet",
+      "answer": "NEPTUNE",
+      "accept": [],
+      "file": "photos/neptune-1.webp",
+      "width": 900,
+      "height": 900,
+      "alt": "A deep blue globe with a large dark oval spot near the middle, edged with bright white streaks of cloud",
+      "credit": "NASA",
+      "source": "https://commons.wikimedia.org/wiki/File:Neptune_Full.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "saturn-1",
+      "group": "planet",
+      "answer": "SATURN",
+      "accept": [],
+      "file": "photos/saturn-1.webp",
+      "width": 900,
+      "height": 460,
+      "alt": "A pale yellow globe encircled by broad, flat, thin rings, which cast a dark curved shadow across it",
+      "credit": "NASA/JPL/Space Science Institute",
+      "source": "https://commons.wikimedia.org/wiki/File:Saturn_from_Cassini_Orbiter_(2004-10-06).jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "uranus-1",
+      "group": "planet",
+      "answer": "URANUS",
+      "accept": [],
+      "file": "photos/uranus-1.webp",
+      "width": 900,
+      "height": 900,
+      "alt": "A smooth, nearly featureless, pale blue-green globe",
+      "credit": "NASA/JPL-Caltech",
+      "source": "https://commons.wikimedia.org/wiki/File:Uranus2.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "venus-1",
+      "group": "planet",
+      "answer": "VENUS",
+      "accept": [],
+      "file": "photos/venus-1.webp",
+      "width": 330,
+      "height": 330,
+      "alt": "A pale, creamy-white globe, a little more than half lit, covered by smooth, featureless clouds",
+      "credit": "NASA (Mariner 10); color processing by Ricardo Nunes",
+      "source": "https://commons.wikimedia.org/wiki/File:Venus-real_color.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "callisto-1",
+      "group": "moon",
+      "answer": "CALLISTO",
+      "accept": [],
+      "file": "photos/callisto-1.webp",
+      "width": 500,
+      "height": 509,
+      "alt": "A dark brownish globe densely peppered all over with small bright crater spots",
+      "credit": "NASA/JPL/DLR(German Aerospace Center)",
+      "source": "https://commons.wikimedia.org/wiki/File:Callisto.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "enceladus-1",
+      "group": "moon",
+      "answer": "ENCELADUS",
+      "accept": [],
+      "file": "photos/enceladus-1.webp",
+      "width": 900,
+      "height": 900,
+      "alt": "A bright white icy globe, pocked with craters near the top and crossed by long grooves and fractures lower down",
+      "credit": "National Aeronautics and Space Administration (NASA) / Jet Propulsion Laboratory (JPL)",
+      "source": "https://commons.wikimedia.org/wiki/File:PIA17202_-_Approaching_Enceladus.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "europa-1",
+      "group": "moon",
+      "answer": "EUROPA",
+      "accept": [],
+      "file": "photos/europa-1.webp",
+      "width": 500,
+      "height": 500,
+      "alt": "A pale, icy globe crisscrossed by a web of long reddish-brown streaks and darker mottled patches",
+      "credit": "NASA/JPL/DLR",
+      "source": "https://commons.wikimedia.org/wiki/File:Europa-moon.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "ganymede-1",
+      "group": "moon",
+      "answer": "GANYMEDE",
+      "accept": [],
+      "file": "photos/ganymede-1.webp",
+      "width": 500,
+      "height": 500,
+      "alt": "A partly lit globe with large dark regions separated by paler, grooved bands, sprinkled with bright crater spots",
+      "credit": "NASA/JPL (edited by PlanetUser)",
+      "source": "https://commons.wikimedia.org/wiki/File:Ganymede_g1_true-edit1.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "io-1",
+      "group": "moon",
+      "answer": "IO",
+      "accept": [],
+      "file": "photos/io-1.webp",
+      "width": 900,
+      "height": 900,
+      "alt": "A yellow, white and orange mottled globe dotted with many small dark spots and a few reddish patches",
+      "credit": "NASA / JPL / University of Arizona",
+      "source": "https://commons.wikimedia.org/wiki/File:Io_highest_resolution_true_color.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "moon-1",
+      "group": "moon",
+      "answer": "MOON",
+      "accept": [
+        "THE MOON",
+        "EARTH'S MOON",
+        "LUNA"
+      ],
+      "file": "photos/moon-1.webp",
+      "width": 900,
+      "height": 900,
+      "alt": "A gray globe with bright, heavily cratered highlands, large dark smooth patches, and bright streaks radiating from a crater at lower left",
+      "credit": "NASA Goddard Space Flight Center",
+      "source": "https://commons.wikimedia.org/wiki/File:Full_Moon_(15984763045).jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "titan-1",
+      "group": "moon",
+      "answer": "TITAN",
+      "accept": [],
+      "file": "photos/titan-1.webp",
+      "width": 500,
+      "height": 500,
+      "alt": "A fuzzy, featureless, yellow-orange globe with a thin bluish haze at its edge",
+      "credit": "NASA/JPL-Caltech/Space Science Institute",
+      "source": "https://commons.wikimedia.org/wiki/File:Titan_in_true_color.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "triton-1",
+      "group": "moon",
+      "answer": "TRITON",
+      "accept": [],
+      "file": "photos/triton-1.webp",
+      "width": 900,
+      "height": 900,
+      "alt": "A partly lit icy globe with a dimpled, wrinkled upper region and a bright, pinkish-white lower region marked with small dark streaks",
+      "credit": "NASA / Jet Propulsion Lab / U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:Triton_moon_mosaic_Voyager_2_(large).jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "barred-spiral-1",
+      "group": "galaxy-type",
+      "answer": "BARRED SPIRAL",
+      "accept": [
+        "BARRED SPIRAL GALAXY"
+      ],
+      "file": "photos/barred-spiral-1.webp",
+      "width": 900,
+      "height": 514,
+      "alt": "A galaxy with a straight, elongated band of yellowish light across its center; two bluish, star-studded arms curve outward from the ends of the band",
+      "credit": "NASA, ESA, and The Hubble Heritage Team (STScI/AURA)",
+      "source": "https://commons.wikimedia.org/wiki/File:Hubble2005-01-barred-spiral-galaxy-NGC1300.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "elliptical-1",
+      "group": "galaxy-type",
+      "answer": "ELLIPTICAL",
+      "accept": [
+        "ELLIPTICAL GALAXY"
+      ],
+      "file": "photos/elliptical-1.webp",
+      "width": 828,
+      "height": 900,
+      "alt": "A smooth, featureless, fuzzy oval glow that brightens steadily toward its center, surrounded by many small, distant galaxies and stars",
+      "credit": "NASA, ESA, and The Hubble Heritage Team (STScI/AURA)",
+      "source": "https://commons.wikimedia.org/wiki/File:NGC_1132HST.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "irregular-1",
+      "group": "galaxy-type",
+      "answer": "IRREGULAR",
+      "accept": [
+        "IRREGULAR GALAXY"
+      ],
+      "file": "photos/irregular-1.webp",
+      "width": 798,
+      "height": 900,
+      "alt": "A large, shapeless, lumpy cloud of bluish stars with a few pink glowing knots and no clear center or symmetry; a small distant galaxy appears at upper left",
+      "credit": "NASA, ESA, and The Hubble Heritage Team (STScI/AURA)",
+      "source": "https://commons.wikimedia.org/wiki/File:Irregular_galaxy_NGC_1427A_(captured_by_the_Hubble_Space_Telescope).jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "lenticular-1",
+      "group": "galaxy-type",
+      "answer": "LENTICULAR",
+      "accept": [
+        "LENTICULAR GALAXY",
+        "S0"
+      ],
+      "file": "photos/lenticular-1.webp",
+      "width": 765,
+      "height": 900,
+      "alt": "A thin disk of light seen exactly edge-on, crossed lengthwise by a sharp dark lane of dust, inside a smooth, featureless glow with no visible arms",
+      "credit": "NASA, ESA, and The Hubble Heritage Team (STScI/AURA)",
+      "source": "https://commons.wikimedia.org/wiki/File:Ngc5866_hst_big.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "unbarred-spiral-1",
+      "group": "galaxy-type",
+      "answer": "UNBARRED SPIRAL",
+      "accept": [
+        "SPIRAL",
+        "SPIRAL GALAXY",
+        "NORMAL SPIRAL",
+        "UNBARRED SPIRAL GALAXY",
+        "NORMAL SPIRAL GALAXY"
+      ],
+      "file": "photos/unbarred-spiral-1.webp",
+      "width": 900,
+      "height": 743,
+      "alt": "A disk-shaped galaxy seen at a slant, with a bright yellowish core and many patchy, dusty arms winding around it",
+      "credit": "The Hubble Heritage Team (AURA/STScI/NASA)",
+      "source": "https://commons.wikimedia.org/wiki/File:NGC_4414_(NASA-med).jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "caldera-1",
+      "group": "volcano-type",
+      "answer": "CALDERA",
+      "accept": [],
+      "file": "photos/caldera-1.webp",
+      "width": 900,
+      "height": 600,
+      "alt": "An aerial view of a huge, roughly circular basin several kilometers across, ringed by steep, snow-streaked walls, with a small cone rising from its floor",
+      "credit": "M. Williams, National Park Service",
+      "source": "https://commons.wikimedia.org/wiki/File:Aniakchak-caldera_alaska.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "cinder-cone-1",
+      "group": "volcano-type",
+      "answer": "CINDER CONE",
+      "accept": [
+        "SCORIA CONE",
+        "CINDER CONE VOLCANO"
+      ],
+      "file": "photos/cinder-cone-1.webp",
+      "width": 900,
+      "height": 675,
+      "alt": "A symmetrical, steep-sided, dark gray cone of loose volcanic fragments with a flat top, rising behind a rough black and reddish lava field and scattered pines",
+      "credit": "National Park Service (Lassen Volcanic National Park)",
+      "source": "https://commons.wikimedia.org/wiki/File:Cinder_Cone_(13172692104).jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "lava-dome-1",
+      "group": "volcano-type",
+      "answer": "LAVA DOME",
+      "accept": [
+        "VOLCANIC DOME"
+      ],
+      "file": "photos/lava-dome-1.webp",
+      "width": 900,
+      "height": 597,
+      "alt": "A rounded, steep-sided mound of cracked, blocky gray lava sitting on a flat, ash-covered floor, with steam rising from the walls behind it",
+      "credit": "Terry Leighley, U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:MSH80_october_dome_10-24-80.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "shield-volcano-1",
+      "group": "volcano-type",
+      "answer": "SHIELD VOLCANO",
+      "accept": [
+        "SHIELD",
+        "SHIELD CONE"
+      ],
+      "file": "photos/shield-volcano-1.webp",
+      "width": 500,
+      "height": 226,
+      "alt": "An aerial view of an enormous, very broad mountain with long, gentle slopes and a nearly flat top, rising above a plain with farm fields",
+      "credit": "J.D. Griggs, U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:Mauna_Loa_Volcano.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "stratovolcano-1",
+      "group": "volcano-type",
+      "answer": "STRATOVOLCANO",
+      "accept": [
+        "COMPOSITE VOLCANO",
+        "COMPOSITE CONE",
+        "STRATOCONE"
+      ],
+      "file": "photos/stratovolcano-1.webp",
+      "width": 500,
+      "height": 330,
+      "alt": "A tall, steep-sided, nearly symmetrical cone-shaped mountain covered in forest, rising directly behind a coastal town across the water",
+      "credit": "Jack Lockwood, U.S. Geological Survey",
+      "source": "https://commons.wikimedia.org/wiki/File:Gamalama.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "annelida-1",
+      "group": "animal-phylum",
+      "answer": "ANNELIDA",
+      "accept": [
+        "ANNELIDS",
+        "ANNELID",
+        "SEGMENTED WORMS"
+      ],
+      "file": "photos/annelida-1.webp",
+      "width": 900,
+      "height": 675,
+      "alt": "A long, reddish-brown worm whose body is made of many ring-like sections, crawling across dark soil among dry straw, with green seedlings behind it",
+      "credit": "USDA NRCS South Dakota",
+      "source": "https://commons.wikimedia.org/wiki/File:Earthworm_in_a_No-till_Field_near_Brookings,_SD_(14366341997).jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "arthropoda-1",
+      "group": "animal-phylum",
+      "answer": "ARTHROPODA",
+      "accept": [
+        "ARTHROPODS",
+        "ARTHROPOD"
+      ],
+      "file": "photos/arthropoda-1.webp",
+      "width": 900,
+      "height": 598,
+      "alt": "A bright red and orange animal with a flat yellowish shell, jointed legs and two red claws, crouching among black volcanic rocks",
+      "credit": "Lieutenant Elizabeth Crapo, NOAA Corps",
+      "source": "https://commons.wikimedia.org/wiki/File:Grapsus_grapsus_Galapagos_Islands.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "chordata-1",
+      "group": "animal-phylum",
+      "answer": "CHORDATA",
+      "accept": [
+        "CHORDATES",
+        "CHORDATE"
+      ],
+      "file": "photos/chordata-1.webp",
+      "width": 900,
+      "height": 675,
+      "alt": "A spotted, olive-green fish with red-edged fins resting just above a gravel streambed underwater",
+      "credit": "U.S. Fish and Wildlife Service - Midwest Region",
+      "source": "https://commons.wikimedia.org/wiki/File:Brook_Trout_(33754366324).jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "cnidaria-1",
+      "group": "animal-phylum",
+      "answer": "CNIDARIA",
+      "accept": [
+        "CNIDARIANS",
+        "COELENTERATA",
+        "COELENTERATES"
+      ],
+      "file": "photos/cnidaria-1.webp",
+      "width": 900,
+      "height": 788,
+      "alt": "A pale, translucent, bell-shaped animal with frilly trailing arms and many long, thin tentacles, drifting in open blue-green water near a few tiny fish",
+      "credit": "Christy Starsinic, NOAA",
+      "source": "https://commons.wikimedia.org/wiki/File:Jellyfish_(55064233378).jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "echinodermata-1",
+      "group": "animal-phylum",
+      "answer": "ECHINODERMATA",
+      "accept": [
+        "ECHINODERMS",
+        "ECHINODERM"
+      ],
+      "file": "photos/echinodermata-1.webp",
+      "width": 442,
+      "height": 590,
+      "alt": "A large purple animal with five thick arms covered in small white bumps, clinging to a rock among barnacles and seaweed in a tide pool",
+      "credit": "U.S. Fish and Wildlife Service",
+      "source": "https://commons.wikimedia.org/wiki/File:Ochre_Sea_Star.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "mollusca-1",
+      "group": "animal-phylum",
+      "answer": "MOLLUSCA",
+      "accept": [
+        "MOLLUSKS",
+        "MOLLUSCS",
+        "MOLLUSK",
+        "MOLLUSC"
+      ],
+      "file": "photos/mollusca-1.webp",
+      "width": 810,
+      "height": 456,
+      "alt": "A pinkish animal with a soft, rounded head, two large eyes and eight curled arms lined with suckers, resting on a sandy, pebbly seafloor",
+      "credit": "NOAA Office of Ocean Exploration and Research",
+      "source": "https://commons.wikimedia.org/wiki/File:Octopus-Sad-Eyes.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "porifera-1",
+      "group": "animal-phylum",
+      "answer": "PORIFERA",
+      "accept": [
+        "SPONGES",
+        "SPONGE"
+      ],
+      "file": "photos/porifera-1.webp",
+      "width": 900,
+      "height": 703,
+      "alt": "A large, pinkish-white, barrel-shaped animal with a rough, ridged surface and a flat top dotted with small holes, sitting on the seafloor among red seaweed",
+      "credit": "NURC/UNCW and NOAA/FGBNMS.",
+      "source": "https://commons.wikimedia.org/wiki/File:Expl0578_-_Flickr_-_NOAA_Photo_Library.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "bacillus-1",
+      "group": "bacteria-shape",
+      "answer": "BACILLUS",
+      "accept": [
+        "BACILLI",
+        "ROD",
+        "ROD-SHAPED",
+        "ROD SHAPED"
+      ],
+      "file": "photos/bacillus-1.webp",
+      "width": 900,
+      "height": 757,
+      "alt": "A black-and-white electron micrograph of many smooth, elongated cells with rounded ends lying in a jumble; an instrument data bar runs along the bottom",
+      "credit": "NIAID",
+      "source": "https://commons.wikimedia.org/wiki/File:E._coli_Bacteria_(7316101966).jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "coccus-1",
+      "group": "bacteria-shape",
+      "answer": "COCCUS",
+      "accept": [
+        "COCCI",
+        "DIPLOCOCCUS",
+        "DIPLOCOCCI",
+        "SPHERICAL"
+      ],
+      "file": "photos/coccus-1.webp",
+      "width": 900,
+      "height": 628,
+      "alt": "A black-and-white electron micrograph of two round cells with bumpy surfaces, joined side by side on a flat surface dotted with small pores",
+      "credit": "Janice Haney Carr, CDC Public Health Image Library",
+      "source": "https://commons.wikimedia.org/wiki/File:Streptococcus_pneumoniae-263.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "spirochete-1",
+      "group": "bacteria-shape",
+      "answer": "SPIROCHETE",
+      "accept": [
+        "SPIROCHAETE",
+        "SPIRAL",
+        "SPIRAL-SHAPED",
+        "HELICAL"
+      ],
+      "file": "photos/spirochete-1.webp",
+      "width": 900,
+      "height": 596,
+      "alt": "A black-and-white electron micrograph of two very long, thin, tightly coiled cells, one hooked at the end, lying on a flat surface dotted with small pores",
+      "credit": "Janice Carr, CDC Public Health Image Library",
+      "source": "https://commons.wikimedia.org/wiki/File:Leptospira_interrogans_strain_RGA_01.png",
+      "license": "Public domain"
+    },
+    {
+      "id": "vibrio-1",
+      "group": "bacteria-shape",
+      "answer": "VIBRIO",
+      "accept": [
+        "VIBRIOS",
+        "COMMA-SHAPED",
+        "COMMA SHAPED",
+        "CURVED ROD"
+      ],
+      "file": "photos/vibrio-1.webp",
+      "width": 900,
+      "height": 734,
+      "alt": "A black-and-white electron micrograph of a short, dark cell bent like a kidney bean, with a long whip-like tail, near a bundle of fine fibers and some debris",
+      "credit": "Tom Kirn, Ron Taylor, Louisa Howard - Dartmouth Electron Microscope Facility",
+      "source": "https://commons.wikimedia.org/wiki/File:Vibrio_cholerae.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "geothermal-plant-1",
+      "group": "energy-technology",
+      "answer": "GEOTHERMAL POWER PLANT",
+      "accept": [
+        "GEOTHERMAL POWER",
+        "GEOTHERMAL ENERGY",
+        "GEOTHERMAL",
+        "GEOTHERMAL PLANT",
+        "GEOTHERMAL POWER STATION"
+      ],
+      "file": "photos/geothermal-plant-1.webp",
+      "width": 900,
+      "height": 592,
+      "alt": "A boxy plant building with clouds of white steam billowing from its top, on a green hillside crossed by long pipelines",
+      "credit": "U.S. Department of Defense",
+      "source": "https://commons.wikimedia.org/wiki/File:Geothermal_power_plant_in_the_United_States.JPEG",
+      "license": "Public domain"
+    },
+    {
+      "id": "hydroelectric-dam-1",
+      "group": "energy-technology",
+      "answer": "HYDROELECTRIC DAM",
+      "accept": [
+        "HYDROELECTRIC POWER",
+        "HYDROELECTRICITY",
+        "HYDROPOWER",
+        "HYDROELECTRIC POWER PLANT",
+        "HYDROELECTRIC PLANT",
+        "DAM"
+      ],
+      "file": "photos/hydroelectric-dam-1.webp",
+      "width": 900,
+      "height": 725,
+      "alt": "An aerial view of a massive concrete wall across a river, holding back a long blue reservoir, with water pouring down a wide central spillway and large buildings at each end",
+      "credit": "U.S. Bureau of Reclamation",
+      "source": "https://commons.wikimedia.org/wiki/File:Grand_Coulee_Dam.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "photovoltaic-1",
+      "group": "energy-technology",
+      "answer": "PHOTOVOLTAIC PANELS",
+      "accept": [
+        "SOLAR PANELS",
+        "SOLAR PHOTOVOLTAIC PANELS",
+        "PHOTOVOLTAIC CELLS",
+        "SOLAR CELLS",
+        "PHOTOVOLTAIC ARRAY",
+        "SOLAR ARRAY",
+        "PV PANELS",
+        "PHOTOVOLTAICS",
+        "SOLAR PV"
+      ],
+      "file": "photos/photovoltaic-1.webp",
+      "width": 900,
+      "height": 612,
+      "alt": "Rows of tilted, dark blue rectangular panels divided into many square cells, mounted on posts with concrete bases in a desert, with mountains behind",
+      "credit": "U.S. Air Force",
+      "source": "https://commons.wikimedia.org/wiki/File:Nellis_AFB_Solar_panels.jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "solar-power-tower-1",
+      "group": "energy-technology",
+      "answer": "SOLAR POWER TOWER",
+      "accept": [
+        "POWER TOWER",
+        "SOLAR TOWER",
+        "CONCENTRATING SOLAR POWER",
+        "CONCENTRATED SOLAR POWER",
+        "CONCENTRATING SOLAR POWER TOWER",
+        "CENTRAL RECEIVER",
+        "CSP"
+      ],
+      "file": "photos/solar-power-tower-1.webp",
+      "width": 900,
+      "height": 506,
+      "alt": "A vast field of flat mirrors on posts in a desert, all angled toward the brilliantly glowing tops of two tall lattice towers in the distance",
+      "credit": "Cliff Ho, U.S. Department of Energy",
+      "source": "https://commons.wikimedia.org/wiki/File:Ho_000157_170595_515228_4578_(36613004792).jpg",
+      "license": "Public domain"
+    },
+    {
+      "id": "wind-turbine-1",
+      "group": "energy-technology",
+      "answer": "WIND TURBINE",
+      "accept": [
+        "WIND FARM",
+        "WIND POWER",
+        "WIND ENERGY",
+        "WIND GENERATOR"
+      ],
+      "file": "photos/wind-turbine-1.webp",
+      "width": 900,
+      "height": 600,
+      "alt": "A row of tall, slender white towers topped with three-bladed rotors, standing across snowy, rolling brown hills under a cloudy sky",
+      "credit": "U.S. Department of Energy",
+      "source": "https://commons.wikimedia.org/wiki/File:Power_County_Wind_Farm_001.jpg",
+      "license": "Public domain"
+    }
+  ]
+}

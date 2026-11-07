@@ -35,8 +35,8 @@ export function OfflineCard() {
     <section className="card stack" aria-labelledby="offline-heading">
       <h2 id="offline-heading">Offline use</h2>
       <p>
-        After the first visit, Rebound opens without a connection. Save the questions too, and drills, reviews and practice rounds keep working
-        offline (about 9 MB). Answers are saved on this device as usual.
+        After the first visit, Rebound opens without a connection. Save the questions too, and drills, reviews, practice rounds and the Visual
+        lab keep working offline (about 12 MB, with the Visual lab's photos). Answers are saved on this device as usual.
       </p>
       {!supported ? (
         <p className="muted">This browser cannot save the site for offline use.</p>
