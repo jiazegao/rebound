@@ -63,7 +63,7 @@ it resolves this tree without a lockfile. `npm install --legacy-peer-deps` gets 
    ```
 
 5. Point the site at it: `VITE_SERVER_URL` in the build step of `.github/workflows/deploy.yml`. The published site
-   uses `https://rebound-server.a7363422681.workers.dev`. To test a deployed server end to end, run
+   uses `https://rebound-server.hanjian.workers.dev`. To test a deployed server end to end, run
    `SERVER_URL=<its address> node e2e/team-server.cjs` against a local build; its last step deletes the test team.
 
 No secrets are needed (`wrangler secret put` is not used). SQLite-backed Durable Objects are available on the
