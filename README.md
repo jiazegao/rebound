@@ -20,7 +20,7 @@ Rebound is an unofficial study tool, not affiliated with or endorsed by the U.S.
 | **Play → Reader console** | Run an in-person practice game from one laptop: question in large type, answer for the reader, 5 s / 20 s answer clocks, game clock, two-tap scoring under the **2027 rules** (interrupts, blurts, rebounds, double interrupts, halves, tiebreakers), undo, keyboard shortcuts. Every toss-up is logged. |
 | **Game summary**, **Stats** | Per-player toss-up accuracy by subject, interrupts, points given away, median buzz time, bonus conversion; CSV export. |
 | **Practice (solo)** | Questions appear letter by letter at a moderator's pace (the words-per-minute setting is converted to letters using the library's average word length, about 6 characters with the space); the word still appearing is shown fainter. Buzz with Space, start typing within 2 seconds (NSB's natural pause) and finish within 5, and the answer checker grades it (close calls go to "your call"). The answer timer can be switched off. |
-| **Library** | Every DOE high school sample set, by set and round, searchable, printable, with links to the original PDFs and a "report a problem" button. Shows which questions the team has already heard. |
+| **Library** | Every DOE high school sample set, by set and round, searchable, printable, with links to the original PDFs and a "report a problem" button. Shows which questions the team has already heard, and lets a player add any question to their review queue. **Library → Topics** shows how often each topic comes up in each subject. |
 | **NSB rules at a glance** | Generated from the same rule presets the game engine uses. |
 | **For coaches**, **For school IT staff**, **Privacy, terms and credits**, **Data and backup** | Setup guide, network needs, credits, export/import/delete. |
 
@@ -72,9 +72,22 @@ domain the coach can access, the privacy and credits pages, asking school IT to 
 
 ## Question data
 
-The DOE high school sample sets ship with the site as JSON in `public/data/doe/` (one file per set plus `index.json`).
-They are U.S. Government works in the public domain; DOE's Office of Science asks to be credited and linked, and every
-round keeps a link to its original PDF.
+The DOE high school sample sets ship with the site as JSON in `public/data/doe/`: one file per set, `index.json`, and
+`catalog.json` (one compact row per question, so drills can choose questions without downloading every set). They are
+U.S. Government works in the public domain; DOE's Office of Science asks to be credited and linked, and every round keeps
+a link to its original PDF.
+
+**Topics.** At build time, keyword rules in `src/core/tagging.ts` (no network, no AI) give each question a topic from
+the 65 in `src/core/taxonomy.ts`. Questions in the most frequent topic or two of each subject also get up to three concepts
+(139 concepts in all), and Energy questions get the discipline they really test. A question gets no topic rather than a
+guess when the rules are unsure:
+
+- **Coverage:** 96.9% of the 11,822 questions in the six core subjects.
+- **Accuracy:** 85% on a 60-question sample drawn and hand-labelled after the rules were frozen. The rules score 91% on
+  the 156-question sample used while writing them.
+- **Known mistakes:** these are mostly boundary cases between neighbouring topics. They are listed in
+  `scripts/doe/REPORT.md`, and the labels are in `scripts/doe/topic-eval.json`.
+- **Keeping data in sync:** a test fails if the rules change without rebuilding the data.
 
 To rebuild the data (for example when DOE posts a new set):
 
@@ -95,7 +108,7 @@ src/core/            framework-free logic, unit-tested
   rules/engine.ts    event-sourced match engine: replay(events) → state; undo = drop last event
   judge/             answer checker: multiple choice rule, accept/reject lists, numbers, units, names
   importers/         DOE PDF → questions (text extraction + parser)
-  taxonomy.ts        the subject map: 66 topics in the six 2027 subjects, with concepts
+  taxonomy.ts        the subject map: 65 topics in the six 2027 subjects, with concepts
   tagging.ts         rule-based topic, concept and Energy cross-subject tagging, run at import
   review.ts          review cards on FSRS: cards from misses, timed grades, retention by season
   mastery.ts         learner model: difficulty-adjusted ratings per subject and topic, buzz speed

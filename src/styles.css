@@ -884,6 +884,9 @@ details[open] > summary {
 .hbar-label {
   font-size: 0.93rem;
 }
+.hbar-chart.fixed-labels {
+  grid-template-columns: 17rem 1fr;
+}
 a.hbar-label {
   color: var(--text);
 }
@@ -1032,7 +1035,8 @@ a.hbar-label {
 }
 
 @media (max-width: 640px) {
-  .hbar-chart {
+  .hbar-chart,
+  .hbar-chart.fixed-labels {
     grid-template-columns: 1fr;
     gap: 0.1rem;
   }

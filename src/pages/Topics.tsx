@@ -54,7 +54,8 @@ function SubjectBars({ block, max }: { block: SubjectBlock; max: number }) {
         {block.total.toLocaleString()} questions
         {block.untagged > 0 && ` · ${block.untagged.toLocaleString()} (${pct(block.untagged, block.total)}) not matched to a topic`}
       </figcaption>
-      <div className="hbar-chart">
+      {/* One label width for every subject, so equal counts draw equal bars across the page. */}
+      <div className="hbar-chart fixed-labels">
         {block.topics.map((t) => (
           <div key={t.id} style={{ display: 'contents' }}>
             <a className="hbar-label" href={href(`/try?mode=subject&subject=${t.subject}&topic=${encodeURIComponent(t.id)}&count=8`)}>

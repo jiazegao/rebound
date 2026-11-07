@@ -77,6 +77,174 @@ Printed categories and where they were mapped:
 - Earth & Space → earth_space: 136
 - EARTH ANDE SPACE → earth_space: 2
 
+## Topics
+
+Topics, concepts and Energy cross-subjects come from the rule-based tagger in `src/core/tagging.ts` (weighted keyword rules per topic; no network, no AI) and the subject map in `src/core/taxonomy.ts`. A question gets no topic rather than a guess when no rule scores high enough; legacy subjects (202 General Science questions) get none. Questions per topic are also in `public/data/doe/catalog.json`.
+
+Coverage: 11451 of 11822 core-subject questions have a topic (96.9%).
+
+| Subject | Questions | With a topic | Untagged | Coverage |
+|---|---|---|---|---|
+| Biology | 2180 | 2160 | 20 | 99.1% |
+| Chemistry | 2076 | 1998 | 78 | 96.2% |
+| Earth and Space | 2192 | 2141 | 51 | 97.7% |
+| Energy | 1338 | 1244 | 94 | 93.0% |
+| Math | 1986 | 1900 | 86 | 95.7% |
+| Physics | 2050 | 2008 | 42 | 98.0% |
+
+### Questions per topic
+
+| Subject | Topic | Questions | Share of subject | With concepts |
+|---|---|---|---|---|
+| Biology | Cells and membranes (`biology.cells-membranes`) | 189 | 8.7% | – |
+| Biology | Biochemistry and metabolism (`biology.biochemistry-metabolism`) | 275 | 12.6% | 263 |
+| Biology | Molecular biology and biotechnology (`biology.molecular-biotech`) | 208 | 9.5% | – |
+| Biology | Genetics (`biology.genetics`) | 123 | 5.6% | – |
+| Biology | Evolution and classification (`biology.evolution-classification`) | 83 | 3.8% | – |
+| Biology | Ecology (`biology.ecology`) | 97 | 4.4% | – |
+| Biology | Animal physiology (`biology.animal-physiology`) | 458 | 21.0% | 452 |
+| Biology | Plant biology (`biology.plant-biology`) | 222 | 10.2% | – |
+| Biology | Microbiology and immunology (`biology.microbiology-immunology`) | 187 | 8.6% | – |
+| Biology | Development (`biology.development`) | 47 | 2.2% | – |
+| Biology | Organism diversity (`biology.organism-diversity`) | 271 | 12.4% | 258 |
+| Chemistry | Atomic structure (`chemistry.atomic-structure`) | 168 | 8.1% | – |
+| Chemistry | Periodic trends (`chemistry.periodic-trends`) | 96 | 4.6% | – |
+| Chemistry | Bonding and geometry (`chemistry.bonding-geometry`) | 344 | 16.6% | 327 |
+| Chemistry | Stoichiometry and solutions (`chemistry.stoichiometry-solutions`) | 170 | 8.2% | – |
+| Chemistry | Gases (`chemistry.gases`) | 134 | 6.5% | – |
+| Chemistry | Thermochemistry (`chemistry.thermochemistry`) | 132 | 6.4% | – |
+| Chemistry | Kinetics (`chemistry.kinetics`) | 75 | 3.6% | – |
+| Chemistry | Equilibrium (`chemistry.equilibrium`) | 47 | 2.3% | – |
+| Chemistry | Acids and bases (`chemistry.acids-bases`) | 196 | 9.4% | – |
+| Chemistry | Electrochemistry (`chemistry.electrochemistry`) | 100 | 4.8% | – |
+| Chemistry | Organic chemistry (`chemistry.organic`) | 374 | 18.0% | 369 |
+| Chemistry | Nuclear chemistry (`chemistry.nuclear`) | 37 | 1.8% | – |
+| Chemistry | Lab and descriptive chemistry (`chemistry.lab-descriptive`) | 125 | 6.0% | – |
+| Earth and Space | Minerals and rocks (`earth_space.minerals-rocks`) | 293 | 13.4% | 285 |
+| Earth and Space | Plate tectonics and structure (`earth_space.tectonics-structure`) | 197 | 9.0% | – |
+| Earth and Space | Earth's interior (`earth_space.earth-interior`) | 58 | 2.6% | – |
+| Earth and Space | Surface processes and hydrology (`earth_space.surface-hydrology`) | 201 | 9.2% | – |
+| Earth and Space | Geologic time and fossils (`earth_space.geologic-time-fossils`) | 89 | 4.1% | – |
+| Earth and Space | Meteorology and climate (`earth_space.meteorology-climate`) | 304 | 13.9% | 283 |
+| Earth and Space | Oceanography (`earth_space.oceanography`) | 161 | 7.3% | – |
+| Earth and Space | Solar system (`earth_space.solar-system`) | 324 | 14.8% | 306 |
+| Earth and Space | Stars (`earth_space.stars`) | 281 | 12.8% | – |
+| Earth and Space | Galaxies and cosmology (`earth_space.galaxies-cosmology`) | 99 | 4.5% | – |
+| Earth and Space | Observational astronomy (`earth_space.observational-astronomy`) | 134 | 6.1% | – |
+| Energy | Energy conversion and efficiency (`energy.conversion-efficiency`) | 124 | 9.3% | – |
+| Energy | Fossil fuels (`energy.fossil-fuels`) | 162 | 12.1% | 151 |
+| Energy | Nuclear fission and fusion (`energy.nuclear-energy`) | 130 | 9.7% | – |
+| Energy | Solar (`energy.solar`) | 54 | 4.0% | – |
+| Energy | Wind, hydro, geothermal and biomass (`energy.renewables`) | 116 | 8.7% | – |
+| Energy | Storage, batteries and hydrogen (`energy.storage-hydrogen`) | 99 | 7.4% | – |
+| Energy | Grid and transmission (`energy.grid-transmission`) | 47 | 3.5% | – |
+| Energy | Energy data and units (`energy.data-units`) | 94 | 7.0% | – |
+| Energy | DOE labs, facilities and research programs (`energy.doe-labs`) | 418 | 31.2% | 384 |
+| Math | Mental arithmetic (`math.arithmetic`) | 96 | 4.8% | – |
+| Math | Algebra (`math.algebra`) | 518 | 26.1% | 457 |
+| Math | Plane and solid geometry (`math.geometry`) | 389 | 19.6% | 388 |
+| Math | Trigonometry (`math.trigonometry`) | 109 | 5.5% | – |
+| Math | Sequences, series and logarithms (`math.sequences-logs`) | 125 | 6.3% | – |
+| Math | Vectors, matrices and complex numbers (`math.vectors-matrices-complex`) | 107 | 5.4% | – |
+| Math | Calculus (`math.calculus`) | 184 | 9.3% | – |
+| Math | Probability and combinatorics (`math.probability-combinatorics`) | 123 | 6.2% | – |
+| Math | Statistics (`math.statistics`) | 71 | 3.6% | – |
+| Math | Number theory (`math.number-theory`) | 178 | 9.0% | – |
+| Physics | Kinematics and forces (`physics.kinematics-forces`) | 383 | 18.7% | 354 |
+| Physics | Work, energy and momentum (`physics.work-energy-momentum`) | 108 | 5.3% | – |
+| Physics | Rotation and gravitation (`physics.rotation-gravitation`) | 153 | 7.5% | – |
+| Physics | Oscillations, waves and sound (`physics.waves-sound`) | 156 | 7.6% | – |
+| Physics | Optics (`physics.optics`) | 150 | 7.3% | – |
+| Physics | Thermodynamics (`physics.thermodynamics`) | 136 | 6.6% | – |
+| Physics | Electrostatics and circuits (`physics.electrostatics-circuits`) | 354 | 17.3% | 340 |
+| Physics | Magnetism and induction (`physics.magnetism-induction`) | 121 | 5.9% | – |
+| Physics | Fluids (`physics.fluids`) | 67 | 3.3% | – |
+| Physics | Relativity and quantum (`physics.relativity-quantum`) | 148 | 7.2% | – |
+| Physics | Nuclear and particle physics (`physics.nuclear-particle`) | 232 | 11.3% | – |
+
+### Concepts
+
+Concept lists exist for the most frequent topics of each subject; a question gets up to three concepts of its own topic. Counts are questions per concept (a question can count for several).
+
+- **Biochemistry and metabolism** (263 of 275 questions with a concept): Carbohydrates 52; Lipids 18; Amino acids and protein structure 58; Enzymes and their regulation 59; Glycolysis and fermentation 39; Krebs cycle and oxidative phosphorylation 46; Light reactions of photosynthesis 34; Calvin cycle and carbon fixation 23; ATP and bioenergetics 33; Vitamins and cofactors 20
+- **Animal physiology** (452 of 458 questions with a concept): Neurons and the nervous system 101; Hormones and the endocrine system 108; Heart, blood and circulation 94; Lungs and gas exchange 41; Digestion and nutrition 64; Kidneys and osmoregulation 35; Muscles, bones and joints 104; Sense organs 29; Reproductive physiology 21; Homeostasis and thermoregulation 17; Tissues, skin and human disease 43
+- **Organism diversity** (258 of 271 questions with a concept): Sponges and cnidarians 19; Flatworms, roundworms and annelids 16; Mollusks 28; Arthropods and insects 64; Echinoderms and invertebrate chordates 18; Fishes 30; Amphibians and reptiles 26; Birds 27; Mammals 43; Fungi and lichens 26; Protists and algae 26; Symmetry, body cavities and body plans 20
+- **Bonding and geometry** (327 of 344 questions with a concept): Lewis structures, octets and formal charge 31; VSEPR and molecular geometry 77; Hybridization and sigma and pi bonds 47; Bond and molecular polarity 37; Intermolecular forces 56; Ionic and metallic bonding 56; Molecular orbitals and bond order 40; Crystal structures and solids 49; Coordination compounds 18
+- **Organic chemistry** (369 of 374 questions with a concept): Alkanes, alkenes and alkynes 139; Aromatic compounds 38; Functional groups 146; Naming organic compounds 83; Isomers and stereochemistry 50; Substitution and elimination reactions 38; Addition and named reactions 26; Polymers 24; Biomolecules 34; Identification tests and spectra 13
+- **Kinematics and forces** (354 of 383 questions with a concept): Motion in one dimension 183; Projectile motion 50; Vectors and relative motion 20; Newton's laws 109; Friction 83; Inclines, pulleys and tension 42; Static equilibrium 26; Elasticity and materials 17
+- **Electrostatics and circuits** (340 of 354 questions with a concept): Charge and Coulomb's law 71; Electric fields and Gauss's law 70; Electric potential and potential energy 50; Capacitors and dielectrics 77; Current, resistance and Ohm's law 133; Series and parallel circuits 86; Electric power and energy 68; RC and AC circuits 15; Meters, batteries and circuit components 80
+- **Minerals and rocks** (285 of 293 questions with a concept): Mineral identification 95; Silicate minerals 89; Carbonates, oxides and other non-silicates 66; Igneous rocks 98; Sedimentary rocks 78; Metamorphic rocks 52; The rock cycle 7; Crystal systems and structure 22; Ores and gems 11
+- **Meteorology and climate** (283 of 304 questions with a concept): Layers and composition of the atmosphere 54; Clouds and precipitation 69; Humidity, lapse rates and stability 42; Air masses and fronts 32; Thunderstorms, tornadoes and hurricanes 44; Winds and global circulation 62; Greenhouse effect and climate change 40; Climate zones and classification 37; El Niño and climate oscillations 8; Weather instruments and forecasting 16; Ice ages and past climates 7
+- **Solar system** (306 of 324 questions with a concept): Terrestrial planets 72; Giant planets and rings 81; Moons of the planets 22; Earth's Moon, phases and eclipses 61; Asteroids, comets and meteors 66; Pluto and dwarf planets 8; Orbits and Kepler's laws 91; Formation of the solar system 4; Space missions 25; Seasons and Earth's motions 23; Magnetospheres and aurorae 14
+- **Fossil fuels** (151 of 162 questions with a concept): Coal 39; Crude oil and refining 45; Natural gas and methane hydrates 51; Fracking, shale and oil sands 10; Formation, reservoirs and extraction 9; Gasoline, diesel and fuel properties 36; Emissions and pollution control 14; Carbon capture and sequestration 10
+- **DOE labs, facilities and research programs** (384 of 418 questions with a concept): Particle and nuclear physics research 109; Materials and condensed matter research 97; Chemistry and catalysis research 107; Biology, genomics and bioenergy research 106; Earth, environment and climate research 28; Astrophysics and cosmology research 39; Fusion and plasma research 14; Supercomputing and quantum computing 38; Light sources, neutron sources and accelerators 79; The national labs and their history 3
+- **Algebra** (457 of 518 questions with a concept): Linear equations and systems 43; Lines, slopes and intercepts 87; Quadratics 35; Polynomials and their roots 60; Factoring and simplifying expressions 54; Inequalities and absolute value 37; Functions, composition and inverses 162; Rational functions and asymptotes 25; Exponents and radicals 70; Word problems 12; Graph transformations and symmetry 69
+- **Plane and solid geometry** (388 of 389 questions with a concept): Triangles and the Pythagorean theorem 102; Similarity and congruence 14; Circles, arcs and chords 137; Polygons and their angles 117; Area and perimeter 95; Volume and surface area of solids 101; Coordinate geometry 52; Transformations 18; Conic sections 18; Angles and parallel lines 84
+
+### Energy cross-subjects
+
+The discipline an Energy question really tests, set only when the evidence is clear (as at the 2025 Finals: "energy (chemistry)").
+
+| Cross-subject | Questions | Share of Energy |
+|---|---|---|
+| Biology | 128 | 9.6% |
+| Chemistry | 240 | 17.9% |
+| Earth and Space | 52 | 3.9% |
+| Math | 79 | 5.9% |
+| Physics | 413 | 30.9% |
+| not set | 426 | 31.8% |
+
+### Evaluation
+
+Hand-labelled stratified random samples (seeded, equal numbers per core subject), stored in `scripts/doe/topic-eval.json`. A question counts as correct when the tagger gives the labelled topic, or no topic when the label is "none"; an untagged question with a labelled topic counts as wrong. The fresh samples were drawn and labelled after the rules were written and are reported separately.
+
+- **Main sample** (156 questions, 26 per core subject, seed 20261107): labelled by reading each question before any rule was written. The rules were developed on other, randomly chosen library questions; this sample was only used to measure them.
+- **holdout-1** (60 questions, 10 per subject, seed 20261108, excluding the main sample): labelled blind. The tagger scored 43 of 60 (71.7%) on it; a last round of general fixes (short terms whose automatic plural matched other words, such as "doe" in "does"; missing vocabulary such as "piezoelectric") was prompted partly by its errors, so its score below is no longer a blind estimate.
+- **holdout-2** (60 questions, seed 20261109, excluding both): drawn and labelled blind after the rules were frozen, then scored once. It is the fairest estimate for unseen questions.
+- Samples are drawn per subject in library order with mulberry32(seed) and a partial Fisher-Yates shuffle. Many disagreements are boundary cases between neighbouring topics (is the optimum pH of pepsin biochemistry or physiology?), where a second labeller might side with the tagger.
+
+| Sample | Questions | Correct | Accuracy | Biology | Chemistry | Earth and Space | Energy | Math | Physics |
+|---|---|---|---|---|---|---|---|---|---|
+| Main sample | 156 | 142 | 91.0% | 23/26 | 24/26 | 23/26 | 24/26 | 23/26 | 25/26 |
+| Fresh sample "holdout-1" | 60 | 52 | 86.7% | 10/10 | 8/10 | 8/10 | 7/10 | 9/10 | 10/10 |
+| Fresh sample "holdout-2" | 60 | 51 | 85.0% | 6/10 | 9/10 | 7/10 | 10/10 | 10/10 | 9/10 |
+
+Energy cross-subject agreement on the labelled Energy questions: 35 of 46 (76.1%).
+
+Disagreements (worth a look when editing the rules):
+
+- main sample `doe-hs-03-r09-b24`: labelled Cells and membranes (`biology.cells-membranes`), tagged Microbiology and immunology (`biology.microbiology-immunology`) — Order the following 4 choices from the SMALLEST to the LARGEST, assuming average size for each: erythrocyte; m…
+- main sample `doe-hs-06-r11-t13`: labelled Evolution and classification (`biology.evolution-classification`), tagged Microbiology and immunology (`biology.microbiology-immunology`) — Which of the following best exemplifies secondary endosymbiosis [en-doh-sim-bee-OH-sis]?
+- main sample `doe-hs-09-r04-b19`: labelled Evolution and classification (`biology.evolution-classification`), tagged Organism diversity (`biology.organism-diversity`) — Identify all of the following three structures that are examples of convergent evolution: 1) Whale flippers an…
+- main sample `doe-hs-09-r07-b04`: labelled Lab and descriptive chemistry (`chemistry.lab-descriptive`), tagged Nuclear chemistry (`chemistry.nuclear`) — Which of the following statements is NOT true regarding alkaline earth metals?
+- main sample `doe-hs-15-r13-t15`: labelled Stoichiometry and solutions (`chemistry.stoichiometry-solutions`), tagged Lab and descriptive chemistry (`chemistry.lab-descriptive`) — What additional piece of information can be used in conjunction with an elemental analysis to determine the ch…
+- main sample `doe-hs-04-r11-b12`: labelled Surface processes and hydrology (`earth_space.surface-hydrology`), tagged Minerals and rocks (`earth_space.minerals-rocks`) — Karst topography is generally formed in regions with which type of rock?
+- main sample `doe-hs-04-r13-b23`: labelled Meteorology and climate (`earth_space.meteorology-climate`), tagged Plate tectonics and structure (`earth_space.tectonics-structure`) — The Deccan traps of 66 million years ago may have influenced Earth’s climate through the release of which sulf…
+- main sample `doe-hs-09-r17-b09`: labelled Solar system (`earth_space.solar-system`), tagged Meteorology and climate (`earth_space.meteorology-climate`) — What is the dominant gas of the Martian atmosphere?
+- main sample `doe-hs-05-r15-t08`: labelled none, tagged Nuclear fission and fusion (`energy.nuclear-energy`) — Plasmas are considered strongly coupled when the ratio of the average distance between the particles to the di…
+- main sample `doe-hs-11-r04-t02`: labelled Energy conversion and efficiency (`energy.conversion-efficiency`), tagged Wind, hydro, geothermal and biomass (`energy.renewables`) — Which of the following does not perform a chemical reaction during operation?
+- main sample `doe-hs-01-r13-t11`: labelled Plane and solid geometry (`math.geometry`), tagged Algebra (`math.algebra`) — Find the center of the circle given by the following equation: x² + y² + 4x + 16y + 3 = 0
+- main sample `doe-hs-04-r06-b06`: labelled Algebra (`math.algebra`), tagged Mental arithmetic (`math.arithmetic`) — Sally plans to sell tickets for the school play. It costs $150 to print the tickets. If she sells the tickets …
+- main sample `doe-hs-11-r01-b23`: labelled Sequences, series and logarithms (`math.sequences-logs`), tagged Mental arithmetic (`math.arithmetic`) — A task takes a single computer processor 10 days to complete. For this task, each successive processor added i…
+- main sample `doe-hs-15-r05-t16`: labelled Magnetism and induction (`physics.magnetism-induction`), tagged Electrostatics and circuits (`physics.electrostatics-circuits`) — What SI derived unit is used to measure the property of a circuit element whose voltage drop is proportional t…
+- fresh sample "holdout-1" `doe-hs-15-r09-b13`: labelled Bonding and geometry (`chemistry.bonding-geometry`), tagged Organic chemistry (`chemistry.organic`) — The following incomplete compound name is missing its oxidation state for cobalt: di-amine-ethylene-di-amine-c…
+- fresh sample "holdout-1" `doe-hs-16-r08-b17`: labelled Equilibrium (`chemistry.equilibrium`), tagged Thermochemistry (`chemistry.thermochemistry`) — A certain reaction has a free energy change of negative 5 kilojoules per mole at 300 kelvins. To two significa…
+- fresh sample "holdout-1" `doe-hs-10-r02-t16`: labelled Minerals and rocks (`earth_space.minerals-rocks`), tagged Surface processes and hydrology (`earth_space.surface-hydrology`) — Bauxite, the hydroxide ore of aluminum, is mined primarily from deposits in tropical areas. What process cause…
+- fresh sample "holdout-1" `doe-hs-15-r17-t02`: labelled Observational astronomy (`earth_space.observational-astronomy`), tagged Galaxies and cosmology (`earth_space.galaxies-cosmology`) — Astronomers use the hydrogen 21-centimeter line to map regions of the galaxy and beyond. In what part of the e…
+- fresh sample "holdout-1" `doe-hs-09-r11-t19`: labelled Energy conversion and efficiency (`energy.conversion-efficiency`), tagged Energy data and units (`energy.data-units`) — What is the change in internal energy, delta U, in joules, of a system that absorbs 4000 joules of heat and th…
+- fresh sample "holdout-1" `doe-hs-11-r05-t14`: labelled Wind, hydro, geothermal and biomass (`energy.renewables`), tagged Fossil fuels (`energy.fossil-fuels`) — 97% of US gasoline sold today contains what percentage of ethanol?
+- fresh sample "holdout-1" `doe-hs-11-r11-b01`: labelled DOE labs, facilities and research programs (`energy.doe-labs`), tagged none — The Daya [DIE-ah] Bay Collaboration is currently on the hunt for a hypothetical type of neutrino [new-TREE-no]…
+- fresh sample "holdout-1" `doe-hs-06-r02-t10`: labelled Probability and combinatorics (`math.probability-combinatorics`), tagged Mental arithmetic (`math.arithmetic`) — Providing your answer to one decimal place, find the value of the following fraction: 63!/(62!3!) [the numerat…
+- fresh sample "holdout-2" `doe-hs-01-r11-t09`: labelled Biochemistry and metabolism (`biology.biochemistry-metabolism`), tagged Animal physiology (`biology.animal-physiology`) — At which of the following pH levels will human pepsin be most active:
+- fresh sample "holdout-2" `doe-hs-09-r02-b18`: labelled Biochemistry and metabolism (`biology.biochemistry-metabolism`), tagged Animal physiology (`biology.animal-physiology`) — Cholesterol and testosterone are examples of what type of lipid that contains four cycloalkane [sigh-kloh-al-c…
+- fresh sample "holdout-2" `doe-hs-12-r03-t18`: labelled Evolution and classification (`biology.evolution-classification`), tagged Organism diversity (`biology.organism-diversity`) — Identify all of the following three Linnaean [lin-AY-in] classifications that apply to the leopard: 1) Carnivo…
+- fresh sample "holdout-2" `doe-hs-17-r01-b01`: labelled Biochemistry and metabolism (`biology.biochemistry-metabolism`), tagged Plant biology (`biology.plant-biology`) — What is the most abundant protein in plant leaves?
+- fresh sample "holdout-2" `doe-hs-04-r07-b05`: labelled Stoichiometry and solutions (`chemistry.stoichiometry-solutions`), tagged Organic chemistry (`chemistry.organic`) — For the complete combustion of butane, butane plus oxygen produces carbon dioxide and water vapor. What is the…
+- fresh sample "holdout-2" `doe-hs-04-r17-b20`: labelled Oceanography (`earth_space.oceanography`), tagged none — What organisms are thought to be responsible for the nitrification process in the mesopelagic [meh-zoh-peh-LAH…
+- fresh sample "holdout-2" `doe-hs-09-r09-b04`: labelled Minerals and rocks (`earth_space.minerals-rocks`), tagged Earth's interior (`earth_space.earth-interior`) — What are the two most abundant elements in the Earth’s crust?
+- fresh sample "holdout-2" `doe-hs-12-r08-b19`: labelled Earth's interior (`earth_space.earth-interior`), tagged Minerals and rocks (`earth_space.minerals-rocks`) — Rank the following three materials in increasing order of speed of P-waves when traveling through them: 1) Ult…
+- fresh sample "holdout-2" `doe-hs-17-r08-b12`: labelled Nuclear and particle physics (`physics.nuclear-particle`), tagged Relativity and quantum (`physics.relativity-quantum`) — Given that the rest mass of an electron is 0.5 mega-electron-volts, what is the minimal energy in mega-electro…
+
 ## Flags
 
 | Flag | Questions | Meaning |
@@ -87,8 +255,8 @@ Printed categories and where they were mapped:
 | answer-missing | 13 | no ANSWER line |
 | choice-letters-fixed | 6 | option letters misprinted in the PDF (read as W, X, Y, Z in order) |
 | choices-missing | 3 | multiple choice without all four options |
-| erratum | 2 |  |
-| choices-reordered | 2 |  |
+| erratum | 2 | a reviewed correction from src/core/importers/doeErrata.ts was applied (see the note on the question) |
+| choices-reordered | 2 | options printed out of letter order; listed W, X, Y, Z with DOE's letters so the answer key still matches |
 | mc-answer-mismatch | 2 | the answer text differs from the option it names |
 | kind-inferred | 1 | TOSS-UP/BONUS marker missing |
 

@@ -2,7 +2,12 @@
  * Builds public/data/doe/ from the cached DOE PDFs:
  *   doe-hs-01.json ... doe-hs-17.json   one QuestionSet per sample set (compact JSON)
  *   index.json                          LibraryIndex of SetSummary entries
+ *   catalog.json                        Catalog: one compact row per question, plus questions per topic
  * and writes the validation report scripts/doe/REPORT.md.
+ *
+ * Every question is tagged with a topic, concepts and (Energy only) a cross-subject by the rule-based
+ * tagger in src/core/tagging.ts; the report's Topics section scores it against the hand-labelled
+ * sample in scripts/doe/topic-eval.json.
  *
  *   npx tsx scripts/doe/build.ts [options]        (npm run data:build)
  *
@@ -12,7 +17,8 @@
  *   --out <dir>         default public/data/doe
  *   --report <file>     default scripts/doe/REPORT.md
  *   --fetch-log <file>  default .cache/doe/fetch-log.json (only read, for the report)
- *   --set <n>           build only this set (repeatable); the index then lists only those sets
+ *   --topic-eval <file> default scripts/doe/topic-eval.json (only read, for the report)
+ *   --set <n>           build only this set (repeatable); the index and catalog then list only those sets
  *
  * The PDFs are untrusted input: they are only read as data by pdf.js (with eval disabled).
  */
@@ -21,7 +27,21 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
-import type { LibraryIndex, Question, QuestionSet, Round, SetSummary, Subject } from '../../src/core/schema';
+import {
+  CORE_SUBJECTS,
+  SUBJECT_LABELS,
+  type Catalog,
+  type CatalogRow,
+  type CoreSubject,
+  type LibraryIndex,
+  type Question,
+  type QuestionSet,
+  type Round,
+  type SetSummary,
+  type Subject,
+} from '../../src/core/schema';
+import { tagQuestion } from '../../src/core/tagging';
+import { TOPICS, topicName } from '../../src/core/taxonomy';
 import {
   DOE_CREDIT,
   DOE_HS_SAMPLE_PAGE,
@@ -147,6 +167,7 @@ function parseArgs(root: string) {
     out: path.join(root, 'public/data/doe'),
     report: path.join(root, 'scripts/doe/REPORT.md'),
     fetchLog: path.join(root, '.cache/doe/fetch-log.json'),
+    topicEval: path.join(root, 'scripts/doe/topic-eval.json'),
     sets: [] as number[],
   };
   const argv = process.argv.slice(2);
@@ -159,6 +180,7 @@ function parseArgs(root: string) {
     else if (a === '--out') opts.out = path.resolve(v);
     else if (a === '--report') opts.report = path.resolve(v);
     else if (a === '--fetch-log') opts.fetchLog = path.resolve(v);
+    else if (a === '--topic-eval') opts.topicEval = path.resolve(v);
     else if (a === '--set') opts.sets.push(Number(v));
     else throw new Error(`unknown option ${a}`);
   }
@@ -174,9 +196,20 @@ async function parseRound(entry: ManifestEntry, file: string): Promise<RoundResu
     const lines = await extractTextLines(doc, { ops: pdfjs.OPS as unknown as Record<string, number> });
     const result = parseDoeRound(lines, meta);
     applyDoeErrata(result.round);
+    tagRound(result.round);
     return { entry, round: result.round, printedLabel: result.printedLabel, warnings: result.warnings, pages: doc.numPages, stray: result.strayLines.length };
   } finally {
     await doc.destroy();
+  }
+}
+
+/** Topic, concepts and (Energy only) cross-subject from the rule-based tagger; absent fields are omitted. */
+function tagRound(round: Round): void {
+  for (const q of questionsOf(round)) {
+    const tags = tagQuestion(q);
+    if (tags.topic) q.topic = tags.topic;
+    if (tags.concepts.length) q.concepts = tags.concepts;
+    if (tags.crossSubject) q.crossSubject = tags.crossSubject;
   }
 }
 
@@ -199,6 +232,7 @@ async function main() {
   const summaries: SetSummary[] = [];
   const results = new Map<number, RoundResult[]>();
   const resources: ManifestEntry[] = [];
+  const catalogRows: CatalogRow[] = [];
 
   for (const n of setNumbers) {
     const setInfo = manifest.sets.find((s) => s.set === n);
@@ -235,6 +269,11 @@ async function main() {
     };
     const fileName = `${id}.json`;
     await writeFile(path.join(opts.out, fileName), JSON.stringify(set));
+    for (const r of rounds) {
+      for (const q of questionsOf(r)) {
+        catalogRows.push([q.id, q.subject, q.topic ?? '', q.kind === 'tossup' ? 't' : 'b', r.order, q.crossSubject ?? '']);
+      }
+    }
 
     const subjectCounts: Partial<Record<Subject, number>> = {};
     let questionCount = 0;
@@ -267,9 +306,139 @@ async function main() {
   const index: LibraryIndex = { generatedAt: new Date().toISOString(), sets: summaries };
   await writeFile(path.join(opts.out, 'index.json'), JSON.stringify(index, null, 1) + '\n');
 
-  const report = buildReport(manifest, results, resources, fetchLog);
+  // Every topic id in taxonomy order (0 when no question has it), so the file is complete and stable.
+  const topicCounts: Record<string, number> = Object.fromEntries(TOPICS.map((t) => [t.id, 0]));
+  for (const row of catalogRows) if (row[2]) topicCounts[row[2]] = (topicCounts[row[2]] ?? 0) + 1;
+  const catalog: Catalog = { generatedAt: index.generatedAt, questions: catalogRows, topicCounts };
+  await writeFile(path.join(opts.out, 'catalog.json'), JSON.stringify(catalog) + '\n');
+
+  const topicEval = existsSync(opts.topicEval) ? (JSON.parse(await readFile(opts.topicEval, 'utf8')) as TopicLabel[]) : undefined;
+  const report = buildReport(manifest, results, resources, fetchLog, topicEval);
   await writeFile(opts.report, report);
-  console.log(`wrote ${summaries.length} set files + index.json to ${path.relative(root, opts.out)}; report ${path.relative(root, opts.report)} (${Math.round((Date.now() - t0) / 1000)}s)`);
+  console.log(
+    `wrote ${summaries.length} set files + index.json + catalog.json (${catalogRows.length} questions) to ${path.relative(root, opts.out)}; ` +
+      `report ${path.relative(root, opts.report)} (${Math.round((Date.now() - t0) / 1000)}s)`,
+  );
+}
+
+/** How the labelled samples in scripts/doe/topic-eval.json were drawn and used (written by hand, like SPOT_CHECKS). */
+const TOPIC_EVAL_NOTES = [
+  '- **Main sample** (156 questions, 26 per core subject, seed 20261107): labelled by reading each question before any rule was written. The rules were developed on other, randomly chosen library questions; this sample was only used to measure them.',
+  '- **holdout-1** (60 questions, 10 per subject, seed 20261108, excluding the main sample): labelled blind. The tagger scored 43 of 60 (71.7%) on it; a last round of general fixes (short terms whose automatic plural matched other words, such as "doe" in "does"; missing vocabulary such as "piezoelectric") was prompted partly by its errors, so its score below is no longer a blind estimate.',
+  '- **holdout-2** (60 questions, seed 20261109, excluding both): drawn and labelled blind after the rules were frozen, then scored once. It is the fairest estimate for unseen questions.',
+  '- Samples are drawn per subject in library order with mulberry32(seed) and a partial Fisher-Yates shuffle. Many disagreements are boundary cases between neighbouring topics (is the optimum pH of pepsin biochemistry or physiology?), where a second labeller might side with the tagger.',
+];
+
+/** One hand-labelled question from scripts/doe/topic-eval.json. */
+interface TopicLabel {
+  id: string;
+  /** Topic id, or "none" when no topic of the question's subject fits. */
+  topic: string;
+  /** Energy only: the discipline the question really tests, or "none". */
+  crossSubject?: string;
+  /** "holdout" for the fresh samples checked after the rules were tuned; absent for the main sample. */
+  sample?: string;
+}
+
+/** The "Topics" section of the report: coverage, topic and concept counts, cross-subjects, and accuracy on the labelled samples. */
+function topicsReport(questions: Question[], labels: TopicLabel[] | undefined): string[] {
+  const out: string[] = [];
+  const core = questions.filter((q) => (CORE_SUBJECTS as Subject[]).includes(q.subject));
+  const tagged = core.filter((q) => q.topic);
+  out.push('## Topics', '');
+  out.push(
+    'Topics, concepts and Energy cross-subjects come from the rule-based tagger in `src/core/tagging.ts` (weighted keyword rules per topic; ' +
+      'no network, no AI) and the subject map in `src/core/taxonomy.ts`. A question gets no topic rather than a guess when no rule scores high enough; ' +
+      `legacy subjects (${questions.length - core.length} General Science questions) get none. Questions per topic are also in \`public/data/doe/catalog.json\`.`,
+    '',
+  );
+  out.push(`Coverage: ${tagged.length} of ${core.length} core-subject questions have a topic (${pct(tagged.length, core.length)}).`, '');
+  out.push('| Subject | Questions | With a topic | Untagged | Coverage |', '|---|---|---|---|---|');
+  for (const s of CORE_SUBJECTS) {
+    const qs = core.filter((q) => q.subject === s);
+    const n = qs.filter((q) => q.topic).length;
+    out.push(`| ${SUBJECT_LABELS[s]} | ${qs.length} | ${n} | ${qs.length - n} | ${pct(n, qs.length)} |`);
+  }
+  out.push('');
+
+  out.push('### Questions per topic', '');
+  out.push('| Subject | Topic | Questions | Share of subject | With concepts |', '|---|---|---|---|---|');
+  for (const s of CORE_SUBJECTS) {
+    const inSubject = core.filter((q) => q.subject === s).length;
+    for (const t of TOPICS.filter((x) => x.subject === s)) {
+      const qs = core.filter((q) => q.topic === t.id);
+      const withConcepts = t.concepts.length ? String(qs.filter((q) => q.concepts?.length).length) : '–';
+      out.push(`| ${SUBJECT_LABELS[s]} | ${t.name} (\`${t.id}\`) | ${qs.length} | ${pct(qs.length, inSubject)} | ${withConcepts} |`);
+    }
+  }
+  out.push('');
+
+  out.push('### Concepts', '');
+  out.push(
+    'Concept lists exist for the most frequent topics of each subject; a question gets up to three concepts of its own topic. ' +
+      'Counts are questions per concept (a question can count for several).',
+    '',
+  );
+  for (const t of TOPICS.filter((x) => x.concepts.length)) {
+    const qs = core.filter((q) => q.topic === t.id);
+    const counts = t.concepts.map((c) => `${c.name} ${qs.filter((q) => q.concepts?.includes(c.id)).length}`);
+    out.push(`- **${t.name}** (${qs.filter((q) => q.concepts?.length).length} of ${qs.length} questions with a concept): ${counts.join('; ')}`);
+  }
+  out.push('');
+
+  out.push('### Energy cross-subjects', '');
+  const energy = core.filter((q) => q.subject === 'energy');
+  out.push('The discipline an Energy question really tests, set only when the evidence is clear (as at the 2025 Finals: "energy (chemistry)").', '');
+  out.push('| Cross-subject | Questions | Share of Energy |', '|---|---|---|');
+  for (const s of [...CORE_SUBJECTS.filter((x) => x !== 'energy'), undefined] as (CoreSubject | undefined)[]) {
+    const n = energy.filter((q) => q.crossSubject === s).length;
+    out.push(`| ${s ? SUBJECT_LABELS[s] : 'not set'} | ${n} | ${pct(n, energy.length)} |`);
+  }
+  out.push('');
+
+  out.push('### Evaluation', '');
+  if (!labels?.length) {
+    out.push('No labelled sample found (scripts/doe/topic-eval.json).', '');
+    return out;
+  }
+  const byId = new Map(questions.map((q) => [q.id, q]));
+  const groups: [string, TopicLabel[]][] = [
+    ['Main sample', labels.filter((l) => !l.sample)],
+    ...[...new Set(labels.filter((l) => l.sample).map((l) => l.sample!))].map((s) => [`Fresh sample "${s}"`, labels.filter((l) => l.sample === s)] as [string, TopicLabel[]]),
+  ];
+  out.push(
+    'Hand-labelled stratified random samples (seeded, equal numbers per core subject), stored in `scripts/doe/topic-eval.json`. ' +
+      'A question counts as correct when the tagger gives the labelled topic, or no topic when the label is "none"; an untagged question with a labelled topic counts as wrong. ' +
+      'The fresh samples were drawn and labelled after the rules were written and are reported separately.',
+    '',
+    ...TOPIC_EVAL_NOTES,
+    '',
+  );
+  out.push(`| Sample | Questions | Correct | Accuracy | ${CORE_SUBJECTS.map((s) => SUBJECT_LABELS[s]).join(' | ')} |`);
+  out.push(`|---|---|---|---|${CORE_SUBJECTS.map(() => '---').join('|')}|`);
+  const misses: string[] = [];
+  for (const [name, group] of groups) {
+    const present = group.filter((l) => byId.has(l.id));
+    const ok = (l: TopicLabel) => (byId.get(l.id)!.topic ?? 'none') === l.topic;
+    const perSubject = CORE_SUBJECTS.map((s) => {
+      const g = present.filter((l) => byId.get(l.id)!.subject === s);
+      return g.length ? `${g.filter(ok).length}/${g.length}` : '–';
+    });
+    const correct = present.filter(ok).length;
+    out.push(`| ${name} | ${present.length} | ${correct} | ${pct(correct, present.length)} | ${perSubject.join(' | ')} |`);
+    for (const l of present.filter((x) => !ok(x))) {
+      const q = byId.get(l.id)!;
+      misses.push(`- ${name.toLowerCase()} \`${l.id}\`: labelled ${l.topic === 'none' ? 'none' : `${topicName(l.topic)} (\`${l.topic}\`)`}, tagged ${q.topic ? `${topicName(q.topic)} (\`${q.topic}\`)` : 'none'} — ${esc(q.stem.slice(0, 110))}${q.stem.length > 110 ? '…' : ''}`);
+    }
+  }
+  out.push('');
+  const crossLabels = labels.filter((l) => l.crossSubject && byId.get(l.id)?.subject === 'energy');
+  if (crossLabels.length) {
+    const agree = crossLabels.filter((l) => (byId.get(l.id)!.crossSubject ?? 'none') === l.crossSubject).length;
+    out.push(`Energy cross-subject agreement on the labelled Energy questions: ${agree} of ${crossLabels.length} (${pct(agree, crossLabels.length)}).`, '');
+  }
+  if (misses.length) out.push('Disagreements (worth a look when editing the rules):', '', ...misses, '');
+  return out;
 }
 
 function buildReport(
@@ -277,6 +446,7 @@ function buildReport(
   results: Map<number, RoundResult[]>,
   resources: ManifestEntry[],
   fetchLog: { totals?: Record<string, number>; seconds?: number; crossCheck?: Record<string, unknown>; results?: { file: string; status: string; error?: string }[] } | undefined,
+  topicEval: TopicLabel[] | undefined,
 ): string {
   const out: string[] = [];
   const all = [...results.values()].flat();
@@ -342,6 +512,8 @@ function buildReport(
   out.push('Printed categories and where they were mapped:', '');
   for (const [k, v] of [...printed.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))) out.push(`- ${k}: ${v}`);
   out.push('');
+
+  out.push(...topicsReport(allQuestions, topicEval));
 
   // Flags.
   out.push('## Flags', '');
