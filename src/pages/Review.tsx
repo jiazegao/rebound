@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PlayerSwitch, useCurrentPlayer } from '../components/PlayerSwitch';
-import { AnswerBox, Choices, ImportNotes, QuestionMeta, RichText } from '../components/QuestionView';
+import { AnswerBox, Choices, Concepts, ImportNotes, QuestionMeta, RichText } from '../components/QuestionView';
 import { Countdown, LoadError, Loading, Notice, PageHeader, Stat, useTicker } from '../components/ui';
 import { Verdict } from '../components/Verdict';
 import { judgeAnswer, type JudgeResult } from '../core/judge/judge';
@@ -290,6 +290,7 @@ function ReviewItem({
             {phase.note && <p className="small">{phase.note}</p>}
             {phase.result ? <Verdict result={phase.result} decided={phase.decided} onDecide={decide} /> : <div className="verdict verdict-incorrect">Not this time.</div>}
             <AnswerBox q={q} />
+            <Concepts q={q} />
             {grade !== null && (
               <p className="small">
                 <strong>{GRADE_TEXT[grade]}</strong>

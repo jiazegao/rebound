@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnswerBox, Choices, QuestionMeta, RichText } from '../components/QuestionView';
+import { AnswerBox, Choices, Concepts, QuestionMeta, RichText } from '../components/QuestionView';
 import { Countdown, LoadError, Loading, Notice, PageHeader, useTicker } from '../components/ui';
 import { Verdict } from '../components/Verdict';
 import { pickDrill, pickMixed, type DrillPick } from '../core/drill';
@@ -705,6 +705,7 @@ function Play({
             {step.response && <p className="small muted">You answered: “{step.response}”</p>}
             <Verdict result={step.result} decided={step.decided} onDecide={decideTossup} />
             <AnswerBox q={tossup} />
+            <Concepts q={tossup} />
           </>
         )}
         {step.kind === 'bonus_result' && bonus && (
@@ -712,6 +713,7 @@ function Play({
             {step.response && <p className="small muted">You answered: “{step.response}”</p>}
             <Verdict result={step.result} decided={step.decided} onDecide={decideBonus} />
             <AnswerBox q={bonus} />
+            <Concepts q={bonus} />
           </>
         )}
         {canContinue && (

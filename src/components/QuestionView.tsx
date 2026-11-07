@@ -1,7 +1,7 @@
 import { Fragment, type ReactNode } from 'react';
 import { PRONUNCIATION } from '../core/judge/normalize';
 import { LETTERS, type Question } from '../core/schema';
-import { topicName } from '../core/taxonomy';
+import { topicById, topicName } from '../core/taxonomy';
 import { SubjectTag } from './ui';
 
 const GUIDE_SPLIT = new RegExp(`(${PRONUNCIATION.source})`, 'gu');
@@ -105,6 +105,19 @@ export function ImportNotes({ q }: { q: Question }) {
   );
 }
 
+/** Name of a concept id ("biology.genetics.hardy-weinberg"), or null if the taxonomy does not list it. */
+function conceptName(id: string): string | null {
+  const topicId = id.split('.').slice(0, 2).join('.');
+  return topicById(topicId)?.concepts.find((c) => c.id === id)?.name ?? null;
+}
+
+/** The concepts a question tests, when tagged. */
+export function Concepts({ q }: { q: Question }) {
+  const names = (q.concepts ?? []).map(conceptName).filter((n): n is string => n !== null);
+  if (names.length === 0) return null;
+  return <div className="small muted concepts">Concepts: {names.join(' · ')}</div>;
+}
+
 /** A full question for reading: meta line, stem, choices and (optionally) the answer. */
 export function QuestionView({ q, showAnswer = true, extra }: { q: Question; showAnswer?: boolean; extra?: ReactNode }) {
   return (
@@ -115,6 +128,7 @@ export function QuestionView({ q, showAnswer = true, extra }: { q: Question; sho
       </p>
       <Choices q={q} />
       {showAnswer && <AnswerBox q={q} />}
+      {showAnswer && <Concepts q={q} />}
       <ImportNotes q={q} />
     </article>
   );
