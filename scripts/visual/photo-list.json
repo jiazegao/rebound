@@ -1,0 +1,75 @@
+{
+  "groups": [
+    {
+      "id": "cloud-genus",
+      "subject": "earth_space",
+      "topic": "earth_space.meteorology-climate",
+      "question": "Identify the cloud genus shown in the photo.",
+      "mcQuestion": "Which of the following cloud genera is shown in the photo?"
+    },
+    {
+      "id": "rock",
+      "subject": "earth_space",
+      "topic": "earth_space.minerals-rocks",
+      "question": "Identify the rock shown in the photo.",
+      "mcQuestion": "Which of the following rocks is shown in the photo?"
+    },
+    {
+      "id": "mineral",
+      "subject": "earth_space",
+      "topic": "earth_space.minerals-rocks",
+      "question": "Identify the mineral shown in the photo.",
+      "mcQuestion": "Which of the following minerals is shown in the photo?"
+    },
+    {
+      "id": "planet",
+      "subject": "earth_space",
+      "topic": "earth_space.solar-system",
+      "question": "Identify the planet shown in the image.",
+      "mcQuestion": "Which of the following planets is shown in the image?"
+    },
+    {
+      "id": "moon",
+      "subject": "earth_space",
+      "topic": "earth_space.solar-system",
+      "question": "Identify the moon shown in the image.",
+      "mcQuestion": "Which of the following moons is shown in the image?"
+    },
+    {
+      "id": "galaxy-type",
+      "subject": "earth_space",
+      "topic": "earth_space.galaxies-cosmology",
+      "question": "In the Hubble classification, what type of galaxy is shown in the image?",
+      "mcQuestion": "In the Hubble classification, which of the following types of galaxy is shown in the image?"
+    },
+    {
+      "id": "volcano-type",
+      "subject": "earth_space",
+      "topic": "earth_space.tectonics-structure",
+      "question": "Identify the type of volcano or volcanic landform shown in the photo.",
+      "mcQuestion": "Which of the following types of volcano or volcanic landform is shown in the photo?"
+    },
+    {
+      "id": "animal-phylum",
+      "subject": "biology",
+      "topic": "biology.organism-diversity",
+      "question": "Identify the phylum of the animal shown in the photo.",
+      "mcQuestion": "To which of the following phyla does the animal shown in the photo belong?"
+    },
+    {
+      "id": "bacteria-shape",
+      "subject": "biology",
+      "topic": "biology.microbiology-immunology",
+      "question": "What term describes the shape of the bacterial cells shown in the micrograph?",
+      "mcQuestion": "Which of the following terms describes the shape of the bacterial cells shown in the micrograph?"
+    },
+    {
+      "id": "energy-technology",
+      "subject": "energy",
+      "topic": "energy.renewables",
+      "question": "Identify the energy technology shown in the photo.",
+      "mcQuestion": "Which of the following energy technologies is shown in the photo?"
+    }
+  ],
+  "photos": []
+}
