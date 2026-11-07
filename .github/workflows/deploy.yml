@@ -28,6 +28,10 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+        env:
+          # The team server (server/, deployed with Wrangler) for sharing and remote rooms. Builds without it, such as local
+          # ones, ask for the server address on the Share and Join forms instead.
+          VITE_SERVER_URL: https://rebound-server.a7363422681.workers.dev
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

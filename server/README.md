@@ -62,6 +62,10 @@ it resolves this tree without a lockfile. `npm install --legacy-peer-deps` gets 
    curl https://rebound-server.<your-subdomain>.workers.dev/api/health   # → {"ok":true}
    ```
 
+5. Point the site at it: `VITE_SERVER_URL` in the build step of `.github/workflows/deploy.yml`. The published site
+   uses `https://rebound-server.a7363422681.workers.dev`. To test a deployed server end to end, run
+   `SERVER_URL=<its address> node e2e/team-server.cjs` against a local build; its last step deletes the test team.
+
 No secrets are needed (`wrangler secret put` is not used). SQLite-backed Durable Objects are available on the
 Workers Free plan.
 
@@ -75,8 +79,9 @@ Workers Free plan.
 - **Logs.** WebSocket URLs carry the session token (browsers cannot set headers on WebSockets), so Workers Logs
   stay off in `wrangler.toml`. Use `npx wrangler tail` to watch errors live. The server never logs PINs,
   secrets or tokens.
-- **Failed-join limit.** The 30-per-hour limit per network address is kept inside each team's object (with the
-  address stored only as a salted hash for an hour). It protects each team, but it is not a global limit, and
+- **Failed-join limit.** The 30-per-hour limit per network address is kept inside each team's object. Every
+  sign-in attempt counts against it until it succeeds, and the address is stored only as a salted hash, removed
+  at the first sign-in attempt an hour or more later. It protects each team, but it is not a global limit, and
   team creation itself is not rate-limited; a Cloudflare rate-limiting rule can be added in front if needed.
 - **Round-trip times for fair buzzing.** Besides answering the client's `ping` with `pong`, the server sends
   its own `{ "type": "ping", "t": <server time> }` (after `welcome` and after each client ping, at most once a

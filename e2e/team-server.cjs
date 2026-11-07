@@ -1,5 +1,6 @@
 /*
- * End-to-end test of sharing and remote rooms against a running team server.
+ * End-to-end test of sharing and remote rooms against a running team server (local, or a deployed one
+ * through SERVER_URL; the last step deletes the test team).
  *
  *   cd server && npx wrangler dev --port 8787 &        # the team server, locally
  *   npm run build && npx vite preview --port 4173 &    # the site
@@ -142,6 +143,18 @@ async function main() {
     await captain.getByText('Ben answers:').waitFor({ timeout: 10000 });
     // The reader never sees the team channel.
     if (await captain.getByText('I think it is a phage').count()) throw new Error('the team channel leaked to the reader');
+  });
+
+  // Last, so a run against a deployed server leaves nothing behind.
+  await step('the captain deletes the team from the server; each device keeps its data', async () => {
+    await captain.goto(`${BASE}#/team`);
+    await captain.getByRole('button', { name: 'Delete the team from the server' }).click(); // the confirm is accepted
+    await captain.getByRole('heading', { name: 'Share with your team' }).waitFor({ timeout: 15000 });
+    await captain.getByText('Ann').first().waitFor();
+    await player.goto(`${BASE}#/team`);
+    await player.getByRole('button', { name: 'Sync now' }).click();
+    await player.getByText('This team is no longer on the team server').waitFor({ timeout: 15000 });
+    await player.getByText('Signed out').first().waitFor();
   });
 
   await browser.close();

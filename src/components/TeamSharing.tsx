@@ -5,6 +5,7 @@ import { href } from '../lib/router';
 import { useData } from '../lib/store';
 import {
   createSharedTeam,
+  deleteSharedTeam,
   leaveSharedTeam,
   listMembers,
   newJoinCode,
@@ -184,7 +185,7 @@ export function TeamSharing() {
           </div>
         )}
         {error && <p className="small" style={{ color: 'var(--bad)' }}>{error}</p>}
-        <div>
+        <div className="row">
           <button
             className="btn btn-small btn-ghost"
             onClick={() => {
@@ -193,6 +194,27 @@ export function TeamSharing() {
           >
             Sign out on this device
           </button>
+          {isLeader && (
+            <button
+              className="btn btn-small btn-bad"
+              disabled={busy}
+              onClick={() => {
+                const name = state.teamName || data.team?.name || 'the team';
+                if (!confirm(`Delete ${name} from the team server? Everything stored there is deleted for good and every member's devices stop syncing. Each device keeps its own copy.`)) return;
+                setBusy(true);
+                setError(null);
+                deleteSharedTeam().then(
+                  () => setBusy(false),
+                  (e: Error) => {
+                    setError(e.message);
+                    setBusy(false);
+                  },
+                );
+              }}
+            >
+              Delete the team from the server
+            </button>
+          )}
         </div>
       </section>
     );

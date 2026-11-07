@@ -171,8 +171,9 @@ export function syncNow(): Promise<void> {
       setStatus(state ? 'ok' : 'off');
     } catch (err) {
       const e = err instanceof SyncError ? err : new SyncError(String(err), 0);
-      if (state) state = { ...state, lastError: e.message };
-      if (e.status === 401 || e.status === 403) setStatus('signed-out');
+      if (state) state = { ...state, lastError: e.status === 404 ? TEAM_GONE : e.message };
+      // A session that ended, or a team that is gone, will not come back by retrying.
+      if (e.status === 401 || e.status === 403 || e.status === 404) setStatus('signed-out');
       else {
         setStatus(e.status === 0 ? 'offline' : 'error');
         backoff = Math.min(300_000, backoff ? backoff * 2 : 5_000);
@@ -188,6 +189,14 @@ export function syncNow(): Promise<void> {
   return running;
 }
 
+const TEAM_GONE =
+  'This team is no longer on the team server (a coach or captain may have deleted it). This device keeps its copy of the data; sign out here to share it again or to join another team.';
+
+/** Background syncs (timer, coming back online, the tab showing again); a signed-out device waits for "Sync now". */
+function autoSync() {
+  if (status !== 'signed-out') void syncNow();
+}
+
 function schedule(ms = 2_500) {
   if (!state || applying || status === 'signed-out') return;
   clearTimeout(timer);
@@ -200,11 +209,11 @@ function start() {
   started = true;
   subscribeStore(() => schedule());
   interval = setInterval(() => {
-    if (document.visibilityState === 'visible') void syncNow();
+    if (document.visibilityState === 'visible') autoSync();
   }, 30_000);
-  window.addEventListener('online', () => void syncNow());
+  window.addEventListener('online', autoSync);
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') void syncNow();
+    if (document.visibilityState === 'visible') autoSync();
   });
 }
 
@@ -317,6 +326,15 @@ export async function choosePlayer(memberName: string, pin: string, playerId: st
 /** The secret from the link this device joined with, kept for the "Which player are you?" step. */
 let pendingSecret: string | null = null;
 
+async function forgetSession(): Promise<void> {
+  state = null;
+  clearTimeout(timer);
+  clearInterval(interval);
+  started = false;
+  await persist();
+  setStatus('off');
+}
+
 /** Stop sharing on this device (the team's data stays here, and on the server for everyone else). */
 export async function leaveSharedTeam(): Promise<void> {
   if (!state) return;
@@ -325,12 +343,17 @@ export async function leaveSharedTeam(): Promise<void> {
   } catch {
     /* already signed out, or offline: forget the session anyway */
   }
-  state = null;
-  clearTimeout(timer);
-  clearInterval(interval);
-  started = false;
-  await persist();
-  setStatus('off');
+  await forgetSession();
+}
+
+/**
+ * Leaders: delete the team and everything it stored from the team server. Every member's devices
+ * stop syncing; each keeps its own copy of the data.
+ */
+export async function deleteSharedTeam(): Promise<void> {
+  if (!state) return;
+  await authed('', { method: 'DELETE' });
+  await forgetSession();
 }
 
 /* ---------------- members (leaders) ---------------- */
