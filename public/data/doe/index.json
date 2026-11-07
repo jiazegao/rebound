@@ -1,0 +1,2195 @@
+{
+ "generatedAt": "2026-11-07T05:36:31.008Z",
+ "sets": [
+  {
+   "id": "doe-hs-01",
+   "provider": "doe",
+   "level": "HS",
+   "title": "DOE High School Sample Set 1",
+   "year": "2009",
+   "setNumber": 1,
+   "file": "doe-hs-01.json",
+   "sourcePage": "https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions",
+   "credit": "U.S. Department of Energy, National Science Bowl sample questions (science.osti.gov/wdts/nsb)",
+   "license": "Public domain (U.S. Government work); DOE Office of Science asks to be credited and linked.",
+   "rounds": [
+    {
+     "id": "doe-hs-01-r01",
+     "label": "Round 1",
+     "order": 1,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-1/round1.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-01-r02",
+     "label": "Round 2",
+     "order": 2,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-1/round2.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-01-r03",
+     "label": "Round 3",
+     "order": 3,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-1/round3.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-01-r04",
+     "label": "Round 4",
+     "order": 4,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-1/round4.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-01-r05",
+     "label": "Round 5",
+     "order": 5,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-1/round5.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-01-r06",
+     "label": "Round 6",
+     "order": 6,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-1/round6.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-01-r07",
+     "label": "Round 7",
+     "order": 7,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-1/round7.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-01-r08",
+     "label": "Round 8",
+     "order": 8,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-1/round8.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-01-r09",
+     "label": "Round 9",
+     "order": 9,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-1/round9.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-01-r10",
+     "label": "Round 10",
+     "order": 10,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-1/round10.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-01-r11",
+     "label": "Round 11",
+     "order": 11,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-1/round11.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-01-r12",
+     "label": "Round 12",
+     "order": 12,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-1/round12.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-01-r13",
+     "label": "Round 13",
+     "order": 13,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-1/round13.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-01-r14",
+     "label": "Round 14",
+     "order": 14,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-1/round14.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-01-r15",
+     "label": "Round 15",
+     "order": 15,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-1/round15.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-01-r16",
+     "label": "Round 16",
+     "order": 16,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-1/round16.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-01-r17",
+     "label": "Round 17",
+     "order": 17,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-1/round17.pdf",
+     "pairs": 25
+    }
+   ],
+   "questionCount": 850,
+   "subjectCounts": {
+    "biology": 152,
+    "chemistry": 146,
+    "earth_space": 204,
+    "math": 110,
+    "physics": 136,
+    "general_science": 102
+   }
+  },
+  {
+   "id": "doe-hs-02",
+   "provider": "doe",
+   "level": "HS",
+   "title": "DOE High School Sample Set 2",
+   "year": "2012",
+   "setNumber": 2,
+   "file": "doe-hs-02.json",
+   "sourcePage": "https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions",
+   "credit": "U.S. Department of Energy, National Science Bowl sample questions (science.osti.gov/wdts/nsb)",
+   "license": "Public domain (U.S. Government work); DOE Office of Science asks to be credited and linked.",
+   "rounds": [
+    {
+     "id": "doe-hs-02-r01",
+     "label": "Round 1",
+     "order": 1,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-2/round1.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-02-r02",
+     "label": "Round 2",
+     "order": 2,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-2/round2.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-02-r03",
+     "label": "Round 3",
+     "order": 3,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-2/round3.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-02-r04",
+     "label": "Round 4",
+     "order": 4,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-2/round4.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-02-r05",
+     "label": "Round 5",
+     "order": 5,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-2/round5.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-02-r06",
+     "label": "Round 6",
+     "order": 6,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-2/round6.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-02-r07",
+     "label": "Round 7",
+     "order": 7,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-2/round7.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-02-r08",
+     "label": "Round 8",
+     "order": 8,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-2/round8.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-02-r09",
+     "label": "Round 9",
+     "order": 9,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-2/round9.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-02-r10",
+     "label": "Round 10",
+     "order": 10,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-2/round10.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-02-r11",
+     "label": "Round 11",
+     "order": 11,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-2/round11.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-02-r12",
+     "label": "Round 12",
+     "order": 12,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-2/round12.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-02-r13",
+     "label": "Round 13",
+     "order": 13,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-2/round13.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-02-r14",
+     "label": "Round 14",
+     "order": 14,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-2/round14.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-02-r15",
+     "label": "Round 15",
+     "order": 15,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-2/round15.pdf",
+     "pairs": 25
+    }
+   ],
+   "questionCount": 750,
+   "subjectCounts": {
+    "biology": 156,
+    "chemistry": 144,
+    "earth_space": 120,
+    "energy": 90,
+    "math": 120,
+    "physics": 120
+   }
+  },
+  {
+   "id": "doe-hs-03",
+   "provider": "doe",
+   "level": "HS",
+   "title": "DOE High School Sample Set 3",
+   "year": "2007",
+   "setNumber": 3,
+   "file": "doe-hs-03.json",
+   "sourcePage": "https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions",
+   "credit": "U.S. Department of Energy, National Science Bowl sample questions (science.osti.gov/wdts/nsb)",
+   "license": "Public domain (U.S. Government work); DOE Office of Science asks to be credited and linked.",
+   "rounds": [
+    {
+     "id": "doe-hs-03-r01",
+     "label": "Round 1",
+     "order": 1,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-3/Round-1C.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-03-r02",
+     "label": "Round 2",
+     "order": 2,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-3/Round-2C.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-03-r03",
+     "label": "Round 3",
+     "order": 3,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-3/Round-3C.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-03-r04",
+     "label": "Round 4",
+     "order": 4,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-3/Round-4C.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-03-r05",
+     "label": "Round 5",
+     "order": 5,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-3/Round-5C.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-03-r06",
+     "label": "Round 6",
+     "order": 6,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-3/Round-6C.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-03-r07",
+     "label": "Round 7",
+     "order": 7,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-3/Round-7C.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-03-r08",
+     "label": "Round 8",
+     "order": 8,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-3/Round-8C.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-03-r09",
+     "label": "Round 9",
+     "order": 9,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-3/Round-9C.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-03-r10",
+     "label": "Round 10",
+     "order": 10,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-3/Round-10C.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-03-r11",
+     "label": "Round 11",
+     "order": 11,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-3/Round-11C.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-03-r12",
+     "label": "Round 12",
+     "order": 12,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-3/Round-12C.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-03-r13",
+     "label": "Round 13",
+     "order": 13,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-3/Round-13C.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-03-r14",
+     "label": "Round 14",
+     "order": 14,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-3/Round-14C.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-03-r15",
+     "label": "Round 15",
+     "order": 15,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-3/Round-15C.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-03-r16",
+     "label": "Round 16",
+     "order": 16,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-3/Round-16C.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-03-r17",
+     "label": "Round 17",
+     "order": 17,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-3/Round-17C.pdf",
+     "pairs": 25
+    }
+   ],
+   "questionCount": 850,
+   "subjectCounts": {
+    "biology": 148,
+    "chemistry": 146,
+    "earth_space": 206,
+    "math": 102,
+    "physics": 148,
+    "general_science": 100
+   }
+  },
+  {
+   "id": "doe-hs-04",
+   "provider": "doe",
+   "level": "HS",
+   "title": "DOE High School Sample Set 4",
+   "year": "2011",
+   "setNumber": 4,
+   "file": "doe-hs-04.json",
+   "sourcePage": "https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions",
+   "credit": "U.S. Department of Energy, National Science Bowl sample questions (science.osti.gov/wdts/nsb)",
+   "license": "Public domain (U.S. Government work); DOE Office of Science asks to be credited and linked.",
+   "rounds": [
+    {
+     "id": "doe-hs-04-r01",
+     "label": "Round 1",
+     "order": 1,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-4/Round1.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-04-r02",
+     "label": "Round 2",
+     "order": 2,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-4/Round2.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-04-r03",
+     "label": "Round 3",
+     "order": 3,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-4/Round3.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-04-r04",
+     "label": "Round 4",
+     "order": 4,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-4/Round4.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-04-r05",
+     "label": "Round 5",
+     "order": 5,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-4/Round5.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-04-r06",
+     "label": "Round 6",
+     "order": 6,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-4/Round6.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-04-r07",
+     "label": "Round 7",
+     "order": 7,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-4/Round7.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-04-r08",
+     "label": "Round 8",
+     "order": 8,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-4/Round8.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-04-r09",
+     "label": "Round 9",
+     "order": 9,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-4/Round9.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-04-r10",
+     "label": "Round 10",
+     "order": 10,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-4/Round10.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-04-r11",
+     "label": "Round 11",
+     "order": 11,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-4/Round11.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-04-r12",
+     "label": "Round 12",
+     "order": 12,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-4/Round12.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-04-r13",
+     "label": "Round 13",
+     "order": 13,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-4/Round13.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-04-r14",
+     "label": "Round 14",
+     "order": 14,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-4/Round14.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-04-r15",
+     "label": "Round 15",
+     "order": 15,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-4/Round15.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-04-r16",
+     "label": "Round 16",
+     "order": 16,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-4/Round16.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-04-r17",
+     "label": "Round 17",
+     "order": 17,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-4/Round17.pdf",
+     "pairs": 25
+    }
+   ],
+   "questionCount": 850,
+   "subjectCounts": {
+    "biology": 134,
+    "chemistry": 134,
+    "earth_space": 170,
+    "energy": 104,
+    "math": 170,
+    "physics": 138
+   }
+  },
+  {
+   "id": "doe-hs-05",
+   "provider": "doe",
+   "level": "HS",
+   "title": "DOE High School Sample Set 5",
+   "year": "2011",
+   "setNumber": 5,
+   "file": "doe-hs-05.json",
+   "sourcePage": "https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions",
+   "credit": "U.S. Department of Energy, National Science Bowl sample questions (science.osti.gov/wdts/nsb)",
+   "license": "Public domain (U.S. Government work); DOE Office of Science asks to be credited and linked.",
+   "rounds": [
+    {
+     "id": "doe-hs-05-r01",
+     "label": "Round 1",
+     "order": 1,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-5/Round1.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-05-r02",
+     "label": "Round 2",
+     "order": 2,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-5/Round2.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-05-r03",
+     "label": "Round 3",
+     "order": 3,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-5/Round3.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-05-r04",
+     "label": "Round 4",
+     "order": 4,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-5/Round4.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-05-r05",
+     "label": "Round 5",
+     "order": 5,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-5/Round5.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-05-r06",
+     "label": "Round 6",
+     "order": 6,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-5/Round6.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-05-r07",
+     "label": "Round 7",
+     "order": 7,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-5/Round7.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-05-r08",
+     "label": "Round 8",
+     "order": 8,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-5/Round8.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-05-r09",
+     "label": "Round 9",
+     "order": 9,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-5/Round9.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-05-r10",
+     "label": "Round 10",
+     "order": 10,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-5/Round10.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-05-r11",
+     "label": "Round 11",
+     "order": 11,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-5/Round11.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-05-r12",
+     "label": "Round 12",
+     "order": 12,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-5/Round12.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-05-r13",
+     "label": "Round 13",
+     "order": 13,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-5/Round13.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-05-r14",
+     "label": "Round 14",
+     "order": 14,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-5/Round14.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-05-r15",
+     "label": "Round 15",
+     "order": 15,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-5/Round15.pdf",
+     "pairs": 25
+    }
+   ],
+   "questionCount": 750,
+   "subjectCounts": {
+    "biology": 150,
+    "chemistry": 120,
+    "earth_space": 116,
+    "energy": 90,
+    "math": 130,
+    "physics": 144
+   }
+  },
+  {
+   "id": "doe-hs-06",
+   "provider": "doe",
+   "level": "HS",
+   "title": "DOE High School Sample Set 6",
+   "year": "2012",
+   "setNumber": 6,
+   "file": "doe-hs-06.json",
+   "sourcePage": "https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions",
+   "credit": "U.S. Department of Energy, National Science Bowl sample questions (science.osti.gov/wdts/nsb)",
+   "license": "Public domain (U.S. Government work); DOE Office of Science asks to be credited and linked.",
+   "rounds": [
+    {
+     "id": "doe-hs-06-r01",
+     "label": "Round 1",
+     "order": 1,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-6/Sample6_ROUND1.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-06-r02",
+     "label": "Round 2",
+     "order": 2,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-6/Sample6_ROUND2.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-06-r03",
+     "label": "Round 3",
+     "order": 3,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-6/Sample6_ROUND3.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-06-r04",
+     "label": "Round 4",
+     "order": 4,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-6/Sample6_ROUND4.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-06-r05",
+     "label": "Round 5",
+     "order": 5,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-6/Sample6_ROUND5.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-06-r06",
+     "label": "Round 6",
+     "order": 6,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-6/Sample6_ROUND6.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-06-r07",
+     "label": "Round 7",
+     "order": 7,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-6/Sample6_ROUND7.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-06-r08",
+     "label": "Round 8",
+     "order": 8,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-6/Sample6_ROUND8.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-06-r09",
+     "label": "Round 9",
+     "order": 9,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-6/Sample6_ROUND9.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-06-r10",
+     "label": "Round 10",
+     "order": 10,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-6/Sample6_ROUND10.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-06-r11",
+     "label": "Round 11",
+     "order": 11,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-6/Sample6_ROUND11.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-06-r12",
+     "label": "Round 12",
+     "order": 12,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-6/Sample6_ROUND12.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-06-r13",
+     "label": "Round 13",
+     "order": 13,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-6/Sample6_ROUND13.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-06-r14",
+     "label": "Round 14",
+     "order": 14,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-6/Sample6_ROUND14.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-06-r15",
+     "label": "Round 15",
+     "order": 15,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-6/Sample6_ROUND15.pdf",
+     "pairs": 25
+    }
+   ],
+   "questionCount": 750,
+   "subjectCounts": {
+    "biology": 148,
+    "chemistry": 122,
+    "earth_space": 150,
+    "energy": 88,
+    "math": 122,
+    "physics": 120
+   }
+  },
+  {
+   "id": "doe-hs-07",
+   "provider": "doe",
+   "level": "HS",
+   "title": "DOE High School Sample Set 7",
+   "year": "2013",
+   "setNumber": 7,
+   "file": "doe-hs-07.json",
+   "sourcePage": "https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions",
+   "credit": "U.S. Department of Energy, National Science Bowl sample questions (science.osti.gov/wdts/nsb)",
+   "license": "Public domain (U.S. Government work); DOE Office of Science asks to be credited and linked.",
+   "rounds": [
+    {
+     "id": "doe-hs-07-r01",
+     "label": "Round 1",
+     "order": 1,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-7/ROUND-1.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-07-r02",
+     "label": "Round 2",
+     "order": 2,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-7/ROUND-2.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-07-r03",
+     "label": "Round 3",
+     "order": 3,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-7/ROUND-3.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-07-r04",
+     "label": "Round 4",
+     "order": 4,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-7/ROUND-4.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-07-r05",
+     "label": "Round 5",
+     "order": 5,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-7/ROUND-5.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-07-r06",
+     "label": "Round 6",
+     "order": 6,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-7/ROUND-6.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-07-r07",
+     "label": "Round 7",
+     "order": 7,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-7/ROUND-7.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-07-r08",
+     "label": "Round 8",
+     "order": 8,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-7/ROUND-8.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-07-r09",
+     "label": "Round 9",
+     "order": 9,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-7/ROUND-9.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-07-r10",
+     "label": "Round 10",
+     "order": 10,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-7/ROUND-10.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-07-r11",
+     "label": "Round 11",
+     "order": 11,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-7/ROUND-11.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-07-r12",
+     "label": "Round 12",
+     "order": 12,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-7/ROUND-12.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-07-r13",
+     "label": "Round 13",
+     "order": 13,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-7/ROUND-13.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-07-r14",
+     "label": "Round 14",
+     "order": 14,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-7/ROUND-14.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-07-r15",
+     "label": "Round 15",
+     "order": 15,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-7/ROUND-15.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-07-r16",
+     "label": "Round 16",
+     "order": 16,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-7/ROUND-16.pdf",
+     "pairs": 25
+    },
+    {
+     "id": "doe-hs-07-r17",
+     "label": "Round 17",
+     "order": 17,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-7/ROUND-17.pdf",
+     "pairs": 25
+    }
+   ],
+   "questionCount": 850,
+   "subjectCounts": {
+    "biology": 170,
+    "chemistry": 144,
+    "earth_space": 136,
+    "energy": 102,
+    "math": 136,
+    "physics": 162
+   }
+  },
+  {
+   "id": "doe-hs-08",
+   "provider": "doe",
+   "level": "HS",
+   "title": "DOE High School Sample Set 8",
+   "year": "2014",
+   "setNumber": 8,
+   "file": "doe-hs-08.json",
+   "sourcePage": "https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions",
+   "credit": "U.S. Department of Energy, National Science Bowl sample questions (science.osti.gov/wdts/nsb)",
+   "license": "Public domain (U.S. Government work); DOE Office of Science asks to be credited and linked.",
+   "rounds": [
+    {
+     "id": "doe-hs-08-r01",
+     "label": "Round 1",
+     "order": 1,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-8/Round-1-A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-08-r02",
+     "label": "Round 2",
+     "order": 2,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-8/Round-2-A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-08-r03",
+     "label": "Round 3",
+     "order": 3,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-8/Round-3-A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-08-r04",
+     "label": "Round 4",
+     "order": 4,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-8/Round-4-A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-08-r05",
+     "label": "Round 5",
+     "order": 5,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-8/Round-5-A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-08-r06",
+     "label": "Round 6",
+     "order": 6,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-8/Round-6-A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-08-r07",
+     "label": "Round 7",
+     "order": 7,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-8/Round-7-A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-08-r08",
+     "label": "Round 8",
+     "order": 8,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-8/Round-8-A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-08-r09",
+     "label": "Round 9",
+     "order": 9,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-8/Round-9-A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-08-r10",
+     "label": "Round 10",
+     "order": 10,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-8/Round-10-A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-08-r11",
+     "label": "Round 11",
+     "order": 11,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-8/Round-11-A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-08-r12",
+     "label": "Round 12",
+     "order": 12,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-8/Round-12-A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-08-r13",
+     "label": "Round 13",
+     "order": 13,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-8/Round-13-A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-08-r14",
+     "label": "Round 14",
+     "order": 14,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-8/Round-14-A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-08-r15",
+     "label": "Round 15",
+     "order": 15,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-8/Round-15-A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-08-r16",
+     "label": "Round 16",
+     "order": 16,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-8/Round-16-A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-08-r17",
+     "label": "Round 17",
+     "order": 17,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-8/Round-17-A.pdf",
+     "pairs": 23
+    }
+   ],
+   "questionCount": 782,
+   "subjectCounts": {
+    "biology": 164,
+    "chemistry": 156,
+    "earth_space": 122,
+    "energy": 102,
+    "math": 130,
+    "physics": 108
+   }
+  },
+  {
+   "id": "doe-hs-09",
+   "provider": "doe",
+   "level": "HS",
+   "title": "DOE High School Sample Set 9",
+   "year": "2015",
+   "setNumber": 9,
+   "file": "doe-hs-09.json",
+   "sourcePage": "https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions",
+   "credit": "U.S. Department of Energy, National Science Bowl sample questions (science.osti.gov/wdts/nsb)",
+   "license": "Public domain (U.S. Government work); DOE Office of Science asks to be credited and linked.",
+   "rounds": [
+    {
+     "id": "doe-hs-09-r01",
+     "label": "Round 1",
+     "order": 1,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-9/RegionalHS_1.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-09-r02",
+     "label": "Round 2",
+     "order": 2,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-9/RegionalHS_2.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-09-r03",
+     "label": "Round 3",
+     "order": 3,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-9/RegionalHS_3A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-09-r04",
+     "label": "Round 4",
+     "order": 4,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-9/RegionalHS_4A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-09-r05",
+     "label": "Round 5",
+     "order": 5,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-9/RegionalHS_5A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-09-r06",
+     "label": "Round 6",
+     "order": 6,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-9/RegionalHS_6A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-09-r07",
+     "label": "Round 7",
+     "order": 7,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-9/RegionalHS_7A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-09-r08",
+     "label": "Round 8",
+     "order": 8,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-9/RegionalHS_8A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-09-r09",
+     "label": "Round 9",
+     "order": 9,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-9/RegionalHS_9A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-09-r10",
+     "label": "Round 10",
+     "order": 10,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-9/RegionalHS_10A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-09-r11",
+     "label": "Round 11",
+     "order": 11,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-9/RegionalHS_11A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-09-r12",
+     "label": "Round 12",
+     "order": 12,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-9/RegionalHS_12A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-09-r13",
+     "label": "Round 13",
+     "order": 13,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-9/RegionalHS_13A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-09-r14",
+     "label": "Round 14",
+     "order": 14,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-9/RegionalHS_14A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-09-r15",
+     "label": "Round 15",
+     "order": 15,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-9/RegionalHS_15A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-09-r16",
+     "label": "Round 16",
+     "order": 16,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-9/RegionalHS_16A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-09-r17",
+     "label": "Round 17",
+     "order": 17,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-9/RegionalHS_17A.pdf",
+     "pairs": 23
+    }
+   ],
+   "questionCount": 782,
+   "subjectCounts": {
+    "biology": 136,
+    "chemistry": 136,
+    "earth_space": 134,
+    "energy": 102,
+    "math": 136,
+    "physics": 138
+   }
+  },
+  {
+   "id": "doe-hs-10",
+   "provider": "doe",
+   "level": "HS",
+   "title": "DOE High School Sample Set 10",
+   "year": "2016",
+   "setNumber": 10,
+   "file": "doe-hs-10.json",
+   "sourcePage": "https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions",
+   "credit": "U.S. Department of Energy, National Science Bowl sample questions (science.osti.gov/wdts/nsb)",
+   "license": "Public domain (U.S. Government work); DOE Office of Science asks to be credited and linked.",
+   "rounds": [
+    {
+     "id": "doe-hs-10-r01",
+     "label": "Round 1",
+     "order": 1,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-10/1A_HS_Reg_2016.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-10-r02",
+     "label": "Round 2",
+     "order": 2,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-10/2A_HS_Reg_2016.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-10-r03",
+     "label": "Round 3",
+     "order": 3,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-10/3A_HS_Reg_2016.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-10-r04",
+     "label": "Round 4",
+     "order": 4,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-10/4A_HS_Reg_2016.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-10-r05",
+     "label": "Round 5",
+     "order": 5,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-10/5A_HS_Reg_2016.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-10-r06",
+     "label": "Round 6",
+     "order": 6,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-10/6A_HS_Reg_2016.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-10-r07",
+     "label": "Round 7",
+     "order": 7,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-10/7A_HS_Reg_2016.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-10-r08",
+     "label": "Round 8",
+     "order": 8,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-10/8A_HS_Reg_2016.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-10-r09",
+     "label": "Round 9",
+     "order": 9,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-10/9A_HS_Reg_2016.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-10-r10",
+     "label": "Round 10",
+     "order": 10,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-10/10A_HS_Reg_2016.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-10-r11",
+     "label": "Round 11",
+     "order": 11,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-10/11A_HS_Reg_2016.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-10-r12",
+     "label": "Round 12",
+     "order": 12,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-10/12A_HS_Reg_2016.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-10-r13",
+     "label": "Round 13",
+     "order": 13,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-10/13A_HS_Reg_2016.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-10-r14",
+     "label": "Round 14",
+     "order": 14,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-10/14A_HS_Reg_2016.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-10-r15",
+     "label": "Round 15",
+     "order": 15,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-10/15A_HS_Reg_2016.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-10-r16",
+     "label": "Round 16",
+     "order": 16,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-10/16A_HS_Reg_2016.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-10-r17",
+     "label": "Round 17",
+     "order": 17,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-10/17A_HS_Reg_2016.pdf",
+     "pairs": 23
+    }
+   ],
+   "questionCount": 782,
+   "subjectCounts": {
+    "biology": 130,
+    "chemistry": 134,
+    "earth_space": 140,
+    "energy": 102,
+    "math": 136,
+    "physics": 140
+   }
+  },
+  {
+   "id": "doe-hs-11",
+   "provider": "doe",
+   "level": "HS",
+   "title": "DOE High School Sample Set 11",
+   "year": "2017",
+   "setNumber": 11,
+   "file": "doe-hs-11.json",
+   "sourcePage": "https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions",
+   "credit": "U.S. Department of Energy, National Science Bowl sample questions (science.osti.gov/wdts/nsb)",
+   "license": "Public domain (U.S. Government work); DOE Office of Science asks to be credited and linked.",
+   "rounds": [
+    {
+     "id": "doe-hs-11-r01",
+     "label": "Round 1",
+     "order": 1,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-11/HS_1.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-11-r02",
+     "label": "Round 2",
+     "order": 2,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-11/HS_2.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-11-r03",
+     "label": "Round 3",
+     "order": 3,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-11/HS_3A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-11-r04",
+     "label": "Round 4",
+     "order": 4,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-11/HS_4A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-11-r05",
+     "label": "Round 5",
+     "order": 5,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-11/HS_5A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-11-r06",
+     "label": "Round 6",
+     "order": 6,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-11/HS_6A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-11-r07",
+     "label": "Round 7",
+     "order": 7,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-11/HS_7A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-11-r08",
+     "label": "Round 8",
+     "order": 8,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-11/HS_8A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-11-r09",
+     "label": "Round 9",
+     "order": 9,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-11/HS_9A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-11-r10",
+     "label": "Round 10",
+     "order": 10,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-11/HS_10A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-11-r11",
+     "label": "Round 11",
+     "order": 11,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-11/HS_11A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-11-r12",
+     "label": "Round 12",
+     "order": 12,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-11/HS_12A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-11-r13",
+     "label": "Round 13",
+     "order": 13,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-11/HS_13A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-11-r14",
+     "label": "Round 14",
+     "order": 14,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-11/HS_14A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-11-r15",
+     "label": "Round 15",
+     "order": 15,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-11/HS_15A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-11-r16",
+     "label": "Round 16",
+     "order": 16,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-11/HS_16A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-11-r17",
+     "label": "Round 17",
+     "order": 17,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-11/HS_17A.pdf",
+     "pairs": 23
+    }
+   ],
+   "questionCount": 782,
+   "subjectCounts": {
+    "biology": 134,
+    "chemistry": 136,
+    "earth_space": 136,
+    "energy": 102,
+    "math": 136,
+    "physics": 138
+   }
+  },
+  {
+   "id": "doe-hs-12",
+   "provider": "doe",
+   "level": "HS",
+   "title": "DOE High School Sample Set 12",
+   "year": "2018",
+   "setNumber": 12,
+   "file": "doe-hs-12.json",
+   "sourcePage": "https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions",
+   "credit": "U.S. Department of Energy, National Science Bowl sample questions (science.osti.gov/wdts/nsb)",
+   "license": "Public domain (U.S. Government work); DOE Office of Science asks to be credited and linked.",
+   "rounds": [
+    {
+     "id": "doe-hs-12-r01",
+     "label": "Round 1",
+     "order": 1,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-12/2018-HSRound-1.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-12-r02",
+     "label": "Round 2",
+     "order": 2,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-12/2018-HSRound-2.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-12-r03",
+     "label": "Round 3",
+     "order": 3,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-12/2018-HSRound-3.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-12-r04",
+     "label": "Round 4",
+     "order": 4,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-12/2018-HSRound-4.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-12-r05",
+     "label": "Round 5",
+     "order": 5,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-12/2018-HSRound-5.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-12-r06",
+     "label": "Round 6",
+     "order": 6,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-12/2018-HSRound-6.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-12-r07",
+     "label": "Round 7",
+     "order": 7,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-12/2018-HSRound-7.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-12-r08",
+     "label": "Round 8",
+     "order": 8,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-12/2018-HSRound-8.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-12-r09",
+     "label": "Round 9",
+     "order": 9,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-12/2018-HSRound-9.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-12-r10",
+     "label": "Round 10",
+     "order": 10,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-12/2018-HSRound-10.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-12-r11",
+     "label": "Round 11",
+     "order": 11,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-12/2018-HSRound-11.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-12-r12",
+     "label": "Round 12",
+     "order": 12,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-12/2018-HSRound-12.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-12-r13",
+     "label": "Round 13",
+     "order": 13,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-12/2018-HSRound-13.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-12-r14",
+     "label": "Round 14",
+     "order": 14,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-12/2018-HSRound-14.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-12-r15",
+     "label": "Round 15",
+     "order": 15,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-12/2018-HSRound-15.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-12-r16",
+     "label": "Round 16",
+     "order": 16,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-12/2018-HSRound-16.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-12-r17",
+     "label": "Round 17",
+     "order": 17,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-12/2018-HSRound-17.pdf",
+     "pairs": 23
+    }
+   ],
+   "questionCount": 782,
+   "subjectCounts": {
+    "biology": 136,
+    "chemistry": 136,
+    "earth_space": 136,
+    "energy": 102,
+    "math": 136,
+    "physics": 136
+   }
+  },
+  {
+   "id": "doe-hs-13",
+   "provider": "doe",
+   "level": "HS",
+   "title": "DOE High School Sample Set 13",
+   "year": "2019",
+   "setNumber": 13,
+   "file": "doe-hs-13.json",
+   "sourcePage": "https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions",
+   "credit": "U.S. Department of Energy, National Science Bowl sample questions (science.osti.gov/wdts/nsb)",
+   "license": "Public domain (U.S. Government work); DOE Office of Science asks to be credited and linked.",
+   "rounds": [
+    {
+     "id": "doe-hs-13-r01",
+     "label": "Round 1",
+     "order": 1,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-13/2019-NSB-HSR-Round-1A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-13-r02",
+     "label": "Round 2",
+     "order": 2,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-13/2019-NSB-HSR-Round-2A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-13-r03",
+     "label": "Round 3",
+     "order": 3,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-13/2019-NSB-HSR-Round-3A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-13-r04",
+     "label": "Round 4",
+     "order": 4,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-13/2019-NSB-HSR-Round-4A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-13-r05",
+     "label": "Round 5",
+     "order": 5,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-13/2019-NSB-HSR-Round-5A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-13-r06",
+     "label": "Round 6",
+     "order": 6,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-13/2019-NSB-HSR-Round-6A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-13-r07",
+     "label": "Round 15",
+     "order": 7,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-13/2019-NSB-HSR-Round-15A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-13-r08",
+     "label": "Round 16",
+     "order": 8,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-13/2019-NSB-HSR-Round-16A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-13-r09",
+     "label": "Round 17",
+     "order": 9,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-13/2019-NSB-HSR-Round-17A.pdf",
+     "pairs": 23
+    }
+   ],
+   "questionCount": 414,
+   "subjectCounts": {
+    "biology": 72,
+    "chemistry": 72,
+    "earth_space": 72,
+    "energy": 54,
+    "math": 72,
+    "physics": 72
+   }
+  },
+  {
+   "id": "doe-hs-14",
+   "provider": "doe",
+   "level": "HS",
+   "title": "DOE High School Sample Set 14",
+   "year": "2019",
+   "setNumber": 14,
+   "file": "doe-hs-14.json",
+   "sourcePage": "https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions",
+   "credit": "U.S. Department of Energy, National Science Bowl sample questions (science.osti.gov/wdts/nsb)",
+   "license": "Public domain (U.S. Government work); DOE Office of Science asks to be credited and linked.",
+   "rounds": [
+    {
+     "id": "doe-hs-14-r01",
+     "label": "Round 7",
+     "order": 1,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-14/2019-NSB-HSR-Round-7A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-14-r02",
+     "label": "Round 8",
+     "order": 2,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-14/2019-NSB-HSR-Round-8A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-14-r03",
+     "label": "Round 9",
+     "order": 3,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-14/2019-NSB-HSR-Round-9A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-14-r04",
+     "label": "Round 10",
+     "order": 4,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-14/2019-NSB-HSR-Round-10A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-14-r05",
+     "label": "Round 11",
+     "order": 5,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-14/2019-NSB-HSR-Round-11A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-14-r06",
+     "label": "Round 12",
+     "order": 6,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-14/2019-NSB-HSR-Round-12A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-14-r07",
+     "label": "Round 13",
+     "order": 7,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-14/2019-NSB-HSR-Round-13A.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-14-r08",
+     "label": "Round 14",
+     "order": 8,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-14/2019-NSB-HSR-Round-14A.pdf",
+     "pairs": 23
+    }
+   ],
+   "questionCount": 368,
+   "subjectCounts": {
+    "biology": 64,
+    "chemistry": 64,
+    "earth_space": 64,
+    "energy": 48,
+    "math": 64,
+    "physics": 64
+   }
+  },
+  {
+   "id": "doe-hs-15",
+   "provider": "doe",
+   "level": "HS",
+   "title": "DOE High School Sample Set 15",
+   "year": "2020",
+   "setNumber": 15,
+   "file": "doe-hs-15.json",
+   "sourcePage": "https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions",
+   "credit": "U.S. Department of Energy, National Science Bowl sample questions (science.osti.gov/wdts/nsb)",
+   "license": "Public domain (U.S. Government work); DOE Office of Science asks to be credited and linked.",
+   "rounds": [
+    {
+     "id": "doe-hs-15-r01",
+     "label": "Round 1",
+     "order": 1,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-15/2020-HS-Rd1.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-15-r02",
+     "label": "Round 2",
+     "order": 2,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-15/2020-HS-Rd2.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-15-r03",
+     "label": "Round 3",
+     "order": 3,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-15/2020-HS-Rd3.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-15-r04",
+     "label": "Round 4",
+     "order": 4,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-15/2020-HS-Rd4.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-15-r05",
+     "label": "Round 5",
+     "order": 5,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-15/2020-HS-Rd5.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-15-r06",
+     "label": "Round 6",
+     "order": 6,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-15/2020-HS-Rd6.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-15-r07",
+     "label": "Round 7",
+     "order": 7,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-15/2020-HS-Rd7.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-15-r08",
+     "label": "Round 8",
+     "order": 8,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-15/2020-HS-Rd8.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-15-r09",
+     "label": "Round 9",
+     "order": 9,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-15/2020-HS-Rd9.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-15-r10",
+     "label": "Round 10",
+     "order": 10,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-15/2020-HS-Rd10.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-15-r11",
+     "label": "Round 11",
+     "order": 11,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-15/2020-HS-Rd11.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-15-r12",
+     "label": "Round 12",
+     "order": 12,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-15/2020-HS-Rd12.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-15-r13",
+     "label": "Round 13",
+     "order": 13,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-15/2020-HS-Rd13.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-15-r14",
+     "label": "Round 14",
+     "order": 14,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-15/2020-HS-Rd14.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-15-r15",
+     "label": "Round 15",
+     "order": 15,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-15/2020-HS-Rd15.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-15-r16",
+     "label": "Round 16",
+     "order": 16,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-15/2020-HS-Rd16.pdf",
+     "pairs": 23
+    },
+    {
+     "id": "doe-hs-15-r17",
+     "label": "Round 17",
+     "order": 17,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-15/2020-HS-Rd17.pdf",
+     "pairs": 23
+    }
+   ],
+   "questionCount": 782,
+   "subjectCounts": {
+    "biology": 136,
+    "chemistry": 136,
+    "earth_space": 136,
+    "energy": 102,
+    "math": 136,
+    "physics": 136
+   }
+  },
+  {
+   "id": "doe-hs-16",
+   "provider": "doe",
+   "level": "HS",
+   "title": "DOE High School Sample Set 16",
+   "year": "2021",
+   "setNumber": 16,
+   "file": "doe-hs-16.json",
+   "sourcePage": "https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions",
+   "credit": "U.S. Department of Energy, National Science Bowl sample questions (science.osti.gov/wdts/nsb)",
+   "license": "Public domain (U.S. Government work); DOE Office of Science asks to be credited and linked.",
+   "rounds": [
+    {
+     "id": "doe-hs-16-r01",
+     "label": "Round 1",
+     "order": 1,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-16/Set-1-HS-2021.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-16-r02",
+     "label": "Round 2",
+     "order": 2,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-16/Set-2-HS-2021.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-16-r03",
+     "label": "Round 3",
+     "order": 3,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-16/Set-3-HS-2021.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-16-r04",
+     "label": "Round 4",
+     "order": 4,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-16/Set-4-HS-2021.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-16-r05",
+     "label": "Round 5",
+     "order": 5,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-16/Set-5-HS-2021.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-16-r06",
+     "label": "Round 6",
+     "order": 6,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-16/Set-6-HS-2021.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-16-r07",
+     "label": "Round 7",
+     "order": 7,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-16/Set-7-HS-2021.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-16-r08",
+     "label": "Round 8",
+     "order": 8,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-16/Set-8-HS-2021.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-16-r09",
+     "label": "Round 9",
+     "order": 9,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-16/Set-9-HS-2021.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-16-r10",
+     "label": "Round 10",
+     "order": 10,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-16/Set-10-HS-2021.pdf",
+     "pairs": 18
+    }
+   ],
+   "questionCount": 360,
+   "subjectCounts": {
+    "biology": 60,
+    "chemistry": 60,
+    "earth_space": 60,
+    "energy": 60,
+    "math": 60,
+    "physics": 60
+   }
+  },
+  {
+   "id": "doe-hs-17",
+   "provider": "doe",
+   "level": "HS",
+   "title": "DOE High School Sample Set 17",
+   "year": "2022",
+   "setNumber": 17,
+   "file": "doe-hs-17.json",
+   "sourcePage": "https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions",
+   "credit": "U.S. Department of Energy, National Science Bowl sample questions (science.osti.gov/wdts/nsb)",
+   "license": "Public domain (U.S. Government work); DOE Office of Science asks to be credited and linked.",
+   "rounds": [
+    {
+     "id": "doe-hs-17-r01",
+     "label": "Round 1",
+     "order": 1,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-17/2022-HS-1.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-17-r02",
+     "label": "Round 2",
+     "order": 2,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-17/2022-HS-2.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-17-r03",
+     "label": "Round 3",
+     "order": 3,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-17/2022-HS-3.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-17-r04",
+     "label": "Round 4",
+     "order": 4,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-17/2022-HS-4.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-17-r05",
+     "label": "Round 5",
+     "order": 5,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-17/2022-HS-5.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-17-r06",
+     "label": "Round 6",
+     "order": 6,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-17/2022-HS-6.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-17-r07",
+     "label": "Round 7",
+     "order": 7,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-17/2022-HS-7.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-17-r08",
+     "label": "Round 8",
+     "order": 8,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-17/2022-HS-8.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-17-r09",
+     "label": "Round 9",
+     "order": 9,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-17/2022-HS-9.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-17-r10",
+     "label": "Round 10",
+     "order": 10,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-17/2022-HS-10.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-17-r11",
+     "label": "Round 11",
+     "order": 11,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-17/2022-HS-11.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-17-r12",
+     "label": "Round 12",
+     "order": 12,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-17/2022-HS-12.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-17-r13",
+     "label": "Round 13",
+     "order": 13,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-17/2022-HS-13.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-17-r14",
+     "label": "Round 14",
+     "order": 14,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-17/2022-HS-14.pdf",
+     "pairs": 18
+    },
+    {
+     "id": "doe-hs-17-r15",
+     "label": "Round 15",
+     "order": 15,
+     "sourceUrl": "https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-17/2022-HS-15.pdf",
+     "pairs": 18
+    }
+   ],
+   "questionCount": 540,
+   "subjectCounts": {
+    "biology": 90,
+    "chemistry": 90,
+    "earth_space": 90,
+    "energy": 90,
+    "math": 90,
+    "physics": 90
+   }
+  }
+ ]
+}

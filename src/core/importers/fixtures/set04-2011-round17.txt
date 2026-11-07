@@ -1,0 +1,48 @@
+ROUND 17
+TOSS-UP
+1) BIOLOGY Multiple Choice White-nose fungus is rapidly spreading across the United States.
+Which of the following events is least likely to occur as a result of its spread?
+W) Fruit prices will increase
+X) Insect populations will increase
+Y) Small flying mammals will die
+Z) Troglobite populations will increase
+ANSWER: Z) TROGLOBITE POPULATIONS WILL INCREASE
+BONUS
+1) BIOLOGY Short Answer What are structures that connect parts of a fungus, providing a
+conduit for the sharing and transport of resources?
+ANSWER: RHIZOMORPHS (read as: ry-ZŌE-mohrfs)
+________________________________________________________________________
+TOSS-UP
+2) MATH Short Answer Find (read as: the limit as x approaches infinity of the
+quantity x squared plus 10 over the quantity 7 x squared minus 5)
+ANSWER: 1/7
+BONUS
+2) MATH Short Answer Find the equation of the line in slope intercept form of the tangent
+to y = 3x² − 2x + 4at x = 1.
+ANSWER: y = 4x + 1
+Round 17 Page 1
+TOSS-UP
+3) EARTH AND SPACE Short Answer TEX86 is a lipid-based paleothermometer (read as:
+pay-lee-ōe-thehr-MOH-meh-tehr) which can reconstruct ancient seawater temperatures. It is
+based on the temperature sensitivity of marine microorganisms in which archaeal phylum?
+ANSWER: CRENARCHAEOTA (read as: kren arr kee ah tah)
+BONUS
+3) EARTH AND SPACE Multiple Choice The TEX86 paleothermometer (read as: pay-ley-ōe-
+thehr-MOH-meh-tehr), measured from the abundance of crenarchaeal (read as: kren arr kee ah
+tah) lipids in marine sediments, depends on the relative abundance of which class of lipids?
+W) Tetraethers
+X) Long-chain alkenones (read as: AHL-kee-nōens)
+Y) Sterols
+Z) Fatty acid methyl esters
+ANSWER: W) TETRAETHERS
+________________________________________________________________________
+TOSS-UP
+4) MATH Short Answer Find (read as: the limit as x approaches infinity of e to the
+negative x)
+ANSWER: 0
+BONUS
+4) MATH Short Answer A particle moves so its position s in kilometers at time t in hours can be
+expressed as s(t) = 6t² + 25. After 5 hours, what is its speed in kilometers per hour and its
+acceleration in kilometers per hour squared, respectively?
+ANSWER: SPEED: 60, ACCELERATION: 12
+Round 17 Page 2

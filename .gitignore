@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.cache/
+*.log
+.DS_Store
+# Never commit question data you don't have permission to publish.
+private-data/
