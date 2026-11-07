@@ -7,6 +7,7 @@ import { CoachesPage, ItStaffPage, AboutPage } from './pages/Info';
 import { TodayPage } from './pages/Today';
 import { ReviewPage } from './pages/Review';
 import { ProgressPage } from './pages/Progress';
+import { TopicsPage } from './pages/Topics';
 import { TeamPage } from './pages/Team';
 import { LibraryPage } from './pages/Library';
 import { ReaderSetup } from './pages/ReaderSetup';
@@ -85,7 +86,7 @@ export function App() {
       page = <ProgressPage />;
       break;
     case 'library':
-      page = <LibraryPage setId={second} roundId={third} print={route.query.get('print') === '1'} />;
+      page = second === 'topics' ? <TopicsPage /> : <LibraryPage setId={second} roundId={third} print={route.query.get('print') === '1'} />;
       break;
     case 'reader':
       page = second ? <ReaderLive gameId={second} /> : <ReaderSetup query={route.query} />;

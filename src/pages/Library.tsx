@@ -17,6 +17,9 @@ function SetList() {
           Every DOE high school sample set, newest first. These are retired regional rounds that DOE publishes for practice; each round links to
           its original PDF.
         </p>
+        <p>
+          <a href={href('/library/topics')}>Browse by topic</a>: which topics come up most often in each subject.
+        </p>
       </PageHeader>
       {index.loading && <Loading what="Loading the library" />}
       {index.error && <LoadError error={index.error} />}

@@ -885,6 +885,9 @@ details[open] > summary {
 .hbar-label {
   font-size: 0.93rem;
 }
+a.hbar-label {
+  color: var(--text);
+}
 .hbar-track {
   min-width: 0;
 }

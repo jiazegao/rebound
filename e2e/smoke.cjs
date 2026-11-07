@@ -286,6 +286,15 @@ async function main() {
       await see('Reviewed 1: 1 right');
     });
 
+    await step('Library topics: how often each topic comes up, with links to drills', async () => {
+      await page.goto(`${BASE}#/library`);
+      await page.getByRole('link', { name: 'Browse by topic' }).click();
+      await page.getByRole('heading', { name: 'Topics', exact: true }).waitFor();
+      const bars = await page.locator('.hbar').count();
+      if (bars !== 8) throw new Error(`expected 8 topic bars from the fixture catalog, got ${bars}`);
+      await page.getByRole('link', { name: 'Genetics' }).first().waitFor();
+    });
+
     await step('My progress shows mastery by subject and the subject map', async () => {
       await page.goto(`${BASE}#/progress`);
       await see('Mastery by subject');
