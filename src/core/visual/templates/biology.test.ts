@@ -192,6 +192,9 @@ describe('transcription', () => {
       const q = draftToQuestion(t, seed, d);
       expect(judgeAnswer(q, d.answer.match(/.{1,3}/g)!.join(' ')).verdict).toBe('correct');
       expect(judgeAnswer(q, `5'-${d.answer}-3'`).verdict).toBe('correct');
+      const swapped = d.answer.slice(0, 4) + (d.answer[4] === 'A' ? 'G' : 'A') + d.answer.slice(5);
+      expect(judgeAnswer(q, swapped).verdict).toBe('incorrect');
+      expect(judgeAnswer(q, [...d.answer].reverse().join('')).verdict).not.toBe('correct');
     }
   });
 });

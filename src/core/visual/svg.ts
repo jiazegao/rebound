@@ -284,12 +284,12 @@ export function plane(o: PlaneOptions): Plane {
       for (const t of ticksFor(o.xMin, o.xMax, a.xTicks)) {
         if (t === yAxisAt && !a.edges) continue;
         parts.push(line(X(t), ay - 4, X(t), ay + 4, { width: 1.5 }));
-        if (labels) parts.push(text(X(t), ay + 18, String(t), { anchor: 'middle', size: 12 }));
+        if (labels) parts.push(text(X(t), ay + 18, String(t), { anchor: 'middle', size: 13 }));
       }
       for (const t of ticksFor(o.yMin, o.yMax, a.yTicks)) {
         if (t === xAxisAt && !a.edges) continue;
         parts.push(line(ax - 4, Y(t), ax + 4, Y(t), { width: 1.5 }));
-        if (labels) parts.push(text(ax - 8, Y(t), String(t), { anchor: 'end', size: 12, baseline: 'middle' }));
+        if (labels) parts.push(text(ax - 8, Y(t), String(t), { anchor: 'end', size: 13, baseline: 'middle' }));
       }
       if (a.xLabel) parts.push(text(right, ay - 10, a.xLabel, { anchor: 'end', size: 14, italic: true }));
       if (a.yLabel) parts.push(text(ax + 10, top + 4, a.yLabel, { size: 14, italic: true, baseline: 'hanging' }));

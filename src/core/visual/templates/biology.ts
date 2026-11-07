@@ -523,6 +523,7 @@ const transcription: VisualTemplate = {
         : 'The figure shows a segment of a DNA template strand. What is the sequence of the mRNA transcribed from it, written from its 5′ end to its 3′ end?',
       format: 'short_answer',
       answer: mrna,
+      // One wrong base is a wrong answer: the answer checker gives base sequences no spelling slack.
       accept: [`5′-${mrna}-3′`, `5'-${mrna}-3'`, `5' ${mrna} 3'`],
       svg: figure(480, 250, ...parts),
       alt,
@@ -650,7 +651,7 @@ interface Person {
 
 const MODE_NAMES: Record<Mode, string> = { AD: 'Autosomal dominant', AR: 'Autosomal recessive' };
 
-export function affected(mode: Mode, g: Genotype): boolean {
+function affected(mode: Mode, g: Genotype): boolean {
   return mode === 'AD' ? g !== 'aa' : g === 'aa';
 }
 

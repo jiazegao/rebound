@@ -1,6 +1,6 @@
 /**
  * Framed axes for the physics and chemistry graph templates: axis lines along the plot's left and
- * bottom edges, tick marks, tick labels at 13 units (plane().axes() prints 12) and axis titles
+ * bottom edges, tick marks, tick labels at 13 units and axis titles
  * outside the plotting area, so titles never sit on top of the data.
  */
 import { line, text, type Plane } from '../svg';

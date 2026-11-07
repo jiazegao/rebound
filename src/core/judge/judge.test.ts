@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { judgeAnswer, type JudgeInput } from './judge';
+import { isBaseSequence, judgeAnswer, type JudgeInput } from './judge';
 import { parseIntegerList, parseNumber } from './numbers';
 import { normalizeText, samePluralWord, toPlain } from './normalize';
 
@@ -222,5 +222,23 @@ describe('helpers', () => {
     expect(parseNumber('5 eV')).toMatchObject({ value: 5, unit: 'eV' });
     expect(parseNumber('1 and 3')).toBeNull();
     expect(parseIntegerList('2 and 7')).toEqual([2, 7]);
+  });
+});
+
+describe('base sequences', () => {
+  const q = { format: 'short_answer' as const, stem: 'What is the mRNA sequence?', answer: 'GGUCAGAUG', accept: ["5'-GGUCAGAUG-3'"], reject: [] };
+  it('accepts the sequence, spaced or with its ends marked', () => {
+    expect(judgeAnswer(q, 'GGU CAG AUG').verdict).toBe('correct');
+    expect(judgeAnswer(q, "5'-GGUCAGAUG-3'").verdict).toBe('correct');
+  });
+  it('gives no spelling slack: one different base is wrong', () => {
+    expect(judgeAnswer(q, 'GGUCAGAUC').verdict).toBe('incorrect');
+    expect(judgeAnswer(q, 'GAUCAGAUG').verdict).toBe('incorrect');
+  });
+  it('knows a sequence when it sees one', () => {
+    expect(isBaseSequence("5′-ATG GCA-3′")).toBe(true);
+    expect(isBaseSequence('AUGC')).toBe(true);
+    expect(isBaseSequence('ACU')).toBe(false);
+    expect(isBaseSequence('CATALASE')).toBe(false);
   });
 });

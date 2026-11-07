@@ -323,6 +323,12 @@ function judgeMultipleChoice(q: JudgeInput, response: string): JudgeResult {
   return incorrect('Give the letter (W, X, Y or Z) or the exact text of a choice.');
 }
 
+/** A DNA or RNA base sequence, e.g. "AUGGCU" or "5′-ATG GCA-3′" (at least four bases). */
+export function isBaseSequence(text: string): boolean {
+  const core = text.toUpperCase().replace(/[53]\s*[′']/g, '').replace(/[\s-]/g, '');
+  return core.length >= 4 && /^[ACGTU]+$/.test(core);
+}
+
 function judgeShortAnswer(q: JudgeInput, response: string): JudgeResult {
   const { candidates, rejects, anyOrder } = answerCandidates(q);
   const texts = candidates.filter((c) => c.parts.length === 1).map((c) => c.text);
@@ -358,6 +364,8 @@ function judgeShortAnswer(q: JudgeInput, response: string): JudgeResult {
   for (const c of texts) {
     const near = nearMiss(response, c);
     if (near === 'confusable') return incorrect(`Close, but that is a different term from "${c}".`, c);
+    // A base sequence is not a word: one different base is a different answer, not a spelling slip.
+    if (near === 'close' && isBaseSequence(c)) return incorrect('Every base in a sequence must be right.', c);
     if (near === 'close') return review(`Close to "${c}". Check your spelling.`, c);
   }
   if (multi.length > 0 && texts.length === 0) {
