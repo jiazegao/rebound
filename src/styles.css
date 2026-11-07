@@ -952,7 +952,6 @@ details[open] > summary {
   flex-direction: column;
   justify-content: space-between;
   outline-offset: 2px;
-  cursor: default;
 }
 .heat-cell[data-bin='0'] {
   background: transparent;
@@ -964,9 +963,14 @@ details[open] > summary {
 .heat-cell[data-bin='3'] { background: var(--viz-seq-3); color: var(--viz-ink-3); }
 .heat-cell[data-bin='4'] { background: var(--viz-seq-4); color: var(--viz-ink-4); }
 .heat-cell[data-bin='5'] { background: var(--viz-seq-5); color: var(--viz-ink-5); }
+.heat-cell {
+  text-decoration: none;
+  cursor: pointer;
+}
 .heat-cell:hover,
 .heat-cell:focus-visible {
   filter: brightness(1.1);
+  box-shadow: inset 0 0 0 2px var(--text);
 }
 .heat-cell .due {
   font-size: 0.75rem;

@@ -6,7 +6,7 @@ import { daysUntil, PHASE_TEXT, practiceDay, seasonPhase } from '../core/review'
 import { topicName } from '../core/taxonomy';
 import type { Player } from '../core/schema';
 import { dateTimeText } from '../lib/format';
-import { planFor, playerDue, usePlayerModel } from '../lib/learning';
+import { planFor, playerCardSummary, playerDue, usePlayerModel } from '../lib/learning';
 import { catalogById, useCatalog } from '../lib/library';
 import { href } from '../lib/router';
 import { savePlan, updateSettings, useData } from '../lib/store';
@@ -45,6 +45,7 @@ function PlanList({ player }: { player: Player }) {
   if (!result) return <p className="muted">Preparing your plan…</p>;
   const plan = result.plan;
   const due = playerDue(data, player.id).length;
+  const tomorrow = due === 0 ? playerCardSummary(data, player.id).startingTomorrow : 0;
   const reviewCap = Math.max(1, Math.floor(plan.minutes / 3 / MINUTES_PER_REVIEW));
   const reviewCards = Math.min(due, reviewCap);
   const total = plan.items.reduce((s, i) => s + (i.kind === 'review' ? reviewCards * MINUTES_PER_REVIEW : i.minutes), 0);
@@ -83,7 +84,12 @@ function PlanList({ player }: { player: Player }) {
                   {item.topic && <span className="plan-topic"> · {topicName(item.topic)}</span>}
                 </h3>
                 <p className="why">
-                  <span className="why-label">Why this?</span> {isReview && due === 0 ? 'Nothing due right now. Questions you miss or answer slowly come back here.' : item.why}
+                  <span className="why-label">Why this?</span>{' '}
+                  {isReview && due === 0
+                    ? tomorrow > 0
+                      ? `Nothing due right now. ${tomorrow} question${tomorrow === 1 ? '' : 's'} you missed or answered slowly today come${tomorrow === 1 ? 's' : ''} back tomorrow.`
+                      : 'Nothing due right now. Questions you miss or answer slowly come back here.'
+                    : item.why}
                 </p>
               </div>
               <div className="plan-side">

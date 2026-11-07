@@ -472,6 +472,8 @@ export interface CardSummary {
   dueToday: number;
   /** New cards waiting for a later day. */
   waiting: number;
+  /** New cards from today's practice, which can first come up tomorrow. */
+  startingTomorrow: number;
   /** Cards retired as learned. */
   learned: number;
   suspended: number;
@@ -496,6 +498,7 @@ export function summarizeCards(
     total: 0,
     dueToday: due.reviews.length + due.fresh.length,
     waiting: due.waiting,
+    startingTomorrow: 0,
     learned: 0,
     suspended: 0,
     reviewedToday: 0,
@@ -510,6 +513,7 @@ export function summarizeCards(
     }
     if (isStale(c, now)) continue;
     s.total += 1;
+    if (stage === 'new' && c.fsrs.due > now && !isSuspended(c, disputed)) s.startingTomorrow += 1;
     if (isSuspended(c, disputed)) s.suspended += 1;
     else if (stage === 'review' && c.fsrs.due >= end && (s.nextDue === null || c.fsrs.due < s.nextDue)) s.nextDue = c.fsrs.due;
   }

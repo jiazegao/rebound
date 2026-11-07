@@ -463,13 +463,21 @@ export function ReviewPage({ query }: { query: URLSearchParams }) {
   return (
     <div className="container narrow">
       <PageHeader title="Review">
-        <p>
-          Questions you missed, gave away on an interrupt, or answered too slowly come back here, spaced out with FSRS (the scheduler Anki
-          uses): soon after a miss, then days and weeks apart. Every review is timed. Buzz while you are still reading for "Easy", within the
-          5-second window for "Good"; a slow right answer counts as "Hard" and comes back sooner. A few new questions join each day (
-          {newCardsPerDay(data.settings.dailyMinutes)} with a {data.settings.dailyMinutes}-minute plan), wrong interrupts and your own subjects
-          first; once a right answer earns a gap of {LEARNED_DAYS} days, the question is learned and leaves the queue.
-        </p>
+        <p>Questions you missed, gave away on an interrupt, or answered too slowly come back here, spaced out over days and weeks. Every review is timed.</p>
+        <details className="small">
+          <summary>How review works</summary>
+          <p>
+            Rebound schedules reviews with FSRS, the scheduler Anki uses: soon after a miss, then days and weeks apart. The question appears in
+            full and the clock starts. Buzz while you are still reading for "Easy", within the 5-second window after that for "Good"; a slow
+            right answer counts as "Hard" and comes back sooner.
+          </p>
+          <p>
+            A few new questions join each day ({newCardsPerDay(data.settings.dailyMinutes)} with a {data.settings.dailyMinutes}-minute plan):
+            questions you added, wrong interrupts and your own subjects first. New questions left waiting for two weeks are dropped. Once a
+            right answer earns a gap of {LEARNED_DAYS} days, the question is learned and leaves the queue; missing it again in a drill or a
+            game brings it back.
+          </p>
+        </details>
       </PageHeader>
       <PlayerSwitch />
       {error && <LoadError error={error} />}
@@ -514,7 +522,11 @@ export function ReviewPage({ query }: { query: URLSearchParams }) {
                     misses and slow answers land here. You can also add any question from the <a href={href('/library')}>Library</a>.
                   </>
                 ) : (
-                  <>All caught up for today.</>
+                  <>
+                    All caught up for today.
+                    {summary.startingTomorrow > 0 &&
+                      ` ${summary.startingTomorrow} question${summary.startingTomorrow === 1 ? '' : 's'} from today's practice start${summary.startingTomorrow === 1 ? 's' : ''} tomorrow.`}
+                  </>
                 )}
               </Notice>
             )}

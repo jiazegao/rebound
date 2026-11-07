@@ -6,7 +6,7 @@ import { endOfPracticeDay } from '../core/review';
 import { CORE_SUBJECTS, SUBJECT_LABELS } from '../core/schema';
 import { topicById, topicName, topicsForSubject } from '../core/taxonomy';
 import { percent } from '../lib/format';
-import { disputedQuestions, playerCardSummary, playerObservations, usePlayerModel } from '../lib/learning';
+import { playerCardSummary, playerDue, playerObservations, usePlayerModel } from '../lib/learning';
 import { catalogById, useCatalog } from '../lib/library';
 import { href } from '../lib/router';
 import { useData, type AppData } from '../lib/store';
@@ -187,6 +187,7 @@ function TopicHeatMap({ model, due }: { model: PlayerModel; due: Map<string, num
       </div>
       <figcaption className="small muted" style={{ margin: '0.25rem 0 0' }}>
         Each topic colored by mastery, once you have answered at least {MIN_ANSWERS} of its questions. Darker is stronger. Due reviews are marked.
+        Select a topic to drill it.
       </figcaption>
       {table ? (
         <div className="table-wrap" style={{ marginTop: '0.75rem' }}>
@@ -249,24 +250,25 @@ function TopicHeatMap({ model, due }: { model: PlayerModel; due: Map<string, num
                       ? `${percent(line.p, 1)} mastery · ${line.n} answers, ${line.correct} right · median buzz ${seconds(line.medianBuzzMs)}`
                       : `${line?.n ?? 0} answer${line?.n === 1 ? '' : 's'} so far`;
                   return (
-                    <div
+                    <a
                       key={t.id}
                       className="heat-cell"
                       data-bin={bin}
-                      tabIndex={0}
-                      role="img"
-                      aria-label={`${t.name}: ${summary}${dueHere ? `, ${dueHere} due for review` : ''}`}
+                      href={href(`/try?mode=subject&subject=${subject}&topic=${encodeURIComponent(t.id)}&count=8`)}
+                      aria-label={`${t.name}: ${summary}${dueHere ? `, ${dueHere} due for review` : ''}. Drill this topic.`}
                       {...handlers(
                         <>
                           <strong>{line && line.n >= MIN_ANSWERS ? percent(line.p, 1) : 'Not enough answers'}</strong>
                           {t.name} · {summary}
                           {dueHere > 0 && ` · ${dueHere} due for review`}
+                          <br />
+                          Select to drill this topic.
                         </>,
                       )}
                     >
                       <span>{t.name}</span>
                       {dueHere > 0 && <span className="due">{dueHere} due</span>}
-                    </div>
+                    </a>
                   );
                 })}
               </div>
@@ -426,10 +428,7 @@ export function ProgressPage() {
   // Due reviews per topic, for the map.
   const due = new Map<string, number>();
   if (player && catalogMap) {
-    const disputed = disputedQuestions(data);
-    const end = endOfPracticeDay(now);
-    for (const c of Object.values(data.cards)) {
-      if (c.playerId !== player.id || c.fsrs.due >= end || disputed.has(c.questionId)) continue;
+    for (const c of playerDue(data, player.id, now)) {
       const topic = catalogMap.get(c.questionId)?.[2];
       if (topic) due.set(topic, (due.get(topic) ?? 0) + 1);
     }

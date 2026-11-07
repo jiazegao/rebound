@@ -215,7 +215,10 @@ describe("today's queue", () => {
     expect(q.map((c) => c.questionId)).toEqual(['qb', 'qa', 'qn']);
     expect(reviewQueue(dueToday([a, b, fresh], OWNER, T0, { ...OPTS, disputed: new Set(['qb']) })).map((c) => c.questionId)).toEqual(['qa', 'qn']);
     const s = summarizeCards([a, b, other, fresh], OWNER, T0, { ...OPTS, disputed: new Set(['qb']) });
-    expect(s).toMatchObject({ total: 3, dueToday: 2, suspended: 1, learned: 0, waiting: 0 });
+    expect(s).toMatchObject({ total: 3, dueToday: 2, suspended: 1, learned: 0, waiting: 0, startingTomorrow: 0 });
+    // A miss from today's practice starts tomorrow.
+    const today = applyOutcome(undefined, outcome({ key: 'qt', questionId: 'qt', t: T0 }), 0.88)!;
+    expect(summarizeCards([a, today], OWNER, T0 + 60_000, OPTS)).toMatchObject({ total: 2, dueToday: 1, startingTomorrow: 1 });
   });
 
   it('scales the new-card allowance with the plan length', () => {
