@@ -3,7 +3,7 @@ import type { MatchEvent } from '../core/rules/engine';
 import { cardId } from '../core/review';
 import { freshTopicCounts, planFor, playerDue, playerObservations } from './learning';
 import { gameOutcomes } from './outcomes';
-import { addAttempt, addToReview, emptyData, finishGame, getData, setNextEvent, update, type GameRecord } from './store';
+import { addAttempt, addToReview, emptyData, finishGame, getData, importData, setNextEvent, update, type GameRecord } from './store';
 
 // Times are real timestamps so cards land on real days.
 const T = new Date(2026, 10, 7, 16).getTime();
@@ -134,6 +134,31 @@ describe('review cards from games and practice', () => {
     vi.setSystemTime(T + 20 * DAY);
     addAttempt({ playerId: 'ann', questionId: 'doe-hs-17-r02-t05', subject: 'chemistry', kind: 'tossup', correct: false, interrupt: false, latencyMs: 2000, overridden: false, t: T + 20 * DAY });
     expect(Object.keys(getData().cards)).toEqual([cardId('ann', 'doe-hs-17-r02-t05')]);
+  });
+});
+
+describe('backups from before review cards', () => {
+  it('builds cards from recent practice when an older backup is loaded', () => {
+    seed();
+    const old = {
+      ...emptyData(),
+      team: getData().team,
+      players: getData().players,
+      games: [{ ...game(), status: 'finished' as const }],
+      attempts: [
+        { id: 'x1', playerId: 'ann', questionId: 'doe-hs-17-r02-t04', subject: 'chemistry' as const, kind: 'tossup' as const, correct: false, interrupt: false, latencyMs: 2000, overridden: false, t: T },
+      ],
+    } as Partial<ReturnType<typeof emptyData>>;
+    delete old.cards;
+    delete old.plans;
+    importData(JSON.stringify({ app: 'rebound', data: old }));
+    expect(Object.keys(getData().cards).sort()).toEqual([
+      cardId('abe', 'doe-hs-17-r01-b02'),
+      cardId('abe', 'doe-hs-17-r01-t02'),
+      cardId('ann', 'doe-hs-17-r02-t04'),
+      cardId('bea', 'doe-hs-17-r01-t02'),
+      cardId('bea', 'doe-hs-17-r01-t03'),
+    ]);
   });
 });
 

@@ -142,7 +142,10 @@ function scheduleSave() {
 export async function initStore(): Promise<void> {
   try {
     const saved = await get<AppData>(KEY);
-    if (saved && saved.version === 1) data = normalize({ ...emptyData(), ...saved, settings: { ...emptyData().settings, ...saved.settings } });
+    if (saved && saved.version === 1) {
+      data = normalize({ ...emptyData(), ...saved, settings: { ...emptyData().settings, ...saved.settings } });
+      if (saved.cards === undefined) backfillCards(data);
+    }
   } catch {
     status = { ...status, persistent: false };
   }
@@ -300,6 +303,12 @@ function normalize(d: AppData): AppData {
   return d;
 }
 
+/** Data from before review cards existed: build cards from the practice already logged (recent misses only). */
+function backfillCards(d: AppData): void {
+  const outcomes = [...d.attempts.map(attemptOutcome), ...d.games.filter((g) => g.status === 'finished').flatMap((g) => gameOutcomes(g, d.players))];
+  applyOutcomes(d, outcomes);
+}
+
 function applyOutcomes(d: AppData, outcomes: Outcome[]): void {
   const players = new Set<string>();
   for (const o of [...outcomes].sort((a, b) => a.t - b.t)) {
@@ -408,6 +417,7 @@ export function importData(json: string): void {
   update((d) => {
     Object.assign(d, emptyData(), incoming, { settings: { ...emptyData().settings, ...incoming.settings } });
     normalize(d);
+    if (incoming.cards === undefined) backfillCards(d);
   });
 }
 
