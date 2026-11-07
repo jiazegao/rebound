@@ -71,5 +71,27 @@
       "mcQuestion": "Which of the following energy technologies is shown in the photo?"
     }
   ],
-  "photos": []
+  "photos": [
+    {
+      "id": "cumulonimbus-1",
+      "group": "cloud-genus",
+      "answer": "CUMULONIMBUS",
+      "accept": [
+        "CUMULONIMBUS CLOUD",
+        "THUNDERHEAD",
+        "THUNDERSTORM CLOUD"
+      ],
+      "commonsFile": "File:Cumulonimbus NOAA gov.jpg",
+      "alt": "A single enormous cloud tower rising from a dark, rainy base and spreading at the top into a broad, flat, fibrous canopy, with small puffy clouds below it over a desert"
+    },
+    {
+      "id": "garnet-1",
+      "group": "mineral",
+      "answer": "GARNET",
+      "accept": [],
+      "commonsFile": "File:GarnetCrystalUSGOV.jpg",
+      "credit": "U.S. Geological Survey",
+      "alt": "A cluster of glassy, orange-brown crystals, each a rounded solid with many flat, diamond-shaped faces, on a black background"
+    }
+  ]
 }

@@ -9,3 +9,6 @@ private-data/
 # Team server (server/): local Wrangler state (dev databases, traces) and local secrets.
 .wrangler/
 .dev.vars*
+
+# Python bytecode (scripts/visual)
+__pycache__/

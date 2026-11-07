@@ -65,39 +65,47 @@ class BuildError(Exception):
 # ---------------------------------------------------------------------------------------------- network
 
 class Polite:
-    """One request at a time, spaced out, identified, and backing off when the servers ask."""
+    """One request at a time, spaced out, identified, and waiting as long as the servers ask.
 
-    def __init__(self) -> None:
+    Wikimedia answers HTTP 429 with a Retry-After that counts down to the end of its rate-limit window;
+    a refused request is retried once, exactly when that window ends, until `budget` seconds have passed.
+    """
+
+    def __init__(self, budget: float = 1800) -> None:
         self.last = 0.0
         self.count = 0
+        self.budget = budget
 
-    def get(self, url: str, *, gap: float = 1.1, tries: int = 7) -> bytes:
-        for attempt in range(tries):
+    def get(self, url: str, *, gap: float = 1.1) -> bytes:
+        start = time.monotonic()
+        refusals = 0
+        while True:
             wait = self.last + gap - time.monotonic()
             if wait > 0:
                 time.sleep(wait)
             request = urllib.request.Request(url, headers={'User-Agent': USER_AGENT})
             self.count += 1
+            pause = None
             try:
                 with urllib.request.urlopen(request, timeout=90) as response:
                     return response.read()
             except urllib.error.HTTPError as error:
-                if error.code not in (429, 500, 502, 503, 504) or attempt + 1 == tries:
+                if error.code not in (429, 500, 502, 503, 504) or time.monotonic() - start > self.budget:
                     raise BuildError(f'HTTP {error.code} for {url}') from None
                 try:
-                    asked = int(error.headers.get('Retry-After') or 0)
+                    pause = max(2, min(300, int(error.headers.get('Retry-After') or 30))) + 1
                 except ValueError:
-                    asked = 0
-                pause = min(300, max(asked, 10) * (attempt + 1) + 5)
-                print(f'    HTTP {error.code}; waiting {pause} s before retrying', file=sys.stderr)
-                time.sleep(pause)
+                    pause = 30
+                refusals += 1
+                if refusals % 5 == 1:
+                    print(f'    HTTP {error.code} (x{refusals}); retrying in {pause} s as asked', file=sys.stderr)
             except (urllib.error.URLError, TimeoutError) as error:
-                if attempt + 1 == tries:
+                if time.monotonic() - start > self.budget:
                     raise BuildError(f'{error} for {url}') from None
-                time.sleep(15 * (attempt + 1))
+                pause = 30
             finally:
                 self.last = time.monotonic()
-        raise BuildError(f'gave up on {url}')
+            time.sleep(pause)
 
 
 def fetch_imageinfo(net: Polite, titles: list[str]) -> dict[str, dict]:
