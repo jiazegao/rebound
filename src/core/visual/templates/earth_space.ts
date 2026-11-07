@@ -921,7 +921,7 @@ const relativeDating: VisualTemplate = {
       stem,
       format: 'short_answer',
       answer,
-      accept: [`LAYER ${answer}`, `FEATURE ${answer}`],
+      accept: [answer === s.dike ? `INTRUSION ${answer}` : answer === s.fault ? `FAULT ${answer}` : `LAYER ${answer}`, `FEATURE ${answer}`],
       svg: drawSection(s),
       alt: s.alt,
       topic: 'earth_space.geologic-time-fossils',

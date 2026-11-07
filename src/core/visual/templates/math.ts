@@ -3,9 +3,10 @@
  * Each template draws a figure (svg.ts) and asks a bonus question about it with an exact answer.
  * See src/core/visual/README.md for the rules every template follows.
  */
+import { multipleChoice } from '../choices';
 import { piText, radicalText, reduce } from '../exact';
 import type { Rng } from '../rng';
-import { ACCENT, angleArc, arrow, circle, dot, figure, line, num, PAPER, path, plane, polygon, rect, rightAngleMark, SOFT, text } from '../svg';
+import { ACCENT, angleArc, arrow, circle, dot, figure, INK, line, num, PAPER, path, plane, polygon, rect, rightAngleMark, SOFT, text } from '../svg';
 import type { VisualTemplate } from '../types';
 import {
   addDot,
@@ -19,6 +20,7 @@ import {
   spotsAround,
   sum,
   textWidth,
+  tickLabels,
   type AnswerForms,
   type LabelSpot,
   type Obstacles,
@@ -171,10 +173,11 @@ function latticePolygon(rng: Rng, n: 3 | 4): Pt[] | null {
     const c = poly[(i + 1) % n]!;
     const cross = (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]);
     if (cross <= 0) return null;
-    if (Math.hypot(c[0] - b[0], c[1] - b[1]) < 3) return null;
+    if ((c[0] - b[0]) ** 2 + (c[1] - b[1]) ** 2 < 9) return null;
     if (b[0] === c[0] || b[1] === c[1]) axisSides++;
+    // Bounds no lattice angle can equal (unlike 45°), so rounding in Math.acos never decides.
     const ang = angleDeg(a, b, c);
-    if (ang < (n === 3 ? 25 : 45) || ang > (n === 3 ? 125 : 145)) return null;
+    if (ang < (n === 3 ? 25 : 40) || ang > (n === 3 ? 125 : 145)) return null;
   }
   if (axisSides > (n === 3 ? 1 : 2)) return null;
   const twice = shoelace2(poly);
@@ -645,7 +648,8 @@ const vennDiagram: VisualTemplate = {
     const count = (holds: (m: number) => boolean) => sum(counts.filter((_, m) => holds(m)));
     const abstract = rng.chance(0.45);
     const parts: string[] = [rect(14, 14, 452, 352, { width: 2 })];
-    for (const [x, y] of VENN_CENTERS) parts.push(circle(x, y, VENN_R, { width: 2.5, fill: ACCENT, fillOpacity: SOFT * 0.7 }));
+    // Neutral shading that darkens where circles overlap.
+    for (const [x, y] of VENN_CENTERS) parts.push(circle(x, y, VENN_R, { width: 2.5, fill: INK, fillOpacity: SOFT * 0.6 }));
     for (let m = 0; m < 8; m++) {
       const [x, y] = vennSpot(m);
       parts.push(text(x, y, String(counts[m]), { anchor: 'middle', baseline: 'middle', size: 18 }));
@@ -926,4 +930,112 @@ const parabolaGraph: VisualTemplate = {
   },
 };
 
-export const MATH_TEMPLATES: VisualTemplate[] = [sector, latticeArea, rightTriangle, shadedRegion, regularPolygonAngle, vennDiagram, dotPlot, parabolaGraph];
+/* ---------------- graph of a transformed function: choose its equation ---------------- */
+
+type Family = 'abs' | 'quad' | 'sqrt';
+type Transform = { a: [number, number]; h: number; k: number };
+
+/** y = a·g(x − h) + k for g(x) = |x|, x² or √x, as a function. */
+export function transformed(family: Family, { a, h, k }: Transform): (x: number) => number {
+  const g = family === 'abs' ? Math.abs : family === 'quad' ? (u: number) => u * u : (u: number) => (u < 0 ? NaN : Math.sqrt(u));
+  return (x: number) => (a[0] * g(x - h)) / a[1] + k;
+}
+
+/** The equation as printed in a choice, e.g. "y = −2|x + 3| + 1" or "y = (1/2)(x − 4)² − 2". h and k are not 0. */
+export function equationText(family: Family, { a, h, k }: Transform): string {
+  const [an, ad] = reduce(a[0], a[1]);
+  const coef = `${an < 0 ? '−' : ''}${ad === 1 ? (Math.abs(an) === 1 ? '' : String(Math.abs(an))) : `(${Math.abs(an)}/${ad})`}`;
+  const inner = `x ${h > 0 ? '−' : '+'} ${Math.abs(h)}`;
+  const body = family === 'abs' ? `|${inner}|` : family === 'sqrt' ? `√(${inner})` : `(${inner})²`;
+  return `y = ${coef}${body} ${k > 0 ? '+' : '−'} ${Math.abs(k)}`;
+}
+
+const graphEquation: VisualTemplate = {
+  id: 'math-graph-equation',
+  subject: 'math',
+  title: 'Equation of a graph',
+  description: 'The graph of a shifted, stretched or reflected absolute value, quadratic or square root function on a grid; asks which of four equations it has (multiple choice).',
+  make(rng) {
+    const family = rng.pick<Family>(['abs', 'quad', 'sqrt']);
+    const a = rng.pick<[number, number]>(
+      family === 'sqrt'
+        ? [[1, 1], [-1, 1], [2, 1], [-2, 1]]
+        : [[1, 1], [-1, 1], [2, 1], [-2, 1], [1, 2], [-1, 2]],
+    );
+    let h = 0;
+    let k = 0;
+    while (h === 0 || k === 0 || h === k) {
+      h = family === 'sqrt' ? rng.int(-5, 2) : rng.int(-4, 4);
+      k = rng.int(-4, 4);
+    }
+    const truth: Transform = { a, h, k };
+    const f = transformed(family, truth);
+    // A second lattice point that shows the stretch: one or two units from the vertex, toward the middle.
+    const dx = (a[1] === 2 ? 2 : 1) * (family === 'sqrt' || h <= 0 ? 1 : -1);
+    const pts: Pt[] = [
+      [h, k],
+      [h + dx, f(h + dx)],
+    ];
+    // Distractors: each a common slip, and each misses one of the two marked points.
+    const flip = (q: [number, number]): [number, number] => [-q[0], q[1]];
+    const cands: Transform[] = [
+      { a, h: -h, k },
+      { a, h, k: -k },
+      { a: flip(a), h, k },
+      { a, h: k, k: h },
+      { a, h: -h, k: -k },
+      { a: flip(a), h: -h, k },
+    ];
+    if (!(Math.abs(a[0]) === 1 && a[1] === 1)) cands.push({ a: [Math.sign(a[0]) * a[1], Math.abs(a[0])], h, k });
+    const distractors = cands
+      .filter((c) => pts.some(([x, y]) => !(Math.abs(transformed(family, c)(x) - y) < 1e-9)))
+      .map((c) => equationText(family, c));
+    const answer = equationText(family, truth);
+    const { choices, answerLetter } = multipleChoice(answer, distractors, rng);
+
+    const W = 480;
+    const H = 420;
+    const P = plane({ xMin: -7, xMax: 7, yMin: -7, yMax: 7, left: 44, top: 14, width: 392, height: 392 });
+    const ticks = [-6, -4, -2, 2, 4, 6];
+    const curve = { stroke: ACCENT, width: 3 };
+    const svg = figure(
+      W,
+      H,
+      P.grid(1),
+      P.axes({ tickLabels: false, xLabel: 'x', yLabel: 'y' }),
+      family === 'sqrt' ? P.plot(f, { from: h, to: 7, samples: 400, style: curve }) : P.plot(f, { from: -7, to: h, samples: 200, style: curve }) + P.plot(f, { from: h, to: 7, samples: 200, style: curve }),
+      // over the curve, so their halo keeps them readable where it crosses
+      tickLabels(P, { x: ticks, y: ticks }),
+      ...pts.map(([x, y]) => P.point(x, y)),
+    );
+    const opens = a[0] > 0 ? 'upward' : 'downward';
+    const shape =
+      family === 'abs'
+        ? `a V-shaped graph opening ${opens} with its vertex at ${pointText(h, k)}`
+        : family === 'quad'
+          ? `a parabola opening ${opens} with its vertex at ${pointText(h, k)}`
+          : `a curve that starts at ${pointText(h, k)} and ${a[0] > 0 ? 'rises' : 'falls'} more and more slowly to the right`;
+    return {
+      stem: 'Which of the following is an equation of the graph shown?',
+      format: 'multiple_choice',
+      choices,
+      answerLetter,
+      answer,
+      svg,
+      alt: `A coordinate grid with ${shape}, also passing through ${pointText(...pts[1]!)}; both points are marked.`,
+      topic: 'math.algebra',
+    };
+  },
+};
+
+export const MATH_TEMPLATES: VisualTemplate[] = [
+  sector,
+  latticeArea,
+  rightTriangle,
+  shadedRegion,
+  regularPolygonAngle,
+  vennDiagram,
+  dotPlot,
+  parabolaGraph,
+  graphEquation,
+];

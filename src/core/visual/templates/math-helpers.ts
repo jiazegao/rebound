@@ -221,15 +221,23 @@ export function placeLabel(
  * labeling a vertex away from the middle of its figure.
  */
 export function spotsAround(x: number, y: number, dx: number, dy: number, gap = 9): LabelSpot[] {
-  const dirs: Array<[number, number]> = [];
-  for (let i = 0; i < 8; i++) dirs.push([Math.cos((i * Math.PI) / 4), Math.sin((i * Math.PI) / 4)]);
-  const len = Math.hypot(dx, dy) || 1;
-  const ux = dx / len;
-  const uy = dy / len;
-  dirs.sort((a, b) => b[0] * ux + b[1] * uy - (a[0] * ux + a[1] * uy));
+  // Exact directions and plain arithmetic (no Math.cos), with ties kept in this order by the stable sort,
+  // so every browser ranks the spots the same way and a seed gives the same figure everywhere.
+  const dirs: Array<[number, number]> = [
+    [1, 0],
+    [1, 1],
+    [0, 1],
+    [-1, 1],
+    [-1, 0],
+    [-1, -1],
+    [0, -1],
+    [1, -1],
+  ];
+  const score = ([cx, cy]: [number, number]) => (cx * dx + cy * dy) * (cx !== 0 && cy !== 0 ? Math.SQRT1_2 : 1);
+  dirs.sort((a, b) => score(b) - score(a));
   return dirs.map(([cx, cy]): LabelSpot => {
-    const anchor = cx > 0.3 ? 'start' : cx < -0.3 ? 'end' : 'middle';
-    const baseline = cy > 0.3 ? 'hanging' : cy < -0.3 ? 'baseline' : 'middle';
+    const anchor = cx > 0 ? 'start' : cx < 0 ? 'end' : 'middle';
+    const baseline = cy > 0 ? 'hanging' : cy < 0 ? 'baseline' : 'middle';
     // A label above its point needs a little more room for the descent below its baseline.
     const ox = anchor === 'start' ? gap : anchor === 'end' ? -gap : 0;
     const oy = baseline === 'hanging' ? gap : baseline === 'baseline' ? -gap - 4 : 0;

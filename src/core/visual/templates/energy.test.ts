@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseNumber } from '../../judge/numbers';
 import { makeRng } from '../rng';
 import { checkTemplate } from '../testkit';
-import { carnotEfficiency, ENERGY_TEMPLATES, ivShape, solarPanels, stepEnergy } from './energy';
+import { carnotEfficiency, ENERGY_TEMPLATES, ivShape, ivShapeParams, solarPanels, stepEnergy } from './energy';
 
 describe('energy visual templates', () => {
   it('has templates', () => expect(ENERGY_TEMPLATES.length).toBeGreaterThan(0));
@@ -45,6 +45,26 @@ describe('energy helpers, worked by hand', () => {
     // voltage (real curves meet it steeply): refused.
     expect(ivShape(0.78, 0.92)).toBeNull();
     expect(ivShape(0.76, 0.96)).toBeNull();
+  });
+  it('no candidate panel sits on the edge of the realism check, so rounding in Math.log never decides the pool', () => {
+    // The same grid as solarPanels(): Vmp 78–85% of Voc in 0.1 V steps, Imp 90–95% of Isc in 0.1 A steps.
+    const classes = [
+      { voc: [21, 21.5, 22, 22.5], isc: [5, 5.5, 6, 6.5] },
+      { voc: [37, 37.5, 38, 38.5, 39, 39.5, 40], isc: [8.5, 9, 9.5, 10] },
+      { voc: [44, 45, 46, 47, 48], isc: [9, 9.5, 10, 10.5] },
+    ];
+    let checked = 0;
+    for (const c of classes)
+      for (const voc of c.voc)
+        for (const isc of c.isc)
+          for (let v10 = Math.ceil(voc * 7.8); v10 <= Math.floor(voc * 8.5); v10++)
+            for (let i10 = Math.ceil(isc * 9); i10 <= Math.floor(isc * 9.5); i10++) {
+              const s = ivShapeParams(v10 / 10 / voc, i10 / 10 / isc)!;
+              expect(Math.abs(s.p - 1)).toBeGreaterThan(1e-6);
+              expect(Math.abs(s.m - 1)).toBeGreaterThan(1e-6);
+              checked++;
+            }
+    expect(checked).toBeGreaterThan(solarPanels().length);
   });
   it('every candidate panel has a concave, falling curve with its maximum power at the marked point', () => {
     const panels = solarPanels();

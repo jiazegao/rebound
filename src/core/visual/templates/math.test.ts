@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseNumber } from '../../judge/numbers';
 import { makeRng } from '../rng';
 import { checkTemplate } from '../testkit';
-import { MATH_TEMPLATES, medianFraction, polygonChordAngle, shoelace2, sqrtRatioText, VENN_CENTERS, VENN_R, vennSpot } from './math';
+import { equationText, MATH_TEMPLATES, medianFraction, polygonChordAngle, shoelace2, sqrtRatioText, transformed, VENN_CENTERS, VENN_R, vennSpot } from './math';
 import { decimalAnswer, exactDecimal, fractionAnswer, pointText } from './math-helpers';
 
 describe('math visual templates', () => {
@@ -60,6 +60,16 @@ describe('math helpers, worked by hand', () => {
     expect(exactDecimal(1, 3)).toBeNull();
     expect(pointText(-3, 0)).toBe('(−3, 0)');
   });
+  it('equations of transformed graphs', () => {
+    expect(equationText('abs', { a: [-1, 2], h: -2, k: -3 })).toBe('y = −(1/2)|x + 2| − 3');
+    expect(equationText('quad', { a: [2, 1], h: 3, k: -1 })).toBe('y = 2(x − 3)² − 1');
+    expect(equationText('sqrt', { a: [1, 1], h: -1, k: 1 })).toBe('y = √(x + 1) + 1');
+    expect(equationText('sqrt', { a: [-2, 1], h: 3, k: 2 })).toBe('y = −2√(x − 3) + 2');
+    expect(transformed('abs', { a: [1, 2], h: 4, k: 2 })(2)).toBe(3);
+    expect(transformed('quad', { a: [2, 1], h: 3, k: -1 })(2)).toBe(1);
+    expect(transformed('sqrt', { a: [-2, 1], h: -3, k: 2 })(-2)).toBe(0);
+    expect(transformed('sqrt', { a: [1, 1], h: 0, k: 0 })(-1)).toBeNaN();
+  });
   it('Venn region labels sit inside exactly the right circles, clear of the outlines', () => {
     for (let mask = 0; mask < 8; mask++) {
       const [x, y] = vennSpot(mask);
@@ -95,6 +105,9 @@ describe('math answers for seeds checked by hand', () => {
     ['math-parabola-graph', 7919, '-56'], // roots 1 and 5, y-intercept −2: f(−9) = −2/5 · 140
     ['math-parabola-graph', 15838, '2'], // roots 1 and 3, y-intercept −6: maximum f(2)
     ['math-parabola-graph', 39595, '-9/2'], // roots −3 and 6, y-intercept −4
+    ['math-graph-equation', 7919, 'y = 2√(x + 2) + 3'], // starts at (−2, 3), through (−1, 5)
+    ['math-graph-equation', 31676, 'y = (1/2)|x − 4| + 2'], // vertex (4, 2), through (2, 3)
+    ['math-graph-equation', 55433, 'y = 2(x − 3)² − 1'], // vertex (3, −1), through (2, 1)
   ];
   for (const [id, seed, answer] of cases) it(`${id} seed ${seed}`, () => expect(draft(id, seed).answer).toBe(answer));
 });
@@ -172,6 +185,87 @@ describe('math answers agree with the figure data over many seeds', () => {
       const n = values.length;
       const expected = d.stem.includes('mean') ? values.reduce((a, b) => a + b, 0) / n : n % 2 ? values[(n - 1) / 2]! : (values[n / 2 - 1]! + values[n / 2]!) / 2;
       expect(valueOf(d.answer), `seed ${seed}`).toBeCloseTo(expected, 9);
+    }
+  });
+
+  it('graph equation: exactly one choice passes through both marked points', () => {
+    // Read a choice such as "y = −(1/2)|x + 2| − 3" back into a function.
+    const parse = (eq: string) => {
+      const m = /^y = (−?)(?:(\d+)|\((\d+)\/(\d+)\))?(\||√\(|\()x ([−+]) (\d+)(?:\||\)²|\)) ([−+]) (\d+)$/.exec(eq);
+      if (!m) throw new Error(`cannot read ${eq}`);
+      const a = (m[1] ? -1 : 1) * (m[2] ? Number(m[2]) : m[3] ? Number(m[3]) / Number(m[4]) : 1);
+      const h = (m[6] === '−' ? 1 : -1) * Number(m[7]);
+      const k = (m[8] === '+' ? 1 : -1) * Number(m[9]);
+      const g = m[5] === '|' ? Math.abs : m[5] === '(' ? (u: number) => u * u : (u: number) => (u < 0 ? NaN : Math.sqrt(u));
+      return (x: number) => a * g(x - h) + k;
+    };
+    for (const seed of SEEDS) {
+      const d = draft('math-graph-equation', seed);
+      const marked = [...d.alt.replace(/−/g, '-').matchAll(/\((-?\d+), (-?\d+)\)/g)].map((m) => [Number(m[1]), Number(m[2])] as const);
+      expect(marked.length).toBe(2);
+      const fits = Object.entries(d.choices!).filter(([, eq]) => marked.every(([x, y]) => Math.abs(parse(eq)(x) - y) < 1e-9));
+      expect(fits.map(([letter]) => letter), `seed ${seed}`).toEqual([d.answerLetter]);
+    }
+  });
+
+  it('Venn diagram counts, read back from the figure', () => {
+    // Masks: bit 0 = first set (A), bit 1 = second (B), bit 2 = third (C); 0 = outside all three.
+    const ALL = [0, 1, 2, 3, 4, 5, 6, 7];
+    const pop = (m: number) => (m & 1) + ((m >> 1) & 1) + ((m >> 2) & 1);
+    /** A set expression such as "(A ∪ C) ∩ B′" as the set of region masks it covers. */
+    const evalSet = (expr: string): number[] => {
+      let i = 0;
+      const src = expr.replace(/\s+/g, '');
+      const atom = (): number[] => {
+        let out: number[];
+        if (src[i] === '(') {
+          i++;
+          out = union();
+          i++; // ')'
+        } else {
+          const bit = 1 << 'ABC'.indexOf(src[i++]!);
+          out = ALL.filter((m) => m & bit);
+        }
+        while (src[i] === '′') {
+          i++;
+          const inside = out;
+          out = ALL.filter((m) => !inside.includes(m));
+        }
+        return out;
+      };
+      const union = (): number[] => {
+        let left = atom();
+        while (src[i] === '∪' || src[i] === '∩') {
+          const op = src[i++];
+          const right = atom();
+          left = op === '∪' ? ALL.filter((m) => left.includes(m) || right.includes(m)) : left.filter((m) => right.includes(m));
+        }
+        return left;
+      };
+      return union();
+    };
+    for (const seed of SEEDS) {
+      const d = draft('math-venn-diagram', seed);
+      const counts = [...d.svg.matchAll(/>(\d+)<\/text>/g)].slice(0, 8).map((m) => Number(m[1]));
+      const total = counts.reduce((a, b) => a + b, 0);
+      const size = (masks: number[]) => masks.reduce((a, m) => a + counts[m]!, 0);
+      const names = /labeled (.+?) inside/.exec(d.alt)![1]!.split(', ').map((n) => n.toLowerCase());
+      const bit = (club: string) => 1 << names.indexOf(club);
+      let expected: number;
+      const setExpr = /How many elements are in (.+)\?$/.exec(d.stem)?.[1];
+      const given = /a student in the (\w+) club is chosen at random, what is the probability that the student is also in the (\w+) club/.exec(d.stem);
+      const butNot = /in the (\w+) club but not the (\w+) club/.exec(d.stem);
+      const both = /in both the (\w+) club and the (\w+) club/.exec(d.stem);
+      if (setExpr) expected = size(evalSet(setExpr));
+      else if (given) expected = size(ALL.filter((m) => m & bit(given[1]!) && m & bit(given[2]!))) / size(ALL.filter((m) => m & bit(given[1]!)));
+      else if (butNot) expected = size(ALL.filter((m) => m & bit(butNot[1]!) && !(m & bit(butNot[2]!))));
+      else if (both) expected = size(ALL.filter((m) => m & bit(both[1]!) && m & bit(both[2]!)));
+      else {
+        const which = /in (exactly one|exactly two|at least two|none) of the three clubs/.exec(d.stem)![1]!;
+        const masks = ALL.filter((m) => (which === 'exactly one' ? pop(m) === 1 : which === 'exactly two' ? pop(m) === 2 : which === 'at least two' ? pop(m) >= 2 : m === 0));
+        expected = d.stem.includes('probability') ? size(masks) / total : size(masks);
+      }
+      expect(valueOf(d.answer), `seed ${seed}: ${d.stem}`).toBeCloseTo(expected, 9);
     }
   });
 

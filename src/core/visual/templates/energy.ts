@@ -4,7 +4,7 @@
  * See src/core/visual/README.md for the rules every template follows.
  */
 import { reduce } from '../exact';
-import { ACCENT, arrow, circle, dot, figure, line, num, PAPER, path, plane, rect, SOFT, text } from '../svg';
+import { ACCENT, arrow, circle, dot, figure, INK, line, num, PAPER, path, plane, rect, SOFT, text } from '../svg';
 import type { VisualTemplate } from '../types';
 import { decimalAnswer, exactDecimal, fmt, range, richText, sum, tickLabels, type AnswerForms } from './math-helpers';
 
@@ -15,8 +15,9 @@ interface Device {
   name: string;
   input: string;
   useful: string;
-  /** The main loss first; an optional small second loss, with its share of the input in percent. */
+  /** The main loss first, then an optional small second loss. */
   losses: Array<{ label: string; phrase: string }>;
+  /** With a second loss: the range of its share of the input, in percent. */
   minor?: [number, number];
   /** Realistic efficiency range, in percent. */
   eff: [number, number];
@@ -80,9 +81,9 @@ const sankey: VisualTemplate = {
       b.xs = below ? Math.max(below.xs + below.w + 28, below.xs + below.w / 2 + 112 - b.w / 2) : 150;
     }
     // ACCENT marks the flow the question is about: the useful output for efficiency, else the unknown loss.
-    const usefulFill = ask === 'loss' ? { width: 1.5, fill: 'currentColor', fillOpacity: SOFT } : { width: 1.5, fill: ACCENT, fillOpacity: SOFT * 2.6 };
+    const usefulFill = ask === 'loss' ? { width: 1.5, fill: INK, fillOpacity: SOFT } : { width: 1.5, fill: ACCENT, fillOpacity: SOFT * 2.6 };
     const parts: string[] = [
-      rect(x0, y0, xSplit - x0, Hb, { width: 1.5, fill: 'currentColor', fillOpacity: SOFT }),
+      rect(x0, y0, xSplit - x0, Hb, { width: 1.5, fill: INK, fillOpacity: SOFT }),
       path(
         `M ${xSplit} ${num(y0)} L ${xEnd} ${num(y0)} L ${xEnd} ${num(y0 - 5)} L ${num(xEnd + hU)} ${num(y0 + wU / 2)} L ${xEnd} ${num(y0 + wU + 5)} L ${xEnd} ${num(y0 + wU)} L ${xSplit} ${num(y0 + wU)} Z`,
         usefulFill,
@@ -100,7 +101,7 @@ const sankey: VisualTemplate = {
           `M ${xSplit} ${num(b.top)} L ${num(b.xs)} ${num(b.top)} A ${num(R)} ${num(R)} 0 0 1 ${num(b.xs + R)} ${num(b.bot + r)} ` +
             `L ${num(b.xs + R)} ${yEnd} L ${num(b.xs + R + 6)} ${yEnd} L ${num(cx)} ${num(yEnd + h)} L ${num(b.xs + r - 6)} ${yEnd} ` +
             `L ${num(b.xs + r)} ${yEnd} L ${num(b.xs + r)} ${num(b.bot + r)} A ${r} ${r} 0 0 0 ${num(b.xs)} ${num(b.bot)} L ${xSplit} ${num(b.bot)} Z`,
-          asked ? { width: 1.5, fill: ACCENT, fillOpacity: SOFT * 2.6 } : { width: 1.5, fill: 'currentColor', fillOpacity: SOFT },
+          asked ? { width: 1.5, fill: ACCENT, fillOpacity: SOFT * 2.6 } : { width: 1.5, fill: INK, fillOpacity: SOFT },
         ),
         text(cx, labelY, dev.losses[b.i]!.label, { anchor: 'middle', size: 15 }),
         text(cx, labelY + 19, val(losses[b.i]!, asked), { anchor: 'middle', size: 15, weight: asked ? 'bold' : 'normal' }),
@@ -185,12 +186,12 @@ const heatEngine: VisualTemplate = {
     const cx = 240;
     const ey = 190;
     const er = 46;
-    const accent = (on: boolean) => (on ? ACCENT : 'currentColor');
+    const accent = (on: boolean) => (on ? ACCENT : INK);
     const parts: string[] = [
-      rect(110, 16, 260, 66, { rx: 8, width: 2, fill: 'currentColor', fillOpacity: SOFT }),
+      rect(110, 16, 260, 66, { rx: 8, width: 2, fill: INK, fillOpacity: SOFT }),
       text(cx, 42, 'Hot reservoir', { anchor: 'middle', size: 16, weight: 'bold' }),
       richText(cx, 68, ['T', { sub: 'H' }, ` = ${hot} K`], { anchor: 'middle', size: 16 }),
-      rect(110, 298, 260, 66, { rx: 8, width: 2, fill: 'currentColor', fillOpacity: SOFT * 0.5 }),
+      rect(110, 298, 260, 66, { rx: 8, width: 2, fill: INK, fillOpacity: SOFT * 0.5 }),
       text(cx, 324, 'Cold reservoir', { anchor: 'middle', size: 16, weight: 'bold' }),
       richText(cx, 350, ['T', { sub: 'C' }, ` = ${cold} K`], { anchor: 'middle', size: 16 }),
       arrow(cx, 82, cx, ey - er - 2, { width: 3, head: 13, stroke: accent(ask === 'input') }),
@@ -243,6 +244,12 @@ const heatEngine: VisualTemplate = {
  * there. Returns null when no such shape exists.
  */
 export function ivShape(u: number, i: number): { m: number; p: number } | null {
+  const shape = ivShapeParams(u, i);
+  return shape && shape.m >= 1 && shape.p > 0 && shape.p <= 1 ? shape : null;
+}
+
+/** The (m, p) of ivShape() before the realism check, or null if none fits. */
+export function ivShapeParams(u: number, i: number): { m: number; p: number } | null {
   // With k = p·m: u^m = 1/(1 + k) puts the maximum of V·I at u, and i = (k/(1 + k))^p. Solve for k.
   const lnI = (k: number) => (-Math.log(u) * k * Math.log(k / (1 + k))) / Math.log(1 + k);
   const target = Math.log(i);
@@ -256,8 +263,7 @@ export function ivShape(u: number, i: number): { m: number; p: number } | null {
   }
   const k = Math.sqrt(lo * hi);
   const m = Math.log(1 + k) / -Math.log(u);
-  const p = k / m;
-  return m >= 1 && p > 0 && p <= 1 ? { m, p } : null;
+  return { m, p: k / m };
 }
 
 interface SolarPanel {
@@ -535,7 +541,8 @@ const generationMix: VisualTemplate = {
       const w = values[i]! * scale;
       parts.push(
         text(barX - 10, y + 13, s.name, { anchor: 'end', baseline: 'middle', size: 15 }),
-        rect(barX, y, w, 26, { width: 1.5, fill: ACCENT, fillOpacity: SOFT * 2.4 }),
+        // ACCENT only for the one source a question names; classifying the others is part of the question.
+        rect(barX, y, w, 26, ask === 'single' && i === pick ? { width: 1.5, fill: ACCENT, fillOpacity: SOFT * 3 } : { width: 1.5, fill: INK, fillOpacity: SOFT * 1.2 }),
         text(barX + w + 8, y + 13, String(values[i]), { baseline: 'middle', size: 15 }),
       );
     });

@@ -43,13 +43,39 @@ describe('dihybrid Punnett square', () => {
   });
 
   it('answers agree with the cells in the figure', () => {
-    for (const { d } of drafts('biology-dihybrid-punnett')) {
+    const kinds = new Set<string>();
+    for (const { d } of drafts('biology-dihybrid-punnett', 400)) {
       const rows = /Rows of offspring genotypes: ([^.]*)\./.exec(d.alt)![1]!.split('; ').map((r) => r.split(', '));
       const cells = rows.flat();
       expect(cells.length).toBe(16);
-      const m = /the genotype (\w+)\?/.exec(d.stem);
-      if (m) expect(d.answer).toBe(fractionText(cells.filter((c) => c === m[1]).length, 16));
+      const genes = [...d.alt.matchAll(/(seed shape|seed color|flower color|stem length|pod color), with \w for (\w+) dominant to \w for (\w+)/g)].map((m) => ({
+        organ: { 'seed shape': 'seeds', 'seed color': 'seeds', 'flower color': 'flowers', 'stem length': 'stems', 'pod color': 'pods' }[m[1]!]!,
+        dom: m[2]!,
+        rec: m[3]!,
+      }));
+      expect(genes.length).toBe(2);
+      const dom = (c: string, i: number) => c[2 * i] === c[2 * i]!.toUpperCase();
+      const het = (c: string, i: number) => c[2 * i] !== c[2 * i + 1];
+      let count: number | null = null;
+      const geno = /the genotype (\w+)\?/.exec(d.stem);
+      if (geno) [count] = [cells.filter((c) => c === geno[1]).length, kinds.add('genotype')];
+      else if (/heterozygous for both/.test(d.stem)) [count] = [cells.filter((c) => het(c, 0) && het(c, 1)).length, kinds.add('het')];
+      else if (/homozygous for both/.test(d.stem)) [count] = [cells.filter((c) => !het(c, 0) && !het(c, 1)).length, kinds.add('hom')];
+      else {
+        const [g1, g2] = genes as [(typeof genes)[0], (typeof genes)[0]];
+        for (const d1 of [true, false]) {
+          for (const d2 of [true, false]) {
+            const w1 = d1 ? g1.dom : g1.rec;
+            const w2 = d2 ? g2.dom : g2.rec;
+            const phrase = g1.organ === g2.organ ? `${w1}, ${w2} ${g1.organ}` : `${w1} ${g1.organ} and ${w2} ${g2.organ}`;
+            if (d.stem.includes(`have ${phrase}?`)) [count] = [cells.filter((c) => dom(c, 0) === d1 && dom(c, 1) === d2).length, kinds.add('phenotype')];
+          }
+        }
+      }
+      expect(count).not.toBeNull();
+      expect(d.answer).toBe(fractionText(count!, 16));
     }
+    expect([...kinds].sort()).toEqual(['genotype', 'het', 'hom', 'phenotype']);
   });
 });
 
@@ -76,7 +102,7 @@ describe('food web', () => {
       expect(rows.length).toBe(4);
       const level = new Map<string, number>();
       rows.forEach((r, i) => r.forEach((n) => level.set(n, i)));
-      const arrows = /Arrows run from (.*?)\.( The|$)/.exec(d.alt)![1]!.split(', ').map((a) => a.split(' to '));
+      const arrows = /Arrows run from (.*?)\.( The|$)/.exec(d.alt)![1]!.split(', ').map((a) => a.toLowerCase().split(' to '));
       for (const [food, eater] of arrows) expect(level.get(eater!)! - level.get(food!)!).toBe(1);
       // Every consumer has food, and everything below the top row is eaten.
       for (const [n, lv] of level) {
@@ -89,15 +115,18 @@ describe('food web', () => {
 
 describe('allele frequency', () => {
   it('computes allele frequencies from genotype counts', () => {
+    let checked = 0;
     for (const { d } of drafts('biology-allele-frequency')) {
       const m = /genotype: (\w)\w, ([\d,]+); \w\w, ([\d,]+); \w\w, ([\d,]+)\./.exec(d.alt);
       if (!m) continue;
+      checked++;
       const [AA, Aa, aa] = [m[2], m[3], m[4]].map((x) => Number(x!.replace(/,/g, '')));
       const N = AA! + Aa! + aa!;
       const dominant = new RegExp(`frequency of the ${m[1]} allele`).test(d.stem);
       const nA = 2 * AA! + Aa!;
       expect(d.answer).toBe(fractionText(dominant ? nA : 2 * N - nA, 2 * N));
     }
+    expect(checked).toBeGreaterThan(50);
   });
 
   it('accepts the decimal form of a frequency', () => {
@@ -113,9 +142,11 @@ describe('allele frequency', () => {
   });
 
   it('applies Hardy–Weinberg to phenotype counts', () => {
+    let checked = 0;
     for (const { d } of drafts('biology-allele-frequency', 400)) {
       const m = /two bars: ([\d,]+) individuals with the dominant phenotype and ([\d,]+) with the recessive/.exec(d.alt);
       if (!m) continue;
+      checked++;
       const dom = Number(m[1]!.replace(/,/g, ''));
       const rec = Number(m[2]!.replace(/,/g, ''));
       const N = dom + rec;
@@ -128,6 +159,7 @@ describe('allele frequency', () => {
       else if (/homozygous dominant/.test(d.stem)) expect(value).toBeCloseTo(p * p, 9);
       else expect(value).toBeCloseTo(2 * p * q * N, 6);
     }
+    expect(checked).toBeGreaterThan(50);
   });
 });
 
@@ -158,23 +190,110 @@ describe('transcription', () => {
 
 describe('cell cycle', () => {
   it('answers agree with the phase lengths in the pie chart', () => {
-    for (const { d } of drafts('biology-cell-cycle')) {
+    let checked = 0;
+    for (const { d } of drafts('biology-cell-cycle', 300)) {
       const hours = [...d.alt.matchAll(/(G1|S|G2|M) (\d+) (hours|percent)/g)].map((m) => Number(m[2]));
       const percent = d.alt.includes('percent');
       if (percent) {
         const total = Number(/lasts (\d+) hours/.exec(d.stem)![1]);
         const phase = /spend in (?:the )?(G1|S|G2|M)/.exec(d.stem)![1]!;
         expect(Number(d.answer)).toBe((hours[['G1', 'S', 'G2', 'M'].indexOf(phase)]! * total) / 100);
+        checked++;
         continue;
       }
       const total = hours.reduce((a, b) => a + b, 0);
-      if (/interphase/.test(d.stem)) expect(d.answer).toBe(fractionText(total - hours[3]!, total));
+      const phaseOf = (name: string) => hours[['G1', 'S', 'G2', 'M'].indexOf(name)]!;
       const cells = /how many of ([\d,]+) cells .* in (?:the )?(G1|S|G2|M)/.exec(d.stem);
-      if (cells) {
-        const n = Number(cells[1]!.replace(/,/g, ''));
-        const h = hours[['G1', 'S', 'G2', 'M'].indexOf(cells[2]!)]!;
-        expect(Number(d.answer.replace(/,/g, ''))).toBe((n * h) / total);
+      const frac = /spend in (?:the )?(G1|S|G2|M)\b/.exec(d.stem);
+      if (/interphase/.test(d.stem)) expect(d.answer).toBe(fractionText(total - hours[3]!, total));
+      else if (cells) expect(Number(d.answer.replace(/,/g, ''))).toBe((Number(cells[1]!.replace(/,/g, '')) * phaseOf(cells[2]!)) / total);
+      else expect(d.answer).toBe(fractionText(phaseOf(frac![1]!), total));
+      checked++;
+    }
+    expect(checked).toBe(300);
+  });
+});
+
+describe('pedigree', () => {
+  type Mode = 'AD' | 'AR' | 'XD' | 'XR';
+  interface Ind {
+    male: boolean;
+    affected: boolean;
+    father?: number;
+    mother?: number;
+  }
+
+  /** Genotypes as the number of trait alleles (a male's X-linked genotype is 0 or 1). */
+  function solutions(mode: Mode, people: Ind[], limit = 1000): number[][] {
+    const xLinked = mode === 'XD' || mode === 'XR';
+    const options = (p: Ind) => (xLinked && p.male ? [0, 1] : [0, 1, 2]);
+    const shows = (p: Ind, g: number) =>
+      mode === 'AD' || mode === 'XD' ? g >= 1 : mode === 'AR' ? g === 2 : p.male ? g === 1 : g === 2;
+    const passes = (g: number) => (g === 0 ? [0] : g === 1 ? [0, 1] : [1]);
+    const fromParents = (p: Ind, g: number, gf: number, gm: number) => {
+      if (!xLinked) return passes(gf).some((a) => passes(gm).some((b) => a + b === g));
+      return p.male ? passes(gm).includes(g) : passes(gm).some((b) => gf + b === g);
+    };
+    const out: number[][] = [];
+    const g: number[] = [];
+    const dfs = (i: number) => {
+      if (out.length >= limit) return;
+      if (i === people.length) {
+        out.push([...g]);
+        return;
       }
+      const p = people[i]!;
+      for (const v of options(p)) {
+        if (shows(p, v) !== p.affected) continue;
+        if (p.father !== undefined && !fromParents(p, v, g[p.father]!, g[p.mother!]!)) continue;
+        g[i] = v;
+        dfs(i + 1);
+      }
+    };
+    dfs(0);
+    return out;
+  }
+
+  /** Read the pedigree back from its alt text: generation I, generation II (with the spouse), generation III. */
+  function parse(alt: string): { people: Ind[]; link: number; spouse: number } {
+    const section = (name: string) => alt.slice(alt.indexOf(`Generation ${name}`)).split('Generation ')[1]!;
+    const persons = (s: string) => [...s.matchAll(/(\d+), (affected|unaffected) (male|female)/g)].map((m) => ({ affected: m[2] === 'affected', male: m[3] === 'male' }));
+    const g1 = persons(section('I:'));
+    const g2 = persons(section('II,'));
+    const g3 = persons(section('III,'));
+    const linkNo = Number(/II-(\d+) is married to/.exec(alt)![1]);
+    const people: Ind[] = [];
+    g1.forEach((p) => people.push(p));
+    const father1 = g1.findIndex((p) => p.male);
+    const mother1 = g1.findIndex((p) => !p.male);
+    g2.forEach((p, i) => people.push(i === g2.length - 1 ? p : { ...p, father: father1, mother: mother1 }));
+    const link = 2 + linkNo - 1;
+    const spouse = 2 + g2.length - 1;
+    const [f, m] = people[link]!.male ? [link, spouse] : [spouse, link];
+    g3.forEach((p) => people.push({ ...p, father: f, mother: m }));
+    return { people, link, spouse };
+  }
+
+  it('the solver tells the classic patterns apart', () => {
+    // Two unaffected parents with an affected daughter: only autosomal recessive.
+    const ar: Ind[] = [{ male: true, affected: false }, { male: false, affected: false }, { male: false, affected: true, father: 0, mother: 1 }];
+    expect((['AD', 'AR', 'XD', 'XR'] as Mode[]).filter((m) => solutions(m, ar).length > 0)).toEqual(['AR']);
+    // Two affected parents with an unaffected daughter: only autosomal dominant.
+    const ad: Ind[] = [{ male: true, affected: true }, { male: false, affected: true }, { male: false, affected: false, father: 0, mother: 1 }];
+    expect((['AD', 'AR', 'XD', 'XR'] as Mode[]).filter((m) => solutions(m, ad).length > 0)).toEqual(['AD']);
+  });
+
+  it('every pedigree fits exactly one mode of inheritance, and the couple asked about has known genotypes', () => {
+    for (const { d } of drafts('biology-pedigree', 300)) {
+      const { people, link, spouse } = parse(d.alt);
+      const fits = (['AD', 'AR', 'XD', 'XR'] as Mode[]).filter((m) => solutions(m, people).length > 0);
+      expect(fits.length).toBe(1);
+      const mode = fits[0]!;
+      if (d.format === 'multiple_choice') expect(d.answer).toBe(mode === 'AD' ? 'Autosomal dominant' : 'Autosomal recessive');
+      else expect(d.stem).toContain(mode === 'AD' ? 'autosomal dominant' : 'autosomal recessive');
+      // Both members of the couple are heterozygous in every genotype assignment that fits.
+      const couples = new Set(solutions(mode, people).map((g) => `${g[link]}${g[spouse]}`));
+      expect([...couples]).toEqual(['11']);
     }
   });
 });

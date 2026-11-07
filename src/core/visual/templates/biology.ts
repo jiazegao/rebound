@@ -3,9 +3,10 @@
  * Each template draws a figure (svg.ts) and asks a bonus question about it with an exact answer.
  * See src/core/visual/README.md for the rules every template follows.
  */
+import { multipleChoice } from '../choices';
 import { decimalText, fractionText, gcd } from '../exact';
 import type { Rng } from '../rng';
-import { ACCENT, INK, PAPER, SOFT, arrow, figure, line, path, rect, num, text } from '../svg';
+import { ACCENT, INK, PAPER, SOFT, arrow, circle, figure, line, path, rect, num, text } from '../svg';
 import type { VisualTemplate } from '../types';
 import { commas, textWidth } from './earth_bio_kit';
 
@@ -62,10 +63,19 @@ const dihybridPunnett: VisualTemplate = {
     "A completed 4 × 4 Punnett square for two pea-plant genes, with each parent's gametes and a key to the alleles; asks for the fraction of offspring with a given genotype or phenotype.",
   make(rng) {
     const [ga, gb] = rng.sample(PEA_GENES, 2) as [PeaGene, PeaGene];
+    // Dominant-allele counts for [parent 1 gene a, parent 1 gene b, parent 2 gene a, parent 2 gene b]: mostly the
+    // classic crosses (both parents dihybrid, or a dihybrid and a single heterozygote), sometimes anything else.
     const pickCount = () => (rng.chance(0.6) ? 1 : rng.chance(0.5) ? 2 : 0);
     let counts: number[];
-    do counts = [pickCount(), pickCount(), pickCount(), pickCount()];
-    while (counts.filter((c) => c === 1).length < 2);
+    const style = rng.next();
+    if (style < 0.4) counts = [1, 1, 1, 1];
+    else if (style < 0.75) {
+      const other = rng.chance(0.5) ? [1, rng.pick([0, 2])] : [rng.pick([0, 2]), 1];
+      counts = rng.chance(0.5) ? [1, 1, ...other] : [...other, 1, 1];
+    } else {
+      do counts = [pickCount(), pickCount(), pickCount(), pickCount()];
+      while (counts.filter((c) => c === 1).length < 2);
+    }
     const top = gametes(alleles(ga, counts[0]!), alleles(gb, counts[1]!));
     const side = gametes(alleles(ga, counts[2]!), alleles(gb, counts[3]!));
     const cells = side.map((y) => top.map((x) => offspring(x, y)));
@@ -87,8 +97,10 @@ const dihybridPunnett: VisualTemplate = {
     const het = (g: string, i: number) => g[2 * i] !== g[2 * i + 1];
     questions.push({ ask: 'be heterozygous for both genes', count: all.filter((g) => het(g, 0) && het(g, 1)).length });
     questions.push({ ask: 'be homozygous for both genes', count: all.filter((g) => !het(g, 0) && !het(g, 1)).length });
+    // Pick the answer first, evenly among the fractions this square offers, so 1/4 does not dominate.
     const usable = questions.filter((q) => q.count > 0 && q.count < 16);
-    const q = rng.pick(usable);
+    const target = rng.pick([...new Set(usable.map((x) => x.count))].sort((a, b) => a - b));
+    const q = rng.pick(usable.filter((x) => x.count === target));
 
     const cw = 84;
     const ch = 38;
@@ -138,6 +150,9 @@ interface Ecosystem {
 
 const o = (name: string, eats: string[] = []): Organism => ({ name, eats });
 
+/** An organism's name inside a sentence: "the hawk", but "the Weddell seal". */
+const common = (name: string) => (name.startsWith('Weddell') ? name : name.toLowerCase());
+
 /** Each organism has one trophic level, and eats only organisms one level down, so every level is unambiguous. */
 const ECOSYSTEMS: Ecosystem[] = [
   {
@@ -158,13 +173,30 @@ const ECOSYSTEMS: Ecosystem[] = [
   },
   {
     levels: [
-      [o('Phytoplankton'), o('Kelp')],
-      [o('Zooplankton', ['Phytoplankton']), o('Krill', ['Phytoplankton']), o('Sea urchin', ['Kelp']), o('Abalone', ['Kelp'])],
-      [o('Herring', ['Zooplankton', 'Krill']), o('Squid', ['Krill', 'Zooplankton']), o('Sea otter', ['Sea urchin', 'Abalone'])],
-      [o('Seal', ['Herring', 'Squid']), o('Tuna', ['Herring', 'Squid']), o('Bald eagle', ['Herring', 'Sea otter'])],
+      [o('Phytoplankton'), o('Ice algae')],
+      [o('Krill', ['Phytoplankton', 'Ice algae']), o('Copepods', ['Phytoplankton', 'Ice algae'])],
+      [o('Penguin', ['Krill']), o('Squid', ['Krill', 'Copepods']), o('Silverfish', ['Copepods', 'Krill']), o('Crabeater seal', ['Krill'])],
+      [o('Leopard seal', ['Penguin', 'Crabeater seal', 'Silverfish']), o('Elephant seal', ['Squid', 'Silverfish']), o('Weddell seal', ['Silverfish', 'Squid'])],
     ],
   },
 ];
+
+/** True when every organism is joined to every other through the links (ignoring their direction). */
+function connected(web: FoodWeb): boolean {
+  const names = web.levels.flat();
+  const seen = new Set([names[0]!]);
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const [a, b] of web.links) {
+      if (seen.has(a) !== seen.has(b)) {
+        seen.add(a);
+        seen.add(b);
+        grew = true;
+      }
+    }
+  }
+  return seen.size === names.length;
+}
 
 export interface FoodWeb {
   /** levels[0] producers … levels[3] tertiary consumers. */
@@ -200,7 +232,8 @@ function buildWeb(rng: Rng): FoodWeb {
     for (let lv = 1; lv <= 3; lv++) {
       for (const eater of chosen[lv]!) for (const food of chosen[lv - 1]!) if (eater.eats.includes(food.name)) links.push([food.name, eater.name]);
     }
-    return { levels: chosen.map((l) => l.map((x) => x.name)), links };
+    const web = { levels: chosen.map((l) => l.map((x) => x.name)), links };
+    if (connected(web)) return web;
   }
 }
 
@@ -227,11 +260,12 @@ const foodWeb: VisualTemplate = {
     let answer: string;
     let highlight: string | null = null;
     const intro = 'In the food web shown, arrows point in the direction of energy flow.';
-    if (kind === 'chains') {
-      const top = rng.pick(web.levels[3]!);
+    const tops = web.levels[3]!.filter((t) => chainsTo(web, t) >= 2);
+    if (kind === 'chains' && tops.length > 0) {
+      const top = rng.pick(tops);
       answer = String(chainsTo(web, top));
-      stem = `${intro} How many different food chains in this web begin with a producer and end with the ${top.toLowerCase()}?`;
-    } else if (kind === 'count') {
+      stem = `${intro} How many different food chains in this web begin with a producer and end with the ${common(top)}?`;
+    } else if (kind !== 'energy') {
       const which = rng.pick([1, 2, -1]);
       const names = ['producers', 'primary consumers', 'secondary consumers'];
       const n = which === -1 ? web.levels[1]!.length + web.levels[2]!.length + web.levels[3]!.length : web.levels[which]!.length;
@@ -296,13 +330,13 @@ const foodWeb: VisualTemplate = {
       );
       parts.push(text(p.x, p.y, n, { anchor: 'middle', baseline: 'middle', size: 15, halo: false, weight: hl ? 'bold' : 'normal' }));
     }
-    const arrows = web.links.map(([f, e]) => `${f.toLowerCase()} to ${e.toLowerCase()}`).join(', ');
+    const arrows = web.links.map(([f, e]) => `${common(f)} to ${common(e)}`).join(', ');
     return {
       stem,
       format: 'short_answer',
       answer,
       svg: figure(480, 290, ...parts),
-      alt: `A food web of ${levelOf.size} organisms: ${order.map((r) => r.join(', ')).join('; ')} (bottom row to top row). Arrows run from ${arrows}.${highlight ? ` The ${highlight.toLowerCase()} is highlighted.` : ''}`,
+      alt: `A food web of ${levelOf.size} organisms: ${order.map((r) => r.join(', ')).join('; ')} (bottom row to top row). Arrows run from ${arrows}.${highlight ? ` The box for ${common(highlight)} is highlighted.` : ''}`,
       topic: 'biology.ecology',
     };
   },
@@ -470,11 +504,11 @@ const transcription: VisualTemplate = {
     let alt: string;
     const ends = (seq: string, left5: boolean) => `${left5 ? '5′' : '3′'}-${seq}-${left5 ? '3′' : '5′'}`;
     if (!double) {
-      strand(templateShown, 104, templateLeft5, true, 'Template strand', true);
+      strand(templateShown, 116, templateLeft5, true, 'Template strand', true);
       alt = `One DNA strand, labeled template strand, reading left to right ${ends(templateShown, templateLeft5)}.`;
     } else {
-      const yTop = 82;
-      const yBottom = 152;
+      const yTop = 76;
+      const yBottom = 146;
       const topSeq = templateOnTop ? templateShown : codingShown;
       const bottomSeq = templateOnTop ? codingShown : templateShown;
       const topLeft5 = templateOnTop ? templateLeft5 : !templateLeft5;
@@ -500,6 +534,8 @@ const transcription: VisualTemplate = {
 /* ---------------- the cell cycle ---------------- */
 
 const PHASE_NAMES = ['G1', 'S', 'G2', 'M'];
+/** How a phase reads in a stem: "G1", "the S phase", "G2", "the M phase". */
+const PHASE_WORDS = ['G1', 'the S phase', 'G2', 'the M phase'];
 
 const cellCycle: VisualTemplate = {
   id: 'biology-cell-cycle',
@@ -535,7 +571,7 @@ const cellCycle: VisualTemplate = {
     if (percentMode) {
       const i = rng.int(0, 3);
       answer = String(hours[i]);
-      stem = `The pie chart shows the percentage of the cell cycle spent in each phase for a cell type whose cycle lasts ${total} hours. How many hours does the cell spend in ${PHASE_NAMES[i] === 'M' ? 'the M phase' : `${PHASE_NAMES[i]}`}?`;
+      stem = `The pie chart shows the percentage of the cell cycle spent in each phase for a cell type whose cycle lasts ${total} hours. How many hours does the cell spend in ${PHASE_WORDS[i]}?`;
     } else {
       const kind = rng.pick(['fraction', 'interphase', 'cells'] as const);
       if (kind === 'interphase') {
@@ -544,14 +580,14 @@ const cellCycle: VisualTemplate = {
       } else if (kind === 'fraction') {
         const i = rng.int(0, 3);
         answer = fractionText(hours[i]!, total);
-        stem = `The pie chart shows how many hours a dividing cell spends in each phase of its cell cycle. What fraction of the cycle does the cell spend in ${i === 3 ? 'the M phase' : i === 1 ? 'the S phase' : PHASE_NAMES[i]}?`;
+        stem = `The pie chart shows how many hours a dividing cell spends in each phase of its cell cycle. What fraction of the cycle does the cell spend in ${PHASE_WORDS[i]}?`;
       } else {
         const i = rng.int(0, 3);
         const unit = total / gcd(total, hours[i]!);
         const sizes = [120, 150, 180, 200, 240, 300, 360, 400, 480, 500, 600, 720, 800, 900, 1000, 1200].filter((x) => x % unit === 0);
         const n = sizes.length ? rng.pick(sizes) : unit * rng.int(10, 20);
         answer = commas((n * hours[i]!) / total);
-        stem = `The pie chart shows how many hours the cells of a culture spend in each phase of their cell cycle. If the number of cells in each phase is proportional to the time spent in it, how many of ${commas(n)} cells would you expect to be in ${i === 3 ? 'the M phase' : i === 1 ? 'the S phase' : PHASE_NAMES[i]}?`;
+        stem = `The pie chart shows how many hours the cells of a culture spend in each phase of their cell cycle. If the number of cells in each phase is proportional to the time spent in it, how many of ${commas(n)} cells would you expect to be in ${PHASE_WORDS[i]}?`;
       }
     }
 
@@ -599,5 +635,168 @@ const cellCycle: VisualTemplate = {
   },
 };
 
-export const BIOLOGY_TEMPLATES: VisualTemplate[] = [dihybridPunnett, foodWeb, alleleFrequency, transcription, cellCycle];
+/* ---------------- a pedigree ---------------- */
+
+type Mode = 'AD' | 'AR';
+type Genotype = 'AA' | 'Aa' | 'aa';
+
+interface Person {
+  id: string;
+  male: boolean;
+  genotype: Genotype;
+  x: number;
+  y: number;
+}
+
+const MODE_NAMES: Record<Mode, string> = { AD: 'Autosomal dominant', AR: 'Autosomal recessive' };
+
+export function affected(mode: Mode, g: Genotype): boolean {
+  return mode === 'AD' ? g !== 'aa' : g === 'aa';
+}
+
+function child(rng: Rng, p: Genotype, q: Genotype): Genotype {
+  const n = Number(p[rng.int(0, 1)] === 'A') + Number(q[rng.int(0, 1)] === 'A');
+  return n === 2 ? 'AA' : n === 1 ? 'Aa' : 'aa';
+}
+
+/**
+ * A three-generation pedigree whose mode of inheritance is fixed by one family: the couple II-k × II-(k+1).
+ * Autosomal recessive: both are unaffected carriers with an affected daughter (rules out both dominant modes,
+ * and X-linked recessive, which needs the father of an affected daughter to be affected).
+ * Autosomal dominant: both are affected heterozygotes with an unaffected daughter (rules out both recessive
+ * modes, and X-linked dominant, in which an affected father passes the trait to every daughter).
+ */
+function buildPedigree(rng: Rng, mode: Mode): { people: Person[][]; link: Person; spouse: Person } {
+  const parentsOptions: Array<[Genotype, Genotype]> =
+    mode === 'AR'
+      ? [['Aa', 'AA'], ['AA', 'Aa'], ['Aa', 'Aa'], ['aa', 'AA'], ['AA', 'aa'], ['aa', 'Aa'], ['Aa', 'aa']]
+      : [['Aa', 'aa'], ['aa', 'Aa'], ['Aa', 'Aa']];
+  const [fatherG, motherG] = rng.pick(parentsOptions);
+  const nSibs = rng.int(2, 3);
+  const linkMale = rng.chance(0.5);
+  const sibs: Array<{ male: boolean; genotype: Genotype }> = [];
+  for (let i = 0; i < nSibs - 1; i++) sibs.push({ male: rng.chance(0.5), genotype: child(rng, fatherG, motherG) });
+  const nKids = rng.int(3, 4);
+  let kids: Array<{ male: boolean; genotype: Genotype }>;
+  for (;;) {
+    kids = Array.from({ length: nKids }, () => ({ male: rng.chance(0.5), genotype: child(rng, 'Aa', 'Aa') }));
+    const key = kids.some((k) => !k.male && affected(mode, k.genotype) === (mode === 'AR'));
+    const both = kids.some((k) => affected(mode, k.genotype)) && kids.some((k) => !affected(mode, k.genotype));
+    if (key && both) break;
+  }
+  const gx = 72;
+  const baseX = 262 - nSibs * (gx / 2);
+  const y = [48, 140, 232];
+  const gen2: Person[] = [];
+  sibs.forEach((sb, i) => gen2.push({ id: '', male: sb.male, genotype: sb.genotype, x: baseX + i * gx, y: y[1]! }));
+  const link: Person = { id: '', male: linkMale, genotype: 'Aa', x: baseX + (nSibs - 1) * gx, y: y[1]! };
+  const spouse: Person = { id: '', male: !linkMale, genotype: 'Aa', x: link.x + gx, y: y[1]! };
+  gen2.push(link, spouse);
+  const mid1 = (baseX + link.x) / 2;
+  const gen1: Person[] = [
+    { id: '', male: true, genotype: fatherG, x: mid1 - 36, y: y[0]! },
+    { id: '', male: false, genotype: motherG, x: mid1 + 36, y: y[0]! },
+  ];
+  const mid2 = (link.x + spouse.x) / 2;
+  const gen3: Person[] = kids.map((k, j) => ({ id: '', male: k.male, genotype: k.genotype, x: mid2 + (j - (nKids - 1) / 2) * 64, y: y[2]! }));
+  const people = [gen1, gen2, gen3];
+  people.forEach((g, i) => g.forEach((p, j) => (p.id = `${['I', 'II', 'III'][i]}-${j + 1}`)));
+  return { people, link, spouse };
+}
+
+const pedigree: VisualTemplate = {
+  id: 'biology-pedigree',
+  subject: 'biology',
+  title: 'Pedigree analysis',
+  description:
+    'A three-generation pedigree of a single-gene trait in which one family fixes the mode of inheritance; asks for the mode (autosomal dominant or recessive), or a probability for a child or for a marked individual.',
+  make(rng) {
+    const mode: Mode = rng.chance(0.5) ? 'AD' : 'AR';
+    const { people, link, spouse } = buildPedigree(rng, mode);
+    const kids = people[2]!;
+    const ask = rng.pick(['mode', 'mode', 'next', 'sex', 'kid'] as const);
+    let highlight: Person | null = null;
+
+    const S = 28;
+    const parts: string[] = [];
+    const couple = (a: Person, b: Person) => parts.push(line(a.x, a.y, b.x, b.y, { width: 2 }));
+    const descent = (a: Person, b: Person, children: Person[]) => {
+      const mx = (a.x + b.x) / 2;
+      const sy = (a.y + children[0]!.y) / 2;
+      parts.push(line(mx, a.y, mx, sy, { width: 2 }));
+      parts.push(line(Math.min(...children.map((c) => c.x)), sy, Math.max(...children.map((c) => c.x)), sy, { width: 2 }));
+      for (const c of children) parts.push(line(c.x, sy, c.x, c.y - S / 2, { width: 2 }));
+    };
+    const gen1 = people[0]!;
+    const sibs = people[1]!.filter((p) => p !== spouse);
+    couple(gen1[0]!, gen1[1]!);
+    descent(gen1[0]!, gen1[1]!, sibs);
+    couple(link, spouse);
+    descent(link, spouse, kids);
+
+    let stem: string;
+    let format: 'short_answer' | 'multiple_choice' = 'short_answer';
+    let answer: string;
+    let choices: ReturnType<typeof multipleChoice> | null = null;
+    const shading = 'In the pedigree, shaded symbols represent individuals who show a trait controlled by a single gene, with complete penetrance.';
+    const named = `In the pedigree, shaded symbols represent individuals who show an ${MODE_NAMES[mode].toLowerCase()} trait.`;
+    if (ask === 'mode') {
+      format = 'multiple_choice';
+      answer = MODE_NAMES[mode];
+      choices = multipleChoice(answer, ['Autosomal dominant', 'Autosomal recessive', 'X-linked dominant', 'X-linked recessive'].filter((x) => x !== answer), rng);
+      stem = `${shading} Which mode of inheritance does the pedigree show?`;
+    } else if (ask === 'next') {
+      const affectedNext = rng.chance(0.5);
+      const p = mode === 'AR' ? (affectedNext ? [1, 4] : [3, 4]) : affectedNext ? [3, 4] : [1, 4];
+      answer = fractionText(p[0]!, p[1]!);
+      stem = `${named} If ${link.id} and ${spouse.id} have another child, what is the probability that the child will ${affectedNext ? 'show' : 'not show'} the trait?`;
+    } else if (ask === 'sex') {
+      const son = rng.chance(0.5);
+      answer = mode === 'AR' ? '1/8' : '3/8';
+      stem = `${named} If ${link.id} and ${spouse.id} have another child, what is the probability that the child will be ${son ? 'a son' : 'a daughter'} who shows the trait?`;
+    } else {
+      // AR: an unaffected child of two carriers is a carrier with probability 2/3.
+      // AD: an affected child of two heterozygotes is homozygous with probability 1/3.
+      const pool = kids.filter((k) => affected(mode, k.genotype) === (mode === 'AD'));
+      highlight = rng.pick(pool);
+      answer = mode === 'AR' ? '2/3' : '1/3';
+      stem =
+        mode === 'AR'
+          ? `${named} What is the probability that ${highlight.id}, marked in the pedigree, is a carrier of the trait?`
+          : `${named} What is the probability that ${highlight.id}, marked in the pedigree, is homozygous for the allele that causes the trait?`;
+    }
+
+    for (const gen of people) {
+      for (const p of gen) {
+        const shaded = affected(mode, p.genotype);
+        const style = { stroke: INK, width: 2, fill: shaded ? INK : PAPER };
+        parts.push(p.male ? rect(p.x - S / 2, p.y - S / 2, S, S, style) : circle(p.x, p.y, S / 2, style));
+        if (p === highlight) {
+          parts.push(p.male ? rect(p.x - S / 2 - 5, p.y - S / 2 - 5, S + 10, S + 10, { stroke: ACCENT, width: 3 }) : circle(p.x, p.y, S / 2 + 5, { stroke: ACCENT, width: 3 }));
+        }
+        parts.push(text(p.x, p.y + S / 2 + 17, p.id.split('-')[1]!, { anchor: 'middle', size: 13 }));
+      }
+    }
+    ['I', 'II', 'III'].forEach((g, i) => parts.push(text(22, people[i]![0]!.y, g, { anchor: 'middle', baseline: 'middle', size: 16, weight: 'bold' })));
+
+    const describe = (p: Person) => `${p.id.split('-')[1]}, ${affected(mode, p.genotype) ? 'affected' : 'unaffected'} ${p.male ? 'male' : 'female'}`;
+    const alt =
+      'A pedigree (squares are males, circles are females, shaded symbols are affected). ' +
+      `Generation I: ${gen1.map(describe).join('; ')}, a couple. ` +
+      `Generation II, their children: ${sibs.map(describe).join('; ')}; ${link.id} is married to ${spouse.id.split('-')[1]}, ${affected(mode, spouse.genotype) ? 'affected' : 'unaffected'} ${spouse.male ? 'male' : 'female'} from outside the family. ` +
+      `Generation III, children of ${link.id} and ${spouse.id}: ${kids.map(describe).join('; ')}.` +
+      (highlight ? ` ${highlight.id} is marked.` : '');
+    return {
+      stem,
+      format,
+      ...(choices ? { choices: choices.choices, answerLetter: choices.answerLetter } : {}),
+      answer,
+      svg: figure(480, 270, ...parts),
+      alt,
+      topic: 'biology.genetics',
+    };
+  },
+};
+
+export const BIOLOGY_TEMPLATES: VisualTemplate[] = [dihybridPunnett, foodWeb, alleleFrequency, transcription, cellCycle, pedigree];
 
