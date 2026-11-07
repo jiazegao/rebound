@@ -884,6 +884,16 @@ details[open] > summary {
 .hbar-label {
   font-size: 0.93rem;
 }
+.concept-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.3rem;
+}
+.concept-card h3 {
+  font-size: 1rem;
+}
 .hero-figure {
   font-size: 3rem;
   font-weight: 700;

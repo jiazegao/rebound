@@ -33,7 +33,7 @@ export interface OfflineStatus {
 }
 
 function dataUrls(files: string[]): string[] {
-  return ['index.json', 'catalog.json', ...files].map((f) => new URL(`${DATA_BASE}${f}`, document.baseURI).href);
+  return ['index.json', 'catalog.json', 'concepts.json', ...files].map((f) => new URL(`${DATA_BASE}${f}`, document.baseURI).href);
 }
 
 export async function offlineStatus(): Promise<OfflineStatus> {

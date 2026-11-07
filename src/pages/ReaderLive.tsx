@@ -17,7 +17,8 @@ import {
 import { getPreset } from '../core/rules/presets';
 import type { Question, Round } from '../core/schema';
 import { clockText } from '../lib/format';
-import { findRound, useSet } from '../lib/library';
+import { useAsync } from '../lib/library';
+import { loadGameRound } from '../lib/packets';
 import { href } from '../lib/router';
 import { beep, unlockAudio } from '../lib/sound';
 import { appendEvent, finishGame, markSeen, undoEvent, update, useData, type GameRecord } from '../lib/store';
@@ -607,7 +608,7 @@ function ReaderGame({ game, round }: { game: GameRecord; round: Round }) {
 export function ReaderLive({ gameId }: { gameId: string }) {
   const data = useData();
   const game = data.games.find((g) => g.id === gameId);
-  const set = useSet(game?.packet.setId ?? null);
+  const round = useAsync(game ? `${game.packet.setId}|${game.packet.roundId}` : null, () => loadGameRound(game!.packet));
   if (!game) {
     return (
       <div className="container narrow">
@@ -617,9 +618,7 @@ export function ReaderLive({ gameId }: { gameId: string }) {
       </div>
     );
   }
-  if (set.loading) return <div className="container"><Loading what="Loading the questions" /></div>;
-  if (set.error || !set.data) return <div className="container"><LoadError error={set.error ?? new Error('Set not found')} /></div>;
-  const round = findRound(set.data, game.packet.roundId);
-  if (!round) return <div className="container"><Notice kind="error">This game's round is missing from the library.</Notice></div>;
-  return <ReaderGame game={game} round={round} />;
+  if (round.loading) return <div className="container"><Loading what="Loading the questions" /></div>;
+  if (round.error || !round.data) return <div className="container"><LoadError error={round.error ?? new Error('Round not found')} /></div>;
+  return <ReaderGame game={game} round={round.data} />;
 }

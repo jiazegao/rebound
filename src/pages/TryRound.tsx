@@ -2,13 +2,14 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { AnswerBox, Choices, Concepts, QuestionMeta, RichText } from '../components/QuestionView';
 import { Countdown, LoadError, Loading, Notice, PageHeader, useTicker } from '../components/ui';
 import { Verdict } from '../components/Verdict';
-import { pickDrill, pickMixed, type DrillPick } from '../core/drill';
+import { pickDrill, pickMixed, setIdOf, type DrillPick } from '../core/drill';
 import { judgeAnswer, type JudgeResult } from '../core/judge/judge';
 import { ratingFor } from '../core/mastery';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type Catalog, type CoreSubject, type Question, type QuestionPair, type QuestionSet } from '../core/schema';
 import { topicsForSubject } from '../core/taxonomy';
 import { usePlayerModel } from '../lib/learning';
-import { catalogById, loadCatalog, loadQuestions, loadSetById, setLabel, useCatalog, useIndex } from '../lib/library';
+import { catalogById, loadCatalog, loadConceptIndex, loadQuestions, loadSetById, setLabel, useCatalog, useIndex } from '../lib/library';
+import { topicById } from '../core/taxonomy';
 import { buildReading, lettersPerMinute, readingDurationMs, revealedCount, splitRevealed, type Reading } from '../lib/reading';
 import { href } from '../lib/router';
 import { addAttempt, completePlanItem, markSeen, updateSettings, useData } from '../lib/store';
@@ -95,6 +96,8 @@ interface Settings {
   topic: string;
   /** Also use Energy questions that test this subject. */
   cross: boolean;
+  /** Concept id: drill only questions tagged with it ("" for none). */
+  concept: string;
   count: number;
   wpm: number;
   answerTimer: boolean;
@@ -106,8 +109,7 @@ const COUNTS = [5, 8, 10, 15, 20];
 async function libraryItems(catalog: Catalog, s: Settings, seen: Record<string, number>, rating: (subject: CoreSubject, topic: string) => number): Promise<Item[]> {
   // A few extra, in case some cannot be graded.
   const want = s.count + 3;
-  const picks: DrillPick[] =
-    s.mode === 'mixed'
+  const picks: DrillPick[] = s.mode === 'subject' && s.concept ? await conceptPicks(s.concept, want, seen) : s.mode === 'mixed'
       ? pickMixed(catalog.questions, { count: want, seen, rating: (sub, topic) => rating(sub as CoreSubject, topic) })
       : pickDrill(catalog.questions, {
           subject: s.subject,
@@ -129,6 +131,23 @@ async function libraryItems(catalog: Catalog, s: Settings, seen: Record<string, 
   return items.slice(0, s.count);
 }
 
+/** Questions tagged with a concept, unheard first. A bonus whose toss-up is also picked comes after it, not on its own. */
+async function conceptPicks(conceptId: string, want: number, seen: Record<string, number>): Promise<DrillPick[]> {
+  const ids = (await loadConceptIndex()).concepts[conceptId] ?? [];
+  const fresh = ids.filter((id) => !seen[id]);
+  const pool = shuffle(fresh.length >= want ? fresh : [...fresh, ...shuffle(ids.filter((id) => seen[id]))]);
+  const chosen = pool.slice(0, want);
+  const tossups = new Set(chosen.filter((id) => /-t\d+$/.test(id)));
+  return chosen
+    .filter((id) => !(/-b\d+$/.test(id) && tossups.has(id.replace(/-b(\d+)$/, '-t$1'))))
+    .map((id) => ({ questionId: id, setId: setIdOf(id), bonusOnly: /-b\d+$/.test(id) }));
+}
+
+function conceptName(id: string): string | null {
+  const topic = topicById(id.split('.').slice(0, 2).join('.'));
+  return topic?.concepts.find((c) => c.id === id)?.name ?? null;
+}
+
 function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Settings) => void; initial: Partial<Settings>; autoStart: boolean }) {
   const data = useData();
   const index = useIndex();
@@ -140,6 +159,7 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
     subject: 'biology',
     topic: '',
     cross: false,
+    concept: '',
     count: 10,
     wpm: data.settings.readingWpm,
     answerTimer: data.settings.answerTimer,
@@ -281,7 +301,18 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
                 </div>
               </>
             )}
-            {s.mode === 'subject' && (
+            {s.mode === 'subject' && s.concept && (
+              <div className="field">
+                <span className="label">Concept</span>
+                <span>
+                  {conceptName(s.concept) ?? s.concept}{' '}
+                  <button className="btn btn-small btn-ghost" onClick={() => setS({ ...s, concept: '' })}>
+                    Clear
+                  </button>
+                </span>
+              </div>
+            )}
+            {s.mode === 'subject' && !s.concept && (
               <>
                 <div className="field">
                   <label htmlFor="subject">Subject</label>
@@ -796,6 +827,7 @@ function initialFromQuery(query: URLSearchParams): Partial<Settings> {
   if (subject && (CORE_SUBJECTS as string[]).includes(subject)) initial.subject = subject as CoreSubject;
   if (query.get('topic')) initial.topic = query.get('topic')!;
   if (query.get('cross') === '1') initial.cross = true;
+  if (query.get('concept')) initial.concept = query.get('concept')!;
   const count = Number(query.get('count'));
   if (count > 0 && count <= 40) initial.count = Math.round(count);
   return initial;

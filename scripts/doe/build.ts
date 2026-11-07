@@ -3,6 +3,7 @@
  *   doe-hs-01.json ... doe-hs-17.json   one QuestionSet per sample set (compact JSON)
  *   index.json                          LibraryIndex of SetSummary entries
  *   catalog.json                        Catalog: one compact row per question, plus questions per topic
+ *   concepts.json                       ConceptIndex: the questions tagged with each concept (for the Learn pages)
  * and writes the validation report scripts/doe/REPORT.md.
  *
  * Every question is tagged with a topic, concepts and (Energy only) a cross-subject by the rule-based
@@ -32,6 +33,7 @@ import {
   SUBJECT_LABELS,
   type Catalog,
   type CatalogRow,
+  type ConceptIndex,
   type CoreSubject,
   type LibraryIndex,
   type Question,
@@ -233,6 +235,7 @@ async function main() {
   const results = new Map<number, RoundResult[]>();
   const resources: ManifestEntry[] = [];
   const catalogRows: CatalogRow[] = [];
+  const conceptQuestions: Record<string, string[]> = {};
 
   for (const n of setNumbers) {
     const setInfo = manifest.sets.find((s) => s.set === n);
@@ -272,6 +275,7 @@ async function main() {
     for (const r of rounds) {
       for (const q of questionsOf(r)) {
         catalogRows.push([q.id, q.subject, q.topic ?? '', q.kind === 'tossup' ? 't' : 'b', r.order, q.crossSubject ?? '']);
+        for (const c of q.concepts ?? []) (conceptQuestions[c] ??= []).push(q.id);
       }
     }
 
@@ -311,12 +315,14 @@ async function main() {
   for (const row of catalogRows) if (row[2]) topicCounts[row[2]] = (topicCounts[row[2]] ?? 0) + 1;
   const catalog: Catalog = { generatedAt: index.generatedAt, questions: catalogRows, topicCounts };
   await writeFile(path.join(opts.out, 'catalog.json'), JSON.stringify(catalog) + '\n');
+  const conceptIndex: ConceptIndex = { generatedAt: index.generatedAt, concepts: conceptQuestions };
+  await writeFile(path.join(opts.out, 'concepts.json'), JSON.stringify(conceptIndex) + '\n');
 
   const topicEval = existsSync(opts.topicEval) ? (JSON.parse(await readFile(opts.topicEval, 'utf8')) as TopicLabel[]) : undefined;
   const report = buildReport(manifest, results, resources, fetchLog, topicEval);
   await writeFile(opts.report, report);
   console.log(
-    `wrote ${summaries.length} set files + index.json + catalog.json (${catalogRows.length} questions) to ${path.relative(root, opts.out)}; ` +
+    `wrote ${summaries.length} set files + index.json + catalog.json (${catalogRows.length} questions) + concepts.json to ${path.relative(root, opts.out)}; ` +
       `report ${path.relative(root, opts.report)} (${Math.round((Date.now() - t0) / 1000)}s)`,
   );
 }

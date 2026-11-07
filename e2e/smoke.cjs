@@ -33,6 +33,7 @@ async function main() {
     await page.route('**/data/doe/index.json', (r) => r.fulfill({ path: path.join(__dirname, 'fixture-index.json'), contentType: 'application/json' }));
     await page.route('**/data/doe/doe-hs-99.json', (r) => r.fulfill({ path: path.join(__dirname, 'fixture-set.json'), contentType: 'application/json' }));
     await page.route('**/data/doe/catalog.json', (r) => r.fulfill({ path: path.join(__dirname, 'fixture-catalog.json'), contentType: 'application/json' }));
+    await page.route('**/data/doe/concepts.json', (r) => r.fulfill({ path: path.join(__dirname, 'fixture-concepts.json'), contentType: 'application/json' }));
   }
 
   let failures = 0;
@@ -254,6 +255,49 @@ async function main() {
       await page.goto(`${BASE}#/team`);
       await see('Lineup:');
       await see("The team's best in every topic");
+    });
+
+    await step('team packets: upload a packet, build a scrimmage, play it in the Reader console', async () => {
+      await page.goto(`${BASE}#/packets`);
+      await page.locator('#up-title').fill('Fixture upload');
+      await page.locator('#up-files').setInputFiles(path.join(__dirname, 'fixture-set.json'));
+      await see('Check before saving');
+      await page.getByRole('button', { name: /Save packet \(4 toss-ups\)/ }).click();
+      await page.getByRole('link', { name: 'Play in the Reader console' }).waitFor();
+      const shown = await page.locator('.question-kind').count();
+      if (shown !== 8) throw new Error(`expected 8 questions in the uploaded packet, got ${shown}`);
+      await page.goto(`${BASE}#/packets`);
+      await page.getByRole('button', { name: 'Build packet' }).click();
+      await page.getByRole('button', { name: 'Save packet' }).click();
+      await page.getByRole('link', { name: 'Play in the Reader console' }).click();
+      await see('A team packet');
+      if (!(await page.locator('input[name=source]').nth(1).isChecked())) throw new Error('the Reader console should start from the packet');
+      await see('4 toss-ups.');
+    });
+
+    await step('concept cards: write one, a second player reviews it, drill its questions', async () => {
+      await page.goto(`${BASE}#/learn`);
+      await page.getByRole('link', { name: 'Circles, arcs and chords' }).click();
+      await see('How NSB asks it');
+      await page.getByRole('button', { name: 'Write the card' }).click();
+      await page.locator('#card-summary').fill('A circle is the set of points at distance r from a center. Area is pi r squared; circumference is 2 pi r.');
+      await page.locator('#card-facts').fill('A = πr²\nC = 2πr');
+      await page.locator('#card-sources').fill('OpenStax Precalculus 2e | https://openstax.org/details/books/precalculus-2e');
+      await page.getByRole('button', { name: 'Save card' }).click();
+      await see('waiting for a second player to review');
+      // Ann wrote it (she is practicing on this device); Bea reviews it.
+      await page.evaluate(() => {
+        location.hash = '#/today';
+      });
+      await page.locator('#player-switch').selectOption({ label: 'Bea' });
+      await page.goBack();
+      await page.getByRole('button', { name: /mark reviewed/ }).click();
+      await see('reviewed by Bea');
+      await shot('12b-concept-card');
+      await page.getByRole('link', { name: 'Drill these' }).click();
+      await see('Bonus 1 of 1');
+      await page.goto(`${BASE}#/today`);
+      await page.locator('#player-switch').selectOption({ label: 'Ann' });
     });
 
     await step("Today shows each player's plan with reasons", async () => {

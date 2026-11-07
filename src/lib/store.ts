@@ -91,6 +91,8 @@ export interface AppData {
   assignments: Assignment[];
   /** Keyed by `${assignmentId}:${playerId}`. */
   completions: Record<string, Completion>;
+  /** playerId → conceptId → when they read that concept card. */
+  conceptReads: Record<string, Record<string, number>>;
   settings: { sound: boolean; readingWpm: number; soloPlayerId: string | null; answerTimer: boolean; dailyMinutes: number };
   lastExportAt: string | null;
 }
@@ -111,6 +113,7 @@ export function emptyData(): AppData {
     conceptCards: {},
     assignments: [],
     completions: {},
+    conceptReads: {},
     settings: { sound: true, readingWpm: 200, soloPlayerId: null, answerTimer: true, dailyMinutes: 30 },
     lastExportAt: null,
   };
@@ -442,6 +445,42 @@ export async function resetAll(): Promise<void> {
   } catch {
     /* storage unavailable: nothing to delete */
   }
+}
+
+/* ---------------- team packets ---------------- */
+
+/** Save a scrimmage or uploaded packet. Returns its id. */
+export function savePacket(packet: Omit<TeamPacket, 'id' | 'createdAt'> & { id?: string }): string {
+  const id = packet.id ?? newId('pk');
+  update((d) => {
+    const existing = d.packets.find((p) => p.id === id);
+    if (existing) Object.assign(existing, packet, { id });
+    else d.packets.unshift({ ...packet, id, createdAt: new Date().toISOString() });
+  });
+  return id;
+}
+
+export function deletePacket(id: string): void {
+  update((d) => {
+    d.packets = d.packets.filter((p) => p.id !== id);
+  });
+}
+
+/* ---------------- concept cards ---------------- */
+
+export function saveConceptCard(card: Omit<ConceptCard, 'updatedAt'>): void {
+  update((d) => {
+    d.conceptCards[card.id] = { ...card, updatedAt: new Date().toISOString() };
+  });
+}
+
+/** A second player confirms the card (the author cannot review their own card). */
+export function reviewConceptCard(id: string, reviewerId: string): void {
+  update((d) => {
+    const card = d.conceptCards[id];
+    if (!card || card.authorId === reviewerId) return;
+    d.conceptCards[id] = { ...card, status: 'reviewed', reviewerId, updatedAt: new Date().toISOString() };
+  });
 }
 
 /* ---------------- lineups ---------------- */

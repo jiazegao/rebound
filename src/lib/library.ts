@@ -1,12 +1,14 @@
 /** Loading question sets. DOE sets ship with the site as static JSON files under data/doe/. */
 import { useEffect, useState } from 'react';
 import { setIdOf } from '../core/drill';
-import type { Catalog, CatalogRow, LibraryIndex, Question, QuestionPair, QuestionSet, Round, SetSummary } from '../core/schema';
+import { getData } from './store';
+import type { Catalog, CatalogRow, ConceptIndex, LibraryIndex, Question, QuestionPair, QuestionSet, Round, SetSummary } from '../core/schema';
 
 const BASE = 'data/doe/';
 
 let indexPromise: Promise<LibraryIndex> | null = null;
 let catalogPromise: Promise<Catalog> | null = null;
+let conceptPromise: Promise<ConceptIndex> | null = null;
 const setPromises = new Map<string, Promise<QuestionSet>>();
 
 async function fetchJson<T>(url: string): Promise<T> {
@@ -51,6 +53,15 @@ export function loadCatalog(): Promise<Catalog> {
   return catalogPromise;
 }
 
+/** The library questions tagged with each concept (for the Learn pages and concept drills). */
+export function loadConceptIndex(): Promise<ConceptIndex> {
+  conceptPromise ??= fetchJson<ConceptIndex>(`${BASE}concepts.json`).catch((err) => {
+    conceptPromise = null;
+    throw err;
+  });
+  return conceptPromise;
+}
+
 const catalogMaps = new WeakMap<Catalog, Map<string, CatalogRow>>();
 
 /** Catalog rows by question id. */
@@ -90,10 +101,16 @@ function locate(set: QuestionSet): Map<string, Located> {
 /** Find questions by id, loading only the sets they come from. Unknown ids are left out. */
 export async function loadQuestions(ids: string[]): Promise<Map<string, Located>> {
   const setIds = [...new Set(ids.map(setIdOf))];
-  const index = await loadIndex();
-  const sets = await Promise.all(
-    setIds.filter((id) => index.sets.some((s) => s.id === id)).map((id) => loadSetById(id)),
-  );
+  // Questions from packets the team uploaded live in the team's own data, not in the library files.
+  const teamSets = getData()
+    .packets.filter((p) => p.kind === 'upload' && p.set && setIds.includes(p.set.id))
+    .map((p) => p.set!);
+  const librarySetIds = setIds.filter((id) => !id.startsWith('team-'));
+  const index = librarySetIds.length ? await loadIndex() : { sets: [] };
+  const sets = [
+    ...teamSets,
+    ...(await Promise.all(librarySetIds.filter((id) => index.sets.some((s) => s.id === id)).map((id) => loadSetById(id)))),
+  ];
   const out = new Map<string, Located>();
   for (const set of sets) {
     const m = locate(set);
@@ -151,6 +168,10 @@ export function useSet(setId: string | null): AsyncState<QuestionSet> {
 
 export function useCatalog(): AsyncState<Catalog> {
   return useAsync('catalog', loadCatalog);
+}
+
+export function useConceptIndex(): AsyncState<ConceptIndex> {
+  return useAsync('concepts', loadConceptIndex);
 }
 
 /** Human label for a set, e.g. "Set 17 · 2022". */

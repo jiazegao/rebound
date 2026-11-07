@@ -162,6 +162,12 @@ export interface Catalog {
   topicCounts: Record<string, number>;
 }
 
+/** The library questions tagged with each concept id (public/data/doe/concepts.json). */
+export interface ConceptIndex {
+  generatedAt: string;
+  concepts: Record<string, string[]>;
+}
+
 /* ------------------------------------------------------------------ */
 /* Team data                                                           */
 /* ------------------------------------------------------------------ */

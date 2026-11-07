@@ -31,6 +31,8 @@ describe('who may write what', () => {
     expect(canWrite(member, 'cards', 'p1:q', null, { playerId: 'p1' })).toBe(false);
     expect(canWrite(member, 'plans', 'p2', {}, null)).toBe(true);
     expect(canWrite(member, 'plans', 'p1', {}, null)).toBe(false);
+    expect(canWrite(member, 'conceptReads', 'p2', {}, null)).toBe(true);
+    expect(canWrite(member, 'conceptReads', 'p1', {}, null)).toBe(false);
     expect(canWrite(member, 'completions', 'a1:p2', { playerId: 'p2' }, null)).toBe(true);
     // A coach with no player cannot be tricked into matching playerId null.
     expect(canWrite({ id: 'm4', role: 'member', playerId: null }, 'attempts', 'a', { playerId: null }, null)).toBe(false);
@@ -45,6 +47,7 @@ describe('merging concurrent edits', () => {
   it('unions seen ledgers at the earlier time', () => {
     expect(mergeSeen({ a: 5, b: 9 }, { b: 3, c: 7 })).toEqual({ a: 5, b: 3, c: 7 });
     expect(mergeRecord('seen', { a: 1 }, { b: 2 }, true)).toEqual({ a: 1, b: 2 });
+    expect(mergeRecord('conceptReads', { a: 1 }, { b: 2 }, true)).toEqual({ a: 1, b: 2 });
     // Not concurrent: the device saw the stored version, so its version wins as is.
     expect(mergeRecord('seen', { a: 1 }, { b: 2 }, false)).toEqual({ b: 2 });
   });

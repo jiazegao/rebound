@@ -9,6 +9,8 @@ import { ReviewPage } from './pages/Review';
 import { ProgressPage } from './pages/Progress';
 import { TopicsPage } from './pages/Topics';
 import { LineupsPage } from './pages/Lineups';
+import { PacketsPage, PacketView } from './pages/Packets';
+import { ConceptPage, LearnPage } from './pages/Learn';
 import { TeamPage } from './pages/Team';
 import { LibraryPage } from './pages/Library';
 import { ReaderSetup } from './pages/ReaderSetup';
@@ -28,6 +30,7 @@ const TEAM_NAV: NavItem[] = [
   { label: 'Today', path: '/today', section: 'today' },
   { label: 'Practice', path: '/try', section: 'try' },
   { label: 'Review', path: '/review', section: 'review' },
+  { label: 'Learn', path: '/learn', section: 'learn' },
   { label: 'Library', path: '/library', section: 'library' },
   { label: 'Play', path: '/reader', section: 'reader' },
   { label: 'Team', path: '/team', section: 'team' },
@@ -101,6 +104,12 @@ export function App() {
     case 'lineups':
       page = <LineupsPage />;
       break;
+    case 'learn':
+      page = second ? <ConceptPage id={second} /> : <LearnPage />;
+      break;
+    case 'packets':
+      page = second ? <PacketView id={second} print={route.query.get('print') === '1'} /> : <PacketsPage />;
+      break;
     case 'stats':
       page = <StatsPage />;
       break;
@@ -113,7 +122,7 @@ export function App() {
 
   const nav = data.team ? TEAM_NAV : PUBLIC_NAV;
   const section = first ?? '';
-  const sectionAliases: Record<string, string> = { games: 'reader', stats: 'team', data: 'team', progress: 'today', lineups: 'team' };
+  const sectionAliases: Record<string, string> = { games: 'reader', stats: 'team', data: 'team', progress: 'today', lineups: 'team', packets: 'library' };
   const activeSection = sectionAliases[section] ?? section;
 
   return (

@@ -3,7 +3,8 @@ import { LoadError, Loading, Notice, PageHeader, SubjectTag } from '../component
 import { DEFAULT_PRESET_ID, PRESETS } from '../core/rules/presets';
 import { CORE_SUBJECTS } from '../core/schema';
 import { dateTimeText } from '../lib/format';
-import { roundQuestions, setLabel, useIndex, useSet } from '../lib/library';
+import { roundQuestions, setLabel, useAsync, useIndex, useSet } from '../lib/library';
+import { packetRound, packetRounds, teamSetId } from '../lib/packets';
 import { href, navigate } from '../lib/router';
 import { addPlayer, createGame, useData } from '../lib/store';
 
@@ -12,6 +13,9 @@ type Side = 0 | 1 | null;
 export function ReaderSetup({ query }: { query: URLSearchParams }) {
   const data = useData();
   const index = useIndex();
+  const [source, setSource] = useState<'doe' | 'packet'>(query.get('packet') ? 'packet' : 'doe');
+  const [packetId, setPacketId] = useState<string | null>(query.get('packet') ?? data.packets[0]?.id ?? null);
+  const [packetRoundId, setPacketRoundId] = useState<string | null>(null);
   const [setId, setSetId] = useState<string | null>(query.get('set'));
   const [roundId, setRoundId] = useState<string | null>(query.get('round'));
   const [presetId, setPresetId] = useState(DEFAULT_PRESET_ID);
@@ -37,7 +41,10 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
   const team = (side: 0 | 1) => players.filter((p) => sides[p.id] === side).map((p) => p.id);
   const teamA = team(0);
   const teamB = team(1);
-  const round = set.data?.rounds.find((r) => r.id === roundId);
+  const packet = data.packets.find((p) => p.id === packetId) ?? null;
+  const packetChoice = packet ? (packetRounds(packet).find((r) => r.id === packetRoundId) ?? packetRounds(packet)[0]) : null;
+  const fromPacket = useAsync(source === 'packet' && packet && packetChoice ? `${packet.id}|${packetChoice.id}` : null, () => packetRound(packet!, packetChoice!.id));
+  const round = source === 'packet' ? fromPacket.data : set.data?.rounds.find((r) => r.id === roundId);
   const preset = PRESETS.find((p) => p.id === presetId)!;
 
   const heardCounts = useMemo(() => {
@@ -77,10 +84,17 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
   };
 
   const start = () => {
-    if (!round || !set.data || problems.length) return;
+    if (!round || problems.length) return;
+    const info =
+      source === 'packet' && packet
+        ? { setId: teamSetId(packet.id), setTitle: packet.title, roundId: round.id, roundLabel: round.label }
+        : set.data
+          ? { setId: set.data.id, setTitle: set.data.title, roundId: round.id, roundLabel: round.label, sourceUrl: round.sourceUrl }
+          : null;
+    if (!info) return;
     const id = createGame({
       presetId,
-      packet: { setId: set.data.id, setTitle: set.data.title, roundId: round.id, roundLabel: round.label, sourceUrl: round.sourceUrl },
+      packet: info,
       pairs: round.pairs.map((p) => ({ tossupId: p.tossup.id, bonusId: p.bonus?.id, subject: p.tossup.subject })),
       teams: [
         { name: names[0].trim() || 'Team A', playerIds: teamA },
@@ -115,9 +129,49 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
       <div className="grid-2" style={{ marginTop: '1rem' }}>
         <section className="card stack">
           <h2>1. Questions</h2>
-          {index.loading && <Loading />}
-          {index.error && <LoadError error={index.error} />}
-          {index.data && (
+          {data.packets.length > 0 && (
+            <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
+              <legend className="label">From</legend>
+              <label className="checkbox">
+                <input type="radio" name="source" checked={source === 'doe'} onChange={() => setSource('doe')} /> A DOE sample round
+              </label>
+              <label className="checkbox">
+                <input type="radio" name="source" checked={source === 'packet'} onChange={() => setSource('packet')} /> A team packet (scrimmage or upload)
+              </label>
+            </fieldset>
+          )}
+          {source === 'packet' && packet && (
+            <>
+              <div className="field">
+                <label htmlFor="packet">Packet</label>
+                <select id="packet" value={packet.id} onChange={(e) => { setPacketId(e.target.value); setPacketRoundId(null); }}>
+                  {data.packets.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {packetRounds(packet).length > 1 && (
+                <div className="field">
+                  <label htmlFor="packet-round">Round</label>
+                  <select id="packet-round" value={packetChoice?.id ?? ''} onChange={(e) => setPacketRoundId(e.target.value)}>
+                    {packetRounds(packet).map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {fromPacket.loading && <Loading what="Loading the packet" />}
+              {fromPacket.error && <Notice kind="error">{fromPacket.error.message}</Notice>}
+              {round && <p className="small muted">{round.pairs.length} toss-ups. <a href={href(`/packets/${packet.id}`)}>See or print the packet</a></p>}
+            </>
+          )}
+          {source === 'doe' && index.loading && <Loading />}
+          {source === 'doe' && index.error && <LoadError error={index.error} />}
+          {source === 'doe' && index.data && (
             <div className="field">
               <label htmlFor="set">Sample set</label>
               <select id="set" value={setId ?? ''} onChange={(e) => { setSetId(e.target.value); setRoundId(null); }}>
@@ -131,7 +185,7 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
               </select>
             </div>
           )}
-          {set.data && (
+          {source === 'doe' && set.data && (
             <div className="field">
               <label htmlFor="round">Round</label>
               <select id="round" value={roundId ?? ''} onChange={(e) => setRoundId(e.target.value)}>
@@ -151,7 +205,7 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
               ))}
             </div>
           )}
-          {round && (
+          {source === 'doe' && round && (
             <a className="small" href={href(`/library/${setId}/${round.id}?print=1`)} target="_blank" rel="noreferrer">
               Print this packet
             </a>
@@ -190,9 +244,34 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
       <section className="card stack" style={{ marginTop: '1rem' }}>
         <div className="row spread">
           <h2 style={{ margin: 0 }}>3. Teams</h2>
-          <button className="btn btn-small" onClick={autoSplit} disabled={players.length < 2}>
-            Auto-split
-          </button>
+          <div className="row" style={{ gap: '0.5rem' }}>
+            {data.lineups.length > 0 && (
+              <select
+                aria-label="Put a saved lineup on Team A"
+                value=""
+                onChange={(e) => {
+                  const lineup = data.lineups.find((l) => l.id === e.target.value);
+                  if (!lineup) return;
+                  // The lineup's starters play as Team A; everyone else who was on Team A moves to Team B.
+                  const next: Record<string, Side> = {};
+                  for (const p of players) next[p.id] = lineup.starters.includes(p.id) ? 0 : sides[p.id] === 0 ? 1 : sides[p.id] ?? null;
+                  setSides(next);
+                  setNames((n) => [lineup.name, n[1]]);
+                }}
+                style={{ width: 'auto' }}
+              >
+                <option value="">Team A from a lineup…</option>
+                {data.lineups.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            <button className="btn btn-small" onClick={autoSplit} disabled={players.length < 2}>
+              Auto-split
+            </button>
+          </div>
         </div>
         <div className="grid-2">
           {[0, 1].map((side) => (

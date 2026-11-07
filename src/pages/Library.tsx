@@ -18,7 +18,8 @@ function SetList() {
           its original PDF.
         </p>
         <p>
-          <a href={href('/library/topics')}>Browse by topic</a>: which topics come up most often in each subject.
+          <a href={href('/library/topics')}>Browse by topic</a>: which topics come up most often in each subject. <a href={href('/packets')}>Team packets</a>:
+          build a scrimmage nobody has heard, or upload an invitational's packet.
         </p>
       </PageHeader>
       {index.loading && <Loading what="Loading the library" />}

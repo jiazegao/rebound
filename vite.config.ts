@@ -17,7 +17,9 @@ function serviceWorker(): Plugin {
       const built = Object.keys(bundle).filter((f) => !f.endsWith('.map'));
       const icons = existsSync('public/icons') ? readdirSync('public/icons').map((f) => `icons/${f}`) : [];
       const extra = existsSync('public/manifest.webmanifest') ? ['manifest.webmanifest'] : [];
-      const precache = ['./', ...built.filter((f) => f !== 'index.html'), ...extra, ...icons].sort();
+      // Chunks loaded only when someone uploads a packet (pdf.js, the tagger) are cached on first use instead.
+      const lazy = (f: string) => /^assets\/(pdf|tagging)[.-]/.test(f);
+      const precache = ['./', ...built.filter((f) => f !== 'index.html' && !lazy(f)), ...extra, ...icons].sort();
       const hash = createHash('sha256');
       for (const f of built) {
         const item = bundle[f];

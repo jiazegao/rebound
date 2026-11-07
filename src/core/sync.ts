@@ -25,6 +25,7 @@ export const SYNC_COLLECTIONS = [
   'games',
   'attempts',
   'seen',
+  'conceptReads',
   'cards',
   'plans',
   'reports',
@@ -116,6 +117,7 @@ export function canWrite(member: MemberInfo, c: SyncCollection, id: string, body
     case 'cards':
       return own(field(body ?? existing, 'playerId'));
     case 'plans':
+    case 'conceptReads':
       return own(id);
     case 'completions':
       return own(field(body ?? existing, 'playerId'));
@@ -168,6 +170,7 @@ export function mergeRecord(c: SyncCollection, stored: unknown, incoming: unknow
   if (stored === null || stored === undefined || !concurrent) return incoming;
   switch (c) {
     case 'seen':
+    case 'conceptReads':
       return mergeSeen(stored, incoming);
     case 'cards':
       return mergeCard(stored, incoming);
