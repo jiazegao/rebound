@@ -5,6 +5,25 @@ import { href, navigate } from '../lib/router';
 import { bonusLines, gameLines, gameState, median } from '../lib/stats';
 import { deleteGame, useData } from '../lib/store';
 
+/** How many review questions the game gave each player (misses, slow buzzes, dead toss-ups in their subject, missed bonuses). */
+function ReviewNote({ gameId }: { gameId: string }) {
+  const data = useData();
+  const prefix = `game:${gameId}:`;
+  const counts = new Map<string, number>();
+  for (const c of Object.values(data.cards)) {
+    // A card came from this game if the game created it (its first source).
+    if (c.sources[0]?.startsWith(prefix)) counts.set(c.playerId, (counts.get(c.playerId) ?? 0) + 1);
+  }
+  if (counts.size === 0) return null;
+  const name = (id: string) => data.players.find((p) => p.id === id)?.name ?? 'A former player';
+  const parts = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([id, n]) => `${name(id)} ${n}`);
+  return (
+    <Notice>
+      This game added questions to review queues: {parts.join(', ')}. Each player sees them on their <a href={href('/review')}>Review</a> page.
+    </Notice>
+  );
+}
+
 export function GameSummary({ gameId }: { gameId: string }) {
   const data = useData();
   const game = data.games.find((g) => g.id === gameId);
@@ -99,6 +118,8 @@ export function GameSummary({ gameId }: { gameId: string }) {
           </button>
         </div>
       </PageHeader>
+
+      {game.status === 'finished' && <ReviewNote gameId={game.id} />}
 
       <h2>Players</h2>
       <div className="table-wrap">

@@ -157,6 +157,7 @@ async function main() {
       await page.getByRole('link', { name: 'See game summary' }).click();
       await see('Team A 18 – 4 Team B');
       await see('Question by question');
+      await see('This game added questions to review queues');
       await shot('06-summary');
     });
 
