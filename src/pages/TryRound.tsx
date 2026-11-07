@@ -12,7 +12,8 @@ import { catalogById, loadCatalog, loadConceptIndex, loadQuestions, loadSetById,
 import { topicById } from '../core/taxonomy';
 import { buildReading, lettersPerMinute, readingDurationMs, revealedCount, splitRevealed, type Reading } from '../lib/reading';
 import { href } from '../lib/router';
-import { addAttempt, completePlanItem, markSeen, updateSettings, useData } from '../lib/store';
+import { addAttempt, completeAssignment, completePlanItem, markSeen, updateSettings, useData } from '../lib/store';
+import { packetRound } from '../lib/packets';
 
 const TOSSUP_WINDOW_S = 5;
 const BONUS_WINDOW_S = 20;
@@ -98,6 +99,8 @@ interface Settings {
   cross: boolean;
   /** Concept id: drill only questions tagged with it ("" for none). */
   concept: string;
+  /** Team packet id: play that packet ("" for none). */
+  packet: string;
   count: number;
   wpm: number;
   answerTimer: boolean;
@@ -160,6 +163,7 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
     topic: '',
     cross: false,
     concept: '',
+    packet: '',
     count: 10,
     wpm: data.settings.readingWpm,
     answerTimer: data.settings.answerTimer,
@@ -194,7 +198,12 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
       const seen = playerId ? data.seen[playerId] ?? {} : {};
       let items: Item[] = [];
       let settings = s;
-      if (s.mode === 'round') {
+      const teamPacket = s.packet ? data.packets.find((p) => p.id === s.packet) : undefined;
+      if (s.packet && !teamPacket) throw new Error('That team packet is not on this device.');
+      if (teamPacket) {
+        const round = await packetRound(teamPacket);
+        items = round.pairs.filter(playable).map((pair) => ({ pair, where: teamPacket.title }));
+      } else if (s.mode === 'round') {
         let chosen = set;
         if (!chosen || !s.setId) {
           // Random: one of the eight newest sets.
@@ -274,7 +283,18 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
             </label>
           </fieldset>
           <div className="grid">
-            {s.mode === 'round' && (
+            {s.packet && (
+              <div className="field">
+                <span className="label">Team packet</span>
+                <span>
+                  {data.packets.find((p) => p.id === s.packet)?.title ?? 'Not on this device'}{' '}
+                  <button className="btn btn-small btn-ghost" onClick={() => setS({ ...s, packet: '' })}>
+                    Clear
+                  </button>
+                </span>
+              </div>
+            )}
+            {s.mode === 'round' && !s.packet && (
               <>
                 <div className="field">
                   <label htmlFor="set">Sample set</label>
@@ -828,6 +848,10 @@ function initialFromQuery(query: URLSearchParams): Partial<Settings> {
   if (query.get('topic')) initial.topic = query.get('topic')!;
   if (query.get('cross') === '1') initial.cross = true;
   if (query.get('concept')) initial.concept = query.get('concept')!;
+  if (query.get('packet')) {
+    initial.packet = query.get('packet')!;
+    initial.mode = 'round';
+  }
   const count = Number(query.get('count'));
   if (count > 0 && count <= 40) initial.count = Math.round(count);
   return initial;
@@ -845,6 +869,7 @@ export function TryRound({ query }: { query: URLSearchParams }) {
   // Launched from a plan item on Today: start straight away, and tick the item off at the end.
   const planItem = query.get('plan');
   const planDay = query.get('day');
+  const assignment = query.get('assignment');
   const autoStart = query.get('go') === '1';
 
   // A new link (for example another plan item) starts over at setup.
@@ -865,6 +890,7 @@ export function TryRound({ query }: { query: URLSearchParams }) {
           setStage('done');
           const playerId = data.team ? data.settings.soloPlayerId : null;
           if (playerId && planItem && planDay) completePlanItem(playerId, planDay, planItem);
+          if (playerId && assignment) completeAssignment(assignment, playerId);
         }}
         onQuit={() => setStage('setup')}
       />
@@ -874,7 +900,7 @@ export function TryRound({ query }: { query: URLSearchParams }) {
     return (
       <Done
         tally={tally}
-        fromPlan={!!planItem}
+        fromPlan={!!planItem || !!assignment}
         onAgain={() => {
           setItems(shuffle(items));
           setRunKey((k) => k + 1);

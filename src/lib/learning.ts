@@ -18,7 +18,8 @@ import {
   type Outcome,
   type ReviewCard,
 } from '../core/review';
-import type { CatalogRow, Player } from '../core/schema';
+import type { CatalogRow, ConceptIndex, CoreSubject, Player } from '../core/schema';
+import { topicById } from '../core/taxonomy';
 import { attemptOutcome, gameOutcomes } from './outcomes';
 import type { AppData, GameRecord } from './store';
 
@@ -108,6 +109,21 @@ export function playerCardSummary(data: AppData, playerId: string, now = Date.no
   return summarizeCards(playerCards(data), ownerOf(data, playerId), now, cardOptions(data));
 }
 
+/** Reviewed concept cards the player has not read yet, for the plan's "new concept" items. */
+export function learnableCards(data: AppData, playerId: string, concepts: ConceptIndex | null) {
+  const read = data.conceptReads[playerId] ?? {};
+  const out: Array<{ conceptId: string; name: string; topicId: string; subject: CoreSubject; questions: number }> = [];
+  for (const card of Object.values(data.conceptCards)) {
+    if (card.status !== 'reviewed' || read[card.id]) continue;
+    const topicId = card.id.split('.').slice(0, 2).join('.');
+    const topic = topicById(topicId);
+    const concept = topic?.concepts.find((c) => c.id === card.id);
+    if (!topic || !concept) continue;
+    out.push({ conceptId: card.id, name: concept.name, topicId, subject: topic.subject, questions: concepts?.concepts[card.id]?.length ?? 1 });
+  }
+  return out;
+}
+
 /** Questions per topic the player has not heard yet. */
 export function freshTopicCounts(rows: CatalogRow[], seen: Record<string, number> | undefined): Record<string, number> {
   const out: Record<string, number> = {};
@@ -126,6 +142,7 @@ export function planFor(
   model: PlayerModel | undefined,
   catalog: { rows: CatalogRow[]; topicCounts: Record<string, number> } | null,
   now = Date.now(),
+  concepts: ConceptIndex | null = null,
 ): { plan: DayPlan; changed: boolean } {
   const saved = data.plans[player.id];
   const day = practiceDay(now);
@@ -140,6 +157,7 @@ export function planFor(
     model,
     topicCounts: catalog?.topicCounts ?? {},
     freshCounts: catalog ? freshTopicCounts(catalog.rows, data.seen[player.id]) : undefined,
+    learnable: learnableCards(data, player.id, concepts),
   };
   const plan = saved && saved.day === day ? resizePlan(saved, input) : buildPlan(input);
   return { plan, changed: true };

@@ -24,7 +24,7 @@ import { playerCardSummary, playerDue } from '../lib/learning';
 import { loadQuestions } from '../lib/library';
 import { buildReading } from '../lib/reading';
 import { href } from '../lib/router';
-import { completePlanItem, getData, recordReview, removeFromReview, retentionAt, useData } from '../lib/store';
+import { completeAssignment, completePlanItem, getData, recordReview, removeFromReview, retentionAt, useData } from '../lib/store';
 
 const DAY_MS = 86_400_000;
 /** After buzzing in a review, the same answer timer as solo practice: start within 2 s, finish within 5 s. */
@@ -399,6 +399,13 @@ export function ReviewPage({ query }: { query: URLSearchParams }) {
   const limit = Math.max(1, Number(query.get('limit')) || DEFAULT_SESSION);
   const planItem = query.get('plan');
   const planDay = query.get('day');
+  const assignment = query.get('assignment');
+
+  // An assignment to clear due reviews is done once nothing is due.
+  useEffect(() => {
+    if (!assignment || !player || stage === 'session') return;
+    if (playerCardSummary(getData(), player.id).dueToday === 0) completeAssignment(assignment, player.id);
+  }, [assignment, player, stage, data.cards]);
 
   if (!data.team) {
     return (
@@ -452,6 +459,7 @@ export function ReviewPage({ query }: { query: URLSearchParams }) {
           if (position + 1 >= queue.length) {
             setStage('done');
             if (planItem && planDay) completePlanItem(player.id, planDay, planItem);
+            if (assignment && playerDue(getData(), player.id).length === 0) completeAssignment(assignment, player.id);
           } else setPosition(position + 1);
         }}
       />
@@ -488,7 +496,7 @@ export function ReviewPage({ query }: { query: URLSearchParams }) {
         <Notice kind="good">
           Reviewed {results.length}: {results.filter((r) => r.grade !== Rating.Again).length} right
           {results.some((r) => r.grade === Rating.Hard) && `, ${results.filter((r) => r.grade === Rating.Hard).length} slow`}.{' '}
-          {planItem && <a href={href('/today')}>Back to today's plan</a>}
+          {(planItem || assignment) && <a href={href('/today')}>Back to today's plan</a>}
         </Notice>
       )}
 

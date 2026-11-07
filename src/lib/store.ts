@@ -176,6 +176,12 @@ export async function initStore(): Promise<void> {
   emit();
 }
 
+/** Run `listener` after every change to the data (for background sync). Returns an unsubscribe function. */
+export function subscribeStore(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
 export function useData(): AppData {
   return useSyncExternalStore(subscribe, () => data);
 }
@@ -463,6 +469,39 @@ export function savePacket(packet: Omit<TeamPacket, 'id' | 'createdAt'> & { id?:
 export function deletePacket(id: string): void {
   update((d) => {
     d.packets = d.packets.filter((p) => p.id !== id);
+  });
+}
+
+/* ---------------- assignments ---------------- */
+
+export function createAssignment(fields: Omit<Assignment, 'id' | 'createdAt'>): string {
+  const id = newId('as');
+  update((d) => {
+    d.assignments.unshift({ ...fields, id, createdAt: new Date().toISOString() });
+  });
+  return id;
+}
+
+export function deleteAssignment(id: string): void {
+  update((d) => {
+    d.assignments = d.assignments.filter((a) => a.id !== id);
+    for (const key of Object.keys(d.completions)) if (d.completions[key].assignmentId === id) delete d.completions[key];
+  });
+}
+
+/** Record that a player finished an assignment (once). */
+export function completeAssignment(assignmentId: string, playerId: string): void {
+  const id = `${assignmentId}:${playerId}`;
+  if (data.completions[id] || !data.assignments.some((a) => a.id === assignmentId && a.playerIds.includes(playerId))) return;
+  update((d) => {
+    d.completions[id] = { id, assignmentId, playerId, at: new Date().toISOString() };
+  });
+}
+
+export function markConceptRead(playerId: string, conceptId: string): void {
+  if (data.conceptReads[playerId]?.[conceptId]) return;
+  update((d) => {
+    (d.conceptReads[playerId] ??= {})[conceptId] = Date.now();
   });
 }
 

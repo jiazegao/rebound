@@ -7,7 +7,7 @@ import { topicById, TOPICS } from '../core/taxonomy';
 import { dateText } from '../lib/format';
 import { loadQuestions, useAsync, useConceptIndex } from '../lib/library';
 import { href } from '../lib/router';
-import { reviewConceptCard, saveConceptCard, useData } from '../lib/store';
+import { completeAssignment, completePlanItem, markConceptRead, reviewConceptCard, saveConceptCard, useData } from '../lib/store';
 
 /** The summary should stay short enough to read before a drill. */
 const SUMMARY_WORDS = 150;
@@ -96,9 +96,13 @@ function CardEditor({ id, existing, onDone }: { id: string; existing?: ConceptCa
   );
 }
 
-export function ConceptPage({ id }: { id: string }) {
+export function ConceptPage({ id, query }: { id: string; query?: URLSearchParams }) {
   const data = useData();
   const player = useCurrentPlayer();
+  const planItem = query?.get('plan');
+  const planDay = query?.get('day');
+  const assignment = query?.get('assignment');
+  const read = player ? !!data.conceptReads[player.id]?.[id] : false;
   const index = useConceptIndex();
   const found = conceptOf(id);
   const card = data.conceptCards[id];
@@ -178,6 +182,22 @@ export function ConceptPage({ id }: { id: string }) {
           )}
           <CardStatus card={card} />
           <div className="row">
+            {player &&
+              (read ? (
+                <span className="badge">Read</span>
+              ) : (
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    markConceptRead(player.id, id);
+                    if (planItem && planDay) completePlanItem(player.id, planDay, planItem);
+                    if (assignment) completeAssignment(assignment, player.id);
+                  }}
+                >
+                  Got it
+                </button>
+              ))}
+            {(planItem || assignment) && read && <a href={href('/today')}>Back to today's plan</a>}
             <button className="btn btn-small" onClick={() => setEditing(true)}>
               Edit
             </button>

@@ -7,7 +7,9 @@ import { topicName } from '../core/taxonomy';
 import type { Player } from '../core/schema';
 import { dateTimeText } from '../lib/format';
 import { planFor, playerCardSummary, playerDue, usePlayerModel } from '../lib/learning';
-import { catalogById, useCatalog } from '../lib/library';
+import { catalogById, useCatalog, useConceptIndex } from '../lib/library';
+import { assignmentMinutes, openAssignments, type OpenAssignment } from '../core/assignments';
+import type { Assignment } from '../core/schema';
 import { href } from '../lib/router';
 import { savePlan, updateSettings, useData } from '../lib/store';
 
@@ -16,26 +18,61 @@ const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 function itemLink(item: PlanItem, plan: DayPlan, reviewCards: number): string {
   const tail = `plan=${encodeURIComponent(item.id)}&day=${plan.day}`;
   if (item.kind === 'review') return `/review?${tail}&limit=${reviewCards}`;
+  if (item.kind === 'learn') return `/learn/${encodeURIComponent(item.conceptId!)}?${tail}`;
   if (item.kind === 'mixed') return `/try?mode=mixed&count=${item.count}&${tail}&go=1`;
   const topic = item.topic ? `&topic=${encodeURIComponent(item.topic)}` : '';
   return `/try?mode=subject&subject=${item.subject}${topic}&count=${item.count}&${tail}&go=1`;
 }
 
+/** Where an assignment's Start button goes; finishing there ticks it off. */
+export function assignmentLink(a: Assignment): string {
+  const tail = `assignment=${encodeURIComponent(a.id)}`;
+  if (a.kind === 'drill') {
+    const topic = a.topic ? `&topic=${encodeURIComponent(a.topic)}` : '';
+    return `/try?mode=subject&subject=${a.subject ?? 'biology'}${topic}&count=${a.count ?? 8}&${tail}&go=1`;
+  }
+  if (a.kind === 'packet') return `/try?packet=${encodeURIComponent(a.packetId ?? '')}&${tail}&go=1`;
+  if (a.kind === 'concept') return `/learn/${encodeURIComponent(a.conceptId ?? '')}?${tail}`;
+  return `/review?${tail}`;
+}
+
+function AssignedItem({ open, by }: { open: OpenAssignment; by: string }) {
+  const { assignment: a, state, days } = open;
+  const when = state === 'overdue' ? `overdue by ${-days} day${days === -1 ? '' : 's'}` : state === 'today' ? 'due today' : `due in ${days} day${days === 1 ? '' : 's'}`;
+  return (
+    <li className="plan-item card">
+      <div className="plan-main">
+        <h3>{a.title}</h3>
+        <p className="why">
+          <span className="why-label">Why this?</span> Assigned by {by}, {when}.{a.note ? ` ${a.note}` : ''}
+        </p>
+      </div>
+      <div className="plan-side">
+        <span className="small muted nowrap">{assignmentMinutes(a)} min</span>
+        <a className="btn btn-primary" href={href(assignmentLink(a))}>
+          Start
+        </a>
+      </div>
+    </li>
+  );
+}
+
 function PlanList({ player }: { player: Player }) {
   const data = useData();
   const catalog = useCatalog();
+  const conceptIndex = useConceptIndex();
   const catalogMap = useMemo(() => (catalog.data ? catalogById(catalog.data) : null), [catalog.data]);
   const model = usePlayerModel(data, player.id, catalogMap);
   const minutes = data.settings.dailyMinutes;
-  const ready = !catalog.loading;
+  const ready = !catalog.loading && !conceptIndex.loading;
   const result = useMemo(
     () =>
       ready
-        ? planFor(data, player, minutes, model, catalog.data ? { rows: catalog.data.questions, topicCounts: catalog.data.topicCounts } : null)
+        ? planFor(data, player, minutes, model, catalog.data ? { rows: catalog.data.questions, topicCounts: catalog.data.topicCounts } : null, Date.now(), conceptIndex.data ?? null)
         : null,
     // The plan only needs rebuilding when the player, day, length, catalog or saved plan changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ready, player, minutes, catalog.data, data.plans[player.id], model],
+    [ready, player, minutes, catalog.data, conceptIndex.data, data.plans[player.id], model],
   );
 
   useEffect(() => {
@@ -48,7 +85,11 @@ function PlanList({ player }: { player: Player }) {
   const tomorrow = due === 0 ? playerCardSummary(data, player.id).startingTomorrow : 0;
   const reviewCap = Math.max(1, Math.floor(plan.minutes / 3 / MINUTES_PER_REVIEW));
   const reviewCards = Math.min(due, reviewCap);
-  const total = plan.items.reduce((s, i) => s + (i.kind === 'review' ? reviewCards * MINUTES_PER_REVIEW : i.minutes), 0);
+  const assigned = openAssignments(player.id, data.assignments, data.completions, plan.day);
+  const byName = (id: string | null) => data.players.find((p) => p.id === id)?.name ?? 'your captain';
+  const total =
+    plan.items.reduce((s, i) => s + (i.kind === 'review' ? reviewCards * MINUTES_PER_REVIEW : i.minutes), 0) +
+    assigned.reduce((s, x) => s + assignmentMinutes(x.assignment), 0);
 
   return (
     <section aria-labelledby="plan-heading">
@@ -69,13 +110,18 @@ function PlanList({ player }: { player: Player }) {
         <p className="small muted">The topic list could not be loaded (offline?), so drills cover whole subjects today.</p>
       )}
       <ol className="plan">
-        {plan.items.map((item) => {
+        {plan.items.map((item, index) => {
           const isReview = item.kind === 'review';
           const done = item.done || (isReview && due === 0 && item.cards !== undefined && item.cards > 0);
           const empty = isReview && due === 0 && !done;
           const title = isReview ? (reviewCards > 0 ? `Review ${reviewCards} question${reviewCards === 1 ? '' : 's'}` : 'Review') : item.title;
           const mins = isReview ? reviewCards * MINUTES_PER_REVIEW : item.minutes;
-          return (
+          // Work the captain assigned comes right after the reviews.
+          const after =
+            index === 0
+              ? assigned.map((x) => <AssignedItem key={x.assignment.id} open={x} by={byName(x.assignment.createdBy)} />)
+              : null;
+          return [
             <li key={item.id} className={`plan-item card${done ? ' done' : ''}`}>
               <div className="plan-main">
                 <h3>
@@ -104,8 +150,9 @@ function PlanList({ player }: { player: Player }) {
                   </a>
                 )}
               </div>
-            </li>
-          );
+            </li>,
+            after,
+          ];
         })}
       </ol>
       <p className="small muted">

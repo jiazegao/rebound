@@ -300,6 +300,36 @@ async function main() {
       await page.locator('#player-switch').selectOption({ label: 'Ann' });
     });
 
+    await step('assignments: the captain assigns a drill, it shows on Today and ticks off when done', async () => {
+      await page.goto(`${BASE}#/assignments`);
+      await page.locator('#as-subject').selectOption('biology');
+      await page.locator('#as-count').selectOption('5');
+      for (const n of ['Abe', 'Bea', 'Ben']) await page.getByRole('checkbox', { name: n }).uncheck();
+      await page.locator('#as-title').fill('Biology warm-up');
+      await page.getByRole('button', { name: 'Assign', exact: true }).click();
+      await see('0 of 1 done');
+      await page.goto(`${BASE}#/today`);
+      const item = page.locator('.plan-item', { hasText: 'Biology warm-up' });
+      await item.getByText('Assigned by').waitFor();
+      await item.getByRole('link', { name: 'Start' }).click();
+      await page.getByRole('button', { name: /Buzz/ }).waitFor();
+      await page.waitForTimeout(600);
+      await key('Space');
+      await page.locator('#answer').fill('phenotype');
+      await key('Enter');
+      await see('Correct');
+      await key('Space');
+      await page.locator('#answer').fill('bacteriophage');
+      await key('Enter');
+      await see('Correct');
+      await key('Space');
+      await page.getByRole('link', { name: "Back to today's plan" }).click();
+      await see("Ann's plan");
+      if (await page.locator('.plan-item', { hasText: 'Biology warm-up' }).count()) throw new Error('the finished assignment is still on Today');
+      await page.goto(`${BASE}#/assignments`);
+      await see('1 of 1 done');
+    });
+
     await step("Today shows each player's plan with reasons", async () => {
       await page.goto(`${BASE}#/today`);
       await see("Ann's plan");

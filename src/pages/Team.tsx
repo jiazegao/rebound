@@ -417,6 +417,12 @@ export function TeamPage() {
           <a className="btn btn-small" href={href('/lineups')}>
             Lineups
           </a>
+          <a className="btn btn-small" href={href('/assignments')}>
+            Assignments
+          </a>
+          <a className="btn btn-small" href={href('/packets')}>
+            Packets
+          </a>
           <a className="btn btn-small" href={href('/stats')}>
             Stats
           </a>

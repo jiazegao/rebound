@@ -220,6 +220,21 @@ describe('daily plan', () => {
     expect(b.items).toEqual(a.items);
   });
 
+  it("adds an unread concept card from the player's own subjects, weakest topic first", () => {
+    const learnable = [
+      { conceptId: 'biology.ecology.food-webs', name: 'Food webs', topicId: 'biology.ecology', subject: 'biology' as const, questions: 40 },
+      { conceptId: 'physics.optics.lenses', name: 'Lenses', topicId: 'physics.optics', subject: 'physics' as const, questions: 90 },
+    ];
+    const plan = buildPlan({ ...base, learnable });
+    const learn = plan.items.filter((i) => i.kind === 'learn');
+    expect(learn).toHaveLength(1);
+    expect(learn[0]).toMatchObject({ conceptId: 'biology.ecology.food-webs', minutes: 3 });
+    expect(plan.items.map((i) => i.id).slice(0, 2)).toEqual(['review', 'learn-1']);
+    // Off-season plans read two cards when there are two to read.
+    const off = buildPlan({ ...base, now: new Date(2026, 6, 1).getTime(), learnable: [...learnable, { ...learnable[0], conceptId: 'biology.ecology.x', name: 'X' }] });
+    expect(off.items.filter((i) => i.kind === 'learn')).toHaveLength(2);
+  });
+
   it('keeps finished items when the plan is resized', () => {
     const plan = buildPlan(base);
     plan.items[0].done = true;

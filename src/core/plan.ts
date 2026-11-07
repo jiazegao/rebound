@@ -14,7 +14,7 @@ import { practiceDay, seasonPhase, daysUntil, type SeasonPhase } from './review'
 import { CORE_SUBJECTS, SUBJECT_LABELS, type CoreSubject, type Player } from './schema';
 import { topicsForSubject } from './taxonomy';
 
-export type PlanItemKind = 'review' | 'drill' | 'mixed';
+export type PlanItemKind = 'review' | 'learn' | 'drill' | 'mixed';
 
 export interface PlanItem {
   /** "review", "drill-primary", "drill-secondary", "drill-focus" or "mixed". */
@@ -28,6 +28,8 @@ export interface PlanItem {
   /** Drills: subject and (when the library is tagged) topic. */
   subject?: CoreSubject;
   topic?: string;
+  /** Learn: the concept card to read. */
+  conceptId?: string;
   /** Drills and mixed rounds: number of questions. */
   count?: number;
   done: boolean;
@@ -70,7 +72,11 @@ export interface PlanInput {
   topicCounts: Record<string, number>;
   /** Questions per topic id the player has not heard yet; topics without enough are skipped. */
   freshCounts?: Record<string, number>;
+  /** Concept cards the team has written that the player has not read yet. */
+  learnable?: Array<{ conceptId: string; name: string; topicId: string; subject: CoreSubject; questions: number }>;
 }
+
+export const MINUTES_PER_CARD = 3;
 
 /** A small seeded random generator (mulberry32 over a string hash). */
 export function seededRandom(seed: string): () => number {
@@ -168,8 +174,33 @@ export function buildPlan(input: PlanInput): DayPlan {
     done: false,
   });
 
-  // 2–3. Drills, then 4. a mixed round.
-  const rest = Math.max(0, minutes - cards * MINUTES_PER_REVIEW);
+  // 2. New concepts from the player's own subjects (more in the off-season), by frequency times weakness.
+  const own = [player.primarySubject, player.secondarySubject].filter(Boolean) as CoreSubject[];
+  const wanted = phase === 'off_season' ? 2 : 1;
+  const learn = (input.learnable ?? [])
+    .filter((c) => own.includes(c.subject))
+    .map((c) => {
+      const p = input.model?.topics[c.topicId]?.p ?? input.model?.subjects[c.subject]?.p ?? 0.5;
+      return { c, p, score: Math.sqrt(c.questions) * (1 - p) * (c.subject === player.primarySubject ? 1.5 : 1) + random() * 0.01 };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, minutes >= 20 ? wanted : 0);
+  for (const [i, { c, p }] of learn.entries()) {
+    items.push({
+      id: `learn-${i + 1}`,
+      kind: 'learn',
+      title: `Read: ${c.name}`,
+      why: `A ${SUBJECT_LABELS[c.subject]} concept card you haven't read; ${c.questions} library questions test it${p < 0.6 ? `, and you are at about ${pct(p)} on its topic` : ''}.`,
+      minutes: MINUTES_PER_CARD,
+      subject: c.subject,
+      topic: c.topicId,
+      conceptId: c.conceptId,
+      done: false,
+    });
+  }
+
+  // 3–4. Drills, then 5. a mixed round.
+  const rest = Math.max(0, minutes - cards * MINUTES_PER_REVIEW - learn.length * MINUTES_PER_CARD);
   const mixedMinutes = Math.min(rest, Math.max(minutes >= 20 ? 5 : 3, Math.round(rest * PHASE_MIX[phase].mixed)));
   const drillMinutes = rest - mixedMinutes;
 

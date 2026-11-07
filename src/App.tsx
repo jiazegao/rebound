@@ -11,6 +11,7 @@ import { TopicsPage } from './pages/Topics';
 import { LineupsPage } from './pages/Lineups';
 import { PacketsPage, PacketView } from './pages/Packets';
 import { ConceptPage, LearnPage } from './pages/Learn';
+import { AssignmentsPage } from './pages/Assignments';
 import { TeamPage } from './pages/Team';
 import { LibraryPage } from './pages/Library';
 import { ReaderSetup } from './pages/ReaderSetup';
@@ -104,8 +105,11 @@ export function App() {
     case 'lineups':
       page = <LineupsPage />;
       break;
+    case 'assignments':
+      page = <AssignmentsPage />;
+      break;
     case 'learn':
-      page = second ? <ConceptPage id={second} /> : <LearnPage />;
+      page = second ? <ConceptPage id={second} query={route.query} /> : <LearnPage />;
       break;
     case 'packets':
       page = second ? <PacketView id={second} print={route.query.get('print') === '1'} /> : <PacketsPage />;
@@ -122,7 +126,7 @@ export function App() {
 
   const nav = data.team ? TEAM_NAV : PUBLIC_NAV;
   const section = first ?? '';
-  const sectionAliases: Record<string, string> = { games: 'reader', stats: 'team', data: 'team', progress: 'today', lineups: 'team', packets: 'library' };
+  const sectionAliases: Record<string, string> = { games: 'reader', stats: 'team', data: 'team', progress: 'today', lineups: 'team', packets: 'library', assignments: 'team' };
   const activeSection = sectionAliases[section] ?? section;
 
   return (
