@@ -355,3 +355,22 @@ export function currentSession(): { serverUrl: string; teamId: string; token: st
 export function pendingChanges(data: AppData = getData()): number {
   return state ? localChanges(toRecords(data), state.known).length : 0;
 }
+
+/* ---------------- rooms ---------------- */
+
+export interface RoomListing {
+  roomId: string;
+  name: string;
+  host: string;
+  players: number;
+  createdAt: number;
+}
+
+/** Open a remote room hosted by this member (the reader). */
+export async function createRoom(name: string): Promise<string> {
+  return (await authed<{ roomId: string }>('/rooms', { method: 'POST', body: JSON.stringify({ name }) })).roomId;
+}
+
+export async function listRooms(): Promise<RoomListing[]> {
+  return (await authed<{ rooms: RoomListing[] }>('/rooms')).rooms;
+}

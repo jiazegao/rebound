@@ -894,6 +894,17 @@ details[open] > summary {
 .concept-card h3 {
   font-size: 1rem;
 }
+.room-chat {
+  max-height: 12rem;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+}
+.room-buzz {
+  min-height: 5rem;
+  font-size: 1.5rem;
+}
 .hero-figure {
   font-size: 3rem;
   font-weight: 700;

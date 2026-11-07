@@ -12,6 +12,8 @@ import { LineupsPage } from './pages/Lineups';
 import { PacketsPage, PacketView } from './pages/Packets';
 import { ConceptPage, LearnPage } from './pages/Learn';
 import { AssignmentsPage } from './pages/Assignments';
+import { RoomPage } from './pages/Room';
+import { JoinPage } from './pages/Join';
 import { TeamPage } from './pages/Team';
 import { LibraryPage } from './pages/Library';
 import { ReaderSetup } from './pages/ReaderSetup';
@@ -105,6 +107,12 @@ export function App() {
     case 'lineups':
       page = <LineupsPage />;
       break;
+    case 'join':
+      page = <JoinPage code={second} />;
+      break;
+    case 'room':
+      page = second ? <RoomPage roomId={second} /> : <NotFound />;
+      break;
     case 'assignments':
       page = <AssignmentsPage />;
       break;
@@ -126,7 +134,7 @@ export function App() {
 
   const nav = data.team ? TEAM_NAV : PUBLIC_NAV;
   const section = first ?? '';
-  const sectionAliases: Record<string, string> = { games: 'reader', stats: 'team', data: 'team', progress: 'today', lineups: 'team', packets: 'library', assignments: 'team' };
+  const sectionAliases: Record<string, string> = { games: 'reader', stats: 'team', data: 'team', progress: 'today', lineups: 'team', packets: 'library', assignments: 'team', room: 'reader' };
   const activeSection = sectionAliases[section] ?? section;
 
   return (

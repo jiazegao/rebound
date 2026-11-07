@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AnswerBox, Choices, ImportNotes, QuestionMeta, RichText } from '../components/QuestionView';
 import { Countdown, LoadError, Loading, Notice, useTicker } from '../components/ui';
+import { RemotePanel } from '../components/RemotePanel';
 import {
   allowedEvents,
   applyEvent,
@@ -140,8 +141,10 @@ function ReaderGame({ game, round }: { game: GameRecord; round: Round }) {
   }, []);
 
   const dispatch = useCallback(
-    (input: EventInput) => {
-      const event = { ...input, t: Date.now() } as MatchEvent;
+    (input: EventInput, at?: number) => {
+      // A remote buzz carries when it was pressed; events never go back in time.
+      const last = game.events.length ? game.events[game.events.length - 1].t : 0;
+      const event = { ...input, t: at === undefined ? Date.now() : Math.min(Date.now(), Math.max(at, last)) } as MatchEvent;
       let next: MatchState;
       try {
         next = applyEvent(state, event);
@@ -462,6 +465,8 @@ function ReaderGame({ game, round }: { game: GameRecord; round: Round }) {
           </button>
         </div>
       </div>
+
+      <RemotePanel game={game} state={state} round={round} dispatch={dispatch} names={names} />
 
       {showHelp && (
         <div className="card small" style={{ marginBottom: '0.75rem' }}>

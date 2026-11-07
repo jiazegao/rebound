@@ -1,8 +1,9 @@
 # Rebound
 
-A free, team-first practice website for the National Science Bowl (NSB). This covers **Phases 0 and 1** of the plan in
-[`docs/PROPOSAL.md`](docs/PROPOSAL.md): every practice is logged, and every player opens **Today** to find a daily plan and a review
-queue built from their own misses.
+A free, team-first practice website for the National Science Bowl (NSB). This covers **Phases 0–2** of the plan in
+[`docs/PROPOSAL.md`](docs/PROPOSAL.md): every practice is logged, every player opens **Today** to find a daily plan and a review queue
+built from their own misses, and the captain runs the team from the **Team** pages (lineups, assignments, scrimmages), with an optional
+team server for sharing between devices and remote rooms.
 
 Rebound is an unofficial study tool, not affiliated with or endorsed by the U.S. Department of Energy (DOE).
 
@@ -15,6 +16,13 @@ Rebound is an unofficial study tool, not affiliated with or endorsed by the U.S.
 | **Review** | Timed review of misses, wrong interrupts, slow correct answers, toss-ups nobody got in your subject, and bonuses your team missed, from solo practice and Reader console games. Scheduled with FSRS ([ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs)) in whole days; the grade comes from correctness and buzz time. New misses join a few a day (wrong interrupts and the player's own subjects first), and a question answered right after a month's gap is learned and leaves the queue, so the daily load stays steady. Cards pause while their question has an open problem report. |
 | **Practice → drills** | Subject and topic drills drawn from the whole library (fresh questions first, aimed at a 70–85% expected success rate, from a few set files), an option to add Energy questions that test the subject, and balanced mixed toss-ups. |
 | **My progress** | Mastery by subject and a topic map (difficulty-adjusted ratings from each player's first answers), buzz speed, the review queue and daily activity, each with a table view. |
+| **Team → Lineups** | Estimated points per regional round for any four players, subject by subject (difficulty-adjusted results, buzz speed, overlapping knowledge, a reference opponent); the five best foursomes; a suggested alternate; saved lineups, one set for the next competition. |
+| **Team** | Who covers what, with graduation years and who takes over each subject; the team's best player in every topic, with gaps counted; the chosen lineup; sharing (below). |
+| **Team → Assignments** | Drills, team packets, concept cards or clearing reviews, for chosen players with a due date; they show on each player's Today page and tick off when done; drills suggested from coverage gaps. |
+| **Library → Team packets** | Scrimmages of questions nobody in the room has heard (balanced like a DOE round, at a chosen difficulty), and packets uploaded as PDF (parsed in the browser) or JSON, with a review screen; print, play in the Reader console or solo. Uploaded packets stay in the team's data. |
+| **Learn** | Concept cards written by the team (summary, key facts, traps, sources), reviewed by a second player, next to the library questions that test each concept; concept drills; unread cards join the daily plan. |
+| **Team stats** | Adds rebounds, net points per interrupt, small samples marked, and a week-by-week trend of practice games. |
+| **Sharing and remote rooms** | Optional, through the team server ([`docs/SERVER.md`](docs/SERVER.md)): the captain shares the team, players join with a link, a display name and a PIN, and everything syncs between devices. The Reader console can open a remote room: players buzz from their own devices (server-timed, with latency correction), see the question read aloud or revealed in step, confer in a private team channel during bonuses, and their captain answers in an answer box. |
 | **Offline** | A service worker keeps the site available offline after the first visit; **Data → Save all questions for offline use** stores the whole library (about 9 MB) for drills and reviews without a connection. The site can be installed to a home screen. |
 | **Team** | Create the team, add players, give each a primary and secondary subject, see "who covers what". |
 | **Play → Reader console** | Run an in-person practice game from one laptop: question in large type, answer for the reader, 5 s / 20 s answer clocks, game clock, two-tap scoring under the **2027 rules** (interrupts, blurts, rebounds, double interrupts, halves, tiebreakers), undo, keyboard shortcuts. Every toss-up is logged. |

@@ -4,6 +4,7 @@ import { useTip } from '../components/VizTip';
 import { topicName, topicsForSubject } from '../core/taxonomy';
 import { catalogById, useCatalog } from '../lib/library';
 import { graduatingClass, MIN_TOPIC_ANSWERS, succession, teamPlayers, topicCoverage, useTeamModels } from '../lib/team';
+import { TeamSharing } from '../components/TeamSharing';
 import { daysUntil, FINAL_WEEKS_DAYS } from '../core/review';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type CoreSubject, type Level, type Player, type Role } from '../core/schema';
 import { href } from '../lib/router';
@@ -459,7 +460,10 @@ export function TeamPage() {
         </form>
       )}
 
-      <NextEvent />
+      <div className="grid-2">
+        <NextEvent />
+        <TeamSharing />
+      </div>
 
       <h2>Roster</h2>
       {players.length === 0 ? (

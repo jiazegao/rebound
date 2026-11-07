@@ -46,6 +46,8 @@ export interface GameRecord {
   events: MatchEvent[];
   status: 'in_progress' | 'finished';
   finalScores?: [number, number];
+  /** The remote room this game is played in, when players join from their own devices. */
+  roomId?: string;
 }
 
 /** One answer in solo practice ("Try a round" while signed in as a player). */
@@ -280,6 +282,13 @@ export function finishGame(gameId: string, scores: [number, number]): void {
     g.updatedAt = new Date().toISOString();
     // Misses, slow buzzes and missed bonuses become review cards (each answer only once, even if the game is reopened).
     applyOutcomes(d, gameOutcomes(g, d.players));
+  });
+}
+
+export function setGameRoom(gameId: string, roomId: string | undefined): void {
+  update((d) => {
+    const g = d.games.find((x) => x.id === gameId);
+    if (g) g.roomId = roomId;
   });
 }
 
