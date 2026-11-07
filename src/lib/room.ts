@@ -127,10 +127,21 @@ export class RoomClient {
       }
       this.handle(msg);
     };
-    ws.onclose = () => {
+    ws.onclose = (e) => {
       clearInterval(this.pingTimer);
       this.set({ connected: false });
       if (this.closed) return;
+      // The server's own reasons for closing: don't keep reconnecting.
+      const final: Record<number, string> = {
+        4001: 'This device is signed out of the team. Sign in again on the Team page.',
+        4003: 'You were removed from the team.',
+        4004: 'This room was closed.',
+      };
+      if (final[e.code]) {
+        this.closed = true;
+        this.set({ error: final[e.code] });
+        return;
+      }
       // Reconnect with backoff (a school network can drop the connection now and then).
       this.retry = Math.min(this.retry + 1, 6);
       setTimeout(() => !this.closed && this.connect(), 500 * 2 ** this.retry);
@@ -154,6 +165,10 @@ export class RoomClient {
 
   private handle(msg: Record<string, unknown>): void {
     switch (msg.type) {
+      case 'ping':
+        // The server measures this connection's round trip to time buzzes fairly: answer at once.
+        this.send({ type: 'pong', t: msg.t });
+        break;
       case 'welcome': {
         const room = msg.room as { name: string; hostId: string; members: RoomMember[]; state: RoomView | null; buzz: BuzzState };
         this.set({ you: msg.you as RoomSnapshot['you'], roomName: room.name, hostId: room.hostId, members: room.members, view: room.state ?? null, buzz: room.buzz ?? EMPTY_BUZZ });

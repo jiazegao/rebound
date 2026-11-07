@@ -29,9 +29,15 @@ team's data in its built-in SQLite database and hosts the team's rooms. The free
   `https://<site>/#/join/<joinCode>` for the captain to post in the team's chat.
 - A **member** has a display name (unique in the team, case-insensitive, 1–40 characters), a role (`coach`,
   `captain` or `member`), an optional roster player id (`playerId`, matching a record in the `players`
-  collection) and a PIN (4–8 digits, PBKDF2-SHA256, 100,000 iterations, 16-byte random salt).
-- Signing in on a new device: the join code (or a stored team id), the member's name and PIN. Five wrong PINs
-  lock that member out for 15 minutes.
+  collection; one member per roster player) and a PIN (4–8 digits, PBKDF2-SHA256 with a 16-byte random salt).
+  A 4–8 digit PIN is weak against anyone holding its hash however many rounds there are, so the defenses are
+  that hashes never leave the team's Durable Object and the lockout below; 20,000 rounds keep sign-in well
+  inside the Workers free plan's CPU limit. Each hash records its round count, so this can change later.
+- Signing in on a new device: the join code, the member's name and PIN. Five wrong PINs lock that member out
+  for 15 minutes.
+- Linking to the roster: a new member whose name matches exactly one active roster player who is not linked yet
+  is linked to that player. A member who is not linked can link to a free roster player by signing in with
+  `playerId` ("Which player are you?" after joining). Changing an existing link is for leaders.
 - A **session token** is 32 random bytes (base64url) sent as `Authorization: Bearer <token>`. The server stores
   only its SHA-256. Sessions last until the member signs out or is removed; unused sessions expire after 180 days.
 - The member who creates the team is its `captain`. Leaders (coach, captain) can change roles, link members
@@ -46,7 +52,7 @@ response carries CORS headers for the origins in the `ALLOWED_ORIGINS` variable 
 | Method and path | Who | Body → response |
 |---|---|---|
 | `GET /api/health` | anyone | → `{ ok: true }` |
-| `POST /api/teams` | anyone | `{ teamName, level: "HS"\|"MS", memberName, pin, playerId? }` → `{ teamId, joinCode, token, member }` |
+| `POST /api/teams` | anyone | `{ teamName, level: "HS"\|"MS", memberName, pin, playerId? }` → 201 `{ teamId, joinCode, token, member }` |
 | `POST /api/teams/:teamId/join` | anyone with the secret | `{ secret, memberName, pin, playerId? }` → `{ token, member, teamName }`. An existing name signs in (PIN checked); a new name creates a `member`. |
 | `GET /api/teams/:teamId/me` | member | → `{ member, teamName }` |
 | `POST /api/teams/:teamId/signout` | member | → `{ ok: true }` (ends this session) |
@@ -57,14 +63,17 @@ response carries CORS headers for the origins in the `ALLOWED_ORIGINS` variable 
 | `DELETE /api/teams/:teamId/members/:memberId` | leader | → `{ ok: true }` |
 | `POST /api/teams/:teamId/join-code` | leader | → `{ joinCode }` (new secret; old links stop working) |
 | `DELETE /api/teams/:teamId` | coach or captain | → `{ ok: true }` (deletes everything for the team) |
-| `POST /api/teams/:teamId/rooms` | member | `{ name }` → `{ roomId }` (the caller hosts it) |
-| `GET /api/teams/:teamId/rooms` | member | → `{ rooms: { roomId, name, host, players, createdAt }[] }` |
+| `POST /api/teams/:teamId/rooms` | member | `{ name }` → 201 `{ roomId }` (the caller hosts it) |
+| `GET /api/teams/:teamId/rooms` | member | → `{ rooms: { roomId, name, host: { memberId, name }, players, createdAt }[] }` (`players`: connected now, not counting the reader) |
 | `GET /api/teams/:teamId/rooms/:roomId/ws?token=…` | member | WebSocket upgrade (see Rooms) |
 
 `member` objects are `{ id, name, role, playerId }` (the `MemberInfo` type plus the name).
 
-Limits: request bodies up to 2 MB; at most `SYNC_PAGE_SIZE` changes per sync request; record bodies up to
-`MAX_RECORD_BYTES`; ids up to 200 characters; 30 failed joins per IP address per hour.
+Limits: request bodies up to 2 MB; at most `SYNC_PAGE_SIZE` changes per sync request (more is a 413); record
+bodies up to `MAX_RECORD_BYTES`; ids up to 200 characters; 30 failed joins per network address per hour (kept
+per team); 200 members, 20 open rooms and 64 connections per room. Locks and limits answer 429 with
+`Retry-After`. Requests from origins not in `ALLOWED_ORIGINS` get a 403. The last coach or captain cannot be
+removed or demoted.
 
 ## Sync
 
@@ -101,14 +110,18 @@ Messages are JSON objects with a `type`. Server time is the Durable Object's `Da
 
 | type | fields | when |
 |---|---|---|
-| `welcome` | `you: { memberId, name, playerId }`, `room: { roomId, name, hostId, members, state, buzz }`, `serverTime` | after connecting |
+| `welcome` | `you: { memberId, name, playerId }`, `room: { roomId, name, hostId, members, state, seq, buzz }`, `serverTime` | after connecting |
 | `pong` | `t` (echoed), `serverTime` | reply to `ping` |
+| `ping` | `t` (server time) | after `welcome` and after a client's ping (at most once a second); the client answers `{ type: "pong", t }` at once, which is how the server measures the round trip |
 | `members` | `members: { memberId, name, playerId, side: "A"\|"B"\|null, captain: boolean, connected: boolean }[]`, `hostId` | anyone joins, leaves or changes side |
 | `state` | `state` (the reader's last published view, any JSON up to 64 KB), `seq` | the reader publishes |
 | `buzz` | `buzz: { open: boolean, sides: { A: boolean, B: boolean }, winner: null \| { memberId, playerId, side, pressedAt } }` | buzzers open, close or someone wins |
 | `chat` | `from: { memberId, name }`, `side`, `text`, `at` | a teammate writes in the team channel |
 | `answer` | `from: { memberId, name }`, `side`, `text`, `at` | a side's captain submits an answer (to the reader and that side) |
-| `error` | `message` | a refused message |
+| `error` | `message` | a refused message (the connection stays open) |
+
+The server closes a connection with code 4001 when the session ends, 4003 when the member is removed, and 4004
+when the room closes or the team is deleted; clients should not reconnect after those.
 
 ### Client → server
 
@@ -127,8 +140,10 @@ Messages are JSON objects with a `type`. Server time is the Durable Object's `Da
 
 ### Fair buzzing
 
-- Each connection keeps a smoothed round-trip time from `ping`/`pong` (exponentially weighted, starting
-  from the first sample; ignore samples above 3 seconds).
+- Each connection keeps a smoothed round-trip time from the server's own pings (exponentially weighted with
+  weight 0.25, starting from the first sample; samples above 3 seconds are ignored). A client that never answers
+  gets no correction. A client that delays its answers on purpose can gain up to 1.5 seconds: latency
+  correction always trusts the client a little.
 - A `buzz` from an eligible player (buzzers open, their side open, not already buzzed in this window) is
   stamped `pressedAt = receivedAt − rtt / 2`.
 - The first buzz in a window starts a 150 ms collection period. At its end the earliest `pressedAt` wins;
@@ -152,7 +167,7 @@ rooms(id TEXT PRIMARY KEY, name TEXT, host_id TEXT, created_at INTEGER, last_act
 
 ```
 server/
-  package.json         wrangler, @cloudflare/vitest-pool-workers, vitest, typescript
+  package.json         wrangler, @cloudflare/vitest-plugin, vitest, typescript
   wrangler.toml        Worker "rebound-server", Durable Object binding TEAM (class TeamServer, SQLite)
   src/index.ts         routing, CORS, team creation (a new Durable Object per team)
   src/team.ts          the TeamServer Durable Object: members, sessions, sync, rooms

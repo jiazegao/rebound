@@ -196,7 +196,7 @@ export function RoomPage({ roomId }: { roomId: string }) {
 
       <div className="stack" style={{ marginTop: '1rem' }}>
         {windowLeft !== null && <p className="small">{windowLeft > 0 ? `${windowLeft.toFixed(1)} s left` : 'Time'}</p>}
-        {winnerName && <p className="status-line">{winnerName} buzzed</p>}
+        {winnerName && !view?.status?.includes('buzzed') && <p className="status-line">{winnerName} buzzed</p>}
         <button className="btn btn-primary btn-big room-buzz" onClick={() => client?.buzz()} disabled={!canBuzz} aria-disabled={!canBuzz}>
           Buzz <span className="kbd">Space</span>
         </button>

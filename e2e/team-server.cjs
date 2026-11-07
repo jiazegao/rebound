@@ -82,9 +82,12 @@ async function main() {
     await player.locator('#join-pin').fill('5678');
     if (await player.locator('#join-server').count()) await player.locator('#join-server').fill(SERVER);
     await player.getByRole('button', { name: 'Join', exact: true }).click();
-    await player.getByText('Which player are you?').waitFor({ timeout: 15000 });
-    await player.getByRole('button', { name: 'Ben' }).click();
-    await player.getByText("Ben's plan").waitFor({ timeout: 15000 });
+    // The server links "Ben" to the roster player of the same name; otherwise the page asks.
+    const chooser = player.getByText('Which player are you?');
+    const plan = player.getByText("Ben's plan");
+    await chooser.or(plan).first().waitFor({ timeout: 15000 });
+    if (await chooser.count()) await player.getByRole('button', { name: 'Ben' }).click();
+    await plan.waitFor({ timeout: 15000 });
     await player.getByText('Server High').first().waitFor();
   });
 

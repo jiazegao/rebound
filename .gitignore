@@ -5,3 +5,7 @@ dist/
 .DS_Store
 # Never commit question data you don't have permission to publish.
 private-data/
+
+# Team server (server/): local Wrangler state (dev databases, traces) and local secrets.
+.wrangler/
+.dev.vars*

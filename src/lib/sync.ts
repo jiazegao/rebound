@@ -270,6 +270,7 @@ export function parseJoinCode(input: string): { teamId: string; secret: string }
 export async function joinSharedTeam(serverUrl: string, joinCode: string, memberName: string, pin: string, playerId?: string): Promise<void> {
   const parsed = parseJoinCode(joinCode);
   if (!parsed) throw new SyncError('That join link does not look right. Ask your captain for the link again.', 0);
+  pendingSecret = parsed.secret;
   const res = await api<Joined>(serverUrl, `/api/teams/${parsed.teamId}/join`, {
     method: 'POST',
     body: JSON.stringify({ secret: parsed.secret, memberName, pin, playerId }),
@@ -295,6 +296,26 @@ export async function joinSharedTeam(serverUrl: string, joinCode: string, member
   start();
   await syncNow();
 }
+
+/**
+ * "Which player are you?": sign in again with the same name and PIN and a roster player. The server
+ * links a member who has none yet (leaders change existing links).
+ */
+export async function choosePlayer(memberName: string, pin: string, playerId: string): Promise<SharedMember> {
+  if (!state) throw new SyncError('Not connected to a shared team.', 0);
+  const joinCode = state.joinCode;
+  const res = await api<Joined>(state.serverUrl, `/api/teams/${encodeURIComponent(state.teamId)}/join`, {
+    method: 'POST',
+    body: JSON.stringify({ secret: pendingSecret ?? (joinCode ? parseJoinCode(joinCode)?.secret : undefined), memberName, pin, playerId }),
+  });
+  state = { ...state, token: res.token, member: res.member };
+  await persist();
+  emit();
+  return res.member;
+}
+
+/** The secret from the link this device joined with, kept for the "Which player are you?" step. */
+let pendingSecret: string | null = null;
 
 /** Stop sharing on this device (the team's data stays here, and on the server for everyone else). */
 export async function leaveSharedTeam(): Promise<void> {
@@ -361,7 +382,8 @@ export function pendingChanges(data: AppData = getData()): number {
 export interface RoomListing {
   roomId: string;
   name: string;
-  host: string;
+  host: { memberId: string; name: string };
+  /** Members connected now, not counting the reader. */
   players: number;
   createdAt: number;
 }

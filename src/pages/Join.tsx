@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Notice, PageHeader } from '../components/ui';
 import { downloadFile } from '../lib/format';
 import { href, navigate } from '../lib/router';
 import { exportData, updateSettings, useData } from '../lib/store';
-import { joinSharedTeam, parseJoinCode, SERVER_URL, useSync } from '../lib/sync';
+import { choosePlayer, joinSharedTeam, parseJoinCode, SERVER_URL, useSync } from '../lib/sync';
 
 export function JoinPage({ code }: { code?: string }) {
   const data = useData();
@@ -18,6 +18,14 @@ export function JoinPage({ code }: { code?: string }) {
 
   const parsed = parseJoinCode(joinCode);
   const hasLocalTeam = !!data.team && !state;
+  const linkedPlayer = state && joined ? state.member.playerId : null;
+
+  // Linked to a roster player (by name, or after choosing): straight to today's plan.
+  useEffect(() => {
+    if (!linkedPlayer) return;
+    updateSettings({ soloPlayerId: linkedPlayer });
+    navigate('/today');
+  }, [linkedPlayer]);
 
   // Step 2: after joining, a member who is not linked yet says which roster player they are.
   if (state && joined && !state.member.playerId) {
@@ -37,7 +45,7 @@ export function JoinPage({ code }: { code?: string }) {
                 onClick={() => {
                   setBusy(true);
                   // Sign in again with the chosen player; the server links a member who has no player yet.
-                  joinSharedTeam(state.serverUrl, joinCode, joined.name, joined.pin, p.id).then(
+                  choosePlayer(joined.name, joined.pin, p.id).then(
                     () => {
                       updateSettings({ soloPlayerId: p.id });
                       navigate('/today');
