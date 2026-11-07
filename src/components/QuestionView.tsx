@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from 'react';
 import { PRONUNCIATION } from '../core/judge/normalize';
 import { LETTERS, type Question } from '../core/schema';
+import { topicName } from '../core/taxonomy';
 import { SubjectTag } from './ui';
 
 const GUIDE_SPLIT = new RegExp(`(${PRONUNCIATION.source})`, 'gu');
@@ -30,6 +31,7 @@ export function QuestionMeta({ q, extra }: { q: Question; extra?: ReactNode }) {
       <span className="question-kind">{q.kind === 'tossup' ? 'TOSS-UP' : 'BONUS'}</span>
       <span>{q.number}</span>
       <SubjectTag subject={q.subject} />
+      {q.topic && <span className="muted question-topic">{topicName(q.topic)}</span>}
       <span className="muted">{q.format === 'multiple_choice' ? 'Multiple choice' : 'Short answer'}</span>
       {q.visual && <span className="badge">Visual</span>}
       {extra}

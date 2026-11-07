@@ -1,0 +1,23 @@
+{
+  "generatedAt": "2026-11-07T00:00:00.000Z",
+  "questions": [
+    ["doe-hs-99-r01-t01", "biology", "biology.genetics", "t", 1, ""],
+    ["doe-hs-99-r01-b01", "biology", "biology.microbiology-immunology", "b", 1, ""],
+    ["doe-hs-99-r01-t02", "chemistry", "chemistry.acids-bases", "t", 1, ""],
+    ["doe-hs-99-r01-b02", "chemistry", "chemistry.stoichiometry-solutions", "b", 1, ""],
+    ["doe-hs-99-r01-t03", "math", "math.calculus", "t", 1, ""],
+    ["doe-hs-99-r01-b03", "math", "math.geometry", "b", 1, ""],
+    ["doe-hs-99-r01-t04", "physics", "physics.waves-sound", "t", 1, ""],
+    ["doe-hs-99-r01-b04", "physics", "physics.optics", "b", 1, ""]
+  ],
+  "topicCounts": {
+    "biology.genetics": 1,
+    "biology.microbiology-immunology": 1,
+    "chemistry.acids-bases": 1,
+    "chemistry.stoichiometry-solutions": 1,
+    "math.calculus": 1,
+    "math.geometry": 1,
+    "physics.waves-sound": 1,
+    "physics.optics": 1
+  }
+}

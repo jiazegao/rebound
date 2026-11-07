@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { OfflineCard } from '../components/OfflineCard';
 import { Notice, PageHeader } from '../components/ui';
 import { dateTimeText, downloadFile } from '../lib/format';
 import { href, navigate } from '../lib/router';
@@ -47,7 +48,8 @@ export function DataPage() {
       <section className="card stack" style={{ marginTop: '1rem' }}>
         <h2>Back up</h2>
         <p>
-          {data.players.length} players, {data.games.length} games, {data.attempts.length} solo answers.{' '}
+          {data.players.length} players, {data.games.length} games, {data.attempts.length} solo answers, {Object.keys(data.cards).length} review
+          questions.{' '}
           {data.lastExportAt ? `Last backup: ${dateTimeText(data.lastExportAt)}.` : 'Never backed up.'}
         </p>
         <div>
@@ -56,6 +58,10 @@ export function DataPage() {
           </button>
         </div>
       </section>
+
+      <div style={{ marginTop: '1rem' }}>
+        <OfflineCard />
+      </div>
 
       <section className="card stack" style={{ marginTop: '1rem' }}>
         <h2>Restore or move</h2>

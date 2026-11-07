@@ -6,9 +6,12 @@
  */
 import { useSyncExternalStore } from 'react';
 import { del, get, set } from 'idb-keyval';
+import type { DayPlan } from '../core/plan';
+import { applyOutcome, cardId, gradeCard, manualCard, RETENTION, seasonPhase, type CardEvent, type Outcome, type ReviewCard } from '../core/review';
 import type { MatchEvent } from '../core/rules/engine';
-import type { Player, Subject, Team } from '../core/schema';
+import type { Player, QuestionKind, Subject, Team } from '../core/schema';
 import { newId } from './format';
+import { attemptOutcome, gameOutcomes } from './outcomes';
 
 const KEY = 'rebound-data-v1';
 
@@ -64,7 +67,11 @@ export interface AppData {
   seen: Record<string, Record<string, number>>;
   attempts: SoloAttempt[];
   reports: ProblemReport[];
-  settings: { sound: boolean; readingWpm: number; soloPlayerId: string | null; answerTimer: boolean };
+  /** Review cards, keyed by `${playerId}:${questionId}`. */
+  cards: Record<string, ReviewCard>;
+  /** Each player's plan for the current day, keyed by player id. */
+  plans: Record<string, DayPlan>;
+  settings: { sound: boolean; readingWpm: number; soloPlayerId: string | null; answerTimer: boolean; dailyMinutes: number };
   lastExportAt: string | null;
 }
 
@@ -77,7 +84,9 @@ export function emptyData(): AppData {
     seen: {},
     attempts: [],
     reports: [],
-    settings: { sound: true, readingWpm: 200, soloPlayerId: null, answerTimer: true },
+    cards: {},
+    plans: {},
+    settings: { sound: true, readingWpm: 200, soloPlayerId: null, answerTimer: true, dailyMinutes: 30 },
     lastExportAt: null,
   };
 }
@@ -232,6 +241,8 @@ export function finishGame(gameId: string, scores: [number, number]): void {
     g.status = 'finished';
     g.finalScores = scores;
     g.updatedAt = new Date().toISOString();
+    // Misses, slow buzzes and missed bonuses become review cards (each answer only once, even if the game is reopened).
+    applyOutcomes(d, gameOutcomes(g, d.players));
   });
 }
 
@@ -257,7 +268,77 @@ export function markSeen(playerIds: string[], questionIds: string[], at = Date.n
 
 export function addAttempt(attempt: Omit<SoloAttempt, 'id'>): void {
   update((d) => {
-    d.attempts.push({ ...attempt, id: newId('a') });
+    const a = { ...attempt, id: newId('a') };
+    d.attempts.push(a);
+    applyOutcomes(d, [attemptOutcome(a)]);
+  });
+}
+
+/* ---------------- review cards ---------------- */
+
+/** The retention target in force at time `t` (it rises as the next competition gets close). */
+export function retentionAt(d: AppData, t: number): number {
+  return RETENTION[seasonPhase(t, d.team?.nextEvent?.date)];
+}
+
+function applyOutcomes(d: AppData, outcomes: Outcome[]): void {
+  for (const o of [...outcomes].sort((a, b) => a.t - b.t)) {
+    const id = cardId(o.playerId, o.questionId);
+    const next = applyOutcome(d.cards[id], o, retentionAt(d, o.t));
+    if (next) d.cards[id] = next;
+  }
+}
+
+/** Put a question in a player's review queue (due now). */
+export function addToReview(playerId: string, q: { id: string; subject: Subject; kind: QuestionKind }): void {
+  update((d) => {
+    const id = cardId(playerId, q.id);
+    const existing = d.cards[id];
+    if (existing) {
+      // Already a card: bring it forward to today.
+      if (existing.fsrs.due > Date.now()) d.cards[id] = { ...existing, fsrs: { ...existing.fsrs, due: Date.now() } };
+    } else d.cards[id] = manualCard(playerId, q, Date.now());
+  });
+}
+
+export function removeFromReview(id: string): void {
+  update((d) => {
+    delete d.cards[id];
+  });
+}
+
+/** Save the result of one timed review. */
+export function recordReview(id: string, event: CardEvent): void {
+  update((d) => {
+    const card = d.cards[id];
+    if (card) d.cards[id] = gradeCard(card, event, retentionAt(d, event.t));
+  });
+}
+
+/* ---------------- plans and the calendar ---------------- */
+
+export function savePlan(plan: DayPlan): void {
+  update((d) => {
+    d.plans[plan.playerId] = plan;
+  });
+}
+
+/** Tick off a plan item (only if the plan is still the one for that day). */
+export function completePlanItem(playerId: string, day: string, itemId: string): void {
+  const plan = data.plans[playerId];
+  if (!plan || plan.day !== day || plan.items.find((i) => i.id === itemId)?.done !== false) return;
+  update((d) => {
+    const item = d.plans[playerId]?.items.find((i) => i.id === itemId);
+    if (item) item.done = true;
+  });
+}
+
+export function setNextEvent(event: { name: string; date: string } | null): void {
+  update((d) => {
+    if (!d.team) return;
+    if (event && /^\d{4}-\d{2}-\d{2}$/.test(event.date)) d.team.nextEvent = { name: event.name.trim(), date: event.date };
+    else delete d.team.nextEvent;
+    // Today's plans are rebuilt (keeping what is done) when the date moves them into another season phase.
   });
 }
 

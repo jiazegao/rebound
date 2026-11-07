@@ -5,6 +5,8 @@ import { Home } from './pages/Home';
 import { RulesPage } from './pages/Rules';
 import { CoachesPage, ItStaffPage, AboutPage } from './pages/Info';
 import { TodayPage } from './pages/Today';
+import { ReviewPage } from './pages/Review';
+import { ProgressPage } from './pages/Progress';
 import { TeamPage } from './pages/Team';
 import { LibraryPage } from './pages/Library';
 import { ReaderSetup } from './pages/ReaderSetup';
@@ -23,6 +25,7 @@ interface NavItem {
 const TEAM_NAV: NavItem[] = [
   { label: 'Today', path: '/today', section: 'today' },
   { label: 'Practice', path: '/try', section: 'try' },
+  { label: 'Review', path: '/review', section: 'review' },
   { label: 'Library', path: '/library', section: 'library' },
   { label: 'Play', path: '/reader', section: 'reader' },
   { label: 'Team', path: '/team', section: 'team' },
@@ -75,6 +78,12 @@ export function App() {
     case 'today':
       page = <TodayPage />;
       break;
+    case 'review':
+      page = <ReviewPage query={route.query} />;
+      break;
+    case 'progress':
+      page = <ProgressPage />;
+      break;
     case 'library':
       page = <LibraryPage setId={second} roundId={third} print={route.query.get('print') === '1'} />;
       break;
@@ -99,7 +108,7 @@ export function App() {
 
   const nav = data.team ? TEAM_NAV : PUBLIC_NAV;
   const section = first ?? '';
-  const sectionAliases: Record<string, string> = { games: 'reader', stats: 'team', data: 'team' };
+  const sectionAliases: Record<string, string> = { games: 'reader', stats: 'team', data: 'team', progress: 'today' };
   const activeSection = sectionAliases[section] ?? section;
 
   return (

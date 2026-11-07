@@ -4,7 +4,9 @@ import { QuestionView } from '../components/QuestionView';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type Question, type QuestionSet, type Subject } from '../core/schema';
 import { findRound, roundQuestions, setLabel, useIndex, useSet } from '../lib/library';
 import { href } from '../lib/router';
-import { reportProblem, useData } from '../lib/store';
+import { addToReview, reportProblem, useData } from '../lib/store';
+import { cardId } from '../core/review';
+import { dateText } from '../lib/format';
 
 function SetList() {
   const index = useIndex();
@@ -157,6 +159,27 @@ function SetView({ set }: { set: QuestionSet }) {
   );
 }
 
+/** Put a question in the selected player's review queue. */
+function ReviewButton({ q }: { q: Question }) {
+  const data = useData();
+  const player = data.players.find((p) => p.active && p.id === data.settings.soloPlayerId);
+  if (!player) return null;
+  const card = data.cards[cardId(player.id, q.id)];
+  if (card) {
+    const due = card.fsrs.due <= Date.now() ? 'due now' : `next ${dateText(new Date(card.fsrs.due).toISOString())}`;
+    return (
+      <span className="small muted no-print">
+        In {player.name}'s review queue ({due})
+      </span>
+    );
+  }
+  return (
+    <button className="btn btn-small btn-ghost no-print" onClick={() => addToReview(player.id, q)} title={`Add to ${player.name}'s review queue`}>
+      Add to my review
+    </button>
+  );
+}
+
 function ReportButton({ q }: { q: Question }) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState('');
@@ -265,7 +288,10 @@ function RoundView({ set, roundId, autoPrint }: { set: QuestionSet; roundId: str
                   showAnswer={showAnswers}
                   extra={heard.length > 0 ? <span className="muted small no-print">Heard by {heard.join(', ')}</span> : undefined}
                 />
-                <ReportButton q={q} />
+                <div className="row" style={{ gap: '0.25rem' }}>
+                  <ReviewButton q={q} />
+                  <ReportButton q={q} />
+                </div>
               </div>
             );
           });

@@ -82,6 +82,12 @@ export interface Question {
   source: QuestionSource;
   /** Warnings raised while importing, e.g. "choices-missing". Empty or absent when clean. */
   flags?: string[];
+  /** Topic id from src/core/taxonomy.ts, e.g. "biology.genetics" (absent when no topic fits). */
+  topic?: string;
+  /** Concept ids within the topic, e.g. "biology.genetics.hardy-weinberg". */
+  concepts?: string[];
+  /** For Energy questions: the discipline the question really tests ("energy (chemistry)"). */
+  crossSubject?: CoreSubject;
 }
 
 /** A toss-up and the bonus that goes with it. */
@@ -142,6 +148,20 @@ export interface LibraryIndex {
   sets: SetSummary[];
 }
 
+/**
+ * One compact row per question in the library, so drills and plans can choose questions
+ * without downloading every set: [id, subject, topic id or "", "t" | "b", round order, cross-subject or ""].
+ * The set id is the id's prefix (e.g. "doe-hs-17" in "doe-hs-17-r01-t01").
+ */
+export type CatalogRow = [id: string, subject: Subject, topic: string, kind: 't' | 'b', round: number, crossSubject: CoreSubject | ''];
+
+export interface Catalog {
+  generatedAt: string;
+  questions: CatalogRow[];
+  /** How many questions each topic id has, for frequency-weighted planning. */
+  topicCounts: Record<string, number>;
+}
+
 /* ------------------------------------------------------------------ */
 /* Team data                                                           */
 /* ------------------------------------------------------------------ */
@@ -164,4 +184,6 @@ export interface Team {
   name: string;
   level: Level;
   createdAt: string;
+  /** The next competition, which shapes every player's daily plan. `date` is "YYYY-MM-DD". */
+  nextEvent?: { name: string; date: string };
 }

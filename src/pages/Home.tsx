@@ -47,6 +47,20 @@ export function Home() {
           </p>
         </div>
         <div className="card">
+          <h3>A plan for every player, every day</h3>
+          <p>
+            Today gives each player a short plan for the time they have: due reviews of the questions they missed or answered slowly, a drill
+            on a weak, high-frequency topic in their subject, and a mixed round. It shifts toward game play as the next competition gets close.
+          </p>
+        </div>
+        <div className="card">
+          <h3>Practice without Wi-Fi</h3>
+          <p>
+            After the first visit the site opens offline, and players can save every question to their device so drills and reviews keep working
+            on the bus or a patchy school network.
+          </p>
+        </div>
+        <div className="card">
           <h3>Your team's data stays with you</h3>
           <p>
             In this version everything is stored in your browser, on your device. Export a backup file at any time. No ads, no trackers.
@@ -56,8 +70,8 @@ export function Home() {
 
       <h2>What's next</h2>
       <p className="muted" style={{ maxWidth: '70ch' }}>
-        This is the first release. Coming next: a personal daily plan for each player, timed review of missed questions, concept cards for
-        every subject, lineup suggestions, and online team rooms.
+        New in this release: daily plans, timed review (FSRS), topic drills, My progress and offline practice. Coming next: concept cards for
+        every subject, lineup suggestions, assignments and online team rooms.
       </p>
     </div>
   );

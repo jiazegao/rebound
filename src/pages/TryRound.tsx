@@ -1,12 +1,17 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnswerBox, Choices, QuestionMeta, RichText } from '../components/QuestionView';
 import { Countdown, LoadError, Loading, Notice, PageHeader, useTicker } from '../components/ui';
+import { Verdict } from '../components/Verdict';
+import { pickDrill, pickMixed, type DrillPick } from '../core/drill';
 import { judgeAnswer, type JudgeResult } from '../core/judge/judge';
-import { CORE_SUBJECTS, SUBJECT_LABELS, type CoreSubject, type Question, type QuestionPair, type QuestionSet } from '../core/schema';
-import { loadSetById, setLabel, useIndex } from '../lib/library';
+import { ratingFor } from '../core/mastery';
+import { CORE_SUBJECTS, SUBJECT_LABELS, type Catalog, type CoreSubject, type Question, type QuestionPair, type QuestionSet } from '../core/schema';
+import { topicsForSubject } from '../core/taxonomy';
+import { usePlayerModel } from '../lib/learning';
+import { catalogById, loadCatalog, loadQuestions, loadSetById, setLabel, useCatalog, useIndex } from '../lib/library';
 import { buildReading, lettersPerMinute, readingDurationMs, revealedCount, splitRevealed, type Reading } from '../lib/reading';
 import { href } from '../lib/router';
-import { addAttempt, markSeen, updateSettings, useData } from '../lib/store';
+import { addAttempt, completePlanItem, markSeen, updateSettings, useData } from '../lib/store';
 
 const TOSSUP_WINDOW_S = 5;
 const BONUS_WINDOW_S = 20;
@@ -18,6 +23,8 @@ const ANSWER_TOTAL_S = 5;
 interface Item {
   pair: QuestionPair;
   where: string;
+  /** Serve only the bonus (a topic drill whose topic matches the bonus but not its toss-up). */
+  bonusOnly?: boolean;
 }
 
 type Step =
@@ -77,24 +84,62 @@ function shuffle<T>(list: T[]): T[] {
 
 /* ---------------- setup ---------------- */
 
+type Mode = 'round' | 'subject' | 'mixed';
+
 interface Settings {
-  mode: 'round' | 'subject';
+  mode: Mode;
   setId: string;
   roundId: string;
   subject: CoreSubject;
+  /** Topic id, or "" for the whole subject. */
+  topic: string;
+  /** Also use Energy questions that test this subject. */
+  cross: boolean;
   count: number;
   wpm: number;
   answerTimer: boolean;
 }
 
-function Setup({ onStart, initial }: { onStart: (items: Item[], s: Settings) => void; initial: Partial<Settings> }) {
+const COUNTS = [5, 8, 10, 15, 20];
+
+/** Drill and mixed-round questions from the whole library (fresh ones first), loading only the sets they come from. */
+async function libraryItems(catalog: Catalog, s: Settings, seen: Record<string, number>, rating: (subject: CoreSubject, topic: string) => number): Promise<Item[]> {
+  // A few extra, in case some cannot be graded.
+  const want = s.count + 3;
+  const picks: DrillPick[] =
+    s.mode === 'mixed'
+      ? pickMixed(catalog.questions, { count: want, seen, rating: (sub, topic) => rating(sub as CoreSubject, topic) })
+      : pickDrill(catalog.questions, {
+          subject: s.subject,
+          topic: s.topic || undefined,
+          includeEnergyCross: s.cross,
+          allowBonusOnly: !!s.topic,
+          count: want,
+          seen,
+          rating: (sub, topic) => rating(sub as CoreSubject, topic),
+        });
+  const found = await loadQuestions(picks.map((p) => p.questionId));
+  const items: Item[] = [];
+  for (const p of picks) {
+    const loc = found.get(p.questionId);
+    if (!loc) continue;
+    const ok = p.bonusOnly ? !!loc.pair.bonus && playable({ ...loc.pair, tossup: loc.pair.bonus }) : playable(loc.pair);
+    if (ok) items.push({ pair: loc.pair, where: `${loc.set.title}, ${loc.round.label}`, bonusOnly: p.bonusOnly });
+  }
+  return items.slice(0, s.count);
+}
+
+function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Settings) => void; initial: Partial<Settings>; autoStart: boolean }) {
   const data = useData();
   const index = useIndex();
+  const catalog = useCatalog();
   const [s, setS] = useState<Settings>({
     mode: 'round',
     setId: '',
     roundId: '',
     subject: 'biology',
+    topic: '',
+    cross: false,
     count: 10,
     wpm: data.settings.readingWpm,
     answerTimer: data.settings.answerTimer,
@@ -104,11 +149,14 @@ function Setup({ onStart, initial }: { onStart: (items: Item[], s: Settings) => 
   const [error, setError] = useState<Error | null>(null);
   const [busy, setBusy] = useState(false);
   const playerId = data.team ? data.settings.soloPlayerId : null;
+  const catalogMap = useMemo(() => (catalog.data ? catalogById(catalog.data) : null), [catalog.data]);
+  const model = usePlayerModel(data, playerId, catalogMap);
 
   const sets = useMemo(() => [...(index.data?.sets ?? [])].sort((a, b) => (b.setNumber ?? 0) - (a.setNumber ?? 0)), [index.data]);
+  const topics = useMemo(() => topicsForSubject(s.subject).filter((t) => (catalog.data?.topicCounts[t.id] ?? 0) > 0), [s.subject, catalog.data]);
 
   useEffect(() => {
-    if (!s.setId) return;
+    if (!s.setId || s.mode !== 'round') return;
     let live = true;
     loadSetById(s.setId).then(
       (loaded) => live && setSet(loaded),
@@ -117,31 +165,30 @@ function Setup({ onStart, initial }: { onStart: (items: Item[], s: Settings) => 
     return () => {
       live = false;
     };
-  }, [s.setId]);
+  }, [s.setId, s.mode]);
 
   const start = async () => {
     setBusy(true);
+    setError(null);
     try {
-      let chosen = set;
-      let settings = s;
-      if (!chosen || !s.setId) {
-        // Random: one of the eight newest sets.
-        const pick = sets.slice(0, 8)[Math.floor(Math.random() * Math.min(8, sets.length))];
-        chosen = await loadSetById(pick.id);
-        settings = { ...s, setId: pick.id };
-      }
       const seen = playerId ? data.seen[playerId] ?? {} : {};
-      let items: Item[];
-      if (settings.mode === 'round') {
+      let items: Item[] = [];
+      let settings = s;
+      if (s.mode === 'round') {
+        let chosen = set;
+        if (!chosen || !s.setId) {
+          // Random: one of the eight newest sets.
+          const pick = sets.slice(0, 8)[Math.floor(Math.random() * Math.min(8, sets.length))];
+          chosen = await loadSetById(pick.id);
+          settings = { ...s, setId: pick.id };
+        }
         const round = chosen.rounds.find((r) => r.id === settings.roundId) ?? chosen.rounds[Math.floor(Math.random() * chosen.rounds.length)];
         items = round.pairs.filter(playable).map((pair) => ({ pair, where: `${chosen!.title}, ${round.label}` }));
       } else {
-        const pool = chosen.rounds.flatMap((r) =>
-          r.pairs.filter((p) => p.tossup.subject === settings.subject && playable(p)).map((pair) => ({ pair, where: `${chosen!.title}, ${r.label}` })),
-        );
-        const fresh = pool.filter((i) => !seen[i.pair.tossup.id]);
-        items = shuffle(fresh.length >= settings.count ? fresh : pool).slice(0, settings.count);
+        const cat = catalog.data ?? (await loadCatalog());
+        items = await libraryItems(cat, s, seen, (subject, topic) => ratingFor(model, subject, topic));
       }
+      if (items.length === 0) throw new Error('No questions match these settings. Try another topic or subject.');
       updateSettings({ readingWpm: settings.wpm, answerTimer: settings.answerTimer });
       onStart(items, settings);
     } catch (err) {
@@ -150,6 +197,17 @@ function Setup({ onStart, initial }: { onStart: (items: Item[], s: Settings) => 
       setBusy(false);
     }
   };
+
+  // Started from Today: begin as soon as the library is ready.
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (!autoStart || autoStarted.current || !index.data || (s.mode !== 'round' && catalog.loading)) return;
+    autoStarted.current = true;
+    void start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, index.data, catalog.loading]);
+
+  const fromLibrary = s.mode !== 'round';
 
   return (
     <div className="container narrow">
@@ -179,7 +237,7 @@ function Setup({ onStart, initial }: { onStart: (items: Item[], s: Settings) => 
                     </option>
                   ))}
               </select>
-              <span className="hint">Saving lets Rebound skip questions you've heard and count your answers in Stats.</span>
+              <span className="hint">Saving skips questions you've heard, puts misses in your review queue, and counts your answers in Stats.</span>
             </div>
           )}
           <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
@@ -188,39 +246,46 @@ function Setup({ onStart, initial }: { onStart: (items: Item[], s: Settings) => 
               <input type="radio" name="mode" checked={s.mode === 'round'} onChange={() => setS({ ...s, mode: 'round' })} /> A whole round, all subjects
             </label>
             <label className="checkbox">
-              <input type="radio" name="mode" checked={s.mode === 'subject'} onChange={() => setS({ ...s, mode: 'subject' })} /> One subject
+              <input type="radio" name="mode" checked={s.mode === 'subject'} onChange={() => setS({ ...s, mode: 'subject' })} /> A subject or topic drill, from the
+              whole library
+            </label>
+            <label className="checkbox">
+              <input type="radio" name="mode" checked={s.mode === 'mixed'} onChange={() => setS({ ...s, mode: 'mixed' })} /> Mixed toss-ups, all six subjects
             </label>
           </fieldset>
           <div className="grid">
-            <div className="field">
-              <label htmlFor="set">Sample set</label>
-              <select id="set" value={s.setId} onChange={(e) => setS({ ...s, setId: e.target.value, roundId: '' })}>
-                <option value="">Surprise me (recent sets)</option>
-                {sets.map((x) => (
-                  <option key={x.id} value={x.id}>
-                    {setLabel(x)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {s.mode === 'round' ? (
-              <div className="field">
-                <label htmlFor="round">Round</label>
-                <select id="round" value={s.roundId} onChange={(e) => setS({ ...s, roundId: e.target.value })} disabled={!set || !s.setId}>
-                  <option value="">Random round</option>
-                  {s.setId &&
-                    set?.rounds.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.label}
+            {s.mode === 'round' && (
+              <>
+                <div className="field">
+                  <label htmlFor="set">Sample set</label>
+                  <select id="set" value={s.setId} onChange={(e) => setS({ ...s, setId: e.target.value, roundId: '' })}>
+                    <option value="">Surprise me (recent sets)</option>
+                    {sets.map((x) => (
+                      <option key={x.id} value={x.id}>
+                        {setLabel(x)}
                       </option>
                     ))}
-                </select>
-              </div>
-            ) : (
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="round">Round</label>
+                  <select id="round" value={s.roundId} onChange={(e) => setS({ ...s, roundId: e.target.value })} disabled={!set || !s.setId}>
+                    <option value="">Random round</option>
+                    {s.setId &&
+                      set?.rounds.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.label}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </>
+            )}
+            {s.mode === 'subject' && (
               <>
                 <div className="field">
                   <label htmlFor="subject">Subject</label>
-                  <select id="subject" value={s.subject} onChange={(e) => setS({ ...s, subject: e.target.value as CoreSubject })}>
+                  <select id="subject" value={s.subject} onChange={(e) => setS({ ...s, subject: e.target.value as CoreSubject, topic: '', cross: false })}>
                     {CORE_SUBJECTS.map((sub) => (
                       <option key={sub} value={sub}>
                         {SUBJECT_LABELS[sub]}
@@ -228,19 +293,43 @@ function Setup({ onStart, initial }: { onStart: (items: Item[], s: Settings) => 
                     ))}
                   </select>
                 </div>
-                <div className="field">
-                  <label htmlFor="count">Toss-ups</label>
-                  <select id="count" value={s.count} onChange={(e) => setS({ ...s, count: Number(e.target.value) })}>
-                    {[5, 10, 15, 20].map((n) => (
+                {topics.length > 0 && (
+                  <div className="field">
+                    <label htmlFor="topic">Topic</label>
+                    <select id="topic" value={s.topic} onChange={(e) => setS({ ...s, topic: e.target.value })}>
+                      <option value="">All of {SUBJECT_LABELS[s.subject]}</option>
+                      {topics.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name} ({catalog.data?.topicCounts[t.id] ?? 0})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </>
+            )}
+            {fromLibrary && (
+              <div className="field">
+                <label htmlFor="count">Questions</label>
+                <select id="count" value={s.count} onChange={(e) => setS({ ...s, count: Number(e.target.value) })}>
+                  {[...new Set([...COUNTS, s.count])]
+                    .sort((a, b) => a - b)
+                    .map((n) => (
                       <option key={n} value={n}>
                         {n}
                       </option>
                     ))}
-                  </select>
-                </div>
-              </>
+                </select>
+              </div>
             )}
           </div>
+          {s.mode === 'subject' && s.subject !== 'energy' && !s.topic && (
+            <label className="checkbox">
+              <input type="checkbox" checked={s.cross} onChange={(e) => setS({ ...s, cross: e.target.checked })} />
+              Include Energy questions that really test {SUBJECT_LABELS[s.subject]}
+            </label>
+          )}
+          {fromLibrary && catalog.error && <Notice kind="warn">The question catalog could not be loaded, so drills are unavailable right now. {catalog.error.message}</Notice>}
           <div className="field">
             <label htmlFor="wpm">
               Reading speed: {s.wpm} words per minute (about {lettersPerMinute(s.wpm).toLocaleString()} letters per minute)
@@ -256,7 +345,7 @@ function Setup({ onStart, initial }: { onStart: (items: Item[], s: Settings) => 
             Time my answers: start typing within {ANSWER_START_S} seconds of buzzing and finish within {ANSWER_TOTAL_S}
           </label>
           <div>
-            <button className="btn btn-primary btn-big" onClick={() => void start()} disabled={busy}>
+            <button className="btn btn-primary btn-big" onClick={() => void start()} disabled={busy || (fromLibrary && !catalog.data)}>
               {busy ? 'Loading…' : 'Start'}
             </button>
           </div>
@@ -268,33 +357,8 @@ function Setup({ onStart, initial }: { onStart: (items: Item[], s: Settings) => 
 
 /* ---------------- play ---------------- */
 
-function Verdict({ result, decided, onDecide }: { result: JudgeResult | null; decided: boolean | null; onDecide: (right: boolean) => void }) {
-  if (!result) {
-    return <div className="verdict">No answer in time.</div>;
-  }
-  const final = decided ?? (result.verdict === 'correct' ? true : result.verdict === 'incorrect' ? false : null);
-  const kind = final === null ? 'review' : final ? 'correct' : 'incorrect';
-  return (
-    <div className={`verdict verdict-${kind}`} role="status">
-      <strong>{final === null ? 'Your call' : final ? 'Correct' : 'Not correct'}</strong>
-      {decided !== null && decided !== (result.verdict === 'correct') ? ' (your call)' : ''}
-      <div className="small">{result.reason}</div>
-      {final === null ? (
-        <div className="row" style={{ marginTop: '0.5rem' }}>
-          <button className="btn btn-good" onClick={() => onDecide(true)}>
-            I was right <span className="kbd">Y</span>
-          </button>
-          <button className="btn btn-bad" onClick={() => onDecide(false)}>
-            I was wrong <span className="kbd">N</span>
-          </button>
-        </div>
-      ) : (
-        <button className="btn btn-small btn-ghost" style={{ marginTop: '0.25rem' }} onClick={() => onDecide(!final)}>
-          {final ? 'Actually, I was wrong' : 'Actually, I was right'}
-        </button>
-      )}
-    </div>
-  );
+function firstStep(item: Item): Step {
+  return item.bonusOnly ? { kind: 'bonus_reading', startedAt: Date.now() } : { kind: 'tossup_reading', startedAt: Date.now() };
 }
 
 function Play({
@@ -313,7 +377,7 @@ function Play({
   const data = useData();
   const playerId = data.team ? data.settings.soloPlayerId : null;
   const [index, setIndex] = useState(0);
-  const [step, setStep] = useState<Step>(() => ({ kind: 'tossup_reading', startedAt: Date.now() }));
+  const [step, setStep] = useState<Step>(() => firstStep(items[0]));
   const [tally, setTally] = useState<Tally>(emptyTally);
   const [response, setResponse] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -335,8 +399,8 @@ function Play({
 
   // Record that the player has heard the questions.
   useEffect(() => {
-    if (playerId) markSeen([playerId], [tossup.id]);
-  }, [playerId, tossup.id]);
+    if (playerId && !item.bonusOnly) markSeen([playerId], [tossup.id]);
+  }, [playerId, tossup.id, item.bonusOnly]);
 
   const record = useCallback(
     (q: Question, correct: boolean, interrupt: boolean, latencyMs: number | null, overridden: boolean) => {
@@ -503,7 +567,8 @@ function Play({
       return;
     }
     setIndex(index + 1);
-    setStep({ kind: 'tossup_reading', startedAt: Date.now() });
+    setStep(firstStep(items[index + 1]));
+    if (items[index + 1].bonusOnly) setTimeout(() => inputRef.current?.focus(), 0);
   };
 
   // Keyboard: Space buzzes; Space/Enter continues; Y/N decide.
@@ -535,7 +600,7 @@ function Play({
     <div className="container narrow">
       <div className="row spread" style={{ marginBottom: '0.5rem' }}>
         <span className="muted small">
-          Toss-up {index + 1} of {items.length} · {item.where}
+          {item.bonusOnly ? 'Bonus' : 'Toss-up'} {index + 1} of {items.length} · {item.where}
         </span>
         <span className="row small">
           <strong>{tally.points} points</strong>
@@ -651,7 +716,7 @@ function Play({
         )}
         {canContinue && (
           <button className="btn btn-primary btn-big" onClick={next}>
-            {goesToBonus ? 'Bonus' : index + 1 >= items.length && !goesToBonus ? 'Finish' : 'Next toss-up'} <span className="kbd">Space</span>
+            {goesToBonus ? 'Bonus' : index + 1 >= items.length ? 'Finish' : items[index + 1].bonusOnly ? 'Next bonus' : 'Next toss-up'} <span className="kbd">Space</span>
           </button>
         )}
       </div>
@@ -659,7 +724,7 @@ function Play({
   );
 }
 
-function Done({ tally, onAgain, onSetup }: { tally: Tally; onAgain: () => void; onSetup: () => void }) {
+function Done({ tally, fromPlan, onAgain, onSetup }: { tally: Tally; fromPlan: boolean; onAgain: () => void; onSetup: () => void }) {
   const data = useData();
   return (
     <div className="container narrow">
@@ -669,7 +734,12 @@ function Done({ tally, onAgain, onSetup }: { tally: Tally; onAgain: () => void; 
           {tally.bonusesCorrect} of {tally.bonusesHeard}
         </p>
         <div className="row">
-          <button className="btn btn-primary" onClick={onAgain}>
+          {fromPlan && (
+            <a className="btn btn-primary" href={href('/today')}>
+              Back to today's plan
+            </a>
+          )}
+          <button className={fromPlan ? 'btn' : 'btn btn-primary'} onClick={onAgain}>
             Play again
           </button>
           <button className="btn" onClick={onSetup}>
@@ -685,7 +755,14 @@ function Done({ tally, onAgain, onSetup }: { tally: Tally; onAgain: () => void; 
       {tally.missed.length > 0 ? (
         <>
           <h2>Review what you missed</h2>
-          <p className="muted small">Saved players will get these back as timed reviews in the next release.</p>
+          {data.team && data.settings.soloPlayerId ? (
+            <p className="muted small">
+              These are in your <a href={href('/review')}>review queue</a> and come back tomorrow, then on a spaced schedule. Slow correct
+              answers come back too.
+            </p>
+          ) : (
+            <p className="muted small">Choose your name before you start, and Rebound brings misses back as timed reviews.</p>
+          )}
           <div className="stack">
             {tally.missed.map((q) => (
               <article className="question" key={q.id}>
@@ -706,13 +783,41 @@ function Done({ tally, onAgain, onSetup }: { tally: Tally; onAgain: () => void; 
   );
 }
 
+function initialFromQuery(query: URLSearchParams): Partial<Settings> {
+  const initial: Partial<Settings> = {};
+  const mode = query.get('mode');
+  if (mode === 'subject' || mode === 'mixed' || mode === 'round') initial.mode = mode;
+  else if (query.get('set')) initial.mode = 'round';
+  if (query.get('set')) initial.setId = query.get('set')!;
+  if (query.get('round')) initial.roundId = query.get('round')!;
+  const subject = query.get('subject');
+  if (subject && (CORE_SUBJECTS as string[]).includes(subject)) initial.subject = subject as CoreSubject;
+  if (query.get('topic')) initial.topic = query.get('topic')!;
+  if (query.get('cross') === '1') initial.cross = true;
+  const count = Number(query.get('count'));
+  if (count > 0 && count <= 40) initial.count = Math.round(count);
+  return initial;
+}
+
 export function TryRound({ query }: { query: URLSearchParams }) {
+  const data = useData();
   const [stage, setStage] = useState<'setup' | 'play' | 'done'>('setup');
   const [items, setItems] = useState<Item[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [tally, setTally] = useState<Tally>(emptyTally);
   const [runKey, setRunKey] = useState(0);
-  const initial: Partial<Settings> = { setId: query.get('set') ?? '', roundId: query.get('round') ?? '' };
+  const queryKey = query.toString();
+  const initial = useMemo(() => initialFromQuery(new URLSearchParams(queryKey)), [queryKey]);
+  // Launched from a plan item on Today: start straight away, and tick the item off at the end.
+  const planItem = query.get('plan');
+  const planDay = query.get('day');
+  const autoStart = query.get('go') === '1';
+
+  // A new link (for example another plan item) starts over at setup.
+  useEffect(() => {
+    setStage('setup');
+    setSettings(null);
+  }, [queryKey]);
 
   if (stage === 'play' && settings) {
     return (
@@ -724,6 +829,8 @@ export function TryRound({ query }: { query: URLSearchParams }) {
         onDone={(t) => {
           setTally(t);
           setStage('done');
+          const playerId = data.team ? data.settings.soloPlayerId : null;
+          if (playerId && planItem && planDay) completePlanItem(playerId, planDay, planItem);
         }}
         onQuit={() => setStage('setup')}
       />
@@ -733,6 +840,7 @@ export function TryRound({ query }: { query: URLSearchParams }) {
     return (
       <Done
         tally={tally}
+        fromPlan={!!planItem}
         onAgain={() => {
           setItems(shuffle(items));
           setRunKey((k) => k + 1);
@@ -744,7 +852,9 @@ export function TryRound({ query }: { query: URLSearchParams }) {
   }
   return (
     <Setup
+      key={queryKey}
       initial={settings ?? initial}
+      autoStart={autoStart && settings === null}
       onStart={(list, s) => {
         if (list.length === 0) return;
         setItems(list);

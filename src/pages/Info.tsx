@@ -27,11 +27,19 @@ export function CoachesPage() {
           After practice, <a href={href('/stats')}>Stats</a> shows each player's accuracy by subject, interrupts and buzz speed. Export a backup
           from <a href={href('/data')}>Data</a> each week.
         </li>
+        <li>
+          Enter your next competition on the <a href={href('/team')}>Team</a> page. Each player then picks their name on{' '}
+          <a href={href('/today')}>Today</a> and gets a daily plan: reviews of what they missed in games and drills, a topic drill in their
+          subject, and a mixed round. Misses from Reader console games reach the review queue when the game ends.
+        </li>
       </ol>
 
       <h2>What Rebound stores, and where</h2>
       <ul>
-        <li>The team name, players' display names, roles and subjects, practice game records, and which questions each player has heard.</li>
+        <li>
+          The team name, players' display names, roles and subjects, the next competition date, practice game records, solo answers, which
+          questions each player has heard, review schedules and daily plans.
+        </li>
         <li>
           In this version, everything stays in this browser on this device. Nothing is sent to a server. Anyone using the same browser profile
           on this device can see it.
@@ -60,6 +68,10 @@ export function ItStaffPage() {
         <li>It loads HTML, JavaScript, CSS and JSON question files from its own domain over standard HTTPS.</li>
         <li>It makes no requests to other domains, and uses no cookies, ads, analytics or trackers.</li>
         <li>Team data is stored in the browser's IndexedDB on the device.</li>
+        <li>
+          A service worker keeps a copy of the site (and, if a player chooses, the question files, about 9 MB) in the browser's Cache Storage
+          so practice works offline. It only caches files from Rebound's own domain.
+        </li>
         <li>
           Links to official DOE question PDFs and rulebooks point to <code>science.osti.gov</code>; allowing it lets students open the originals.
         </li>

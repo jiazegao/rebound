@@ -1,6 +1,7 @@
 /*
  * Browser smoke test: walks through team setup, a full Reader-console game, the game
- * summary, stats and a solo round, using a small fixture question set.
+ * summary, stats, a solo round, the review queue, today's plan, a drill, My progress and
+ * offline use, using a small fixture question set (the offline check uses the real library).
  *
  *   npm run build && npx vite preview --port 4173 --strictPort &
  *   node e2e/smoke.cjs                      # uses e2e/fixture-*.json
@@ -18,7 +19,8 @@ const SHOTS = process.env.SHOTS_DIR || '';
 
 async function main() {
   const browser = await chromium.launch();
-  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  // Routes cannot see requests a service worker answers, so the fixture run blocks it; the offline check allows it.
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: 'block' });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
@@ -30,6 +32,7 @@ async function main() {
   if (USE_FIXTURES) {
     await page.route('**/data/doe/index.json', (r) => r.fulfill({ path: path.join(__dirname, 'fixture-index.json'), contentType: 'application/json' }));
     await page.route('**/data/doe/doe-hs-99.json', (r) => r.fulfill({ path: path.join(__dirname, 'fixture-set.json'), contentType: 'application/json' }));
+    await page.route('**/data/doe/catalog.json', (r) => r.fulfill({ path: path.join(__dirname, 'fixture-catalog.json'), contentType: 'application/json' }));
   }
 
   let failures = 0;
@@ -207,6 +210,97 @@ async function main() {
       if (!text.includes('8 / 8')) throw new Error(`expected solo 8 / 8 in: ${text}`);
     });
 
+    await step('game misses, dead toss-ups and missed bonuses go to the review queue', async () => {
+      await page.goto(`${BASE}#/review`);
+      // Abe: missed toss-up 3, and owns chemistry, whose toss-up 2 nobody got. Bea: wrong interrupt, and owns math, whose bonus her team missed.
+      for (const [name, count] of [
+        ['Abe', '2'],
+        ['Bea', '2'],
+        ['Ben', '1'],
+      ]) {
+        await page.locator('#player-switch').selectOption({ label: name });
+        const tile = page.locator('.card', { hasText: 'In your queue' }).first();
+        await tile.waitFor();
+        const text = await tile.innerText();
+        if (!text.includes(count)) throw new Error(`${name} should have ${count} review questions: ${text}`);
+      }
+      await page.locator('#player-switch').selectOption({ label: 'Ann' });
+    });
+
+    await step('next competition date', async () => {
+      await page.goto(`${BASE}#/team`);
+      const d = new Date(Date.now() + 10 * 86400000);
+      const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      await page.locator('#event-name').fill('Regional');
+      await page.locator('#event-date').fill(iso);
+      await page.getByRole('button', { name: 'Save', exact: true }).click();
+      await see('Regional is in 10 days');
+    });
+
+    await step("Today shows each player's plan with reasons", async () => {
+      await page.goto(`${BASE}#/today`);
+      await see("Ann's plan");
+      await see('Regional in 10 days');
+      const items = await page.locator('.plan-item').count();
+      if (items < 3) throw new Error(`expected at least 3 plan items, got ${items}`);
+      const why = await page.locator('.why-label').count();
+      if (why !== items) throw new Error('every plan item needs a "Why this?" line');
+      await see('Biology drill');
+      await see('timed mixed play');
+      await shot('12-today-plan');
+    });
+
+    await step('a drill started from the plan begins at once and ticks itself off', async () => {
+      await page.locator('.plan-item', { hasText: 'Biology drill' }).getByRole('link', { name: 'Start' }).click();
+      await page.getByRole('button', { name: /Buzz/ }).waitFor();
+      await page.waitForTimeout(600);
+      await key('Space');
+      await page.locator('#answer').fill('phenotype');
+      await key('Enter');
+      await see('Correct');
+      await key('Space');
+      await page.locator('#answer').fill('bacteriophage');
+      await key('Enter');
+      await see('Correct');
+      await key('Space');
+      await page.getByRole('link', { name: "Back to today's plan" }).click();
+      const drill = page.locator('.plan-item', { hasText: 'Biology drill' });
+      await drill.getByText('Done', { exact: true }).waitFor({ timeout: 5000 });
+    });
+
+    await step('add a question from the library and review it, timed', async () => {
+      await page.goto(`${BASE}#/library/doe-hs-99/doe-hs-99-r01`);
+      await page.getByRole('button', { name: 'Add to my review' }).first().click();
+      await see("In Ann's review queue");
+      await page.goto(`${BASE}#/review`);
+      await page.getByRole('button', { name: /Start review \(1\)/ }).click();
+      await page.getByRole('button', { name: /Buzz/ }).waitFor();
+      await shot('13-review-question');
+      await key('Space');
+      await page.locator('#review-answer').fill('phenotype');
+      await key('Enter');
+      await see('Correct');
+      await see('back in');
+      await shot('14-review-answer');
+      await key('Space');
+      await see('Reviewed 1: 1 right');
+    });
+
+    await step('My progress shows mastery by subject and the subject map', async () => {
+      await page.goto(`${BASE}#/progress`);
+      await see('Mastery by subject');
+      await see('Subject map');
+      const bars = await page.locator('.hbar').count();
+      if (bars < 4) throw new Error(`expected bars for 4 subjects, got ${bars}`);
+      const cells = await page.locator('.heat-cell').count();
+      if (cells < 60) throw new Error(`expected a cell per topic, got ${cells}`);
+      await page.locator('.hbar').first().hover();
+      await page.locator('.viz-tip').first().waitFor();
+      await shot('15-progress');
+      await page.getByRole('button', { name: 'Show table' }).first().click();
+      await page.getByRole('cell', { name: 'Biology' }).first().waitFor();
+    });
+
     await step('solo reading shows letters one at a time, current word fainter', async () => {
       await page.goto(`${BASE}#/try`);
       await page.locator('#who').selectOption('');
@@ -267,12 +361,34 @@ async function main() {
     await step('phone layout', async () => {
       await page.setViewportSize({ width: 390, height: 844 });
       await page.goto(`${BASE}#/today`);
-      await see('Quick start');
+      await see("Who's practicing?");
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
       if (overflow) throw new Error('page scrolls sideways on a phone');
       await shot('11-phone-today');
     });
   }
+
+  await step('offline: the site opens with no connection, and saved questions work', async () => {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const p = await ctx.newPage();
+    p.on('pageerror', (e) => errors.push(`offline pageerror: ${e.message}`));
+    await p.goto(BASE);
+    await p.evaluate(() => navigator.serviceWorker.ready.then(() => true));
+    await p.reload();
+    await p.waitForFunction(() => navigator.serviceWorker.controller !== null);
+    await ctx.setOffline(true);
+    await p.reload();
+    await p.getByText('Practice like the real thing').first().waitFor({ timeout: 8000 });
+    await ctx.setOffline(false);
+    await p.goto(`${BASE}#/data`);
+    await p.getByRole('button', { name: 'Save all questions for offline use' }).click();
+    await p.getByText(/All \d+ question files are saved/).first().waitFor({ timeout: 30000 });
+    await ctx.setOffline(true);
+    await p.goto(`${BASE}#/library/doe-hs-17/doe-hs-17-r01`);
+    await p.locator('.question-kind').first().waitFor({ timeout: 8000 });
+    if (SHOTS) await p.screenshot({ path: path.join(SHOTS, '16-offline-library.png') });
+    await ctx.close();
+  });
 
   await browser.close();
   if (errors.length) {

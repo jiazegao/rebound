@@ -1,7 +1,8 @@
 # Rebound
 
-A free, team-first practice website for the National Science Bowl (NSB). This is **Phase 0** of the plan in
-[`docs/PROPOSAL.md`](docs/PROPOSAL.md): the site can go live, and every practice is logged.
+A free, team-first practice website for the National Science Bowl (NSB). This covers **Phases 0 and 1** of the plan in
+[`docs/PROPOSAL.md`](docs/PROPOSAL.md): every practice is logged, and every player opens **Today** to find a daily plan and a review
+queue built from their own misses.
 
 Rebound is an unofficial study tool, not affiliated with or endorsed by the U.S. Department of Energy (DOE).
 
@@ -10,6 +11,11 @@ Rebound is an unofficial study tool, not affiliated with or endorsed by the U.S.
 | Page | What it does |
 |---|---|
 | **Home**, **Try a round** | Public pages. Anyone can play a DOE round solo without an account. |
+| **Today** | Each player picks their name and gets a plan for 15, 30 or 45 minutes: due reviews (capped at a third of the time), a targeted drill on a weak, high-frequency topic in their primary subject, one in their secondary subject, and a mixed round. Every item says why it is there. The mix shifts toward timed mixed rounds in the last three weeks before the team's next competition (set on the Team page). |
+| **Review** | Timed review of misses, wrong interrupts, slow correct answers, toss-ups nobody got in your subject, and bonuses your team missed, from solo practice and Reader console games. Scheduled with FSRS ([ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs)) in whole days; the grade comes from correctness and buzz time. Cards pause while their question has an open problem report. |
+| **Practice → drills** | Subject and topic drills drawn from the whole library (fresh questions first, aimed at a 70–85% expected success rate, from a few set files), an option to add Energy questions that test the subject, and balanced mixed toss-ups. |
+| **My progress** | Mastery by subject and a topic map (difficulty-adjusted ratings from each player's first answers), buzz speed, the review queue and daily activity, each with a table view. |
+| **Offline** | A service worker keeps the site available offline after the first visit; **Data → Save all questions for offline use** stores the whole library (about 9 MB) for drills and reviews without a connection. The site can be installed to a home screen. |
 | **Team** | Create the team, add players, give each a primary and secondary subject, see "who covers what". |
 | **Play → Reader console** | Run an in-person practice game from one laptop: question in large type, answer for the reader, 5 s / 20 s answer clocks, game clock, two-tap scoring under the **2027 rules** (interrupts, blurts, rebounds, double interrupts, halves, tiebreakers), undo, keyboard shortcuts. Every toss-up is logged. |
 | **Game summary**, **Stats** | Per-player toss-up accuracy by subject, interrupts, points given away, median buzz time, bonus conversion; CSV export. |
@@ -37,7 +43,7 @@ npm run dev        # http://localhost:5173
 Other commands:
 
 ```bash
-npm test           # unit tests (rules engine, answer checker, stats, importer)
+npm test           # unit tests (rules engine, answer checker, review scheduler, plans, drills, tagging, importer)
 npm run build      # type-check and build the static site into dist/
 npm run preview    # serve dist/ at http://localhost:4173
 node e2e/smoke.cjs # browser walkthrough against the preview server (needs Playwright + Chromium)
@@ -83,15 +89,23 @@ private to the team and never commit them (the `private-data/` folder is git-ign
 
 ```
 src/core/            framework-free logic, unit-tested
-  schema.ts          shared data types ("NSB-JSON") for questions, sets, players
+  schema.ts          shared data types ("NSB-JSON") for questions, sets, players, the catalog
   rules/presets.ts   rule presets (DOE Regional/Virtual/Finals 2027, invitational, practice)
   rules/engine.ts    event-sourced match engine: replay(events) → state; undo = drop last event
   judge/             answer checker: multiple choice rule, accept/reject lists, numbers, units, names
   importers/         DOE PDF → questions (text extraction + parser)
-src/lib/             browser-side helpers: store (IndexedDB), library loading, stats, router, sound
+  taxonomy.ts        the subject map: 66 topics in the six 2027 subjects, with concepts
+  tagging.ts         rule-based topic, concept and Energy cross-subject tagging, run at import
+  review.ts          review cards on FSRS: cards from misses, timed grades, retention by season
+  mastery.ts         learner model: difficulty-adjusted ratings per subject and topic, buzz speed
+  plan.ts            the daily plan with "why this?" lines
+  drill.ts           choosing drill questions from the catalog
+src/lib/             browser-side helpers: store (IndexedDB), library loading, learning glue, offline, stats, router, sound
 src/pages/           one file per page
 src/components/      shared UI pieces
+src/sw/              the service worker template (vite.config.ts fills in the file list at build time)
 scripts/doe/         data fetch/build scripts and the validation report
+scripts/icons/       renders the app icons with Playwright
 e2e/                 browser smoke test and a small fixture question set
 ```
 
@@ -105,13 +119,17 @@ Key design choices:
   values written in a different form come back as `review` and the player decides.
 - **Pages only talk to `src/lib/store.ts`.** Swapping local storage for a shared database later should not require page
   changes.
+- **Learning logic is pure.** Review scheduling, mastery, plans and drill choice are plain functions of the saved data, so
+  they are unit-tested and can move to a server unchanged. Mastery counts only a player's first answer to each question;
+  reviews measure memory of a question already seen, so they feed the schedule, not the mastery map.
+- **Difficulty is estimated from round numbers for now.** Until there is enough team data to measure it, a question's
+  difficulty comes from what DOE says about its sample sets: rounds 1–10 are about equal, and later rounds and bonuses are harder.
 
 ## Roadmap
 
-From the proposal: Phase 1 adds the personal **Today** plan and timed spaced review (FSRS) of misses; Phase 2 adds the
-captain's lineup simulator, assignments, scrimmage builder, concept cards and online team rooms; Phase 3 adds Finals
-presets with visual bonuses; Phase 4 adds the question-writing studio, reading paths, middle school mode, and the
-open-source handoff.
+From the proposal: Phase 2 adds the captain's lineup simulator, assignments, scrimmage builder, concept cards and online
+team rooms; Phase 3 adds Finals presets with visual bonuses; Phase 4 adds the question-writing studio, reading paths,
+middle school mode, and the open-source handoff.
 
 ## License
 

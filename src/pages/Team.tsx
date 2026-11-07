@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { PageHeader, SubjectTag, Notice } from '../components/ui';
+import { daysUntil, FINAL_WEEKS_DAYS } from '../core/review';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type CoreSubject, type Level, type Player, type Role } from '../core/schema';
 import { href } from '../lib/router';
-import { addPlayer, createTeam, removePlayer, renameTeam, updatePlayer, useData } from '../lib/store';
+import { addPlayer, createTeam, removePlayer, renameTeam, setNextEvent, updatePlayer, useData } from '../lib/store';
 
 const ROLES: Role[] = ['member', 'captain', 'coach'];
 const SQUADS = ['', 'A', 'B', 'C', 'D'];
@@ -141,6 +142,63 @@ function PlayerRow({ p }: { p: Player }) {
   );
 }
 
+function NextEvent() {
+  const data = useData();
+  const saved = data.team?.nextEvent;
+  const [name, setName] = useState(saved?.name ?? '');
+  const [date, setDate] = useState(saved?.date ?? '');
+  const days = daysUntil(saved?.date, Date.now());
+  const dirty = name !== (saved?.name ?? '') || date !== (saved?.date ?? '');
+  return (
+    <form
+      className="card"
+      aria-labelledby="next-event-heading"
+      onSubmit={(e) => {
+        e.preventDefault();
+        setNextEvent(date ? { name, date } : null);
+      }}
+    >
+      <h2 id="next-event-heading">Next competition</h2>
+      <p className="muted small">
+        In the last {FINAL_WEEKS_DAYS / 7} weeks before it, every player's daily plan shifts toward timed mixed rounds and reviews come back a
+        little more often.
+      </p>
+      <div className="row" style={{ alignItems: 'flex-end' }}>
+        <div className="field" style={{ flex: '1 1 220px' }}>
+          <label htmlFor="event-name">Name</label>
+          <input id="event-name" type="text" value={name} placeholder="e.g. Regional" onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="event-date">Date</label>
+          <input id="event-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        </div>
+        <button className="btn btn-primary" type="submit" disabled={!dirty}>
+          Save
+        </button>
+        {saved && (
+          <button
+            className="btn btn-ghost"
+            type="button"
+            onClick={() => {
+              setNextEvent(null);
+              setName('');
+              setDate('');
+            }}
+          >
+            Clear
+          </button>
+        )}
+      </div>
+      {saved && days === null && <p className="small" style={{ color: 'var(--warn)' }}>That date has passed. Enter the next competition.</p>}
+      {saved && days !== null && (
+        <p className="small muted">
+          {saved.name || 'The competition'} is {days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`}.
+        </p>
+      )}
+    </form>
+  );
+}
+
 function Coverage({ players }: { players: Player[] }) {
   const active = players.filter((p) => p.active && p.role !== 'coach');
   return (
@@ -231,6 +289,8 @@ export function TeamPage() {
           </button>
         </form>
       )}
+
+      <NextEvent />
 
       <h2>Roster</h2>
       {players.length === 0 ? (
