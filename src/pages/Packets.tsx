@@ -1,26 +1,51 @@
 import { useEffect, useMemo, useState } from 'react';
 import { QuestionView } from '../components/QuestionView';
 import { LoadError, Loading, Notice, PageHeader, SubjectTag } from '../components/ui';
-import { buildScrimmage, LEVEL_TEXT, type ScrimmageLevel, type ScrimmageResult } from '../core/scrimmage';
-import type { Round, TeamPacket } from '../core/schema';
+import { FigureView } from '../components/Figure';
+import { teamCatalog, UPLOAD_LEVEL_LABEL } from '../core/levels';
+import { buildScrimmage, FORMATS, LEVEL_TEXT, type ScrimmageLevel, type ScrimmageResult } from '../core/scrimmage';
+import type { Round, ScrimmageFormat, TeamPacket, UploadLevel } from '../core/schema';
 import { dateText, newId } from '../lib/format';
 import { loadCatalog, loadQuestions, useAsync, useCatalog, type Located } from '../lib/library';
 import { packetRound, packetRounds } from '../lib/packets';
 import { href, navigate } from '../lib/router';
 import { deletePacket, savePacket, useData } from '../lib/store';
 import { parseJson, parsePdf, uploadSet, UPLOAD_LICENSE, type ParsedRound } from '../lib/upload';
+import { makeVisualPicker } from '../lib/visualPool';
+import { loadPhotoSet, trustedFigure } from '../lib/visuals';
 
-const SIZES = [15, 20, 25];
+const SIZES = [10, 15, 20, 25, 30];
+
+const VISUAL_SHARES: Array<{ share: number; label: string }> = [
+  { share: 1, label: 'Every bonus' },
+  { share: 0.5, label: 'Every other bonus' },
+  { share: 0.25, label: 'About one bonus in four' },
+];
+
+/** "Scrimmage · Finals visual bonus round · late regional" */
+export function packetKindText(p: TeamPacket): string {
+  if (p.kind === 'upload') return `Uploaded${p.level ? ` · ${UPLOAD_LEVEL_LABEL[p.level].toLowerCase()}` : ''}`;
+  const parts = ['Scrimmage'];
+  if (p.options?.format && p.options.format !== 'regional') parts.push(FORMATS[p.options.format].label.toLowerCase());
+  if (p.options) parts.push(LEVEL_TEXT[p.options.level].split(' (')[0]!.toLowerCase());
+  return parts.join(' · ');
+}
 
 function ScrimmageBuilder() {
   const data = useData();
   const catalog = useCatalog();
   const players = data.players.filter((p) => p.active && p.role !== 'coach');
   const [inRoom, setInRoom] = useState<Set<string>>(() => new Set(players.map((p) => p.id)));
-  const [size, setSize] = useState(25);
+  const [format, setFormat] = useState<ScrimmageFormat>('regional');
+  const [size, setSize] = useState(FORMATS.regional.size);
   const [level, setLevel] = useState<ScrimmageLevel>('early');
+  const [visualShare, setVisualShare] = useState(0.5);
+  const team = useMemo(() => teamCatalog(data.packets), [data.packets]);
+  const hasLevel = (l: ScrimmageLevel) => (l === 'invitational' || l === 'nationals' ? [...team.levels.values()].includes(l) : true);
   const [built, setBuilt] = useState<{ result: ScrimmageResult; questions: Map<string, Located> } | null>(null);
-  const [title, setTitle] = useState(`Scrimmage ${dateText(new Date().toISOString())}`);
+  const defaultTitle = (f: ScrimmageFormat) => `${f === 'regional' ? 'Scrimmage' : FORMATS[f].label} ${dateText(new Date().toISOString())}`;
+  const [title, setTitle] = useState(() => defaultTitle('regional'));
+  const [titleEdited, setTitleEdited] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -31,7 +56,10 @@ function ScrimmageBuilder() {
       const cat = catalog.data ?? (await loadCatalog());
       const heard = new Set<string>();
       for (const id of inRoom) for (const q of Object.keys(data.seen[id] ?? {})) heard.add(q);
-      const result = buildScrimmage(cat.questions, { size, level, heard });
+      const pickVisual = format === 'finals-visual' ? makeVisualPicker({ photos: await loadPhotoSet(), team: data.visuals, heard }) : undefined;
+      // A level also draws on uploaded packets at that level; "Any level" keeps to the DOE library.
+      const rows = level === 'any' ? cat.questions : [...cat.questions, ...team.rows];
+      const result = buildScrimmage(rows, { size, level, heard, format, teamLevels: team.levels, visualShare, pickVisual });
       const questions = await loadQuestions(result.pairs.flatMap((p) => (p.bonusId ? [p.tossupId, p.bonusId] : [p.tossupId])));
       setBuilt({ result, questions });
     } catch (err) {
@@ -47,7 +75,7 @@ function ScrimmageBuilder() {
       kind: 'scrimmage',
       title: title.trim() || 'Scrimmage',
       pairs: built.result.pairs.map(({ tossupId, bonusId }) => ({ tossupId, bonusId })),
-      options: { level, forPlayers: [...inRoom], size },
+      options: { level, forPlayers: [...inRoom], size, format, ...(built.result.visualBonuses ? { visualBonuses: built.result.visualBonuses } : {}) },
     });
     navigate(`/packets/${id}`);
   };
@@ -78,6 +106,44 @@ function ScrimmageBuilder() {
           ))}
         </div>
       </fieldset>
+      <div className="field">
+        <label htmlFor="scrim-format">Format</label>
+        <select
+          id="scrim-format"
+          value={format}
+          onChange={(e) => {
+            const f = e.target.value as ScrimmageFormat;
+            setFormat(f);
+            setSize(FORMATS[f].size);
+            setBuilt(null);
+            if (!titleEdited) setTitle(defaultTitle(f));
+          }}
+        >
+          {(Object.keys(FORMATS) as ScrimmageFormat[]).map((f) => (
+            <option key={f} value={f}>
+              {FORMATS[f].label}
+            </option>
+          ))}
+        </select>
+        <span className="hint">{FORMATS[format].hint}</span>
+      </div>
+      {format === 'finals-visual' && (
+        <div className="field">
+          <label htmlFor="scrim-visual">Visual bonuses</label>
+          <select id="scrim-visual" value={visualShare} onChange={(e) => setVisualShare(Number(e.target.value))}>
+            {VISUAL_SHARES.map((v) => (
+              <option key={v.share} value={v.share}>
+                {v.label}
+              </option>
+            ))}
+          </select>
+          <span className="hint">
+            DOE does not say how many bonuses in a visual round are visual. Each comes from the{' '}
+            <a href={href('/visual')}>Visual lab</a>: your team's own visual questions, the photo set, or a generated figure, in the same subject as
+            its toss-up.
+          </span>
+        </div>
+      )}
       <div className="grid">
         <div className="field">
           <label htmlFor="scrim-size">Toss-ups</label>
@@ -93,8 +159,9 @@ function ScrimmageBuilder() {
           <label htmlFor="scrim-level">Difficulty</label>
           <select id="scrim-level" value={level} onChange={(e) => setLevel(e.target.value as ScrimmageLevel)}>
             {(Object.keys(LEVEL_TEXT) as ScrimmageLevel[]).map((l) => (
-              <option key={l} value={l}>
+              <option key={l} value={l} disabled={!hasLevel(l)}>
                 {LEVEL_TEXT[l]}
+                {hasLevel(l) ? '' : ' — upload one first'}
               </option>
             ))}
           </select>
@@ -109,7 +176,9 @@ function ScrimmageBuilder() {
       {built && (
         <>
           <p className="small">
-            {built.result.pairs.length} toss-ups with their bonuses, from {built.result.sets.length} sample set{built.result.sets.length === 1 ? '' : 's'}.
+            {built.result.pairs.length} toss-ups{format === 'tiebreak' ? '' : ' with their bonuses'}, from {built.result.sets.length} set
+            {built.result.sets.length === 1 ? '' : 's'}
+            {built.result.visualBonuses > 0 && `, with ${built.result.visualBonuses} visual bonuses`}.
             {built.result.heardPairs > 0
               ? ` ${built.result.heardPairs} include questions someone has heard: fresh ones at this difficulty ran out.`
               : ' Nobody in the room has heard any of them.'}
@@ -117,7 +186,8 @@ function ScrimmageBuilder() {
           <ol className="small" style={{ margin: 0, paddingLeft: '1.4rem', maxHeight: '16rem', overflowY: 'auto' }}>
             {built.result.pairs.map((p) => (
               <li key={p.tossupId}>
-                <SubjectTag subject={p.subject} /> {(built.questions.get(p.tossupId)?.question.stem ?? '').slice(0, 90)}…
+                <SubjectTag subject={p.subject} /> {p.visual && <span className="badge">Visual bonus</span>}{' '}
+                {(built.questions.get(p.tossupId)?.question.stem ?? '').slice(0, 90)}…
               </li>
             ))}
           </ol>
@@ -131,7 +201,15 @@ function ScrimmageBuilder() {
           >
             <div className="field" style={{ flex: '1 1 220px' }}>
               <label htmlFor="scrim-title">Packet name</label>
-              <input id="scrim-title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
+              <input
+                id="scrim-title"
+                type="text"
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setTitleEdited(true);
+                }}
+              />
             </div>
             <button className="btn btn-primary" type="submit">
               Save packet
@@ -146,6 +224,7 @@ function ScrimmageBuilder() {
 function UploadPacket() {
   const [title, setTitle] = useState('');
   const [credit, setCredit] = useState('');
+  const [level, setLevel] = useState<UploadLevel>('invitational');
   const [rounds, setRounds] = useState<ParsedRound[]>([]);
   const [leftOut, setLeftOut] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
@@ -185,7 +264,7 @@ function UploadPacket() {
   const save = () => {
     const name = title.trim() || 'Uploaded packet';
     const set = uploadSet(packetId, name, credit.trim() || name, kept.filter((r) => r.pairs.length > 0));
-    savePacket({ id: packetId, kind: 'upload', title: name, set });
+    savePacket({ id: packetId, kind: 'upload', title: name, set, level });
     navigate(`/packets/${packetId}`);
   };
 
@@ -204,6 +283,17 @@ function UploadPacket() {
         <div className="field">
           <label htmlFor="up-credit">Source and credit</label>
           <input id="up-credit" type="text" value={credit} placeholder="e.g. MIT Science Bowl Invitational, 2025" onChange={(e) => setCredit(e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="up-level">How hard is it?</label>
+          <select id="up-level" value={level} onChange={(e) => setLevel(e.target.value as UploadLevel)}>
+            {(Object.keys(UPLOAD_LEVEL_LABEL) as UploadLevel[]).map((l) => (
+              <option key={l} value={l}>
+                {UPLOAD_LEVEL_LABEL[l]}
+              </option>
+            ))}
+          </select>
+          <span className="hint">Drills and scrimmages can then aim at this level (Nationals-level for Finals practice).</span>
         </div>
       </div>
       <div className="field">
@@ -292,7 +382,7 @@ function PacketList() {
               <td>
                 <a href={href(`/packets/${p.id}`)}>{p.title}</a>
               </td>
-              <td>{p.kind === 'scrimmage' ? `Scrimmage (${p.options ? LEVEL_TEXT[p.options.level].split(' (')[0].toLowerCase() : 'library'})` : 'Uploaded'}</td>
+              <td>{packetKindText(p)}</td>
               <td className="num">{p.kind === 'scrimmage' ? p.pairs?.length ?? 0 : (p.set?.rounds ?? []).reduce((n, r) => n + r.pairs.length, 0)}</td>
               <td>{dateText(p.createdAt)}</td>
               <td>
@@ -346,6 +436,7 @@ export function PacketView({ id, print }: { id: string; print: boolean }) {
   const chosen = rounds.find((r) => r.id === roundId) ?? rounds[0];
   const round = useAsync<Round>(packet && chosen ? `${packet.id}|${chosen.id}` : null, () => packetRound(packet as TeamPacket, chosen!.id));
   const [showAnswers, setShowAnswers] = useState(true);
+  const [worksheet, setWorksheet] = useState(false);
   const subjects = useMemo(() => [...new Set((round.data?.pairs ?? []).map((p) => p.tossup.subject))], [round.data]);
 
   useEffect(() => {
@@ -368,8 +459,7 @@ export function PacketView({ id, print }: { id: string; print: boolean }) {
       </p>
       <PageHeader title={packet.title}>
         <p>
-          {packet.kind === 'scrimmage' ? 'Scrimmage from the DOE sample sets' : (packet.set?.credit ?? 'Uploaded packet')} · made {dateText(packet.createdAt)}
-          {packet.options && ` · ${LEVEL_TEXT[packet.options.level]}`}
+          {packet.kind === 'scrimmage' ? 'Scrimmage' : (packet.set?.credit ?? 'Uploaded packet')} · {packetKindText(packet)} · made {dateText(packet.createdAt)}
         </p>
         <div className="row no-print">
           <a className="btn btn-primary" href={href(`/reader?packet=${packet.id}`)}>
@@ -381,6 +471,12 @@ export function PacketView({ id, print }: { id: string; print: boolean }) {
           <label className="checkbox">
             <input type="checkbox" checked={showAnswers} onChange={(e) => setShowAnswers(e.target.checked)} /> Show answers
           </label>
+          {round.data?.pairs.some((p) => p.bonus && trustedFigure(p.bonus)) && (
+            <label className="checkbox">
+              <input type="checkbox" checked={worksheet} onChange={(e) => setWorksheet(e.target.checked)} /> Visual bonus worksheet only (figures for
+              the players, as in earlier Finals elimination matches)
+            </label>
+          )}
           <button
             className="btn btn-ghost"
             onClick={() => {
@@ -415,17 +511,30 @@ export function PacketView({ id, print }: { id: string; print: boolean }) {
               <SubjectTag key={s} subject={s} />
             ))}
           </div>
-          <div className="stack">
-            {round.data.pairs.map((p) => (
-              <div key={p.tossup.id}>
-                <QuestionView q={p.tossup} showAnswer={showAnswers} />
-                {p.bonus && <QuestionView q={p.bonus} showAnswer={showAnswers} />}
-              </div>
-            ))}
-          </div>
+          {worksheet ? (
+            <div className="stack worksheet">
+              {round.data.pairs
+                .filter((p) => p.bonus && trustedFigure(p.bonus))
+                .map((p) => (
+                  <section key={p.tossup.id} className="worksheet-item">
+                    <h3 style={{ margin: 0 }}>Visual bonus {p.number}</h3>
+                    <FigureView q={p.bonus!} />
+                  </section>
+                ))}
+            </div>
+          ) : (
+            <div className="stack">
+              {round.data.pairs.map((p) => (
+                <div key={p.tossup.id}>
+                  <QuestionView q={p.tossup} showAnswer={showAnswers} />
+                  {p.bonus && <QuestionView q={p.bonus} showAnswer={showAnswers} />}
+                </div>
+              ))}
+            </div>
+          )}
           <p className="small muted" style={{ marginTop: '1.5rem' }}>
             {packet.kind === 'scrimmage'
-              ? 'Questions: U.S. Department of Energy, National Science Bowl sample questions (public domain).'
+              ? `Questions: U.S. Department of Energy, National Science Bowl sample questions (public domain)${packet.options?.visualBonuses ? '; visual bonuses from Rebound’s Visual lab (photos credited with each figure)' : ''}.`
               : `${packet.set?.credit ?? ''}. ${UPLOAD_LICENSE}`}
           </p>
         </>

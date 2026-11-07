@@ -20,6 +20,7 @@ function itemLink(item: PlanItem, plan: DayPlan, reviewCards: number): string {
   if (item.kind === 'review') return `/review?${tail}&limit=${reviewCards}`;
   if (item.kind === 'learn') return `/learn/${encodeURIComponent(item.conceptId!)}?${tail}`;
   if (item.kind === 'mixed') return `/try?mode=mixed&count=${item.count}&${tail}&go=1`;
+  if (item.kind === 'visual') return `/visual?count=${item.count}&${tail}&go=1`;
   const topic = item.topic ? `&topic=${encodeURIComponent(item.topic)}` : '';
   return `/try?mode=subject&subject=${item.subject}${topic}&count=${item.count}&${tail}&go=1`;
 }

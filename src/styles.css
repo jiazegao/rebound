@@ -1108,3 +1108,75 @@ a.hbar-label {
     border-radius: 0;
   }
 }
+
+/* ---------------- visual question figures ---------------- */
+
+.qfig {
+  --figure-bg: var(--surface);
+  --figure-accent: var(--viz-series);
+  margin: 0.75rem 0;
+  padding: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+}
+.qfig-art {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+}
+.qfig-art svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 55vh;
+}
+img.qfig-art {
+  height: auto;
+  max-height: 55vh;
+  object-fit: contain;
+}
+.qfig-large .qfig-art svg,
+.qfig-large img.qfig-art {
+  max-height: 70vh;
+}
+.qfig-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  margin-top: 0.35rem;
+}
+.qfig:fullscreen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 0;
+  border-radius: 0;
+  padding: 2vh 2vw;
+}
+.qfig:fullscreen .qfig-art,
+.qfig:fullscreen .qfig-art svg,
+.qfig:fullscreen img.qfig-art {
+  width: 100%;
+  max-height: 90vh;
+}
+@media print {
+  .qfig {
+    --figure-bg: #ffffff;
+    --figure-accent: #1e5bb8;
+    color: #000000;
+    background: #ffffff;
+    break-inside: avoid;
+  }
+}
+.worksheet-item .qfig-art svg,
+.worksheet-item img.qfig-art {
+  max-height: 40vh;
+}
+@media print {
+  .worksheet-item {
+    break-inside: avoid;
+  }
+}

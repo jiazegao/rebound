@@ -4,6 +4,7 @@ import { currentWindow } from '../core/rules/engine';
 import { SUBJECT_LABELS, type Round } from '../core/schema';
 import { buildReading, readingDurationMs } from '../lib/reading';
 import { RoomClient, useRoom, type RoomView } from '../lib/room';
+import { trustedFigure } from '../lib/visuals';
 import { href } from '../lib/router';
 import { setGameRoom, useData, type GameRecord } from '../lib/store';
 import { createRoom, currentSession, useSync } from '../lib/sync';
@@ -93,7 +94,11 @@ export function RemotePanel({
     if (!client || mode !== 'text' || !isReading || !q || !reading.current) return;
     const duration = readingDurationMs(buildReading(q), wpm);
     const endsIn = reading.current.startedAt + duration - client.serverNow();
-    const t = setTimeout(() => dispatchRef.current({ type: state.phase === 'tossup_reading' ? 'tossup_read' : 'bonus_read' }), Math.max(0, endsIn));
+    const visual = state.phase === 'bonus_reading' && !!q && !!trustedFigure(q);
+    const t = setTimeout(
+      () => dispatchRef.current(state.phase === 'tossup_reading' ? { type: 'tossup_read' } : { type: 'bonus_read', ...(visual ? { visual: true } : {}) }),
+      Math.max(0, endsIn),
+    );
     return () => clearTimeout(t);
   }, [client, mode, isReading, readingKey, q, wpm, state.phase]);
 
@@ -122,6 +127,8 @@ export function RemotePanel({
       bonusTeam: state.bonus?.team,
       status,
       answer: state.phase === 'question_over' && q ? (q.answerLetter ? `${q.answerLetter}) ${q.answer}` : q.answer) : undefined,
+      // A visual bonus's figure: each device looks the question up itself (nothing large goes through the room).
+      figure: onBonus && pair?.bonus && trustedFigure(pair.bonus) ? { questionId: pair.bonus.id } : undefined,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, state, mode, readingKey, wpm, round, names]);

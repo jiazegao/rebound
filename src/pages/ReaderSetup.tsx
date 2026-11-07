@@ -18,7 +18,11 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
   const [packetRoundId, setPacketRoundId] = useState<string | null>(null);
   const [setId, setSetId] = useState<string | null>(query.get('set'));
   const [roundId, setRoundId] = useState<string | null>(query.get('round'));
-  const [presetId, setPresetId] = useState(DEFAULT_PRESET_ID);
+  const [presetId, setPresetId] = useState(() => {
+    const asked = query.get('preset');
+    return asked && PRESETS.some((p) => p.id === asked) ? asked : DEFAULT_PRESET_ID;
+  });
+  const [format, setFormat] = useState<'game' | 'tiebreak'>(query.get('format') === 'tiebreak' ? 'tiebreak' : 'game');
   const [names, setNames] = useState<[string, string]>(['Team A', 'Team B']);
   const [sides, setSides] = useState<Record<string, Side>>({});
   const [quickName, setQuickName] = useState('');
@@ -46,6 +50,15 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
   const fromPacket = useAsync(source === 'packet' && packet && packetChoice ? `${packet.id}|${packetChoice.id}` : null, () => packetRound(packet!, packetChoice!.id));
   const round = source === 'packet' ? fromPacket.data : set.data?.rounds.find((r) => r.id === roundId);
   const preset = PRESETS.find((p) => p.id === presetId)!;
+
+  // A scrimmage built for a format brings its rules: Finals timing, visual bonus rounds, tiebreaker drills.
+  const packetFormat = source === 'packet' ? packet?.options?.format : undefined;
+  useEffect(() => {
+    if (packetFormat === 'finals') setPresetId('doe-finals-2027');
+    else if (packetFormat === 'finals-visual') setPresetId('doe-finals-visual-2027');
+    if (packetFormat === 'tiebreak') setFormat('tiebreak');
+    else if (packetFormat) setFormat('game');
+  }, [packetFormat]);
 
   const heardCounts = useMemo(() => {
     if (!round) return [];
@@ -94,6 +107,7 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
     if (!info) return;
     const id = createGame({
       presetId,
+      ...(format === 'tiebreak' ? { format } : {}),
       packet: info,
       pairs: round.pairs.map((p) => ({ tossupId: p.tossup.id, bonusId: p.bonus?.id, subject: p.tossup.subject })),
       teams: [
@@ -235,6 +249,16 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
             </select>
             <span className="hint">{preset.summary}</span>
           </div>
+          <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
+            <legend className="label">Game</legend>
+            <label className="checkbox">
+              <input type="radio" name="format" checked={format === 'game'} onChange={() => setFormat('game')} /> A full game
+            </label>
+            <label className="checkbox">
+              <input type="radio" name="format" checked={format === 'tiebreak'} onChange={() => setFormat('tiebreak')} /> Tiebreaker drill: 5 toss-ups
+              from 0–0, no bonuses and no clock, repeated while tied (Rule 6-4)
+            </label>
+          </fieldset>
           <a className="small" href={href('/rules')}>
             Rules at a glance
           </a>

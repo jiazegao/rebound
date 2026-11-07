@@ -12,9 +12,11 @@ import { del, get, set } from 'idb-keyval';
 import { useSyncExternalStore } from 'react';
 import { fingerprint, recordKey, SYNC_PAGE_SIZE, type MemberRole, type SyncResponse } from '../core/sync';
 import { emptyData, getData, subscribeStore, update, type AppData } from './store';
-import { applyRecords, localChanges, rememberRecords, toRecords, type Known } from './syncRecords';
+import { applyRecords, localChanges, pushBatch, rememberRecords, toRecords, type Known } from './syncRecords';
 
 const KEY = 'rebound-sync-v1';
+/** Most JSON to send in one sync request (the server accepts bodies up to 2 MB). */
+const PUSH_BYTES = 1_500_000;
 
 /** The team server for this build of the site ("" when none is configured). */
 export const SERVER_URL: string = ((import.meta.env.VITE_SERVER_URL as string | undefined) ?? '').replace(/\/$/, '');
@@ -121,7 +123,8 @@ async function runOnce(): Promise<void> {
   if (!state) return;
   for (let round = 0; round < 50 && state; round++) {
     const before = toRecords(getData());
-    const changes = localChanges(before, state.known).slice(0, SYNC_PAGE_SIZE);
+    const pending = localChanges(before, state.known);
+    const changes = pushBatch(pending, SYNC_PAGE_SIZE, PUSH_BYTES);
     const res: SyncResponse = await authed<SyncResponse>('/sync', { method: 'POST', body: JSON.stringify({ cursor: state.cursor, changes }) });
     if (!state) return;
     // Records changed on this device while the request was out stay as they are; they go up next round.
@@ -148,7 +151,7 @@ async function runOnce(): Promise<void> {
       known,
       rejected: [...res.rejected.map((r) => ({ key: recordKey(r.c, r.id), reason: r.reason, at: Date.now() })), ...state.rejected].slice(0, 20),
     };
-    if (!res.more && changes.length < SYNC_PAGE_SIZE) break;
+    if (!res.more && changes.length === pending.length) break;
   }
   if (state) state = { ...state, lastSyncAt: Date.now(), lastError: null };
 }

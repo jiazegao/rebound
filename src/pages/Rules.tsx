@@ -17,6 +17,14 @@ function rows(p: RulesPreset): Array<[string, string]> {
     ['After a wrong answer', `The other team gets another ${t.reboundWindowSec} seconds to buzz.`],
     ['Answering a toss-up', `The player must start answering within a natural pause of up to ${t.naturalPauseSec} seconds after being recognized, or it is a stall.`],
     ['Bonus', `${t.bonusSec} seconds for the captain to begin answering, with a "5 SECONDS" warning after ${t.bonusWarningAtSec}.`],
+    ...(p.official && p.visualBonus
+      ? ([
+          [
+            'Visual bonus',
+            `A figure is shown on a monitor or a worksheet. ${p.visualBonus.sec} seconds for the captain to begin answering, with the "5 SECONDS" warning after ${p.visualBonus.warningAtSec}. Figures may or may not be drawn to scale.`,
+          ],
+        ] as Array<[string, string]>)
+      : []),
     [
       'Game length',
       p.clock
@@ -27,6 +35,14 @@ function rows(p: RulesPreset): Array<[string, string]> {
     ['Talking during bonuses', p.communication.bonus],
     ['Challenges', p.unsuccessfulChallengeLimit ? `Up to ${p.unsuccessfulChallengeLimit} unsuccessful science challenges per team per round.` : 'Not tracked.'],
     ['Ties', `In elimination games, ${p.tiebreakTossups} toss-ups with no bonuses and no clock, repeated until the tie is broken.`],
+    ...(p.id === 'doe-regional-2027'
+      ? ([
+          [
+            'Round robin ties',
+            'Head-to-head record first. Two teams still tied play a 5 toss-up tiebreaker; three or more each hear the same 5 toss-ups in separate rooms, read in full, scored +1 for a right answer, −1 for a wrong one and 0 for none (Rule 9-1).',
+          ],
+        ] as Array<[string, string]>)
+      : []),
   ];
 }
 

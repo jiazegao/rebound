@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AnswerBox, Choices, ImportNotes, QuestionMeta, RichText } from '../components/QuestionView';
 import { Countdown, LoadError, Loading, Notice, useTicker } from '../components/ui';
+import { FigureView } from '../components/Figure';
 import { RemotePanel } from '../components/RemotePanel';
 import {
   allowedEvents,
@@ -15,10 +16,11 @@ import {
   type MatchState,
   type TeamIdx,
 } from '../core/rules/engine';
-import { getPreset } from '../core/rules/presets';
+import { getPreset, visualBonusTiming } from '../core/rules/presets';
 import type { Question, Round } from '../core/schema';
 import { clockText } from '../lib/format';
 import { useAsync } from '../lib/library';
+import { trustedFigure } from '../lib/visuals';
 import { loadGameRound } from '../lib/packets';
 import { href } from '../lib/router';
 import { beep, unlockAudio } from '../lib/sound';
@@ -124,11 +126,17 @@ function ReaderGame({ game, round }: { game: GameRecord; round: Round }) {
   const [adjustDelta, setAdjustDelta] = useState(4);
   const [adjustNote, setAdjustNote] = useState('Challenge upheld');
 
-  const config = useMemo(() => ({ preset: getPreset(game.presetId), teams: game.teams, pairCount: game.pairs.length }), [game.presetId, game.teams, game.pairs.length]);
+  const config = useMemo(
+    () => ({ preset: getPreset(game.presetId), teams: game.teams, pairCount: game.pairs.length, tiebreakOnly: game.format === 'tiebreak' }),
+    [game.presetId, game.teams, game.pairs.length, game.format],
+  );
   const state = useMemo(() => replay(config, game.events), [config, game.events]);
   const allowed = allowedEvents(state);
   const names = useMemo(() => new Map(data.players.map((p) => [p.id, p.name])), [data.players]);
   const pair = state.pairIndex >= 0 ? round.pairs[state.pairIndex] : undefined;
+  // A bonus with a figure is a visual bonus: 30 seconds instead of 20 (Rules 5-4, 5-5).
+  const visualBonus = !!(pair?.bonus && trustedFigure(pair.bonus));
+  const visualTiming = visualBonusTiming(getPreset(game.presetId));
   const win = currentWindow(state);
   const clockRunning = state.clock !== null && state.clock.runningSince !== null && !state.clock.expired;
   const now = useTicker(clockRunning || win !== null, 100);
@@ -219,11 +227,11 @@ function ReaderGame({ game, round }: { game: GameRecord; round: Round }) {
   const primaryAction = useCallback((): EventInput | null => {
     if (allowed.has('start')) return { type: 'start' };
     if (allowed.has('tossup_read')) return { type: 'tossup_read' };
-    if (allowed.has('bonus_read')) return { type: 'bonus_read' };
+    if (allowed.has('bonus_read')) return { type: 'bonus_read', ...(visualBonus ? { visual: true } : {}) };
     if (allowed.has('next')) return { type: 'next' };
     if (allowed.has('start_half')) return { type: 'start_half' };
     return null;
-  }, [allowed]);
+  }, [allowed, visualBonus]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -375,9 +383,11 @@ function ReaderGame({ game, round }: { game: GameRecord; round: Round }) {
       );
       break;
     case 'bonus_reading':
-      instructions = `Bonus for ${game.teams[state.bonus!.team].name}. Read it, then tap "Done reading"; the 20 seconds start then.`;
+      instructions = visualBonus
+        ? `Visual bonus for ${game.teams[state.bonus!.team].name}. Show the figure (Full screen to project it), read the question, then tap "Done reading"; the ${visualTiming.sec} seconds start then.`
+        : `Bonus for ${game.teams[state.bonus!.team].name}. Read it, then tap "Done reading"; the ${config.preset.timing.bonusSec} seconds start then.`;
       controls = (
-        <button className="btn btn-primary btn-big" onClick={() => dispatch({ type: 'bonus_read' })}>
+        <button className="btn btn-primary btn-big" onClick={() => dispatch({ type: 'bonus_read', ...(visualBonus ? { visual: true } : {}) })}>
           Done reading <span className="kbd">Space</span>
         </button>
       );
@@ -430,7 +440,11 @@ function ReaderGame({ game, round }: { game: GameRecord; round: Round }) {
       break;
     case 'game_over': {
       const tied = state.scores[0] === state.scores[1];
-      instructions = tied ? 'Tied. In elimination games, play a 5-toss-up tiebreaker.' : 'Game over.';
+      instructions = tied
+        ? 'Tied. In elimination games, play a 5-toss-up tiebreaker.'
+        : state.endedReason === 'packet' && state.period === 'tiebreak'
+          ? 'The packet ran out of toss-ups during the tiebreaker.'
+          : 'Game over.';
       controls = (
         <div className="row">
           {allowed.has('start_tiebreak') && (
@@ -454,7 +468,9 @@ function ReaderGame({ game, round }: { game: GameRecord; round: Round }) {
     <div className="container reader">
       <div className="row spread no-print" style={{ marginBottom: '0.75rem' }}>
         <div className="small muted">
-          <a href={href('/reader')}>Reader console</a> · {game.packet.setTitle}, {game.packet.roundLabel} · {config.preset.name}
+          <a href={href('/reader')}>Reader console</a> · {game.packet.setTitle === game.packet.roundLabel ? game.packet.setTitle : `${game.packet.setTitle}, ${game.packet.roundLabel}`} ·{' '}
+          {config.preset.name}
+          {game.format === 'tiebreak' && ' · tiebreaker drill'}
         </div>
         <div className="toolbar">
           <button className="btn btn-small" onClick={() => setHideAnswer((v) => !v)} aria-pressed={hideAnswer}>
@@ -512,6 +528,7 @@ function ReaderGame({ game, round }: { game: GameRecord; round: Round }) {
           {question && phase !== 'game_over' && phase !== 'halftime' ? (
             <article className="question">
               <QuestionMeta q={question} />
+              <FigureView q={question} large />
               <p className="stem">
                 <RichText text={question.stem} />
               </p>

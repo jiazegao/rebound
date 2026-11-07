@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { setIdOf } from '../core/drill';
 import { getData } from './store';
+import { isVisualId, loadVisualQuestions, VISUAL_SET, visualRound } from './visuals';
 import type { Catalog, CatalogRow, ConceptIndex, LibraryIndex, Question, QuestionPair, QuestionSet, Round, SetSummary } from '../core/schema';
 
 const BASE = 'data/doe/';
@@ -99,7 +100,9 @@ function locate(set: QuestionSet): Map<string, Located> {
 }
 
 /** Find questions by id, loading only the sets they come from. Unknown ids are left out. */
-export async function loadQuestions(ids: string[]): Promise<Map<string, Located>> {
+export async function loadQuestions(allIds: string[]): Promise<Map<string, Located>> {
+  const ids = allIds.filter((id) => !isVisualId(id));
+  const visualIds = allIds.filter(isVisualId);
   const setIds = [...new Set(ids.map(setIdOf))];
   // Questions from packets the team uploaded live in the team's own data, not in the library files.
   const teamSets = getData()
@@ -117,6 +120,12 @@ export async function loadQuestions(ids: string[]): Promise<Map<string, Located>
     for (const id of ids) {
       const found = m.get(id);
       if (found) out.set(id, found);
+    }
+  }
+  // Visual questions (generated, photo set, the team's own) stand alone: a bonus with no toss-up.
+  if (visualIds.length) {
+    for (const [id, question] of await loadVisualQuestions(visualIds)) {
+      out.set(id, { question, pair: { number: 1, tossup: question, bonus: question }, round: visualRound(id), set: VISUAL_SET });
     }
   }
   return out;

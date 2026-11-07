@@ -22,6 +22,8 @@ import { GameSummary } from './pages/GameSummary';
 import { TryRound } from './pages/TryRound';
 import { StatsPage } from './pages/Stats';
 import { DataPage } from './pages/Data';
+import { VisualLabPage } from './pages/VisualLab';
+import { ShootoutConsole, TiebreakersPage } from './pages/Tiebreakers';
 
 interface NavItem {
   label: string;
@@ -128,13 +130,22 @@ export function App() {
     case 'data':
       page = <DataPage />;
       break;
+    case 'visual':
+      page = <VisualLabPage query={route.query} />;
+      break;
+    case 'tiebreakers':
+      page = <TiebreakersPage />;
+      break;
+    case 'shootout':
+      page = <ShootoutConsole />;
+      break;
     default:
       page = <NotFound />;
   }
 
   const nav = data.team ? TEAM_NAV : PUBLIC_NAV;
   const section = first ?? '';
-  const sectionAliases: Record<string, string> = { games: 'reader', stats: 'team', data: 'team', progress: 'today', lineups: 'team', packets: 'library', assignments: 'team', room: 'reader' };
+  const sectionAliases: Record<string, string> = { games: 'reader', stats: 'team', data: 'team', progress: 'today', lineups: 'team', packets: 'library', assignments: 'team', room: 'reader', visual: 'try', tiebreakers: 'try', shootout: 'reader' };
   const activeSection = sectionAliases[section] ?? section;
 
   return (

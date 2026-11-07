@@ -109,6 +109,37 @@ async function main() {
     await captain.locator('#player-switch').selectOption({ label: 'Ann' });
   });
 
+  await step("a visual question the captain adds reaches the player's device", async () => {
+    await captain.goto(`${BASE}#/visual`);
+    await captain.getByRole('button', { name: 'Add one' }).click();
+    const png = await captain.evaluate(() => {
+      const c = document.createElement('canvas');
+      c.width = 60;
+      c.height = 40;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#3987e5';
+      ctx.fillRect(0, 0, 60, 40);
+      return c.toDataURL('image/png').split(',')[1];
+    });
+    await captain.locator('#vq-picture').setInputFiles({ name: 'figure.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
+    await captain.locator('form img').first().waitFor();
+    await captain.locator('#vq-alt').fill('A blue rectangle');
+    await captain.locator('#vq-credit').fill('Drawn by the team');
+    await captain.locator('#vq-stem').fill('What color is the shape shown?');
+    await captain.locator('#vq-answer').fill('blue');
+    await captain.getByRole('button', { name: 'Save', exact: true }).click();
+    await captain.getByText("Your team's visual questions (1)").waitFor();
+    await captain.goto(`${BASE}#/team`);
+    await captain.getByRole('button', { name: 'Sync now' }).click();
+    await captain.getByText('Up to date').waitFor({ timeout: 15000 });
+    await player.goto(`${BASE}#/team`);
+    await player.getByRole('button', { name: 'Sync now' }).click();
+    await player.getByText('Up to date').waitFor({ timeout: 15000 });
+    await player.goto(`${BASE}#/visual`);
+    await player.getByText("Your team's visual questions (1)").waitFor({ timeout: 10000 });
+    await player.getByText('BLUE').first().waitFor();
+  });
+
   await step('the captain opens a remote room for a Reader console game', async () => {
     await captain.goto(`${BASE}#/reader`);
     await captain.getByRole('radiogroup', { name: 'Ann plays for' }).getByRole('radio', { name: 'Team A' }).click();
@@ -143,6 +174,41 @@ async function main() {
     await captain.getByText('Ben answers:').waitFor({ timeout: 10000 });
     // The reader never sees the team channel.
     if (await captain.getByText('I think it is a phage').count()) throw new Error('the team channel leaked to the reader');
+  });
+
+  await step("a Finals visual round in a remote room: the figure shows on the player's screen", async () => {
+    await captain.goto(`${BASE}#/packets`);
+    await captain.locator('#scrim-format').selectOption('finals-visual');
+    await captain.locator('#scrim-visual').selectOption('1');
+    await captain.getByRole('button', { name: 'Build packet' }).click();
+    await captain.getByRole('button', { name: 'Save packet' }).click();
+    await captain.getByRole('link', { name: 'Play in the Reader console' }).click();
+    await captain.getByRole('radiogroup', { name: 'Ann plays for' }).getByRole('radio', { name: 'Team A' }).click();
+    await captain.getByRole('radiogroup', { name: 'Ben plays for' }).getByRole('radio', { name: 'Team B' }).click();
+    await captain.getByRole('button', { name: 'Start game' }).click();
+    await captain.getByRole('button', { name: 'Open a remote room' }).click();
+    const link = await captain.getByRole('textbox', { name: 'Room link' }).inputValue();
+    await captain.getByText('Remote room · connected').waitFor({ timeout: 15000 });
+    await player.goto(link.replace(/^.*#/, `${BASE}#`));
+    await player.getByText('connected').first().waitFor({ timeout: 15000 });
+    await captain.getByText(/Ben \(Team B/).waitFor({ timeout: 15000 });
+    const key = async (k) => {
+      await captain.keyboard.press(k);
+      await captain.waitForTimeout(250);
+    };
+    await key('Space'); // start
+    // Team A answers toss-ups (Ann is key 1) until a visual bonus comes up.
+    for (let i = 0; i < 4; i++) {
+      await key('Space');
+      await key('1');
+      await key('c');
+      if (await captain.getByText('Visual bonus for').count()) break;
+      await key('Space');
+      await key('c');
+      await key('Space');
+    }
+    await captain.getByText('Visual bonus for').waitFor();
+    await player.locator('.qfig .qfig-art').first().waitFor({ timeout: 15000 });
   });
 
   // Last, so a run against a deployed server leaves nothing behind.

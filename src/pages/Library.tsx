@@ -19,7 +19,8 @@ function SetList() {
         </p>
         <p>
           <a href={href('/library/topics')}>Browse by topic</a>: which topics come up most often in each subject. <a href={href('/packets')}>Team packets</a>:
-          build a scrimmage nobody has heard, or upload an invitational's packet.
+          build a scrimmage nobody has heard (including Finals formats), or upload an invitational's packet. <a href={href('/visual')}>Visual lab</a>:
+          visual bonuses for the Finals.
         </p>
       </PageHeader>
       {index.loading && <Loading what="Loading the library" />}

@@ -10,6 +10,7 @@ import { doeRoundId, parseDoeRound, type ParseWarning } from '../core/importers/
 import { extractTextLines } from '../core/importers/pdfText';
 import type { Question, QuestionSet, Round } from '../core/schema';
 import { teamSetId } from './packets';
+import { isSafeImageSrc } from './visuals';
 
 export const UPLOAD_LICENSE = 'Private to the team. Community packets carry no open license: do not redistribute.';
 
@@ -90,8 +91,14 @@ export async function parseJson(file: File, packetId: string, credit: string): P
           return undefined;
         }
         const id = `${roundId}-${kind === 'tossup' ? 't' : 'b'}${String(j + 1).padStart(2, '0')}`;
+        // Keep a figure only if it is an ordinary picture (a data: URL of a JPEG, PNG or WebP). Drawing
+        // markup (SVG) is never taken from a file: the site only shows figures its own code draws.
+        const { figure: raw, ...rest } = q;
+        const figure = raw?.kind === 'image' && typeof raw.src === 'string' && isSafeImageSrc(raw.src) ? { kind: 'image' as const, src: raw.src, alt: String(raw.alt ?? ''), ...(raw.credit ? { credit: String(raw.credit) } : {}) } : undefined;
+        if (raw && !figure) warnings.push({ code: 'figure-dropped', message: `Pair ${j + 1}: the ${kind}'s figure was left out (only JPEG, PNG or WebP pictures embedded as data URLs are kept).` });
         return {
-          ...q,
+          ...rest,
+          ...(figure ? { figure, visual: true } : {}),
           id,
           kind,
           number: j + 1,

@@ -1,5 +1,7 @@
 import { Fragment, useEffect, useState } from 'react';
+import { FigureView } from '../components/Figure';
 import { RichText } from '../components/QuestionView';
+import { loadQuestions, useAsync } from '../lib/library';
 import { Notice, PageHeader, useTicker } from '../components/ui';
 import { buildReading, revealedCount, splitRevealed } from '../lib/reading';
 import { RoomClient, useRoom, type RoomView, type Side } from '../lib/room';
@@ -35,6 +37,14 @@ function RevealedText({ view, serverNow }: { view: RoomView; serverNow: number }
       ))}
     </p>
   );
+}
+
+/** A visual bonus's figure, looked up on this device (generated, photo set, or the team's synced data). */
+function RoomFigure({ questionId }: { questionId: string }) {
+  const found = useAsync(questionId, async () => (await loadQuestions([questionId])).get(questionId)?.question ?? null);
+  if (found.loading) return <p className="small muted">Loading the figure…</p>;
+  if (!found.data) return <p className="small muted">This figure is not on this device yet. Sync on the Team page, then come back.</p>;
+  return <FigureView q={found.data} large />;
 }
 
 function TeamChannel({ client, side, lines, canAnswer }: { client: RoomClient; side: Side; lines: { from: { name: string }; text: string; at: number }[]; canAnswer: boolean }) {
@@ -180,6 +190,7 @@ export function RoomPage({ roomId }: { roomId: string }) {
               <span className="question-kind">{view.label}</span>
               {view.subject && <span className="muted">{view.subject}</span>}
             </div>
+            {view.figure && <RoomFigure questionId={view.figure.questionId} />}
             <RevealedText view={view} serverNow={serverNow} />
             {view.status && <p className="status-line">{view.status}</p>}
             {view.answer && (

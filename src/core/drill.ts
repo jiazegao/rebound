@@ -7,7 +7,7 @@
  * - Few downloads: the questions come from a handful of sets (each set is one file).
  */
 import { chance, questionDifficulty } from './mastery';
-import { CORE_SUBJECTS, type CatalogRow, type CoreSubject, type Subject } from './schema';
+import { CORE_SUBJECTS, type CatalogRow, type CoreSubject, type DifficultyLevel, type Subject } from './schema';
 
 export interface DrillRequest {
   /** One subject, or undefined for a mixed drill across the six subjects. */
@@ -28,6 +28,9 @@ export interface DrillRequest {
   maxSets?: number;
   /** Random numbers in [0, 1); pass a seeded generator for repeatable picks. */
   random?: () => number;
+  /** Only questions at this level of the difficulty ladder (see levels.ts), judged by `levelOf`. */
+  level?: DifficultyLevel;
+  levelOf?: (row: CatalogRow) => DifficultyLevel;
 }
 
 export interface DrillPick {
@@ -52,6 +55,7 @@ export const TARGET_CHANCE = 0.775;
 
 function matches(row: CatalogRow, req: DrillRequest): boolean {
   const [, subject, topic, , , cross] = row;
+  if (req.level && req.levelOf && req.levelOf(row) !== req.level) return false;
   if (req.topic) return topic === req.topic;
   if (!req.subject) return (CORE_SUBJECTS as Subject[]).includes(subject);
   if (subject === req.subject) return true;

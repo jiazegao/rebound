@@ -1,9 +1,9 @@
 # Rebound
 
-A free, team-first practice website for the National Science Bowl (NSB). This covers **Phases 0–2** of the plan in
+A free, team-first practice website for the National Science Bowl (NSB). This covers **Phases 0–3** of the plan in
 [`docs/PROPOSAL.md`](docs/PROPOSAL.md): every practice is logged, every player opens **Today** to find a daily plan and a review queue
 built from their own misses, and the captain runs the team from the **Team** pages (lineups, assignments, scrimmages), with an optional
-team server for sharing between devices and remote rooms.
+team server for sharing between devices and remote rooms, and Finals preparation (visual bonuses, Finals formats, tiebreakers).
 
 Rebound is an unofficial study tool, not affiliated with or endorsed by the U.S. Department of Energy (DOE).
 
@@ -14,17 +14,19 @@ Rebound is an unofficial study tool, not affiliated with or endorsed by the U.S.
 | **Home**, **Try a round** | Public pages. Anyone can play a DOE round solo without an account. |
 | **Today** | Each player picks their name and gets a plan for 15, 30 or 45 minutes: due reviews (capped at a third of the time), a targeted drill on a weak, high-frequency topic in their primary subject, one in their secondary subject, and a mixed round. Every item says why it is there. The mix shifts toward timed mixed rounds in the last three weeks before the team's next competition (set on the Team page). |
 | **Review** | Timed review of misses, wrong interrupts, slow correct answers, toss-ups nobody got in your subject, and bonuses your team missed, from solo practice and Reader console games. Scheduled with FSRS ([ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs)) in whole days; the grade comes from correctness and buzz time. New misses join a few a day (wrong interrupts and the player's own subjects first), and a question answered right after a month's gap is learned and leaves the queue, so the daily load stays steady. Cards pause while their question has an open problem report. |
-| **Practice → drills** | Subject and topic drills drawn from the whole library (fresh questions first, aimed at a 70–85% expected success rate, from a few set files), an option to add Energy questions that test the subject, and balanced mixed toss-ups. |
+| **Practice → drills** | Subject and topic drills drawn from the whole library (fresh questions first, aimed at a 70–85% expected success rate, from a few set files), an option to add Energy questions that test the subject, and balanced mixed toss-ups. A level filter follows the difficulty ladder: early regional (DOE rounds 1–10), late regional (rounds 11–17), and invitational or nationals-level from the team's uploaded packets. |
+| **Practice → Visual lab** | Practice for the Finals' visual bonuses: a figure, the question read at the player's pace, then 30 seconds (the warning at 25) to begin the answer. Figures come from generators that draw graphs, circuits, diagrams and charts in all six subjects with exactly computed answers; from public-domain photos (clouds, rocks, minerals, planets and moons, galaxies, volcanoes, organisms, energy technologies); and from the team's own visual questions (a picture shrunk in the browser, synced to every member, importable and exportable as JSON). |
+| **Practice → Tiebreakers** | The two tie formats: a 5 toss-up tiebreaker game in the Reader console (no bonuses, no clock, repeated while tied, Rule 6-4), a shootout drill on your own (five fully read toss-ups, +1 / −1 / 0, Rule 9-1), and a shootout console for three or more groups that says who advances and how a remaining tie is broken. |
 | **My progress** | Mastery by subject and a topic map (difficulty-adjusted ratings from each player's first answers), buzz speed, the review queue and daily activity, each with a table view. |
 | **Team → Lineups** | Estimated points per regional round for any four players, subject by subject (difficulty-adjusted results, buzz speed, overlapping knowledge, a reference opponent); the five best foursomes; a suggested alternate; saved lineups, one set for the next competition. |
 | **Team** | Create the team and add players, each with a primary and secondary subject and a graduation year; who covers what, and who takes over each subject next season; the team's best player in every topic, with gaps counted; the chosen lineup; sharing (below). |
 | **Team → Assignments** | Drills, team packets, concept cards or clearing reviews, for chosen players with a due date; they show on each player's Today page and tick off when done; drills suggested from coverage gaps. |
-| **Library → Team packets** | Scrimmages of questions nobody in the room has heard (balanced like a DOE round, at a chosen difficulty), and packets uploaded as PDF (parsed in the browser) or JSON, with a review screen; print, play in the Reader console or solo. Uploaded packets stay in the team's data. |
+| **Library → Team packets** | Scrimmages of questions nobody in the room has heard (balanced like a DOE round, at a chosen level of the difficulty ladder) for a format: a regional round, a Finals round, a Finals visual bonus round (a share of the bonuses replaced by visual bonuses in the same subject, spread through the round) or a tiebreaker drill; packets uploaded as PDF (parsed in the browser) or JSON, with a review screen and a difficulty level. Print (including a visual bonus worksheet for the players), play in the Reader console or solo. Uploaded packets stay in the team's data. |
 | **Learn** | Concept cards written by the team (summary, key facts, traps, sources), reviewed by a second player, next to the library questions that test each concept; concept drills; unread cards join the daily plan. |
 | **Team stats** | Adds rebounds, net points per interrupt, small samples marked, and a week-by-week trend of practice games. |
 | **Sharing and remote rooms** | Optional, through the team server ([`docs/SERVER.md`](docs/SERVER.md)): the captain shares the team, players join with a link, a display name and a PIN, and everything syncs between devices. The Reader console can open a remote room: players buzz from their own devices (server-timed, with latency correction), see the question read aloud or revealed in step, confer in a private team channel during bonuses, and their captain answers in an answer box. |
 | **Offline** | A service worker keeps the site available offline after the first visit; **Data → Save all questions for offline use** stores the whole library (about 9 MB) for drills and reviews without a connection. The site can be installed to a home screen. |
-| **Play → Reader console** | Run an in-person practice game from one laptop: question in large type, answer for the reader, 5 s / 20 s answer clocks, game clock, two-tap scoring under the **2027 rules** (interrupts, blurts, rebounds, double interrupts, halves, tiebreakers), undo, keyboard shortcuts. Every toss-up is logged. |
+| **Play → Reader console** | Run an in-person practice game from one laptop: question in large type, answer for the reader, 5 s / 20 s answer clocks, game clock, two-tap scoring under the **2027 rules** (interrupts, blurts, rebounds, double interrupts, halves, tiebreakers), undo, keyboard shortcuts. Every toss-up is logged. Presets for regionals, virtual events and the Finals: 10-minute halves, and visual bonus rounds with 12-minute halves and 30-second visual bonuses whose figure can be projected full screen (remote players see it on their own screens). |
 | **Game summary**, **Stats** | Per-player toss-up accuracy by subject, interrupts, points given away, median buzz time, bonus conversion; CSV export. |
 | **Practice (solo)** | Questions appear letter by letter at a moderator's pace (the words-per-minute setting is converted to letters using the library's average word length, about 6 characters with the space); the word still appearing is shown fainter. Buzz with Space, start typing within 2 seconds (NSB's natural pause) and finish within 5, and the answer checker grades it (close calls go to "your call"). The answer timer can be switched off. |
 | **Library** | Every DOE high school sample set, by set and round, searchable, printable, with links to the original PDFs and a "report a problem" button. Shows which questions the team has already heard, and lets a player add any question to their review queue. **Library → Topics** shows how often each topic comes up in each subject. |
@@ -94,6 +96,17 @@ The DOE high school sample sets ship with the site as JSON in `public/data/doe/`
 U.S. Government works in the public domain; DOE's Office of Science asks to be credited and linked, and every round keeps
 a link to its original PDF.
 
+**Visual bonuses.** DOE publishes no Finals visual bonuses, so the Visual lab has its own sources:
+
+- **Generated figures** (`src/core/visual/`): templates that draw an SVG figure and compute the answer exactly in NSB's
+  simplest form. A question's id is its template and a seed, so it can be rebuilt anywhere; every template is tested
+  over 80 seeds against the answer checker, and `npx tsx scripts/checks/visual-gallery.ts <dir>` renders them for a look.
+  `src/core/visual/README.md` lists the rules a template follows.
+- **Photos** (`public/data/visual/`): public-domain photos from Wikimedia Commons, mostly from U.S. government agencies,
+  each with its author, licence and source page in `photos.json`. `scripts/visual/build-photos.py` rebuilds the set
+  from the curated list in `scripts/visual/photo-list.json` and refuses any file whose licence is not public domain.
+- **The team's own** visual questions live in the team's data and are never published.
+
 **Topics.** At build time, keyword rules in `src/core/tagging.ts` (no network, no AI) give each question a topic from
 the 65 in `src/core/taxonomy.ts`. Questions in the most frequent topic or two of each subject also get up to three concepts
 (139 concepts in all), and Energy questions get the discipline they really test. A question gets no topic rather than a
@@ -135,13 +148,18 @@ src/core/            framework-free logic, unit-tested
   scrimmage.ts       scrimmage packets from questions nobody in the room has heard
   assignments.ts     assignment due dates, progress and suggestions from coverage gaps
   sync.ts            the sync contract (collections, who may write what, merges), shared with the server
+  levels.ts          the difficulty ladder: DOE round levels and the levels of uploaded packets
+  rules/shootout.ts  the round robin shootout (+1 / −1 / 0) and who advances
+  visual/            generated visual bonuses: templates, SVG building blocks, exact answers, the photo-set questions
 src/lib/             browser-side helpers: store (IndexedDB), library loading, learning glue, offline, stats, router, sound,
-                     team-server sync (sync.ts, syncRecords.ts) and the remote room client (room.ts)
+                     team-server sync (sync.ts, syncRecords.ts), the remote room client (room.ts), visual questions
+                     (visuals.ts: generated, photo set and team-made; visualPool.ts; images.ts)
 src/pages/           one file per page
 src/components/      shared UI pieces
 src/sw/              the service worker template (vite.config.ts fills in the file list at build time)
 scripts/doe/         data fetch/build scripts and the validation report
 scripts/icons/       renders the app icons with Playwright
+scripts/visual/      builds the public-domain photo set for the Visual lab
 e2e/                 browser smoke test, the two-browser team-server test, and a small fixture question set
 server/              the team server: Cloudflare Worker, Durable Object per team, tests (see server/README.md)
 ```
@@ -167,7 +185,7 @@ Key design choices:
 
 ## Roadmap
 
-From the proposal: Phases 0–2 are built. Phase 3 adds Finals presets with visual bonuses; Phase 4 adds the
+From the proposal: Phases 0–3 are built. Phase 4 adds the
 question-writing studio, reading paths, middle school mode, and the open-source handoff.
 
 ## License
@@ -175,4 +193,5 @@ question-writing studio, reading paths, middle school mode, and the open-source 
 The code is released under the [MIT License](LICENSE).
 
 The DOE question data in `public/data/doe/` is not covered by the MIT License: it is a U.S. Government work in the public
-domain. DOE's Office of Science asks to be credited and linked, which the site does on every question and round.
+domain. DOE's Office of Science asks to be credited and linked, which the site does on every question and round. The photos in
+`public/data/visual/photos/` are public domain too; `photos.json` credits each one, and the site shows the credit with each photo.

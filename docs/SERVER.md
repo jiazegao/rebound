@@ -3,8 +3,9 @@
 The website is static (GitHub Pages) and works on its own, one device at a time. The team server adds two
 things that need a shared place:
 
-1. **Shared team data.** The roster, games, answers, review cards, plans, lineups, assignments, packets and
-   concept cards sync between the practice laptop and every player's phone or Chromebook.
+1. **Shared team data.** The roster, games, answers, review cards, plans, lineups, assignments, packets, the
+   team's visual questions (with their pictures) and concept cards sync between the practice laptop and every
+   player's phone or Chromebook.
 2. **Remote rooms.** Live games with players on their own devices: server-timed buzzing, the question text
    revealed in step on every screen, a private team channel during bonuses, and a captain's answer box.
 
@@ -69,7 +70,8 @@ response carries CORS headers for the origins in the `ALLOWED_ORIGINS` variable 
 
 `member` objects are `{ id, name, role, playerId }` (the `MemberInfo` type plus the name).
 
-Limits: request bodies up to 2 MB; at most `SYNC_PAGE_SIZE` changes per sync request (more is a 413); record
+Limits: request bodies up to 2 MB (devices send at most about 1.5 MB of changes per request, since a visual question's
+picture can be a few hundred kilobytes); at most `SYNC_PAGE_SIZE` changes per sync request (more is a 413); record
 bodies up to `MAX_RECORD_BYTES`; ids up to 200 characters; 30 failed joins per network address per hour (kept
 per team); 200 members, 20 open rooms and 64 connections per room. Locks and limits answer 429 with
 `Retry-After`. Requests from origins not in `ALLOWED_ORIGINS` get a 403. The last coach or captain cannot be

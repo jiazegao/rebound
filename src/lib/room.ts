@@ -43,6 +43,8 @@ export interface RoomView {
   status?: string;
   /** The answer, once the question is over. */
   answer?: string;
+  /** A visual bonus: the question whose figure to show (each device loads it from its own data). */
+  figure?: { questionId: string };
 }
 
 export interface ChatLine {

@@ -14,7 +14,7 @@ import { practiceDay, seasonPhase, daysUntil, type SeasonPhase } from './review'
 import { CORE_SUBJECTS, SUBJECT_LABELS, type CoreSubject, type Player } from './schema';
 import { topicsForSubject } from './taxonomy';
 
-export type PlanItemKind = 'review' | 'learn' | 'drill' | 'mixed';
+export type PlanItemKind = 'review' | 'learn' | 'drill' | 'mixed' | 'visual';
 
 export interface PlanItem {
   /** "review", "drill-primary", "drill-secondary", "drill-focus" or "mixed". */
@@ -30,7 +30,7 @@ export interface PlanItem {
   topic?: string;
   /** Learn: the concept card to read. */
   conceptId?: string;
-  /** Drills and mixed rounds: number of questions. */
+  /** Drills, mixed rounds and visual bonuses: number of questions. */
   count?: number;
   done: boolean;
 }
@@ -66,7 +66,8 @@ export interface PlanInput {
   minutes: number;
   /** Review cards due today. */
   dueCount: number;
-  nextEvent?: { name: string; date: string } | null;
+  /** `finals`: the next competition is the National Finals (Finals prep adds visual bonuses). */
+  nextEvent?: { name: string; date: string; finals?: boolean } | null;
   model?: PlayerModel;
   /** Library questions per topic id (catalog.json). Empty before the library is tagged. */
   topicCounts: Record<string, number>;
@@ -77,6 +78,21 @@ export interface PlanInput {
 }
 
 export const MINUTES_PER_CARD = 3;
+
+/** Weeks before the National Finals when the plan switches to Finals prep. */
+export const FINALS_PREP_DAYS = 42;
+
+/**
+ * Finals prep (proposal 4.4): of the time after reviews and reading, 20% visual bonuses, 30% drills and
+ * 50% timed mixed rounds.
+ */
+export const FINALS_MIX = { visual: 0.2, drills: 0.3, mixed: 0.5 };
+
+/** True when the next competition is the National Finals and it is close. */
+export function finalsPrep(nextEvent: PlanInput['nextEvent'], now: number): boolean {
+  const days = daysUntil(nextEvent?.date, now);
+  return !!nextEvent?.finals && days !== null && days <= FINALS_PREP_DAYS;
+}
 
 /** A small seeded random generator (mulberry32 over a string hash). */
 export function seededRandom(seed: string): () => number {
@@ -199,9 +215,13 @@ export function buildPlan(input: PlanInput): DayPlan {
     });
   }
 
-  // 3–4. Drills, then 5. a mixed round.
-  const rest = Math.max(0, minutes - cards * MINUTES_PER_REVIEW - learn.length * MINUTES_PER_CARD);
-  const mixedMinutes = Math.min(rest, Math.max(minutes >= 20 ? 5 : 3, Math.round(rest * PHASE_MIX[phase].mixed)));
+  // 3–4. Drills, then 5. a mixed round; before the Finals, visual bonuses too.
+  const finals = finalsPrep(input.nextEvent, now);
+  const afterLearning = Math.max(0, minutes - cards * MINUTES_PER_REVIEW - learn.length * MINUTES_PER_CARD);
+  const visualMinutes = finals && afterLearning >= 8 ? Math.max(3, Math.round(afterLearning * FINALS_MIX.visual)) : 0;
+  const rest = afterLearning - visualMinutes;
+  const mixedShare = finals ? FINALS_MIX.mixed / (FINALS_MIX.mixed + FINALS_MIX.drills) : PHASE_MIX[phase].mixed;
+  const mixedMinutes = Math.min(rest, Math.max(minutes >= 20 ? 5 : 3, Math.round(rest * mixedShare)));
   const drillMinutes = rest - mixedMinutes;
 
   const primary = player.primarySubject;
@@ -226,6 +246,20 @@ export function buildPlan(input: PlanInput): DayPlan {
       minutes: count * MINUTES_PER_QUESTION,
       subject: d.subject,
       topic: choice.topic,
+      count,
+      done: false,
+    });
+  }
+
+  if (visualMinutes > 0) {
+    const count = Math.max(3, Math.round(visualMinutes / MINUTES_PER_QUESTION));
+    const days = daysUntil(input.nextEvent?.date, now);
+    items.push({
+      id: 'visual',
+      kind: 'visual',
+      title: `Visual bonuses: ${count}`,
+      why: `${input.nextEvent!.name || 'The Finals'} ${days === 0 ? 'is today' : days === 1 ? 'is tomorrow' : `is in ${days} days`}: Finals rounds use visual bonuses, 30 seconds each`,
+      minutes: count * MINUTES_PER_QUESTION,
       count,
       done: false,
     });

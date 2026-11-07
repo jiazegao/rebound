@@ -15,10 +15,10 @@ export interface LocalRecord {
 /** What the device knows about each record it has synced: the fingerprint it had then and the server revision. */
 export type Known = Record<string, { fp: string; rev: number }>;
 
-type ArrayCollection = 'players' | 'lineups' | 'assignments' | 'packets' | 'games' | 'attempts' | 'reports';
+type ArrayCollection = 'players' | 'lineups' | 'assignments' | 'packets' | 'visuals' | 'games' | 'attempts' | 'reports';
 type MapCollection = 'completions' | 'conceptCards' | 'cards' | 'seen' | 'conceptReads' | 'plans';
 
-const ARRAYS: ArrayCollection[] = ['players', 'lineups', 'assignments', 'packets', 'games', 'attempts', 'reports'];
+const ARRAYS: ArrayCollection[] = ['players', 'lineups', 'assignments', 'packets', 'visuals', 'games', 'attempts', 'reports'];
 const MAPS: MapCollection[] = ['completions', 'conceptCards', 'cards', 'seen', 'conceptReads', 'plans'];
 
 /** Every synced record in the saved data, keyed by `collection/id`. */
@@ -46,6 +46,24 @@ export function localChanges(records: Map<string, LocalRecord>, known: Known): P
   // Apply order matters for a fresh device (the team before its players, and so on).
   const order = (c: SyncCollection) => SYNC_COLLECTIONS.indexOf(c);
   return changes.sort((a, b) => order(a.c) - order(b.c));
+}
+
+/**
+ * The changes to send in one request: at most `maxCount`, and at most about `maxBytes` of JSON (the server
+ * takes request bodies up to 2 MB, and a record with a picture can be a few hundred kilobytes). Always at
+ * least one change, so a single large record still goes.
+ */
+export function pushBatch(changes: PushChange[], maxCount: number, maxBytes: number): PushChange[] {
+  const out: PushChange[] = [];
+  let bytes = 0;
+  for (const change of changes) {
+    if (out.length >= maxCount) break;
+    const size = JSON.stringify(change).length;
+    if (out.length > 0 && bytes + size > maxBytes) break;
+    out.push(change);
+    bytes += size;
+  }
+  return out;
 }
 
 /** Fingerprint stored for a record deleted on both sides. */
@@ -77,6 +95,7 @@ export function applyRecords(d: AppData, records: SyncRecord[]): void {
   d.lineups.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   d.assignments.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   d.packets.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  d.visuals.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   d.attempts.sort((a, b) => a.t - b.t);
 }
 

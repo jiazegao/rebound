@@ -22,6 +22,7 @@ import type { CatalogRow, ConceptIndex, CoreSubject, Player } from '../core/sche
 import { topicById } from '../core/taxonomy';
 import { attemptOutcome, gameOutcomes } from './outcomes';
 import type { AppData, GameRecord } from './store';
+import { isVisualId } from './visuals';
 
 const gameCache = new Map<string, Outcome[]>();
 
@@ -45,6 +46,9 @@ function roundFromId(questionId: string): number {
 export function playerObservations(data: AppData, playerId: string, catalog: Map<string, CatalogRow> | null): Observation[] {
   const out: Observation[] = [];
   const add = (o: Outcome) => {
+    // Visual lab answers (generated figures, photos, team visuals) are their own kind of practice: they are
+    // not part of the mastery map, which rates players on library questions.
+    if (isVisualId(o.questionId)) return;
     const row = catalog?.get(o.questionId);
     out.push({
       playerId: o.playerId,

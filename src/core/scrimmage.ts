@@ -1,20 +1,41 @@
 /**
- * Scrimmage packets: a round of toss-up/bonus pairs from the library that nobody in the room has
- * heard, balanced across the six subjects like a DOE round and aimed at a difficulty level.
+ * Scrimmage packets: a round of toss-up/bonus pairs that nobody in the room has heard, balanced across the
+ * six subjects like a DOE round, aimed at a level of the difficulty ladder, and built for a format:
  *
- * Pairs stay as DOE printed them (a toss-up with its own bonus). Questions come from a few set files
- * where possible, so a laptop downloads little before practice.
+ * - regional: a DOE regional round (two 8-minute halves);
+ * - finals: a Finals round (two 10-minute halves), so more questions get read;
+ * - finals-visual: a Finals visual bonus round (two 12-minute halves): some bonuses are replaced by visual
+ *   bonuses in the same subject, spread through the round;
+ * - tiebreak: toss-ups only, played 5 at a time (Rule 6-4).
+ *
+ * Pairs otherwise stay as printed (a toss-up with its own bonus). Questions come from a few set files where
+ * possible, so a laptop downloads little before practice.
  */
 import { partnerId, setIdOf } from './drill';
+import { rowLevel } from './levels';
 import { ROUND_TOSSUPS } from './lineup';
-import { CORE_SUBJECTS, type CatalogRow, type CoreSubject, type Subject } from './schema';
+import { CORE_SUBJECTS, type CatalogRow, type CoreSubject, type DifficultyLevel, type ScrimmageFormat, type Subject } from './schema';
 
-export type ScrimmageLevel = 'early' | 'late' | 'any';
+export type ScrimmageLevel = DifficultyLevel | 'any';
 
 export const LEVEL_TEXT: Record<ScrimmageLevel, string> = {
-  early: 'Early regional (rounds 1–10)',
-  late: 'Late regional (rounds 11–17, harder)',
-  any: 'Any round',
+  early: 'Early regional (DOE rounds 1–10)',
+  late: 'Late regional (DOE rounds 11–17, harder)',
+  invitational: 'Invitational (your uploaded invitational packets)',
+  nationals: 'Nationals-level (your uploaded nationals-level packets)',
+  any: 'Any level (DOE library)',
+};
+
+export const FORMATS: Record<ScrimmageFormat, { label: string; hint: string; size: number; presetId: string }> = {
+  regional: { label: 'Regional round', hint: 'Two 8-minute halves, as at regionals.', size: 25, presetId: 'doe-regional-2027' },
+  finals: { label: 'Finals round', hint: 'Two 10-minute halves: Finals round robin and double elimination rounds.', size: 30, presetId: 'doe-finals-2027' },
+  'finals-visual': {
+    label: 'Finals visual bonus round',
+    hint: 'Two 12-minute halves; visual bonuses show a figure and allow 30 seconds.',
+    size: 30,
+    presetId: 'doe-finals-visual-2027',
+  },
+  tiebreak: { label: 'Tiebreaker drill', hint: 'Toss-ups only, played 5 at a time with no bonuses and no clock (Rule 6-4).', size: 10, presetId: 'doe-regional-2027' },
 };
 
 export interface ScrimmageOptions {
@@ -26,12 +47,21 @@ export interface ScrimmageOptions {
   random?: () => number;
   /** Most set files to draw from before reaching wider. */
   maxSets?: number;
+  format?: ScrimmageFormat;
+  /** Levels of the team's uploaded sets (by set id); DOE rows use their round number. */
+  teamLevels?: ReadonlyMap<string, DifficultyLevel>;
+  /** Finals visual rounds: the share of bonuses to make visual (0–1, default one half). */
+  visualShare?: number;
+  /** Finals visual rounds: a visual bonus id for a subject, or null when there is none to give. */
+  pickVisual?: (subject: CoreSubject) => string | null;
 }
 
 export interface ScrimmagePair {
   tossupId: string;
   bonusId?: string;
   subject: CoreSubject;
+  /** The bonus is a visual bonus that replaced the printed one. */
+  visual?: boolean;
 }
 
 export interface ScrimmageResult {
@@ -39,12 +69,17 @@ export interface ScrimmageResult {
   /** Pairs that had to include questions someone has heard, because fresh ones ran out. */
   heardPairs: number;
   sets: string[];
+  /** Visual bonuses in the packet. */
+  visualBonuses: number;
 }
 
-function levelMatches(round: number, level: ScrimmageLevel): boolean {
-  if (level === 'early') return round <= 10;
-  if (level === 'late') return round >= 11;
-  return true;
+/** Which of `n` positions get one of `k` items, spread evenly (e.g. every other one for k = n / 2). */
+export function spread(n: number, k: number): number[] {
+  const out: number[] = [];
+  if (k <= 0 || n <= 0) return out;
+  const m = Math.min(k, n);
+  for (let i = 0; i < n; i++) if (Math.floor(((i + 1) * m) / n) > Math.floor((i * m) / n)) out.push(i);
+  return out;
 }
 
 /** Pairs per subject for a packet of `size`, in DOE's proportions (Energy a little less). */
@@ -82,7 +117,7 @@ export function buildScrimmage(rows: CatalogRow[], opts: ScrimmageOptions): Scri
   }
   const all: Candidate[] = [];
   for (const r of rows) {
-    if (r[3] !== 't' || !isCore(r[1]) || !levelMatches(r[4], opts.level)) continue;
+    if (r[3] !== 't' || !isCore(r[1]) || (opts.level !== 'any' && rowLevel(r, opts.teamLevels) !== opts.level)) continue;
     const bonus = partnerId(r[0]);
     const bonusId = bonusIds.has(bonus) ? bonus : undefined;
     const fresh = !opts.heard.has(r[0]) && !(bonusId && opts.heard.has(bonusId));
@@ -131,9 +166,23 @@ export function buildScrimmage(rows: CatalogRow[], opts: ScrimmageOptions): Scri
   const pairs: Candidate[] = [];
   while (queues.some((q) => q.length)) for (const q of queues) if (q.length) pairs.push(q.shift()!);
 
+  const out: ScrimmagePair[] = pairs.map(({ tossupId, bonusId, subject }) =>
+    opts.format === 'tiebreak' ? { tossupId, subject } : { tossupId, bonusId, subject },
+  );
+  // A Finals visual round: swap a share of the bonuses, spread through the round, for visual bonuses.
+  let visualBonuses = 0;
+  if (opts.format === 'finals-visual' && opts.pickVisual) {
+    for (const i of spread(out.length, Math.round(out.length * (opts.visualShare ?? 0.5)))) {
+      const id = opts.pickVisual(out[i]!.subject);
+      if (!id) continue;
+      out[i] = { ...out[i]!, bonusId: id, visual: true };
+      visualBonuses += 1;
+    }
+  }
   return {
-    pairs: pairs.map(({ tossupId, bonusId, subject }) => ({ tossupId, bonusId, subject })),
+    pairs: out,
     heardPairs: pairs.filter((p) => !p.fresh).length,
     sets: [...new Set(pairs.map((p) => p.setId))],
+    visualBonuses,
   };
 }

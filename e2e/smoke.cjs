@@ -275,6 +275,109 @@ async function main() {
       await see('4 toss-ups.');
     });
 
+    await step('Finals visual round: a scrimmage with visual bonuses runs in the Reader console (Phase 3 done criterion)', async () => {
+      await page.goto(`${BASE}#/packets`);
+      await page.locator('#scrim-format').selectOption('finals-visual');
+      await page.locator('#scrim-visual').selectOption('1'); // every bonus that has a visual in its subject
+      await page.getByRole('button', { name: 'Build packet' }).click();
+      await see('visual bonuses');
+      await page.getByRole('button', { name: 'Save packet' }).click();
+      await page.getByRole('link', { name: 'Play in the Reader console' }).click();
+      await see('A team packet');
+      const preset = await page.locator('#preset').inputValue();
+      if (preset !== 'doe-finals-visual-2027') throw new Error(`expected the Finals visual rules, got ${preset}`);
+      await page.getByRole('button', { name: 'Auto-split' }).click();
+      await page.getByRole('button', { name: 'Start game' }).click();
+      await see('visual bonus rounds');
+      await key('Space'); // start: two 12-minute halves
+      const clock = await page.locator('.clock .time').innerText();
+      if (!/^1[12]:\d\d$/.test(clock)) throw new Error(`expected a 12-minute half, the clock shows ${clock}`);
+      // Answer toss-ups until a visual bonus comes up.
+      for (let i = 0; i < 4; i++) {
+        await key('Space'); // toss-up read
+        await key('1');
+        await key('c');
+        if (await page.getByText('Visual bonus for').count()) break;
+        await key('Space'); // a printed bonus: read
+        await key('c');
+        await key('Space'); // next
+      }
+      await see('Visual bonus for');
+      await page.locator('.qfig .qfig-art').first().waitFor();
+      await shot('17-reader-visual-bonus');
+      await key('Space'); // done reading: 30 seconds
+      const left = Number((await page.locator('.countdown').first().locator('xpath=..').innerText()).match(/([\d.]+) s/)?.[1]);
+      if (!(left > 25 && left <= 30)) throw new Error(`expected about 30 seconds for a visual bonus, got ${left}`);
+      await key('c');
+    });
+
+    await step('Visual lab: a generated visual bonus with the 30-second window', async () => {
+      await page.goto(`${BASE}#/visual?template=math-sector`);
+      await see('Visual bonus 1 of 5');
+      await page.locator('.qfig svg').first().waitFor();
+      await page.getByRole('button', { name: 'Done reading' }).click();
+      await see('30');
+      await page.getByRole('textbox', { name: 'Your answer' }).fill('1');
+      await page.keyboard.press('Enter');
+      await see('ANSWER:');
+      await page.getByRole('button', { name: /Next/ }).click();
+      await see('Visual bonus 2 of 5');
+      await page.getByRole('button', { name: 'Stop' }).click();
+      await see("Your team's visual questions");
+    });
+
+    await step('Visual lab: add a team visual question with a picture', async () => {
+      await page.goto(`${BASE}#/visual`);
+      await page.getByRole('button', { name: 'Add one' }).click();
+      // A small PNG made in the page (a blue square), standing in for a photo.
+      const png = await page.evaluate(() => {
+        const c = document.createElement('canvas');
+        c.width = 40;
+        c.height = 30;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#2a78d6';
+        ctx.fillRect(0, 0, 40, 30);
+        return c.toDataURL('image/png').split(',')[1];
+      });
+      await page.locator('#vq-picture').setInputFiles({ name: 'square.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
+      await page.locator('form img').first().waitFor();
+      await page.locator('#vq-alt').fill('A blue rectangle');
+      await page.locator('#vq-credit').fill('Drawn by the team');
+      await page.locator('#vq-subject').selectOption('math');
+      await page.locator('#vq-stem').fill('What color is the shape shown?');
+      await page.locator('#vq-answer').fill('blue');
+      await page.getByRole('button', { name: 'Save', exact: true }).click();
+      await see("Your team's visual questions (1)");
+      await see('BLUE');
+    });
+
+    await step('tiebreaker drill: a 5 toss-up tiebreaker game with no bonuses', async () => {
+      await page.goto(`${BASE}#/reader?format=tiebreak`);
+      await page.getByRole('button', { name: 'Auto-split' }).click();
+      await page.getByRole('button', { name: 'Start game' }).click();
+      await see('tiebreaker drill');
+      await key('Space'); // start
+      await see('Tiebreaker');
+      await key('Space'); // toss-up 1 read
+      await key('1');
+      await key('c');
+      await see('Question over');
+      if (await page.getByText('Bonus for').count()) throw new Error('a tiebreaker has no bonuses');
+    });
+
+    await step('shootout drill and the Finals rules page', async () => {
+      await page.goto(`${BASE}#/tiebreakers`);
+      await page.getByRole('button', { name: 'Shootout drill on your own' }).click();
+      await see('Toss-up 1 of');
+      await page.getByRole('button', { name: 'Done reading' }).click();
+      await page.getByRole('button', { name: 'Let it go (0)' }).click();
+      await see('No buzz: 0');
+      await page.goto(`${BASE}#/rules`);
+      await page.getByRole('tab', { name: 'DOE National Finals 2027, visual bonus rounds' }).click();
+      await see('30 seconds for the captain to begin answering');
+      await see('2 halves of 12 minutes');
+    });
+
     await step('concept cards: write one, a second player reviews it, drill its questions', async () => {
       await page.goto(`${BASE}#/learn`);
       await page.getByRole('link', { name: 'Circles, arcs and chords' }).click();

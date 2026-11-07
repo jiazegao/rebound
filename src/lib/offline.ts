@@ -4,6 +4,7 @@
  * reviews work on a bus or on a school network that drops out.
  */
 import { loadIndex } from './library';
+import { loadPhotoSet } from './visuals';
 
 /** Must match DATA in the service worker. */
 export const DATA_CACHE = 'rebound-data-v1';
@@ -32,13 +33,17 @@ export interface OfflineStatus {
   bytes: number | null;
 }
 
-function dataUrls(files: string[]): string[] {
-  return ['index.json', 'catalog.json', 'concepts.json', ...files].map((f) => new URL(`${DATA_BASE}${f}`, document.baseURI).href);
+/** Every data file a device can save: the DOE library and, when the site has one, the photo set for the Visual lab. */
+async function dataUrls(): Promise<string[]> {
+  const index = await loadIndex();
+  const photos = await loadPhotoSet();
+  const doe = ['index.json', 'catalog.json', 'concepts.json', ...index.sets.map((s) => s.file)].map((f) => `${DATA_BASE}${f}`);
+  const visual = photos.photos.length ? ['data/visual/photos.json', ...photos.photos.map((p) => `data/visual/${p.file}`)] : [];
+  return [...doe, ...visual].map((f) => new URL(f, document.baseURI).href);
 }
 
 export async function offlineStatus(): Promise<OfflineStatus> {
-  const index = await loadIndex();
-  const urls = dataUrls(index.sets.map((s) => s.file));
+  const urls = await dataUrls();
   const cache = await caches.open(DATA_CACHE);
   let saved = 0;
   for (const url of urls) if (await cache.match(url)) saved += 1;
@@ -60,8 +65,7 @@ export async function saveForOffline(onProgress: (done: number, total: number) =
   } catch {
     /* not supported */
   }
-  const index = await loadIndex();
-  const urls = dataUrls(index.sets.map((s) => s.file));
+  const urls = await dataUrls();
   const cache = await caches.open(DATA_CACHE);
   let done = 0;
   for (const url of urls) {

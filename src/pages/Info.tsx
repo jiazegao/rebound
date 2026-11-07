@@ -48,7 +48,8 @@ export function CoachesPage() {
       <ul>
         <li>
           The team name, players' display names, roles and subjects, the next competition date, practice game records, solo answers, which
-          questions each player has heard, review schedules, daily plans, lineups, assignments, team packets and concept cards.
+          questions each player has heard, review schedules, daily plans, lineups, assignments, team packets, concept cards, and visual
+          questions the team adds (with their pictures).
         </li>
         <li>
           All of it is kept in this browser on this device. Anyone using the same browser profile on this device can see it. You can download it

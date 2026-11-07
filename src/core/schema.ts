@@ -34,7 +34,8 @@ export type Letter = 'W' | 'X' | 'Y' | 'Z';
 export const LETTERS: Letter[] = ['W', 'X', 'Y', 'Z'];
 
 export type Level = 'HS' | 'MS';
-export type Provider = 'doe' | 'sbreader' | 'team' | 'other';
+/** `rebound`: questions the site generates itself (visual bonuses drawn from templates). */
+export type Provider = 'doe' | 'sbreader' | 'team' | 'rebound' | 'other';
 
 export interface QuestionSource {
   provider: Provider;
@@ -79,6 +80,8 @@ export interface Question {
   notes?: string[];
   /** True when the question depends on a picture or figure. */
   visual?: boolean;
+  /** The figure for a visual question, when the site has it (DOE PDFs' figures are not imported). */
+  figure?: Figure;
   source: QuestionSource;
   /** Warnings raised while importing, e.g. "choices-missing". Empty or absent when clean. */
   flags?: string[];
@@ -89,6 +92,16 @@ export interface Question {
   /** For Energy questions: the discipline the question really tests ("energy (chemistry)"). */
   crossSubject?: CoreSubject;
 }
+
+/**
+ * A visual question's figure. `svg` markup comes only from Rebound's own generators (src/core/visual),
+ * never from users or the network, so it can be put into the page as is. Pictures (`image`) are shown
+ * with an <img> element: a site path for the photo set, or a data: URL (JPEG, PNG or WebP) for pictures a
+ * team added.
+ */
+export type Figure =
+  | { kind: 'svg'; svg: string; alt: string }
+  | { kind: 'image'; src: string; alt: string; credit?: string; sourceUrl?: string };
 
 /** A toss-up and the bonus that goes with it. */
 export interface QuestionPair {
@@ -193,7 +206,8 @@ export interface Team {
   level: Level;
   createdAt: string;
   /** The next competition, which shapes every player's daily plan. `date` is "YYYY-MM-DD". */
-  nextEvent?: { name: string; date: string; lineupId?: string };
+  /** `finals`: it is the National Finals, so daily plans add Finals prep (visual bonuses) in the last six weeks. */
+  nextEvent?: { name: string; date: string; lineupId?: string; finals?: boolean };
 }
 
 /** A saved lineup: up to four starters in seat order, and alternates. */
@@ -215,9 +229,44 @@ export interface TeamPacket {
   /** Scrimmage: library toss-up and bonus ids, in reading order. */
   pairs?: Array<{ tossupId: string; bonusId?: string }>;
   /** Scrimmage settings, for the packet's description. */
-  options?: { level: 'early' | 'late' | 'any'; forPlayers: string[]; size: number };
+  options?: {
+    level: DifficultyLevel | 'any';
+    forPlayers: string[];
+    size: number;
+    /** The format it was built for (older scrimmages have none: a regional round). */
+    format?: ScrimmageFormat;
+    /** Visual bonuses in the packet (Finals visual rounds). */
+    visualBonuses?: number;
+  };
   /** Upload: the questions themselves. They stay in the team's own data and are never published. */
   set?: QuestionSet;
+  /** Upload: how hard the source is, for the difficulty ladder (regional, invitational or nationals-level). */
+  level?: UploadLevel;
+}
+
+/**
+ * The difficulty ladder (proposal 5.6): DOE rounds 1–10, DOE rounds 11 and later, invitational and
+ * nationals-level packets (from the team's uploads).
+ */
+export type DifficultyLevel = 'early' | 'late' | 'invitational' | 'nationals';
+
+/** Levels a team can give an uploaded packet. */
+export type UploadLevel = 'regional' | 'invitational' | 'nationals';
+
+/** What a scrimmage packet is built for. */
+export type ScrimmageFormat = 'regional' | 'finals' | 'finals-visual' | 'tiebreak';
+
+/**
+ * A visual question the team added: a picture (stored as a data: URL) and a bonus question about it.
+ * Ids start with "vtm-". It stays in the team's own data and is never published.
+ */
+export interface TeamVisual {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  /** Player who added it, when known. */
+  authorId: string | null;
+  question: Question;
 }
 
 /** A concept card written by the team (one per concept id). */

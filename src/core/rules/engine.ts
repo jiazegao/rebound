@@ -8,7 +8,7 @@
  *
  * Rule numbers refer to the 2027 NSB Competition Rules.
  */
-import type { RulesPreset } from './presets';
+import { visualBonusTiming, type RulesPreset } from './presets';
 
 export type TeamIdx = 0 | 1;
 export type TossupFault = 'incorrect' | 'blurt' | 'stall' | 'communication';
@@ -26,6 +26,11 @@ export interface MatchConfig {
   teams: [MatchTeam, MatchTeam];
   /** Number of toss-up/bonus pairs available in the packet. */
   pairCount: number;
+  /**
+   * A tiebreaker drill: the game starts as a 5-toss-up tiebreaker (Rule 6-4) from 0–0, with no bonuses and
+   * no game clock, and goes on in series of 5 until one team leads.
+   */
+  tiebreakOnly?: boolean;
 }
 
 export type MatchEvent =
@@ -36,8 +41,11 @@ export type MatchEvent =
   | { type: 'tossup_judged'; t: number; result: TossupResult }
   /** The answer window ran out with no (further) buzz. */
   | { type: 'tossup_dead'; t: number }
-  /** The reader finished reading the bonus, including all four choices (Rule 5-4). */
-  | { type: 'bonus_read'; t: number }
+  /**
+   * The reader finished reading the bonus, including all four choices (Rule 5-4). `visual` marks a visual
+   * bonus, which gets the longer visual window (30 s at the Finals, Rules 5-4 and 5-5).
+   */
+  | { type: 'bonus_read'; t: number; visual?: boolean }
   | { type: 'bonus_judged'; t: number; result: BonusResult }
   | { type: 'next'; t: number }
   /** Discard the current question (moderator error, broken question...). */
@@ -101,6 +109,8 @@ export interface BonusState {
   pairIndex: number;
   readComplete: boolean;
   windowOpenedAt: number | null;
+  /** A visual bonus (longer answer window). */
+  visual?: boolean;
 }
 
 export interface ClockState {
@@ -206,6 +216,10 @@ export function currentWindow(state: MatchState): { kind: 'tossup' | 'rebound' |
     };
   }
   if (state.phase === 'bonus_open' && state.bonus?.windowOpenedAt != null) {
+    if (state.bonus.visual) {
+      const v = visualBonusTiming(state.config.preset);
+      return { kind: 'bonus', openedAt: state.bonus.windowOpenedAt, seconds: v.sec, warningAt: v.warningAtSec };
+    }
     return { kind: 'bonus', openedAt: state.bonus.windowOpenedAt, seconds: timing.bonusSec, warningAt: timing.bonusWarningAtSec };
   }
   return null;
@@ -342,8 +356,14 @@ export function applyEvent(state: MatchState, event: MatchEvent): MatchState {
   switch (event.type) {
     case 'start': {
       if (s.config.pairCount < 1) throw new RuleError('The packet has no questions');
-      s.period = 1;
-      s.clock = freshClock(preset, t);
+      if (s.config.tiebreakOnly) {
+        s.period = 'tiebreak';
+        s.clock = null;
+        s.tiebreakBegun = 0;
+      } else {
+        s.period = 1;
+        s.clock = freshClock(preset, t);
+      }
       beginTossup(s, 0);
       return s;
     }
@@ -436,6 +456,7 @@ export function applyEvent(state: MatchState, event: MatchEvent): MatchState {
       const b = s.bonus!;
       b.readComplete = true;
       b.windowOpenedAt = t;
+      if (event.visual) b.visual = true;
       s.phase = 'bonus_open';
       return s;
     }

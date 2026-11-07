@@ -2,6 +2,7 @@ import { Fragment, type ReactNode } from 'react';
 import { PRONUNCIATION } from '../core/judge/normalize';
 import { LETTERS, type Question } from '../core/schema';
 import { topicById, topicName } from '../core/taxonomy';
+import { FigureView } from './Figure';
 import { SubjectTag } from './ui';
 
 const GUIDE_SPLIT = new RegExp(`(${PRONUNCIATION.source})`, 'gu');
@@ -123,6 +124,7 @@ export function QuestionView({ q, showAnswer = true, extra }: { q: Question; sho
   return (
     <article className="question">
       <QuestionMeta q={q} extra={extra} />
+      <FigureView q={q} />
       <p className="stem">
         <RichText text={q.stem} />
       </p>

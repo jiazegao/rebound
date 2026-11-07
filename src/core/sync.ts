@@ -21,6 +21,7 @@ export const SYNC_COLLECTIONS = [
   'assignments',
   'completions',
   'packets',
+  'visuals',
   'conceptCards',
   'games',
   'attempts',

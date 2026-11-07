@@ -194,6 +194,22 @@ describe('daily plan', () => {
     expect(close.items.find((i) => i.kind === 'mixed')!.why).toContain('Regional is in 13 days');
   });
 
+  it('Finals prep adds visual bonuses: 20% visual, 30% drills, 50% mixed', () => {
+    // NOW is 2026-11-07; a Finals five weeks away is inside the six-week Finals prep window.
+    const finals = buildPlan({ ...base, minutes: 45, dueCount: 0, nextEvent: { name: 'National Finals', date: '2026-12-12', finals: true } });
+    const visual = finals.items.find((i) => i.kind === 'visual');
+    expect(visual).toBeDefined();
+    expect(visual!.why).toContain('National Finals is in 35 days');
+    const minutes = (k: string) => finals.items.filter((i) => i.kind === k).reduce((n, i) => n + i.minutes, 0);
+    const shared = minutes('visual') + minutes('drill') + minutes('mixed');
+    expect(minutes('visual') / shared).toBeGreaterThan(0.15);
+    expect(minutes('visual') / shared).toBeLessThan(0.25);
+    expect(minutes('mixed')).toBeGreaterThan(minutes('drill'));
+    // A regional at the same distance, or the Finals far away, has no visual item.
+    expect(buildPlan({ ...base, nextEvent: { name: 'Regional', date: '2026-12-12' } }).items.some((i) => i.kind === 'visual')).toBe(false);
+    expect(buildPlan({ ...base, nextEvent: { name: 'National Finals', date: '2027-04-29', finals: true } }).items.some((i) => i.kind === 'visual')).toBe(false);
+  });
+
   it('targets weak, frequent topics', () => {
     const strongGenetics = {
       subjects: { biology: { rating: 1600, p: 0.64, n: 40, correct: 26, interrupts: 0, interruptsCorrect: 0, medianBuzzMs: null, last: 0 } },

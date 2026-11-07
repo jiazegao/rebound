@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { fingerprint, recordKey, type SyncRecord } from '../core/sync';
+import { fingerprint, recordKey, type PushChange, type SyncRecord } from '../core/sync';
 import { emptyData } from './store';
-import { applyRecords, DELETED, localChanges, rememberRecords, toRecords } from './syncRecords';
+import { applyRecords, DELETED, localChanges, pushBatch, rememberRecords, toRecords } from './syncRecords';
 
 function sample() {
   const d = emptyData();
@@ -58,5 +58,18 @@ describe('sync records', () => {
     expect(known['seen/p1'].fp).toBe(fingerprint({ q1: 5, q2: 9 }));
     // A record deleted on the server is not pushed back as a deletion.
     expect(localChanges(toRecords(d), known).some((c) => c.id === 'p2')).toBe(false);
+  });
+});
+
+describe('push batches', () => {
+  const change = (id: string, size: number): PushChange => ({ c: 'visuals', id, body: { pad: 'x'.repeat(size) }, baseRev: null });
+
+  it('stops at the count or the byte budget, but always sends at least one change', () => {
+    const changes = [change('a', 100), change('b', 100), change('c', 100)];
+    expect(pushBatch(changes, 2, 1_000_000).map((c) => c.id)).toEqual(['a', 'b']);
+    // Each change is about 160 bytes of JSON (100 of padding plus the rest), so two fit in 400.
+    expect(pushBatch(changes, 10, 400).map((c) => c.id)).toEqual(['a', 'b']);
+    expect(pushBatch([change('big', 5_000)], 10, 300).map((c) => c.id)).toEqual(['big']);
+    expect(pushBatch([], 10, 300)).toEqual([]);
   });
 });

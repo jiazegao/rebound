@@ -303,3 +303,65 @@ describe('undo and validation', () => {
     expect(s.log.at(-1)).toMatchObject({ kind: 'adjust', note: 'Challenge upheld' });
   });
 });
+
+describe('Finals presets and visual bonuses (Rules 5-1, 5-4, 5-5)', () => {
+  it('visual bonus rounds have 12-minute halves; other Finals rounds 10', () => {
+    expect(getPreset('doe-finals-visual-2027').clock?.halfMinutes).toBe(12);
+    expect(getPreset('doe-finals-2027').clock?.halfMinutes).toBe(10);
+    const s = play(config('doe-finals-visual-2027'), [{ type: 'start', t: 0 }]);
+    expect(clockRemainingMs(s, 0)).toBe(12 * 60_000);
+  });
+
+  it('a visual bonus gets 30 seconds with the warning at 25; a plain bonus keeps 20 and 15', () => {
+    const upToBonus: Array<EventInput & { t?: number }> = [
+      { type: 'start' },
+      { type: 'tossup_read' },
+      { type: 'buzz', team: A, playerId: 'a1' },
+      { type: 'tossup_judged', result: 'correct' },
+    ];
+    const visual = play(config('doe-finals-visual-2027'), [...upToBonus, { type: 'bonus_read', visual: true }]);
+    expect(currentWindow(visual)).toMatchObject({ kind: 'bonus', seconds: 30, warningAt: 25 });
+    const plain = play(config('doe-finals-visual-2027'), [...upToBonus, { type: 'bonus_read' }]);
+    expect(currentWindow(plain)).toMatchObject({ kind: 'bonus', seconds: 20, warningAt: 15 });
+    // Practicing a visual bonus under rules without visual bonuses uses the Finals timing.
+    const practice = play(config('doe-regional-2027'), [...upToBonus, { type: 'bonus_read', visual: true }]);
+    expect(currentWindow(practice)).toMatchObject({ seconds: 30, warningAt: 25 });
+  });
+});
+
+describe('tiebreaker drills (Rule 6-4)', () => {
+  it('a tiebreaker-only game starts in a 5 toss-up series with no clock and no bonuses', () => {
+    const cfg = { ...config('doe-regional-2027', 12), tiebreakOnly: true };
+    let s = play(cfg, [{ type: 'start' }]);
+    expect(s.period).toBe('tiebreak');
+    expect(s.clock).toBeNull();
+    s = play(cfg, [{ type: 'start' }, { type: 'tossup_read' }, { type: 'buzz', team: A, playerId: 'a1' }, { type: 'tossup_judged', result: 'correct' }]);
+    expect(s.phase).toBe('question_over');
+    expect(s.scores).toEqual([4, 0]);
+  });
+
+  it('ends after 5 toss-ups when a team leads, and goes on while tied', () => {
+    const cfg = { ...config('doe-regional-2027', 12), tiebreakOnly: true };
+    const dead: Array<EventInput & { t?: number }> = [{ type: 'tossup_read' }, { type: 'tossup_dead' }, { type: 'next' }];
+    // Five dead toss-ups: still 0–0, so a sixth toss-up begins (a new series).
+    let s = play(cfg, [{ type: 'start' }, ...dead, ...dead, ...dead, ...dead, ...dead]);
+    expect(s.phase).toBe('tossup_reading');
+    expect(s.pairIndex).toBe(5);
+    expect(s.tiebreakBegun).toBe(1);
+    // Team A gets the first toss-up, then four dead ones: the game ends 4–0 after the fifth.
+    s = play(cfg, [
+      { type: 'start' },
+      { type: 'tossup_read' },
+      { type: 'buzz', team: A, playerId: 'a1' },
+      { type: 'tossup_judged', result: 'correct' },
+      { type: 'next' },
+      ...dead,
+      ...dead,
+      ...dead,
+      ...dead,
+    ]);
+    expect(s.phase).toBe('game_over');
+    expect(s.endedReason).toBe('tiebreak');
+    expect(s.scores).toEqual([4, 0]);
+  });
+});

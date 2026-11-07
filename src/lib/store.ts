@@ -22,7 +22,7 @@ import {
   type ReviewCard,
 } from '../core/review';
 import type { MatchEvent } from '../core/rules/engine';
-import type { Assignment, Completion, ConceptCard, Lineup, Player, QuestionKind, Subject, Team, TeamPacket } from '../core/schema';
+import type { Assignment, Completion, ConceptCard, Lineup, Player, QuestionKind, Subject, Team, TeamPacket, TeamVisual } from '../core/schema';
 import { newId } from './format';
 import { attemptOutcome, gameOutcomes } from './outcomes';
 
@@ -48,6 +48,8 @@ export interface GameRecord {
   finalScores?: [number, number];
   /** The remote room this game is played in, when players join from their own devices. */
   roomId?: string;
+  /** "tiebreak": a tiebreaker drill (5 toss-ups, no bonuses, no clock, repeated while tied). */
+  format?: 'game' | 'tiebreak';
 }
 
 /** One answer in solo practice ("Try a round" while signed in as a player). */
@@ -95,6 +97,8 @@ export interface AppData {
   completions: Record<string, Completion>;
   /** playerId → conceptId → when they read that concept card. */
   conceptReads: Record<string, Record<string, number>>;
+  /** Visual questions the team added, newest first. */
+  visuals: TeamVisual[];
   settings: { sound: boolean; readingWpm: number; soloPlayerId: string | null; answerTimer: boolean; dailyMinutes: number };
   lastExportAt: string | null;
 }
@@ -116,6 +120,7 @@ export function emptyData(): AppData {
     assignments: [],
     completions: {},
     conceptReads: {},
+    visuals: [],
     settings: { sound: true, readingWpm: 200, soloPlayerId: null, answerTimer: true, dailyMinutes: 30 },
     lastExportAt: null,
   };
@@ -342,6 +347,9 @@ function backfillCards(d: AppData): void {
 function applyOutcomes(d: AppData, outcomes: Outcome[]): void {
   const players = new Set<string>();
   for (const o of [...outcomes].sort((a, b) => a.t - b.t)) {
+    // Generated visual bonuses never become review cards: the same seed brings back the same numbers, so a
+    // retry would test memory of an answer, not the skill. Photo and team visual misses do (identification).
+    if (o.questionId.startsWith('vis-')) continue;
     const id = cardId(o.playerId, o.questionId);
     const next = applyOutcome(d.cards[id], o, retentionAt(d, o.t));
     if (next) d.cards[id] = next;
@@ -402,11 +410,11 @@ export function completePlanItem(playerId: string, day: string, itemId: string):
   });
 }
 
-export function setNextEvent(event: { name: string; date: string } | null): void {
+export function setNextEvent(event: { name: string; date: string; finals?: boolean } | null): void {
   update((d) => {
     if (!d.team) return;
     if (event && /^\d{4}-\d{2}-\d{2}$/.test(event.date)) {
-      d.team.nextEvent = { name: event.name.trim(), date: event.date, lineupId: d.team.nextEvent?.lineupId };
+      d.team.nextEvent = { name: event.name.trim(), date: event.date, lineupId: d.team.nextEvent?.lineupId, ...(event.finals ? { finals: true } : {}) };
     } else delete d.team.nextEvent;
     // Today's plans are rebuilt (keeping what is done) when the date moves them into another season phase.
   });
@@ -478,6 +486,24 @@ export function savePacket(packet: Omit<TeamPacket, 'id' | 'createdAt'> & { id?:
 export function deletePacket(id: string): void {
   update((d) => {
     d.packets = d.packets.filter((p) => p.id !== id);
+  });
+}
+
+/* ---------------- team visual questions ---------------- */
+
+/** Add or update a team visual question. */
+export function saveVisual(visual: Omit<TeamVisual, 'createdAt' | 'updatedAt'>): void {
+  const now = new Date().toISOString();
+  update((d) => {
+    const existing = d.visuals.find((v) => v.id === visual.id);
+    if (existing) Object.assign(existing, visual, { updatedAt: now });
+    else d.visuals.unshift({ ...visual, createdAt: now, updatedAt: now });
+  });
+}
+
+export function deleteVisual(id: string): void {
+  update((d) => {
+    d.visuals = d.visuals.filter((v) => v.id !== id);
   });
 }
 

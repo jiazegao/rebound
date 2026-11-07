@@ -184,21 +184,22 @@ function NextEvent() {
   const saved = data.team?.nextEvent;
   const [name, setName] = useState(saved?.name ?? '');
   const [date, setDate] = useState(saved?.date ?? '');
+  const [finals, setFinals] = useState(!!saved?.finals);
   const days = daysUntil(saved?.date, Date.now());
-  const dirty = name !== (saved?.name ?? '') || date !== (saved?.date ?? '');
+  const dirty = name !== (saved?.name ?? '') || date !== (saved?.date ?? '') || finals !== !!saved?.finals;
   return (
     <form
       className="card"
       aria-labelledby="next-event-heading"
       onSubmit={(e) => {
         e.preventDefault();
-        setNextEvent(date ? { name, date } : null);
+        setNextEvent(date ? { name, date, finals } : null);
       }}
     >
       <h2 id="next-event-heading">Next competition</h2>
       <p className="muted small">
         In the last {FINAL_WEEKS_DAYS / 7} weeks before it, every player's daily plan shifts toward timed mixed rounds and reviews come back a
-        little more often.
+        little more often. For the National Finals, plans add visual bonuses in the last six weeks.
       </p>
       <div className="row" style={{ alignItems: 'flex-end' }}>
         <div className="field" style={{ flex: '1 1 220px' }}>
@@ -209,6 +210,9 @@ function NextEvent() {
           <label htmlFor="event-date">Date</label>
           <input id="event-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
+        <label className="checkbox" style={{ marginBottom: '0.6rem' }}>
+          <input type="checkbox" checked={finals} onChange={(e) => setFinals(e.target.checked)} /> The National Finals
+        </label>
         <button className="btn btn-primary" type="submit" disabled={!dirty}>
           Save
         </button>
@@ -220,6 +224,7 @@ function NextEvent() {
               setNextEvent(null);
               setName('');
               setDate('');
+              setFinals(false);
             }}
           >
             Clear

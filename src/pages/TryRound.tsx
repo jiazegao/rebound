@@ -5,14 +5,15 @@ import { Verdict } from '../components/Verdict';
 import { pickDrill, pickMixed, setIdOf, type DrillPick } from '../core/drill';
 import { judgeAnswer, type JudgeResult } from '../core/judge/judge';
 import { ratingFor } from '../core/mastery';
-import { CORE_SUBJECTS, SUBJECT_LABELS, type Catalog, type CoreSubject, type Question, type QuestionPair, type QuestionSet } from '../core/schema';
+import { LEVEL_LABEL, rowLevel, teamCatalog } from '../core/levels';
+import { CORE_SUBJECTS, SUBJECT_LABELS, type Catalog, type CatalogRow, type CoreSubject, type DifficultyLevel, type Question, type QuestionPair, type QuestionSet } from '../core/schema';
 import { topicsForSubject } from '../core/taxonomy';
 import { usePlayerModel } from '../lib/learning';
 import { catalogById, loadCatalog, loadConceptIndex, loadQuestions, loadSetById, setLabel, useCatalog, useIndex } from '../lib/library';
 import { topicById } from '../core/taxonomy';
 import { buildReading, lettersPerMinute, readingDurationMs, revealedCount, splitRevealed, type Reading } from '../lib/reading';
 import { href } from '../lib/router';
-import { addAttempt, completeAssignment, completePlanItem, markSeen, updateSettings, useData } from '../lib/store';
+import { addAttempt, completeAssignment, completePlanItem, getData, markSeen, updateSettings, useData } from '../lib/store';
 import { packetRound } from '../lib/packets';
 
 const TOSSUP_WINDOW_S = 5;
@@ -104,6 +105,8 @@ interface Settings {
   count: number;
   wpm: number;
   answerTimer: boolean;
+  /** A level of the difficulty ladder, or "" for any. */
+  level: DifficultyLevel | '';
 }
 
 const COUNTS = [5, 8, 10, 15, 20];
@@ -112,9 +115,15 @@ const COUNTS = [5, 8, 10, 15, 20];
 async function libraryItems(catalog: Catalog, s: Settings, seen: Record<string, number>, rating: (subject: CoreSubject, topic: string) => number): Promise<Item[]> {
   // A few extra, in case some cannot be graded.
   const want = s.count + 3;
+  // Choosing a level also draws on the team's uploaded packets at that level. "Any level" keeps to the DOE
+  // library, so packets kept for scrimmages stay unheard.
+  const team = teamCatalog(getData().packets);
+  const rows = s.level ? [...catalog.questions, ...team.rows] : catalog.questions;
+  const levelFilter = s.level ? { level: s.level, levelOf: (row: CatalogRow) => rowLevel(row, team.levels) } : {};
   const picks: DrillPick[] = s.mode === 'subject' && s.concept ? await conceptPicks(s.concept, want, seen) : s.mode === 'mixed'
-      ? pickMixed(catalog.questions, { count: want, seen, rating: (sub, topic) => rating(sub as CoreSubject, topic) })
-      : pickDrill(catalog.questions, {
+      ? pickMixed(rows, { count: want, seen, rating: (sub, topic) => rating(sub as CoreSubject, topic), ...levelFilter })
+      : pickDrill(rows, {
+          ...levelFilter,
           subject: s.subject,
           topic: s.topic || undefined,
           includeEnergyCross: s.cross,
@@ -167,8 +176,10 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
     count: 10,
     wpm: data.settings.readingWpm,
     answerTimer: data.settings.answerTimer,
+    level: '',
     ...initial,
   });
+  const uploadLevels = useMemo(() => new Set(teamCatalog(data.packets).levels.values()), [data.packets]);
   const [set, setSet] = useState<QuestionSet | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [busy, setBusy] = useState(false);
@@ -246,6 +257,10 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
           answer, and press <span className="kbd">Enter</span>. You get {TOSSUP_WINDOW_S} seconds after the reading to buzz and{' '}
           {BONUS_WINDOW_S} seconds on bonuses. After you buzz, start typing within {ANSWER_START_S} seconds and finish within {ANSWER_TOTAL_S},
           since NSB only allows a short natural pause before answering.
+        </p>
+        <p className="small">
+          Also: <a href={href('/visual')}>Visual lab</a> (Finals visual bonuses) · <a href={href('/tiebreakers')}>Tiebreakers</a> (5 toss-up
+          tiebreakers and shootouts)
         </p>
       </PageHeader>
       {index.loading && <Loading what="Loading the library" />}
@@ -358,6 +373,24 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
                   </div>
                 )}
               </>
+            )}
+            {fromLibrary && !s.concept && (
+              <div className="field">
+                <label htmlFor="level">Level</label>
+                <select id="level" value={s.level} onChange={(e) => setS({ ...s, level: e.target.value as DifficultyLevel | '' })}>
+                  <option value="">Any level (DOE library)</option>
+                  {(Object.keys(LEVEL_LABEL) as DifficultyLevel[]).map((l) => {
+                    const fromUploads = l === 'invitational' || l === 'nationals';
+                    const off = fromUploads && !uploadLevels.has(l);
+                    return (
+                      <option key={l} value={l} disabled={off}>
+                        {LEVEL_LABEL[l]}
+                        {fromUploads ? (off ? ' (upload a packet at this level first)' : ' (your uploaded packets)') : l === 'early' ? ' (DOE rounds 1–10)' : ' (DOE rounds 11–17)'}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
             )}
             {fromLibrary && (
               <div className="field">
