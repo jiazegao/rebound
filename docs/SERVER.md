@@ -180,7 +180,7 @@ cd server
 npm install
 npm test                # runs the Worker and Durable Object locally in workerd
 npx wrangler dev        # local server on http://localhost:8787
-npx wrangler deploy     # needs CLOUDFLARE_API_TOKEN (Workers Scripts: Edit, Durable Objects: Edit)
+npx wrangler deploy     # needs CLOUDFLARE_API_TOKEN (Account → Workers Scripts: Edit; see server/README.md)
 ```
 
 `ALLOWED_ORIGINS` is set in `wrangler.toml` under `[vars]`.

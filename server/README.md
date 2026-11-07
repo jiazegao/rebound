@@ -67,10 +67,11 @@ Workers Free plan.
 
 ## Things to know
 
-- **PIN hashing cost.** PBKDF2-SHA256 with 100,000 iterations takes about 13 ms of CPU per hash on a modern
-  server, and the Free plan allows 10 ms of CPU per request. If sign-ins fail with "exceeded CPU time limit",
-  either use Workers Paid or lower `PIN_ITERATIONS` in `src/crypto.ts`: each stored hash records its own
-  iteration count, so existing PINs keep working.
+- **PIN hashing cost.** PBKDF2-SHA256 runs 20,000 iterations (`PIN_ITERATIONS` in `src/crypto.ts`), a few
+  milliseconds of CPU per hash, which keeps sign-in inside the Free plan's 10 ms of CPU per request. A 4–8 digit
+  PIN is weak against anyone holding its hash whatever the count, so the real defenses are that hashes never
+  leave the Durable Object and the five-try lockout. Each stored hash records its own iteration count, so the
+  count can change later without breaking existing PINs.
 - **Logs.** WebSocket URLs carry the session token (browsers cannot set headers on WebSockets), so Workers Logs
   stay off in `wrangler.toml`. Use `npx wrangler tail` to watch errors live. The server never logs PINs,
   secrets or tokens.
