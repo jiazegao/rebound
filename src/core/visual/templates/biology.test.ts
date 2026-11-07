@@ -58,17 +58,25 @@ describe('dihybrid Punnett square', () => {
       const het = (c: string, i: number) => c[2 * i] !== c[2 * i + 1];
       let count: number | null = null;
       const geno = /the genotype (\w+)\?/.exec(d.stem);
-      if (geno) [count] = [cells.filter((c) => c === geno[1]).length, kinds.add('genotype')];
-      else if (/heterozygous for both/.test(d.stem)) [count] = [cells.filter((c) => het(c, 0) && het(c, 1)).length, kinds.add('het')];
-      else if (/homozygous for both/.test(d.stem)) [count] = [cells.filter((c) => !het(c, 0) && !het(c, 1)).length, kinds.add('hom')];
-      else {
+      if (geno) {
+        count = cells.filter((c) => c === geno[1]).length;
+        kinds.add('genotype');
+      } else if (/heterozygous for both/.test(d.stem)) {
+        count = cells.filter((c) => het(c, 0) && het(c, 1)).length;
+        kinds.add('het');
+      } else if (/homozygous for both/.test(d.stem)) {
+        count = cells.filter((c) => !het(c, 0) && !het(c, 1)).length;
+        kinds.add('hom');
+      } else {
         const [g1, g2] = genes as [(typeof genes)[0], (typeof genes)[0]];
         for (const d1 of [true, false]) {
           for (const d2 of [true, false]) {
             const w1 = d1 ? g1.dom : g1.rec;
             const w2 = d2 ? g2.dom : g2.rec;
             const phrase = g1.organ === g2.organ ? `${w1}, ${w2} ${g1.organ}` : `${w1} ${g1.organ} and ${w2} ${g2.organ}`;
-            if (d.stem.includes(`have ${phrase}?`)) [count] = [cells.filter((c) => dom(c, 0) === d1 && dom(c, 1) === d2).length, kinds.add('phenotype')];
+            if (!d.stem.includes(`have ${phrase}?`)) continue;
+            count = cells.filter((c) => dom(c, 0) === d1 && dom(c, 1) === d2).length;
+            kinds.add('phenotype');
           }
         }
       }
