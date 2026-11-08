@@ -64,8 +64,8 @@ response carries CORS headers for the origins in the `ALLOWED_ORIGINS` variable 
 | `DELETE /api/teams/:teamId/members/:memberId` | leader | → `{ ok: true }` |
 | `POST /api/teams/:teamId/join-code` | leader | → `{ joinCode }` (new secret; old links stop working) |
 | `DELETE /api/teams/:teamId` | coach or captain | → `{ ok: true }` (deletes everything for the team) |
-| `POST /api/teams/:teamId/rooms` | member | `{ name }` → 201 `{ roomId }` (the caller hosts it) |
-| `GET /api/teams/:teamId/rooms` | member | → `{ rooms: { roomId, name, host: { memberId, name }, players, createdAt }[] }` (`players`: connected now, not counting the reader) |
+| `POST /api/teams/:teamId/rooms` | member | `{ name, match? }` → 201 `{ roomId }` (the caller hosts it; with `match`, an online match the server runs: see Match rooms) |
+| `GET /api/teams/:teamId/rooms` | member | → `{ rooms: { roomId, name, host: { memberId, name }, players, createdAt, kind: "reader"\|"match", match?: { format, status } }[] }` (`players`: connected now, not counting a reader) |
 | `GET /api/teams/:teamId/rooms/:roomId/ws?token=…` | member | WebSocket upgrade (see Rooms) |
 | `GET /api/teams/:teamId/ai` | member | → `{ enabled: false }`, or `{ enabled: true, model, dailyLimit, usedToday }` (see AI help) |
 | `POST /api/teams/:teamId/ai/draft` | member | `{ passage, source, subject, kind?: "tossup"\|"bonus"\|"either", count?: 1–5 }` → `{ drafts, model, dailyLimit, usedToday }` |
@@ -181,6 +181,47 @@ when the room closes or the team is deleted; clients should not reconnect after 
 - Clients use `pong` to estimate their clock offset, so the text reveal (`state` carries the reading's start
   time in server time and the reading speed) lines up on every screen.
 
+### Match rooms (online matches with no reader)
+
+A room created with `match` has no reader: the server runs the game itself (`server/src/match.ts`). The host
+(the member who created it) plays like anyone else and also starts, pauses and ends it. `match` is
+`{ format: "teams"|"ffa", presetId, wpm, teamNames?, packet: { setId, setTitle, roundId, roundLabel, sourceUrl? },
+pairs: { tossup, bonus? }[], tossupCount? }`, with each question's `id, subject, format, stem, choices?,
+answerLetter?, answer, accept, reject, answerRaw, figure` (at most 40 pairs; free-for-all games use toss-ups only).
+The server keeps the questions and sends a question's text only when its reading starts, and its answer only when
+it is over or a close call is being decided.
+
+- **teams**: two sides under the rules preset, through the shared rules engine: interrupts and re-reads,
+  rebounds, the game clock and halftime. A side's captain (the one chosen in the lobby, or its first player) types
+  the bonus answer after the side confers in its channel; if the captain is not connected, any teammate may.
+- **ffa**: everyone for themselves, toss-ups only: +4 for a right answer, −4 for a wrong interrupt, 0 for a wrong
+  answer after the reading. One buzz each per toss-up; after a wrong interrupt the reading goes on, after a wrong
+  answer at the end a new 5-second window opens for the others.
+- **Timing**: each question's label shows 2 seconds before its reading starts; the buzzers open with the reading.
+  A player who wins the buzz has 8 seconds to type an answer (then it is a stall); a captain has the bonus time
+  (20 seconds, or 30 for a visual bonus) plus 5 seconds to finish typing. The answer stays up 4 seconds before the
+  next question; halftime lasts a minute unless the host starts the second half sooner.
+- **Judging**: the answer checker (`src/core/judge/`). Its close calls ("review") go to the opponents: anyone on
+  the other side, or in a free-for-all anyone else, sends `ruling`; no ruling within 10 seconds, or nobody there to
+  rule, counts as accepted. Everyone has then seen the answer, so a rejected close call ends the toss-up.
+- **Results**: a finished team match becomes a `games` record (id `g-online-<roomId>`, `online: true`) that every
+  device gets with its next sync; each player's device adds that player's misses to their review queue. In a
+  free-for-all each judged answer goes out as `result`, and the player's own device records it as practice.
+- **Pausing**: the host can pause before the next question; a match also pauses there when every player has left.
+- Members on a side need a roster player (their results go to it); the server will not start otherwise.
+
+Extra messages in match rooms (`publish`, `open` and `close` are refused there; `answer` goes to the server, not
+to a reader):
+
+| direction | type | fields | who / when |
+|---|---|---|---|
+| client → server | `start`, `pause`, `resume`, `end` | – | the host (`resume` also starts the second half at halftime) |
+| client → server | `answer` | `text` (≤ 200 characters) | the player who won the buzz, or the bonus side's captain |
+| client → server | `ruling` | `accept: boolean` | an opponent, during a close call |
+| server → client | `state` | the match's view: `label`, `text`, `reading { startedAt, wpm, pausedAt? }`, `window`, `scores`, `status`, `answer`, `match { format, status, paused, answering, review, standings, clock, previous, gameId }` | whenever it changes |
+| server → client | `result` | `result: { memberId, playerId, questionId, subject, kind, correct, interrupt, latencyMs, t }` | each judged free-for-all answer |
+| server → client | `match_over` | `format`, `game` (the team match's game record, or null), `heard` (question ids), `players` | once, at the end |
+
 ## Storage (SQLite in the Durable Object)
 
 ```
@@ -190,6 +231,7 @@ members(id TEXT PRIMARY KEY, name TEXT, name_key TEXT UNIQUE, role TEXT, player_
 sessions(token_hash TEXT PRIMARY KEY, member_id TEXT, created_at INTEGER, last_used INTEGER)
 records(c TEXT, id TEXT, body TEXT, rev INTEGER, by TEXT, PRIMARY KEY (c, id))   -- index on rev
 rooms(id TEXT PRIMARY KEY, name TEXT, host_id TEXT, created_at INTEGER, last_active INTEGER, state TEXT, seq INTEGER)
+matches(room_id TEXT PRIMARY KEY, data TEXT, due_at INTEGER)   -- online matches: the match's state, its next deadline
 ai_usage(day TEXT PRIMARY KEY, count INTEGER)                   -- AI calls per UTC day (created on first use)
 ai_cache(key TEXT PRIMARY KEY, value TEXT, created_at INTEGER)  -- cached explanations, kept 180 days
 ```
@@ -202,6 +244,7 @@ server/
   wrangler.toml        Worker "rebound-server", Durable Object binding TEAM (class TeamServer, SQLite)
   src/index.ts         routing, CORS, team creation (a new Durable Object per team)
   src/team.ts          the TeamServer Durable Object: members, sessions, sync, rooms, AI routes
+  src/match.ts         online matches with no reader: the match director (teams and free-for-all), pure and tested
   src/ai.ts            optional AI help: Claude API calls, input checks, daily limit, explanation cache
   src/registry.ts      the Registry Durable Object: daily caps on new teams (open sign-up)
   src/crypto.ts        ids, tokens, PIN hashing, constant-time comparison

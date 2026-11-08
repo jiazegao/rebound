@@ -23,7 +23,49 @@ export interface BuzzState {
   winner: null | { memberId: string; playerId: string | null; side: Side; pressedAt: number };
 }
 
-/** What the reader publishes for the players' screens. */
+/** A match room's extra view (server/src/match.ts, MatchView): the server runs the game, with no reader. */
+export interface MatchInfo {
+  format: 'teams' | 'ffa';
+  status: 'lobby' | 'playing' | 'finished';
+  /** The match waits before its next question (the host paused it, or everyone left). */
+  paused: boolean;
+  progress?: { n: number; of: number };
+  /** Who is typing an answer now, and until when (server time). */
+  answering?: { memberId: string; name: string; deadline: number; kind: 'tossup' | 'bonus' };
+  /** A close call waiting for a ruling: the other side ('A' or 'B') decides, or everyone else ('others'). */
+  review?: { memberId: string; name: string; response: string; deadline: number; deciders: Side | 'others' };
+  /** Free-for-all scores, best first. */
+  standings?: Array<{ memberId: string; name: string; score: number; correct: number; negs: number }>;
+  /** Team matches: the game clock. */
+  clock?: { remainingMs: number; runningSince: number | null };
+  /** The toss-up's answer, shown while its bonus begins. */
+  previous?: { label: string; answer: string };
+  /** Team matches: the game record's id, once finished. */
+  gameId?: string;
+}
+
+/** One judged answer in a free-for-all, for the player's own device to record as practice. */
+export interface MatchResult {
+  memberId: string;
+  playerId: string;
+  questionId: string;
+  subject: string;
+  kind: 'tossup' | 'bonus';
+  correct: boolean;
+  interrupt: boolean;
+  latencyMs: number | null;
+  t: number;
+}
+
+/** The end of a match: a team match's game record (null for a free-for-all) and the questions heard. */
+export interface MatchOver {
+  format: 'teams' | 'ffa';
+  game: unknown;
+  heard: string[];
+  players: Array<{ memberId: string; playerId: string; name: string; side: Side }>;
+}
+
+/** What the reader (or, in a match room, the server) publishes for the players' screens. */
 export interface RoomView {
   phase: string;
   /** "Toss-up 3 of 25", "Bonus 3". */
@@ -31,8 +73,8 @@ export interface RoomView {
   subject?: string;
   /** The question, once the players may see it (text reveal, or after it was read aloud). */
   text?: string;
-  /** Text reveal: when the reading started (server time) and how fast it runs. */
-  reading?: { startedAt: number; wpm: number };
+  /** Text reveal: when the reading started (server time) and how fast it runs; `pausedAt` stops it there. */
+  reading?: { startedAt: number; wpm: number; pausedAt?: number };
   /** An answer window: when it opened (server time) and how long it lasts. */
   window?: { openedAt: number; seconds: number };
   teams: [string, string];
@@ -45,6 +87,10 @@ export interface RoomView {
   answer?: string;
   /** A visual bonus: the question whose figure to show (each device loads it from its own data). */
   figure?: { questionId: string };
+  /** The question on screen. */
+  questionId?: string;
+  /** Match rooms only. */
+  match?: MatchInfo;
 }
 
 export interface ChatLine {
@@ -59,6 +105,8 @@ export interface RoomSnapshot {
   error: string | null;
   you: { memberId: string; name: string; playerId: string | null } | null;
   roomName: string;
+  /** "match": the server runs the game (no reader). Null until the welcome arrives. */
+  kind: 'reader' | 'match' | null;
   hostId: string | null;
   members: RoomMember[];
   view: RoomView | null;
@@ -72,7 +120,7 @@ const EMPTY_BUZZ: BuzzState = { open: false, sides: { A: false, B: false }, winn
 export class RoomClient {
   private ws: WebSocket | null = null;
   private listeners = new Set<() => void>();
-  private snap: RoomSnapshot = { connected: false, error: null, you: null, roomName: '', hostId: null, members: [], view: null, buzz: EMPTY_BUZZ, chat: [], answers: [] };
+  private snap: RoomSnapshot = { connected: false, error: null, you: null, roomName: '', kind: null, hostId: null, members: [], view: null, buzz: EMPTY_BUZZ, chat: [], answers: [] };
   private pingTimer: ReturnType<typeof setInterval> | undefined;
   private retry = 0;
   private closed = false;
@@ -80,6 +128,9 @@ export class RoomClient {
   private samples: Array<{ rtt: number; offset: number }> = [];
   /** Called with each buzz winner (the reader's console records it). */
   onWinner: ((w: NonNullable<BuzzState['winner']>) => void) | null = null;
+  /** Match rooms: each judged free-for-all answer, and the end of the match. */
+  onResult: ((r: MatchResult) => void) | null = null;
+  onMatchOver: ((m: MatchOver) => void) | null = null;
 
   constructor(private readonly url: string) {}
 
@@ -172,8 +223,16 @@ export class RoomClient {
         this.send({ type: 'pong', t: msg.t });
         break;
       case 'welcome': {
-        const room = msg.room as { name: string; hostId: string; members: RoomMember[]; state: RoomView | null; buzz: BuzzState };
-        this.set({ you: msg.you as RoomSnapshot['you'], roomName: room.name, hostId: room.hostId, members: room.members, view: room.state ?? null, buzz: room.buzz ?? EMPTY_BUZZ });
+        const room = msg.room as { name: string; kind?: 'reader' | 'match'; hostId: string; members: RoomMember[]; state: RoomView | null; buzz: BuzzState };
+        this.set({
+          you: msg.you as RoomSnapshot['you'],
+          roomName: room.name,
+          kind: room.kind ?? 'reader',
+          hostId: room.hostId,
+          members: room.members,
+          view: room.state ?? null,
+          buzz: room.buzz ?? EMPTY_BUZZ,
+        });
         break;
       }
       case 'pong': {
@@ -207,14 +266,29 @@ export class RoomClient {
       case 'error':
         this.set({ error: String(msg.message ?? 'The room refused that.') });
         break;
+      case 'result':
+        this.onResult?.(msg.result as MatchResult);
+        break;
+      case 'match_over':
+        this.onMatchOver?.(msg as unknown as MatchOver);
+        break;
     }
   }
+
+  /** Clears the last error (after the player has seen it). */
+  clearError = () => this.set({ error: null });
 
   // Players
   buzz = () => this.send({ type: 'buzz' });
   chooseSide = (side: Side | null) => this.send({ type: 'side', side });
   chat = (text: string) => this.send({ type: 'chat', text: text.slice(0, 500) });
   answer = (text: string) => this.send({ type: 'answer', text: text.slice(0, 200) });
+  ruling = (accept: boolean) => this.send({ type: 'ruling', accept });
+  // A match room's host
+  start = () => this.send({ type: 'start' });
+  pause = () => this.send({ type: 'pause' });
+  resume = () => this.send({ type: 'resume' });
+  end = () => this.send({ type: 'end' });
   // The reader
   publish = (state: RoomView) => this.send({ type: 'publish', state });
   open = (sides: { A: boolean; B: boolean }) => this.send({ type: 'open', sides });

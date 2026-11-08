@@ -69,7 +69,7 @@ describe('room list', () => {
 
     const before = await call(`/api/teams/${team.teamId}/rooms`, { token: ana.token });
     expect(before.body.rooms).toEqual([
-      { roomId, name: 'Tuesday scrimmage', host: { memberId: team.member.id, name: 'Cora Captain' }, players: 0, createdAt: expect.any(Number) },
+      { roomId, name: 'Tuesday scrimmage', host: { memberId: team.member.id, name: 'Cora Captain' }, players: 0, createdAt: expect.any(Number), kind: 'reader' },
     ]);
     const reader = await connect(team, roomId, team.token);
     const player = await connect(team, roomId, ana.token);
@@ -115,6 +115,7 @@ describe('connecting', () => {
       room: {
         roomId,
         name: 'Tuesday scrimmage',
+        kind: 'reader',
         hostId: team.member.id,
         members: [{ memberId: team.member.id, name: 'Cora Captain', playerId: 'p-cora', side: null, captain: false, connected: true }],
         state: null,

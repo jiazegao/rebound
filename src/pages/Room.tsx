@@ -7,9 +7,10 @@ import { buildReading, revealedCount, splitRevealed } from '../lib/reading';
 import { RoomClient, useRoom, type RoomView, type Side } from '../lib/room';
 import { href } from '../lib/router';
 import { currentSession, useSync } from '../lib/sync';
+import { MatchRoom } from './MatchRoom';
 
-/** The question as revealed so far on this screen (same pace on every device). */
-function RevealedText({ view, serverNow }: { view: RoomView; serverNow: number }) {
+/** The question as revealed so far on this screen (same pace on every device; stopped at `pausedAt`). */
+export function RevealedText({ view, serverNow }: { view: RoomView; serverNow: number }) {
   if (!view.text) return null;
   if (!view.reading) {
     return (
@@ -24,7 +25,8 @@ function RevealedText({ view, serverNow }: { view: RoomView; serverNow: number }
     );
   }
   const reading = buildReading({ stem: view.text });
-  const { done, current } = splitRevealed(reading, revealedCount(reading, serverNow - view.reading.startedAt, view.reading.wpm));
+  const elapsed = (view.reading.pausedAt ?? serverNow) - view.reading.startedAt;
+  const { done, current } = splitRevealed(reading, revealedCount(reading, elapsed, view.reading.wpm));
   const lines = done.split('\n');
   return (
     <p className="stem" aria-live="off">
@@ -40,24 +42,41 @@ function RevealedText({ view, serverNow }: { view: RoomView; serverNow: number }
 }
 
 /** A visual bonus's figure, looked up on this device (generated, photo set, or the team's synced data). */
-function RoomFigure({ questionId }: { questionId: string }) {
+export function RoomFigure({ questionId }: { questionId: string }) {
   const found = useAsync(questionId, async () => (await loadQuestions([questionId])).get(questionId)?.question ?? null);
   if (found.loading) return <p className="small muted">Loading the figure…</p>;
   if (!found.data) return <p className="small muted">This figure is not on this device yet. Sync on the Team page, then come back.</p>;
   return <FigureView q={found.data} large />;
 }
 
-function TeamChannel({ client, side, lines, canAnswer }: { client: RoomClient; side: Side; lines: { from: { name: string }; text: string; at: number }[]; canAnswer: boolean }) {
+export function TeamChannel({
+  client,
+  side,
+  lines,
+  canAnswer,
+  title = 'Team channel',
+  hint = 'Confer here during bonuses, as you would at the table.',
+  privateToSide = true,
+}: {
+  client: RoomClient;
+  side: Side;
+  lines: { from: { name: string }; text: string; at: number }[];
+  canAnswer: boolean;
+  title?: string;
+  hint?: string;
+  /** False for a free-for-all's chat, which every player sees. */
+  privateToSide?: boolean;
+}) {
   const [text, setText] = useState('');
   const [answer, setAnswer] = useState('');
   return (
     <section className="card stack" aria-labelledby="channel-heading">
       <h2 id="channel-heading" style={{ margin: 0 }}>
-        Team channel <span className="small muted">(only side {side} sees this)</span>
+        {title} {privateToSide && <span className="small muted">(only side {side} sees this)</span>}
       </h2>
       <div className="room-chat" aria-live="polite">
         {lines.length === 0 ? (
-          <p className="small muted">Confer here during bonuses, as you would at the table.</p>
+          <p className="small muted">{hint}</p>
         ) : (
           lines.map((l, i) => (
             <p key={i} className="small" style={{ margin: '0.15rem 0' }}>
@@ -117,9 +136,11 @@ export function RoomPage({ roomId }: { roomId: string }) {
   const side = me?.side ?? null;
   const buzz = snapshot?.buzz;
   const canBuzz = !!buzz && buzz.open && !!side && buzz.sides[side] && !buzz.winner;
+  const matchRoom = snapshot?.kind === 'match';
 
-  // Space buzzes (unless typing in the team channel).
+  // Space buzzes (unless typing in the team channel). A match room has its own screen, which does this itself.
   useEffect(() => {
+    if (matchRoom) return;
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
@@ -130,7 +151,9 @@ export function RoomPage({ roomId }: { roomId: string }) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [canBuzz, client]);
+  }, [canBuzz, client, matchRoom]);
+
+  if (session && client && snapshot && matchRoom) return <MatchRoom client={client} snapshot={snapshot} roomId={roomId} />;
 
   if (!session) {
     return (

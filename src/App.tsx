@@ -26,6 +26,7 @@ import { DataPage } from './pages/Data';
 import { VisualLabPage } from './pages/VisualLab';
 import { ShootoutConsole, TiebreakersPage } from './pages/Tiebreakers';
 import { WritePage } from './pages/Write';
+import { OnlinePage } from './pages/Online';
 
 interface NavItem {
   label: string;
@@ -144,13 +145,16 @@ export function App() {
     case 'write':
       page = <WritePage id={second} />;
       break;
+    case 'online':
+      page = <OnlinePage />;
+      break;
     default:
       page = <NotFound />;
   }
 
   const nav = data.team ? TEAM_NAV : PUBLIC_NAV;
   const section = first ?? '';
-  const sectionAliases: Record<string, string> = { games: 'reader', stats: 'team', data: 'team', progress: 'today', lineups: 'team', packets: 'library', assignments: 'team', room: 'reader', visual: 'try', tiebreakers: 'try', shootout: 'reader', write: 'team' };
+  const sectionAliases: Record<string, string> = { games: 'reader', stats: 'team', data: 'team', progress: 'today', lineups: 'team', packets: 'library', assignments: 'team', room: 'reader', visual: 'try', tiebreakers: 'try', shootout: 'reader', write: 'team', online: 'reader' };
   const activeSection = sectionAliases[section] ?? section;
 
   return (

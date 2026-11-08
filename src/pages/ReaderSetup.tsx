@@ -125,6 +125,9 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
     <div className="container">
       <PageHeader title="Reader console">
         <p>Set up a practice game. The reader runs it from this device; every toss-up is logged to each player's stats.</p>
+        <p>
+          No reader? <a href={href('/online')}>Play online</a>: teammates play each other from their own devices, and Rebound reads and judges.
+        </p>
       </PageHeader>
 
       {unfinished.length > 0 && (

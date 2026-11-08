@@ -95,6 +95,7 @@ export function GameSummary({ gameId }: { gameId: string }) {
       <PageHeader title={`${game.teams[0].name} ${state.scores[0]} – ${state.scores[1]} ${game.teams[1].name}`}>
         <p>
           {game.packet.setTitle}, {game.packet.roundLabel} · {dateTimeText(game.createdAt)}
+          {game.online && ' · online match'}
           {game.status === 'in_progress' && ' · not finished'}
         </p>
         <div className="row">

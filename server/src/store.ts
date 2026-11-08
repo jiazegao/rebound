@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS room_members (
   joined_at INTEGER NOT NULL,
   PRIMARY KEY (room_id, member_id)
 );
+CREATE TABLE IF NOT EXISTS matches (room_id TEXT PRIMARY KEY, data TEXT NOT NULL, due_at INTEGER);
 CREATE TABLE IF NOT EXISTS join_failures (
   ip_key TEXT PRIMARY KEY,
   window_start INTEGER NOT NULL,

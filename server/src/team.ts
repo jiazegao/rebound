@@ -38,6 +38,7 @@ import {
   verifyPin,
 } from './crypto';
 import { HttpError, json, jsonText, readJson, toErrorResponse } from './http';
+import { parseMatchSetup } from './match';
 import { parseSyncRequest, runSync } from './records';
 import { closeQuietly, Rooms, sessionTag } from './rooms';
 import { isLeader, memberInfo, publicMember, Store, type MemberRow } from './store';
@@ -475,11 +476,14 @@ export class TeamServer extends DurableObject<Env> {
 
   /* ---------------- rooms ---------------- */
 
+  /** A reader room, or with `match` a room where the server runs the game (online matches with no reader). */
   private async createRoom(request: Request): Promise<Response> {
     const session = await this.authenticate(request);
-    const name = roomName(asObject(await readJson(request)).name);
+    const body = asObject(await readJson(request));
+    const name = roomName(body.name);
+    const setup = body.match === undefined || body.match === null ? null : parseMatchSetup(body.match);
     this.requireReady();
-    return this.rooms.create(session.member, name, Date.now());
+    return this.rooms.create(session.member, name, Date.now(), setup);
   }
 
   private async listRooms(request: Request): Promise<Response> {

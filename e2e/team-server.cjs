@@ -15,6 +15,10 @@ const path = require('path');
 
 const BASE = process.env.BASE_URL || 'http://localhost:4173/';
 const SERVER = process.env.SERVER_URL || 'http://localhost:8787';
+const SHOTS = process.env.SHOTS_DIR || '';
+const shot = async (page, name) => {
+  if (SHOTS) await page.screenshot({ path: require('path').join(SHOTS, `${name}.png`), fullPage: true });
+};
 
 async function fixtures(page) {
   const f = (name) => path.join(__dirname, name);
@@ -209,6 +213,64 @@ async function main() {
     }
     await captain.getByText('Visual bonus for').waitFor();
     await player.locator('.qfig .qfig-art').first().waitFor({ timeout: 15000 });
+  });
+
+  await step('an online match with no reader: both buzz and type answers, the server judges, the game reaches the stats', async () => {
+    await captain.goto(`${BASE}#/online`);
+    await captain.getByRole('heading', { name: 'Start an online match' }).waitFor({ timeout: 15000 });
+    await captain.locator('#om-wpm').fill('600');
+    await captain.getByText(/toss-ups? from Round 1/).waitFor();
+    await captain.getByRole('button', { name: 'Open the match' }).click();
+    await captain.getByText('Waiting for the host to start the match').waitFor({ timeout: 15000 });
+    await captain.getByRole('button', { name: 'Join Team A' }).click();
+    // The player finds it under Play online.
+    await player.goto(`${BASE}#/online`);
+    await player.getByRole('link', { name: 'Join' }).first().click();
+    await player.getByRole('button', { name: 'Join Team B' }).click();
+    await player.getByText('Ben').first().waitFor();
+    await shot(captain, 'online-1-lobby');
+    await captain.getByRole('button', { name: 'Start the match' }).click();
+    // Buzz once the reading has finished (the answer window counts down).
+    await player.getByText(/s left$/).waitFor({ timeout: 15000 });
+    await player.getByRole('button', { name: /Buzz/ }).click();
+    await player.getByLabel(/^Your answer/).fill('phenotype');
+    await shot(player, 'online-2-answering');
+    await player.keyboard.press('Enter');
+    await captain.getByText('Ben: “phenotype”. Correct.').waitFor({ timeout: 10000 });
+    // Ben is Team B's captain, so he answers the bonus when it has been read.
+    await player.getByLabel(/answer for the team/).fill('bacteriophage', { timeout: 15000 });
+    await shot(player, 'online-3-bonus');
+    await player.keyboard.press('Enter');
+    await captain.getByText(/Correct: 10 points/).waitFor({ timeout: 10000 });
+    await captain.getByRole('button', { name: 'End the match' }).click();
+    await player.getByText('The match is over.').waitFor({ timeout: 10000 });
+    // The server wrote the game record; it reaches the captain's device with the next sync.
+    await captain.getByRole('link', { name: 'See the game summary' }).click({ timeout: 20000 });
+    await captain.getByRole('heading', { name: 'Team A 0 – 14 Team B' }).waitFor({ timeout: 10000 });
+  });
+
+  await step('a free-for-all: a close call goes to the other player, who rejects it', async () => {
+    await captain.goto(`${BASE}#/online`);
+    await captain.getByText('Everyone for themselves').click();
+    await captain.locator('#om-count').fill('1');
+    await captain.locator('#om-wpm').fill('600');
+    await captain.getByRole('button', { name: 'Open the match' }).click();
+    await captain.getByRole('button', { name: 'Join the game' }).click();
+    const roomUrl = captain.url();
+    await player.goto(roomUrl);
+    await player.getByRole('button', { name: 'Join the game' }).click();
+    await captain.getByText('Players (2)').waitFor({ timeout: 10000 });
+    await captain.getByRole('button', { name: 'Start the match' }).click();
+    await captain.getByText(/s left$/).waitFor({ timeout: 15000 });
+    await captain.getByRole('button', { name: /Buzz/ }).click();
+    await captain.getByLabel(/^Your answer/).fill('phenotipe');
+    await captain.keyboard.press('Enter');
+    await player.getByText('Close call.').waitFor({ timeout: 10000 });
+    await shot(player, 'online-4-close-call');
+    await player.getByRole('button', { name: 'Reject' }).click();
+    await captain.getByText(/Nobody else may answer this one/).waitFor({ timeout: 10000 });
+    await player.getByText('The game is over.').waitFor({ timeout: 15000 });
+    await shot(player, 'online-5-ffa-final');
   });
 
   // Last, so a run against a deployed server leaves nothing behind.

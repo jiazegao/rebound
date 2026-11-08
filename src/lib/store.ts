@@ -50,6 +50,8 @@ export interface GameRecord {
   roomId?: string;
   /** "tiebreak": a tiebreaker drill (5 toss-ups, no bonuses, no clock, repeated while tied). */
   format?: 'game' | 'tiebreak';
+  /** An online match the team server ran (no reader); the server wrote this record. */
+  online?: boolean;
 }
 
 /** One answer in solo practice ("Try a round" while signed in as a player). */
@@ -317,6 +319,30 @@ export function markSeen(playerIds: string[], questionIds: string[], at = Date.n
       const ledger = (d.seen[p] ??= {});
       for (const q of questionIds) ledger[q] ??= at;
     }
+  });
+}
+
+/**
+ * A finished online team match (the team server writes its game record, which arrives by sync): this device adds
+ * its own player's results to their review queue and "seen" ledger. Safe to repeat: each answer counts once.
+ */
+export function applyOnlineGame(game: GameRecord, playerId: string, heard: string[]): void {
+  update((d) => {
+    applyOutcomes(d, gameOutcomes(game, d.players).filter((o) => o.playerId === playerId));
+  });
+  markSeen([playerId], heard);
+}
+
+/**
+ * One answer from an online free-for-all, recorded as practice for this device's player. The id is fixed by the
+ * match, so the same answer recorded on two devices is still one record.
+ */
+export function recordMatchAnswer(id: string, attempt: Omit<SoloAttempt, 'id'>): void {
+  if (data.attempts.some((a) => a.id === id)) return;
+  update((d) => {
+    const a = { ...attempt, id };
+    d.attempts.push(a);
+    applyOutcomes(d, [attemptOutcome(a)]);
   });
 }
 

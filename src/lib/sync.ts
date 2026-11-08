@@ -409,14 +409,17 @@ export interface RoomListing {
   roomId: string;
   name: string;
   host: { memberId: string; name: string };
-  /** Members connected now, not counting the reader. */
+  /** Members connected now, not counting the reader (in a match room, everyone). */
   players: number;
   createdAt: number;
+  /** "match": an online match the server runs (no reader). */
+  kind?: 'reader' | 'match';
+  match?: { format: 'teams' | 'ffa'; status: 'lobby' | 'playing' | 'finished' };
 }
 
-/** Open a remote room hosted by this member (the reader). */
-export async function createRoom(name: string): Promise<string> {
-  return (await authed<{ roomId: string }>('/rooms', { method: 'POST', body: JSON.stringify({ name }) })).roomId;
+/** Open a remote room hosted by this member: a reader room, or with `match` an online match the server runs. */
+export async function createRoom(name: string, match?: unknown): Promise<string> {
+  return (await authed<{ roomId: string }>('/rooms', { method: 'POST', body: JSON.stringify(match ? { name, match } : { name }) })).roomId;
 }
 
 export async function listRooms(): Promise<RoomListing[]> {

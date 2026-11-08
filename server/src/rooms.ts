@@ -1,6 +1,7 @@
 /**
- * Live rooms (docs/SERVER.md, "Rooms"). The reader's browser runs the game; the server relays the reader's
- * view, decides who buzzed first and carries each side's private channel.
+ * Live rooms (docs/SERVER.md, "Rooms"). In a reader room the reader's browser runs the game; the server relays
+ * the reader's view, decides who buzzed first and carries each side's private channel. In a match room there is no
+ * reader: the server runs the game itself (match.ts) and publishes the view.
  *
  * Sockets use the WebSocket Hibernation API: between messages the object may sleep or be evicted, so nothing
  * lives only in memory. Room state (host, sides and captains, the latest published state and its seq, the buzz
@@ -11,6 +12,8 @@
 
 import { newId } from './crypto';
 import { HttpError, json } from './http';
+import { MatchDirector, newMatchData, type MatchData, type MatchPlayer, type MatchSetup, type OnlineGameRecord } from './match';
+import { putRecord } from './records';
 import type { MemberRow, Store } from './store';
 import { MAX_JSON_DEPTH, nestsDeeperThan, utf8Bytes } from './validate';
 
@@ -95,6 +98,10 @@ interface Attachment {
 
 /** Messages only the room's reader (host) may send. */
 const READER_ONLY = new Set(['publish', 'open', 'close', 'assign', 'handover']);
+/** In a match room the server itself publishes and runs the buzzers. */
+const MATCH_SERVER_ONLY = new Set(['publish', 'open', 'close']);
+/** Match rooms: the host's controls. */
+const MATCH_HOST_ONLY = new Set(['start', 'pause', 'resume', 'end']);
 
 const roomTag = (roomId: string) => `room:${roomId}`;
 export const memberTag = (memberId: string) => `member:${memberId}`;
@@ -142,6 +149,11 @@ function parseSide(value: unknown): Side | null | undefined {
 export class Rooms {
   /** Collection timers by room id. Lost on eviction; `resume` and the alarm recover them from SQLite. */
   private readonly timers = new Map<string, ReturnType<typeof setTimeout>>();
+  /** Match timers by room id (the next reading end, deadline...), recovered the same way. */
+  private readonly matchTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private matchTableReady = false;
+  /** The alarm last set, so an unchanged one is not set again. */
+  private alarmAt: number | null = null;
 
   constructor(
     private readonly ctx: DurableObjectState,
@@ -154,7 +166,8 @@ export class Rooms {
 
   /* ---------------- HTTP: create, list, connect ---------------- */
 
-  create(host: MemberRow, name: string, now: number): Response {
+  /** A reader room, or with `setup` a match room the server runs itself. */
+  create(host: MemberRow, name: string, now: number, setup: MatchSetup | null = null): Response {
     this.closeIdleRooms(now);
     const open = this.sql.exec<{ n: number }>('SELECT COUNT(*) AS n FROM rooms').one().n;
     if (open >= MAX_ROOMS) {
@@ -170,6 +183,12 @@ export class Rooms {
       now,
       JSON.stringify(IDLE_BUZZ),
     );
+    if (setup) {
+      this.ensureMatches();
+      const data = newMatchData(setup);
+      this.sql.exec('INSERT INTO matches (room_id, data, due_at) VALUES (?, ?, NULL)', roomId, JSON.stringify(data));
+      this.publishView(roomId, new MatchDirector(data).view());
+    }
     return json({ roomId }, 201);
   }
 
@@ -182,10 +201,13 @@ export class Rooms {
       if (!connected.has(att.roomId)) connected.set(att.roomId, new Set());
       connected.get(att.roomId)!.add(att.memberId);
     }
+    this.ensureMatches();
     const rows = this.sql
-      .exec<{ id: string; name: string; host_id: string; created_at: number; host_name: string | null }>(
-        `SELECT r.id, r.name, r.host_id, r.created_at, m.name AS host_name
-         FROM rooms r LEFT JOIN members m ON m.id = r.host_id ORDER BY r.created_at DESC`,
+      .exec<{ id: string; name: string; host_id: string; created_at: number; host_name: string | null; format: string | null; status: string | null }>(
+        `SELECT r.id, r.name, r.host_id, r.created_at, m.name AS host_name,
+                json_extract(x.data, '$.setup.format') AS format, json_extract(x.data, '$.status') AS status
+         FROM rooms r LEFT JOIN members m ON m.id = r.host_id LEFT JOIN matches x ON x.room_id = r.id
+         ORDER BY r.created_at DESC`,
       )
       .toArray();
     const rooms = rows.map((r) => {
@@ -194,9 +216,11 @@ export class Rooms {
         roomId: r.id,
         name: r.name,
         host: { memberId: r.host_id, name: r.host_name ?? 'A former member' },
-        // Players connected right now, not counting the reader.
-        players: [...here].filter((id) => id !== r.host_id).length,
+        // Players connected right now, not counting a reader (in a match room the host plays too).
+        players: r.format ? here.size : [...here].filter((id) => id !== r.host_id).length,
         createdAt: r.created_at,
+        kind: r.format ? ('match' as const) : ('reader' as const),
+        ...(r.format ? { match: { format: r.format, status: r.status } } : {}),
       };
     });
     return json({ rooms });
@@ -234,6 +258,7 @@ export class Rooms {
       room: {
         roomId,
         name: room.name,
+        kind: this.isMatch(roomId) ? 'match' : 'reader',
         hostId: room.host_id,
         members: this.memberList(roomId, connected),
         state: room.state === null ? null : JSON.parse(room.state),
@@ -259,6 +284,9 @@ export class Rooms {
 
     // A collection window may have ended while the object was asleep or evicted; decide it first.
     this.settle(att.roomId, now, true);
+    const isMatch = this.isMatch(att.roomId);
+    // Likewise anything a match had due (a reading that ended, a deadline that passed).
+    if (isMatch) this.runMatch(att.roomId, now);
 
     if (typeof raw !== 'string') return refuse(ws, 'Send messages as JSON text.');
     if (raw.length > MAX_MESSAGE_CHARS) return refuse(ws, 'That message is too large.');
@@ -274,7 +302,10 @@ export class Rooms {
     // Keep a busy room's clock fresh (at most once a minute), so a long game is never mistaken for an idle room
     // if every connection drops at once, as on a server restart.
     if (now - room.last_active >= TOUCH_EVERY_MS) this.sql.exec('UPDATE rooms SET last_active = ? WHERE id = ?', now, room.id);
-    if (READER_ONLY.has(String(msg.type)) && room.host_id !== att.memberId) return refuse(ws, 'Only the reader can do that.');
+    const type = String(msg.type);
+    if (isMatch && MATCH_SERVER_ONLY.has(type)) return refuse(ws, 'This room runs itself: there is no reader.');
+    if (isMatch && MATCH_HOST_ONLY.has(type) && room.host_id !== att.memberId) return refuse(ws, 'Only the host can do that.');
+    if (READER_ONLY.has(type) && room.host_id !== att.memberId) return refuse(ws, isMatch ? 'Only the host can do that.' : 'Only the reader can do that.');
 
     switch (msg.type) {
       case 'ping':
@@ -288,7 +319,16 @@ export class Rooms {
       case 'chat':
         return this.onChat(ws, att, member, room, msg, now);
       case 'answer':
-        return this.onAnswer(ws, att, member, room, msg, now);
+        return isMatch ? this.onMatchAnswer(ws, att, room, msg, now) : this.onAnswer(ws, att, member, room, msg, now);
+      case 'ruling':
+        if (!isMatch) break;
+        return this.onRuling(ws, att, room, msg, now);
+      case 'start':
+      case 'pause':
+      case 'resume':
+      case 'end':
+        if (!isMatch) break;
+        return this.onMatchControl(ws, room, type, now);
       case 'publish':
         return this.onPublish(ws, att, room, msg, now);
       case 'open':
@@ -299,9 +339,8 @@ export class Rooms {
         return this.onAssign(ws, room, msg);
       case 'handover':
         return this.onHandover(ws, att, room, msg);
-      default:
-        return refuse(ws, `Unknown message type: ${String(msg.type).slice(0, 40)}.`);
     }
+    return refuse(ws, `Unknown message type: ${type.slice(0, 40)}.`);
   }
 
   /** A socket closed or failed: tell the room if its member has no other connection left. */
@@ -311,6 +350,8 @@ export class Rooms {
     this.sql.exec('UPDATE rooms SET last_active = ? WHERE id = ?', now, att.roomId);
     const stillHere = this.liveSockets(att.roomId).some((s) => s !== ws && attachmentOf(s)?.memberId === att.memberId);
     if (!stillHere) this.broadcastMembers(att.roomId, { gone: ws });
+    // A match pauses when its last player leaves, and a close call with nobody left to rule counts.
+    if (this.isMatch(att.roomId)) this.runMatch(att.roomId, now, ws);
   }
 
   /* ---------------- client messages ---------------- */
@@ -347,7 +388,9 @@ export class Rooms {
   private onSide(ws: WebSocket, att: Attachment, room: RoomRow, msg: Record<string, unknown>): void {
     const side = parseSide(msg.side);
     if (side === undefined) return refuse(ws, 'Choose side A, side B, or no side.');
-    if (room.host_id === att.memberId) return refuse(ws, "The reader doesn't play on a side.");
+    if (this.isMatch(room.id)) {
+      if (this.director(room.id)?.data.status !== 'lobby') return refuse(ws, 'Sides are set once the match starts.');
+    } else if (room.host_id === att.memberId) return refuse(ws, "The reader doesn't play on a side.");
     const current = this.roomMember(room.id, att.memberId);
     if (current?.side === side) return;
     // Changing sides gives up the captaincy of the old side.
@@ -356,7 +399,7 @@ export class Rooms {
   }
 
   private onBuzz(ws: WebSocket, att: Attachment, member: MemberRow, room: RoomRow, now: number): void {
-    if (room.host_id === att.memberId) return refuse(ws, "The reader can't buzz.");
+    if (room.host_id === att.memberId && !this.isMatch(room.id)) return refuse(ws, "The reader can't buzz.");
     const side = this.roomMember(room.id, att.memberId)?.side ?? null;
     if (side === null) return refuse(ws, 'Pick a side before buzzing.');
     const buzz = parseBuzz(room.buzz);
@@ -378,9 +421,9 @@ export class Rooms {
     } else {
       buzz.window = { endsAt: now + BUZZ_WINDOW_MS, entries: [entry] };
       this.schedule(room.id, BUZZ_WINDOW_MS);
-      this.ctx.storage.setAlarm(buzz.window.endsAt + ALARM_SLACK_MS).catch((e: unknown) => console.error('setAlarm failed:', e));
     }
     this.saveBuzz(room.id, buzz);
+    if (buzz.window.entries.length === 1) this.rescheduleAlarm();
   }
 
   private onChat(ws: WebSocket, att: Attachment, member: MemberRow, room: RoomRow, msg: Record<string, unknown>, now: number): void {
@@ -448,7 +491,9 @@ export class Rooms {
     if (msg.captain !== undefined && typeof msg.captain !== 'boolean') return refuse(ws, 'captain must be true or false.');
     const target = this.roomMember(room.id, memberId);
     if (!target) return refuse(ws, "That member hasn't joined this room.");
-    if (memberId === room.host_id) return refuse(ws, "The reader doesn't play on a side.");
+    const isMatch = this.isMatch(room.id);
+    if (isMatch && this.director(room.id)?.data.status !== 'lobby') return refuse(ws, 'Sides are set once the match starts.');
+    if (!isMatch && memberId === room.host_id) return refuse(ws, "The reader doesn't play on a side.");
     if (msg.captain === true && side === null) return refuse(ws, 'A captain needs a side.');
     // Without `captain`, a member keeps their captaincy only if they stay on the same side.
     const captain = side !== null && (msg.captain === undefined ? target.side === side && target.captain === 1 : msg.captain === true);
@@ -469,8 +514,8 @@ export class Rooms {
     if (!this.roomMember(room.id, memberId)) return refuse(ws, "That member hasn't joined this room.");
     if (!this.connectedIds(room.id).has(memberId)) return refuse(ws, "That member isn't connected right now.");
     this.sql.exec('UPDATE rooms SET host_id = ? WHERE id = ?', memberId, room.id);
-    // The new reader leaves their side.
-    this.sql.exec('UPDATE room_members SET side = NULL, captain = 0 WHERE room_id = ? AND member_id = ?', room.id, memberId);
+    // The new reader leaves their side (in a match room the host plays like anyone else).
+    if (!this.isMatch(room.id)) this.sql.exec('UPDATE room_members SET side = NULL, captain = 0 WHERE room_id = ? AND member_id = ?', room.id, memberId);
     this.broadcastMembers(room.id);
   }
 
@@ -520,26 +565,238 @@ export class Rooms {
       buzzed: buzz.buzzed,
       window: null,
     });
+    if (this.isMatch(roomId)) this.matchBuzz(roomId, best.memberId, best.pressedAt, now);
   }
 
-  /** After the object wakes up: re-create the timers of windows still being collected (or decide them). */
+  /** After the object wakes up: re-create the timers of windows still being collected and of running matches. */
   resume(now: number): void {
     for (const { id, buzz } of this.sql.exec<{ id: string; buzz: string }>('SELECT id, buzz FROM rooms').toArray()) {
       const window = parseBuzz(buzz).window;
       if (window) this.schedule(id, window.endsAt - now);
     }
+    this.ensureMatches();
+    for (const { room_id, due_at } of this.sql.exec<{ room_id: string; due_at: number }>('SELECT room_id, due_at FROM matches WHERE due_at IS NOT NULL').toArray()) {
+      this.scheduleMatchTimer(room_id, due_at, now);
+    }
   }
 
-  /** The backup alarm: decide any window whose timer was lost; keep an alarm while windows remain. */
+  /** The backup alarm: decide any window and run any match whose timer was lost; keep an alarm while work remains. */
   alarm(now: number): void {
-    let next: number | null = null;
+    this.alarmAt = null;
     for (const { id, buzz } of this.sql.exec<{ id: string; buzz: string }>('SELECT id, buzz FROM rooms').toArray()) {
       const window = parseBuzz(buzz).window;
-      if (!window) continue;
-      if (now >= window.endsAt) this.settle(id, now, false);
-      else next = Math.min(next ?? Infinity, window.endsAt);
+      if (window && now >= window.endsAt) this.settle(id, now, false);
     }
-    if (next !== null) this.ctx.storage.setAlarm(next + ALARM_SLACK_MS).catch((e: unknown) => console.error('setAlarm failed:', e));
+    this.ensureMatches();
+    for (const { room_id } of this.sql.exec<{ room_id: string }>('SELECT room_id FROM matches WHERE due_at IS NOT NULL AND due_at <= ?', now).toArray()) {
+      this.runMatch(room_id, now);
+    }
+    this.rescheduleAlarm();
+  }
+
+  /** One alarm backs up every timer: the earliest buzz window or match deadline still ahead. */
+  private rescheduleAlarm(): void {
+    let next: number | null = null;
+    for (const { buzz } of this.sql.exec<{ buzz: string }>('SELECT buzz FROM rooms').toArray()) {
+      const window = parseBuzz(buzz).window;
+      if (window) next = Math.min(next ?? Infinity, window.endsAt);
+    }
+    this.ensureMatches();
+    const due = this.sql.exec<{ due: number | null }>('SELECT MIN(due_at) AS due FROM matches').one().due;
+    if (due !== null) next = Math.min(next ?? Infinity, due);
+    if (next === null) return;
+    const at = next + ALARM_SLACK_MS;
+    if (this.alarmAt === at) return;
+    this.alarmAt = at;
+    this.ctx.storage.setAlarm(at).catch((e: unknown) => console.error('setAlarm failed:', e));
+  }
+
+  /* ---------------- match rooms (no reader: the server runs the game) ---------------- */
+
+  /** Teams created before online matches have no matches table yet. */
+  private ensureMatches(): void {
+    if (this.matchTableReady) return;
+    this.sql.exec('CREATE TABLE IF NOT EXISTS matches (room_id TEXT PRIMARY KEY, data TEXT NOT NULL, due_at INTEGER)');
+    this.matchTableReady = true;
+  }
+
+  private isMatch(roomId: string): boolean {
+    this.ensureMatches();
+    return this.sql.exec<{ n: number }>('SELECT COUNT(*) AS n FROM matches WHERE room_id = ?', roomId).one().n > 0;
+  }
+
+  private director(roomId: string): MatchDirector | null {
+    this.ensureMatches();
+    const row = this.sql.exec<{ data: string }>('SELECT data FROM matches WHERE room_id = ?', roomId).toArray()[0];
+    return row ? new MatchDirector(JSON.parse(row.data) as MatchData) : null;
+  }
+
+  /**
+   * Applies whatever the match has due by `now`, then stores it and tells the room. Waits while a buzz is being
+   * decided: `settle` runs the match with the winner, so nothing that happened after the press comes first.
+   * `gone` is a socket that is closing.
+   */
+  private runMatch(roomId: string, now: number, gone?: WebSocket): void {
+    const room = this.room(roomId);
+    if (!room || parseBuzz(room.buzz).window) return;
+    const director = this.director(roomId);
+    if (!director) return;
+    director.advance(now);
+    this.syncMatch(room, director, now, gone);
+  }
+
+  private matchBuzz(roomId: string, memberId: string, pressedAt: number, now: number): void {
+    const room = this.room(roomId);
+    const director = this.director(roomId);
+    if (!room || !director) return;
+    const problem = director.buzz(memberId, pressedAt, now);
+    if (problem) for (const ws of this.ctx.getWebSockets(memberTag(memberId))) if (attachmentOf(ws)?.roomId === roomId) refuse(ws, problem);
+    this.syncMatch(room, director, now);
+  }
+
+  /** After the director changed: buzzers, results, the end of the match, storage, the view and the next timer. */
+  private syncMatch(room: RoomRow, director: MatchDirector, now: number, gone?: WebSocket): void {
+    const d = director.data;
+    const connected = this.connectedIds(room.id, gone);
+    if (d.status === 'playing') {
+      // A close call nobody can rule on (the other side has left) counts.
+      if (d.q?.review && !director.deciders().some((m) => connected.has(m))) director.acceptUnopposed(now);
+      // With every player gone, the match waits before its next question for the host to go on.
+      if (!d.paused && !d.players.some((p) => connected.has(p.memberId))) director.pause(now);
+    }
+
+    // The buzzers the match wants, unless a buzz is being decided.
+    const fresh = this.room(room.id)!;
+    const buzz = parseBuzz(fresh.buzz);
+    if (!buzz.window) {
+      const want = director.buzzers();
+      const same =
+        buzz.open === want.open &&
+        buzz.sides.A === want.sides.A &&
+        buzz.sides.B === want.sides.B &&
+        (!want.open || (buzz.winner === null && sameMembers(buzz.buzzed, want.exclude)));
+      if (!same) this.setBuzz(room.id, { open: want.open, sides: want.sides, winner: want.open ? null : buzz.winner, buzzed: want.exclude, window: null });
+    }
+
+    // Each free-for-all answer goes to the devices: each records its own player's as practice.
+    for (const result of d.outbox) this.broadcast(room.id, JSON.stringify({ type: 'result', result }));
+    d.outbox = [];
+
+    // The end: a team match becomes a game record every device syncs; the devices record their own results.
+    let over: string | null = null;
+    if (d.status === 'finished' && !d.recorded) {
+      d.recorded = true;
+      let game: OnlineGameRecord | null = null;
+      if (d.setup.format === 'teams' && d.startedAt !== null) {
+        d.gameId = `g-online-${room.id}`;
+        const record = director.gameRecord(d.gameId);
+        if (record) this.ctx.storage.transactionSync(() => putRecord(this.store, 'games', record.id, record, room.host_id));
+        game = record;
+      }
+      over = JSON.stringify({ type: 'match_over', format: d.setup.format, game, heard: director.heardQuestionIds(), players: d.players });
+    }
+
+    const due = director.nextDue();
+    this.sql.exec('UPDATE matches SET data = ?, due_at = ? WHERE room_id = ?', JSON.stringify(d), due, room.id);
+    this.publishView(room.id, director.view());
+    if (over) this.broadcast(room.id, over);
+    this.scheduleMatchTimer(room.id, due, now);
+  }
+
+  /** Stores the view and sends it to the room, unless it is unchanged. */
+  private publishView(roomId: string, view: object): void {
+    const room = this.room(roomId);
+    if (!room) return;
+    const text = JSON.stringify(view);
+    if (room.state === text) return;
+    const seq = room.seq + 1;
+    this.sql.exec('UPDATE rooms SET state = ?, seq = ? WHERE id = ?', text, seq, roomId);
+    this.broadcast(roomId, `{"type":"state","state":${text},"seq":${seq}}`);
+  }
+
+  private scheduleMatchTimer(roomId: string, due: number | null, now: number): void {
+    this.cancelMatchTimer(roomId);
+    if (due !== null) {
+      const timer = setTimeout(
+        () => {
+          this.matchTimers.delete(roomId);
+          try {
+            this.runMatch(roomId, Date.now());
+          } catch (e) {
+            console.error('Running a match failed:', e instanceof Error ? (e.stack ?? e.message) : String(e));
+          }
+        },
+        Math.max(0, due - now),
+      );
+      this.matchTimers.set(roomId, timer);
+    }
+    this.rescheduleAlarm();
+  }
+
+  private cancelMatchTimer(roomId: string): void {
+    const timer = this.matchTimers.get(roomId);
+    if (timer !== undefined) clearTimeout(timer);
+    this.matchTimers.delete(roomId);
+  }
+
+  private onMatchAnswer(ws: WebSocket, att: Attachment, room: RoomRow, msg: Record<string, unknown>, now: number): void {
+    const text = cleanMessage(msg.text, MAX_ANSWER_CHARS, false);
+    if (text === null) return refuse(ws, `Answers are 1 to ${MAX_ANSWER_CHARS} characters.`);
+    const director = this.director(room.id);
+    if (!director) return;
+    const connected = this.connectedIds(room.id);
+    // The captain gives the bonus answer; if the captain has dropped out, any teammate may.
+    const mayAnswerBonus = (memberId: string) => {
+      const side = director.player(memberId)?.side;
+      const captain = side ? director.captainOf(side) : undefined;
+      return !captain || captain.memberId === memberId || !connected.has(captain.memberId);
+    };
+    const problem = director.answer(att.memberId, text, now, mayAnswerBonus);
+    if (problem) refuse(ws, problem);
+    this.syncMatch(this.room(room.id)!, director, now);
+  }
+
+  private onRuling(ws: WebSocket, att: Attachment, room: RoomRow, msg: Record<string, unknown>, now: number): void {
+    if (typeof msg.accept !== 'boolean') return refuse(ws, 'A ruling is accept: true or false.');
+    const director = this.director(room.id);
+    if (!director) return;
+    const problem = director.ruling(att.memberId, msg.accept, now);
+    if (problem) refuse(ws, problem);
+    this.syncMatch(this.room(room.id)!, director, now);
+  }
+
+  private onMatchControl(ws: WebSocket, room: RoomRow, type: string, now: number): void {
+    const director = this.director(room.id);
+    if (!director) return;
+    if (type === 'start') {
+      const players = this.matchPlayers(room.id, director.data.setup.format);
+      if (typeof players === 'string') return refuse(ws, players);
+      const problem = director.start(players, now);
+      if (problem) return refuse(ws, problem);
+      if (director.data.setup.format === 'ffa') this.sql.exec("UPDATE room_members SET side = 'A', captain = 0 WHERE room_id = ? AND side IS NOT NULL", room.id);
+      else for (const p of director.data.players) this.sql.exec('UPDATE room_members SET captain = ? WHERE room_id = ? AND member_id = ?', p.captain ? 1 : 0, room.id, p.memberId);
+      this.broadcastMembers(room.id);
+    } else if (type === 'pause') director.pause(now);
+    else if (type === 'resume') director.resume(now);
+    else director.end(now);
+    this.syncMatch(this.room(room.id)!, director, now);
+  }
+
+  /** The players on the sides when the match starts. Each needs a roster player, so the results are theirs. */
+  private matchPlayers(roomId: string, format: MatchSetup['format']): MatchPlayer[] | string {
+    const rows = this.sql
+      .exec<{ member_id: string; name: string; player_id: string | null; side: Side | null; captain: number }>(
+        `SELECT rm.member_id, m.name, m.player_id, rm.side, rm.captain
+         FROM room_members rm JOIN members m ON m.id = rm.member_id
+         WHERE rm.room_id = ? AND rm.side IS NOT NULL ORDER BY rm.joined_at, rm.member_id`,
+        roomId,
+      )
+      .toArray();
+    const unlinked = rows.find((r) => r.player_id === null);
+    if (unlinked) {
+      return `${unlinked.name} isn't linked to a player on the team's roster yet, so their results would have nowhere to go. They can pick their name when they next sign in, or ${format === 'teams' ? 'leave their side' : 'watch instead'}.`;
+    }
+    return rows.map((r) => ({ memberId: r.member_id, playerId: r.player_id!, name: r.name, side: r.side!, captain: r.captain === 1 }));
   }
 
   /* ---------------- team events ---------------- */
@@ -564,8 +821,9 @@ export class Rooms {
 
   /** The team is being deleted: stop timers and close every socket. */
   shutdown(reason: string): void {
-    for (const timer of this.timers.values()) clearTimeout(timer);
+    for (const timer of [...this.timers.values(), ...this.matchTimers.values()]) clearTimeout(timer);
     this.timers.clear();
+    this.matchTimers.clear();
     for (const ws of this.ctx.getWebSockets()) closeQuietly(ws, 4004, reason);
   }
 
@@ -594,8 +852,11 @@ export class Rooms {
     for (const { id } of idle) {
       if (this.liveSockets(id).length > 0) continue;
       this.cancelTimer(id);
+      this.cancelMatchTimer(id);
       this.sql.exec('DELETE FROM room_members WHERE room_id = ?', id);
       this.sql.exec('DELETE FROM rooms WHERE id = ?', id);
+      this.ensureMatches();
+      this.sql.exec('DELETE FROM matches WHERE room_id = ?', id);
     }
   }
 
@@ -684,4 +945,8 @@ function cleanMessage(value: unknown, maxChars: number, multiline: boolean): str
   if (chars < 1 || chars > maxChars) return null;
   if (/[\u0000-\u0009\u000B-\u001F\u007F-\u009F‪-‮⁦-⁩]/.test(text)) return null;
   return text;
+}
+
+function sameMembers(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((x) => b.includes(x));
 }

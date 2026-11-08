@@ -146,3 +146,23 @@ export function runSync(store: Store, member: MemberInfo, request: IncomingSync)
   }
   return `{"cursor":${cursor},"changes":[${parts.join(',')}],"rejected":${JSON.stringify(rejected)},"more":${more}}`;
 }
+
+/**
+ * Stores a record the server made itself (a finished online match) under a new revision, as if member `by` had
+ * pushed it, so every device gets it with its next sync. Call inside a storage transaction.
+ */
+export function putRecord(store: Store, c: SyncCollection, id: string, body: unknown, by: string): void {
+  const text = JSON.stringify(body);
+  if (utf8Bytes(text) > MAX_RECORD_BYTES) throw new HttpError(500, tooLarge);
+  const rev = Number(store.meta('rev') ?? 0) + 1;
+  store.sql.exec(
+    `INSERT INTO records (c, id, body, rev, "by") VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT (c, id) DO UPDATE SET body = excluded.body, rev = excluded.rev, "by" = excluded."by"`,
+    c,
+    id,
+    text,
+    rev,
+    by,
+  );
+  store.setMeta('rev', rev);
+}
