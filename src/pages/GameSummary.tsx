@@ -43,7 +43,7 @@ export function GameSummary({ gameId }: { gameId: string }) {
       </div>
     );
   }
-  const name = (id: string) => data.players.find((p) => p.id === id)?.name ?? id;
+  const name = (id: string) => data.players.find((p) => p.id === id)?.name ?? 'Former player';
   const lines = gameLines(game, state);
   const bonuses = bonusLines(state);
   const teamOf = (id: string) => (game.teams[0].playerIds.includes(id) ? 0 : 1);

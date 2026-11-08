@@ -497,8 +497,9 @@ async function main() {
       await outsider.goto(`${BASE}#/room/${outsiderMatch}`);
       await outsider.getByRole('button', { name: 'Join Team B' }).click();
       await playTossupAndBonus(outsider, 'Olga');
-      // Not everyone in it is on the host's team: no team game, no summary link.
-      await captain.getByText("When everyone in it is on the host's team").waitFor();
+      // Not everyone in it is on the host's team: no team game, no summary link, and the captain is told why.
+      await captain.getByText("Not everyone in it is on your team, so it doesn't count in Team stats.").waitFor();
+      if (await outsider.getByText(/count(s)? in Team stats/).count()) throw new Error('the outsider, on no team, is told about Team stats');
       const answers = await matchAnswers(olga, outsiderMatch);
       if (!answers.some((r) => r.body.kind === 'tossup' && r.body.correct)) throw new Error(`the outsider's answers from the match: ${JSON.stringify(answers.map((r) => r.body))}`);
       const games = await teamGames();

@@ -107,7 +107,7 @@ function Lineups({ state, game, names, allowEdit, dispatch }: { state: MatchStat
             </div>
           ) : (
             <p className="muted" style={{ margin: '0.4rem 0 0' }}>
-              {state.lineups[team].map((id) => names.get(id) ?? id).join(', ')}
+              {state.lineups[team].map((id) => names.get(id) ?? 'Former player').join(', ')}
             </p>
           )}
         </div>
@@ -308,7 +308,7 @@ function ReaderGame({ game, round }: { game: GameRecord; round: Round }) {
               dispatch({ type: 'buzz', team, playerId: pid });
             }}
           >
-            <span>{names.get(pid) ?? pid}</span>
+            <span>{names.get(pid) ?? 'Former player'}</span>
             <span className="kbd">{TEAM_KEYS[team][i]}</span>
           </button>
         ))}

@@ -10,7 +10,7 @@ export function StatsPage() {
   // Everyone on the team sees everyone's stats: the team's games plus each member's practice answers.
   const { data, loading, error } = useTeamData();
   const lines = playerLines(data).filter((l) => l.tossupAttempts + l.soloAnswered + l.games > 0 || data.players.some((p) => p.id === l.playerId && p.active));
-  const name = (id: string) => data.players.find((p) => p.id === id)?.name ?? 'Unknown player';
+  const name = (id: string) => data.players.find((p) => p.id === id)?.name ?? 'Former player';
   const finished = data.games.filter((g) => g.status === 'finished').length;
 
   const exportCsv = () => {

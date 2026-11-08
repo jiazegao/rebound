@@ -56,6 +56,10 @@ async function call(route, { token, method, body, address } = {}) {
  * subject and graduation year are set at once, before the account joins a team (members carry a copy of them).
  */
 async function signUp(name, { email, primarySubject, secondarySubject, gradYear } = {}) {
+  // A deployed server would email each test address a real sign-in link: only a local one is ever used.
+  if (!['localhost', '127.0.0.1', '[::1]'].includes(new URL(SERVER).hostname)) {
+    throw new Error(`the browser tests sign people up only on a local server with the development email outbox (SERVER_URL is ${SERVER})`);
+  }
   const address = freshAddress();
   made += 1;
   const mail = email || `${name.toLowerCase().replace(/[^a-z0-9]+/g, '') || 'player'}+${RUN}-${made}@test.example`;

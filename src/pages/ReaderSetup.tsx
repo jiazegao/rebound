@@ -69,7 +69,7 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
     const ids = roundQuestions(round).map((q) => q.id);
     return [...teamA, ...teamB].map((pid) => {
       const heard = heardLedger(teamData, pid);
-      return { pid, name: data.players.find((p) => p.id === pid)?.name ?? pid, heard: ids.filter((q) => heard[q]).length, total: ids.length };
+      return { pid, name: data.players.find((p) => p.id === pid)?.name ?? 'Former player', heard: ids.filter((q) => heard[q]).length, total: ids.length };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [round, teamA.join(), teamB.join(), data.players, teamData.seen, teamData.games]);

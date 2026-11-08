@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Notice, useTicker } from '../components/ui';
-import { refreshNow } from '../lib/cloud';
+import { refreshNow, useSession } from '../lib/cloud';
 import { type RoomClient, type RoomMember, type RoomSnapshot, type Side } from '../lib/room';
 import { href } from '../lib/router';
 import { markSeen, useData } from '../lib/store';
@@ -20,6 +20,7 @@ function clockText(ms: number): string {
  */
 export function MatchRoom({ client, snapshot, roomId }: { client: RoomClient; snapshot: RoomSnapshot; roomId: string }) {
   const data = useData();
+  const session = useSession();
   const view = snapshot.view;
   const match = view?.match;
   const myId = snapshot.you?.memberId ?? null;
@@ -177,7 +178,14 @@ export function MatchRoom({ client, snapshot, roomId }: { client: RoomClient; sn
 
             {format === 'ffa' && match.standings && <Standings standings={match.standings} myId={myId} />}
 
-            {match.status === 'finished' && <Finished gameId={match.gameId} hasGame={!!match.gameId && data.games.some((g) => g.id === match.gameId)} format={format} />}
+            {match.status === 'finished' && (
+              <Finished
+                gameId={match.gameId}
+                hasGame={!!match.gameId && data.games.some((g) => g.id === match.gameId)}
+                forTeam={forTeam(snapshot, session.team?.members.map((m) => m.userId) ?? [])}
+                format={format}
+              />
+            )}
 
             {isHost && match.status === 'playing' && (
               <section className="card row">
@@ -281,7 +289,18 @@ function Standings({ standings, myId }: { standings: NonNullable<import('../lib/
   );
 }
 
-function Finished({ gameId, hasGame, format }: { gameId?: string; hasGame: boolean; format: 'teams' | 'ffa' }) {
+/**
+ * Whether a finished team match counts for this player's team: the server keeps it in the host's team's games only
+ * when every player is on that team. 'mine': it does, and this player is on that team; 'not-all': this player is on
+ * the host's team, but not everyone who played is; 'other': the host's team is not this player's.
+ */
+function forTeam(snapshot: RoomSnapshot, teamMemberIds: string[]): 'mine' | 'not-all' | 'other' {
+  const team = new Set(teamMemberIds);
+  if (!snapshot.hostId || !team.has(snapshot.hostId)) return 'other';
+  return snapshot.members.every((m) => m.side === null || team.has(m.memberId)) ? 'mine' : 'not-all';
+}
+
+function Finished({ gameId, hasGame, forTeam, format }: { gameId?: string; hasGame: boolean; forTeam: 'mine' | 'not-all' | 'other'; format: 'teams' | 'ffa' }) {
   return (
     <Notice kind="good">
       {format === 'teams' ? (
@@ -289,8 +308,10 @@ function Finished({ gameId, hasGame, format }: { gameId?: string; hasGame: boole
           The match is over. Each player's answers go to their account, and misses to their review queue.{' '}
           {gameId && hasGame ? (
             <a href={href(`/games/${gameId}`)}>See the game summary</a>
-          ) : gameId ? (
-            "When everyone in it is on the host's team, it counts in Team stats too; its summary shows up here in a moment."
+          ) : gameId && forTeam === 'mine' ? (
+            'Everyone in it is on your team, so it counts in Team stats too; its summary shows up here in a moment.'
+          ) : forTeam === 'not-all' ? (
+            "Not everyone in it is on your team, so it doesn't count in Team stats."
           ) : null}
         </>
       ) : (
