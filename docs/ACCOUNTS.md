@@ -147,6 +147,18 @@ captain.
 A member: `{ userId, name, role: "coach"|"captain"|"member", squad?, primarySubject?, secondarySubject?,
 gradYear?, joinedAt, lastSeen }`. Join codes: `<teamId>.<secret>`, as links `<site>#/join/<code>`.
 
+Records responses list records with a revision above `cursor`, oldest first, at most 500, `body: null` for a
+deleted record. A team's `GET /api/teams/:id/members/:userId/records` takes the same `cursor` and returns only
+`TEAM_VISIBLE` collections. Types: src/core/accounts.ts.
+
+Rooms: `GET /api/rooms` → `{ rooms: [{ roomId, name, host: { userId, name }, players, createdAt, kind:
+"reader"|"match", match?: { format, status } }] }`. In a room, a member's `memberId` and `playerId` are both their
+user id. WebSocket messages are otherwise as in docs/SERVER.md.
+
+AI help moves from the team to the user: `GET /api/ai`, `POST /api/ai/draft`, `/api/ai/explain`, `/api/ai/card`
+(signed in; bodies and answers as before), with `AI_DAILY_LIMIT` calls per user per day and the explanation cache
+per user.
+
 ## Site
 
 - **Store.** `AppData` stays the in-memory shape the pages use, filled from the server at sign-in (`/api/me`,
