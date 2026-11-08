@@ -511,7 +511,7 @@ async function main() {
       await shot(outsider, 'online-3-outsider-progress');
     });
 
-    await step('a free-for-all: a close call goes to the other player, who rejects it; the answer goes to its account', async () => {
+    await step("a free-for-all: a close call goes to the other player, who rejects it; the answer is in the answering player's account", async () => {
       await captain.goto(`${BASE}#/online`);
       await captain.getByRole('radio', { name: /Everyone for themselves/ }).check();
       await captain.locator('#om-count').fill('1');
@@ -549,11 +549,18 @@ async function main() {
           .join();
       await player.goto(`${BASE}#/progress`);
       await player.reload();
-      const answeredBefore = await until('the player’s My progress page', () => tileValue(player, 'Questions answered'));
+      const answeredBefore = await until("the player's My progress page", () => tileValue(player, 'Questions answered'));
       const before = await allRecords('/api/me/records', ben);
-      // The captain's Team page (which also loads teammates' practice) stays open while he moves.
+      const hisRoom = (await call('/api/rooms', { token: ben.token, body: { name: 'Ben practices' } })).roomId;
+      if (!(await listed(cara)).includes(hisRoom)) throw new Error('a room the player opened is not listed for his team');
+      // The captain's Team page (which also loads teammates' practice) stays open while he moves. He moves just after
+      // it has fetched the team and his practice (it does so every 30 seconds), so its next refresh is the one that
+      // drops him. (Someone who leaves during a refresh is asked for once more: the page takes the server's 404 in
+      // stride, but the browser logs it.)
       await captain.goto(`${BASE}#/team`);
       await members(captain).getByRole('cell', { name: 'Ben', exact: true }).waitFor({ timeout: 15000 });
+      await captain.waitForResponse((r) => r.url() === `${SERVER}/api/teams/${teamId}` && r.request().method() === 'GET', { timeout: 40000 });
+      await captain.waitForResponse((r) => r.url().startsWith(`${SERVER}/api/teams/${teamId}/members/${ben.user.id}/records`), { timeout: 5000 }).catch(() => {});
       await player.goto(`${BASE}#/join/${rival.joinCode}`);
       await player.getByText('You can be on one team at a time, so joining leaves it.').waitFor({ timeout: 15000 });
       await player.getByRole('button', { name: 'Leave Server High and join' }).click(); // the confirm is accepted
@@ -569,6 +576,7 @@ async function main() {
       // The old team no longer lists him: the server at once, the captain's open page with its next refresh.
       const old = await call(`/api/teams/${teamId}`, { token: cara.token });
       if (old.members.some((m) => m.userId === ben.user.id)) throw new Error('the old team still lists the player');
+      if ((await listed(cara)).includes(hisRoom)) throw new Error('the room he opened is still listed for the team he left');
       await members(captain).getByRole('heading', { name: 'Members (1)' }).waitFor({ timeout: 40000 });
       if (await members(captain).getByRole('cell', { name: 'Ben', exact: true }).count()) throw new Error("the old team's Team page still lists the player");
       note(`the captain's open Team page dropped him ${secondsSince(moved)} s after he moved, without a reload`);
