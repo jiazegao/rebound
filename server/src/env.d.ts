@@ -4,7 +4,7 @@ declare namespace Cloudflare {
     /** One Durable Object per user, addressed by `idFromName(userId)`: profile, sessions, the user's own records. */
     USER: DurableObjectNamespace<import('./user').UserServer>;
     /** One Durable Object per team, addressed by `idFromName(teamId)`: settings, members, team records. */
-    TEAM: DurableObjectNamespace<import('./team').Team>;
+    TEAMS: DurableObjectNamespace<import('./team').Team>;
     /** One Durable Object per live room or online match, addressed by `idFromName(roomId)`. */
     ROOM: DurableObjectNamespace<import('./room').RoomServer>;
     /** One Durable Object (named "global"): email and Google account → user, email codes, sign-in limits. */

@@ -4,7 +4,7 @@
  */
 
 export const userObject = (env: Env, userId: string) => env.USER.get(env.USER.idFromName(userId));
-export const teamObject = (env: Env, teamId: string) => env.TEAM.get(env.TEAM.idFromName(teamId));
+export const teamObject = (env: Env, teamId: string) => env.TEAMS.get(env.TEAMS.idFromName(teamId));
 export const roomObject = (env: Env, roomId: string) => env.ROOM.get(env.ROOM.idFromName(roomId));
 export const directoryObject = (env: Env) => env.DIRECTORY.get(env.DIRECTORY.idFromName('global'));
 export const registryObject = (env: Env) => env.REGISTRY.get(env.REGISTRY.idFromName('global'));

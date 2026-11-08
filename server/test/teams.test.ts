@@ -7,7 +7,7 @@ import type { Outcome } from '../../src/core/review';
 import { Outbox } from '../src/outbox';
 import { allMyRecords, call, eventually, getRecords, join, makeTeam, putRecords, signUp, teamWith, type Json, type TestTeam, type TestUser } from './helpers';
 
-const teamStub = (teamId: string) => env.TEAM.get(env.TEAM.idFromName(teamId));
+const teamStub = (teamId: string) => env.TEAMS.get(env.TEAMS.idFromName(teamId));
 
 const teamPath = (team: TestTeam) => `/api/teams/${team.teamId}`;
 const getTeam = (team: TestTeam, user: TestUser) => call(teamPath(team), { token: user.token });

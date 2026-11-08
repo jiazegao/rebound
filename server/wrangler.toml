@@ -37,9 +37,10 @@ AI_DAILY_LIMIT = "50"
 name = "USER"
 class_name = "UserServer"
 
-# One object per team: settings, members, team records, the list of its members' rooms.
+# One object per team: settings, members, team records, the list of its members' rooms. (Not named TEAM: that name
+# bound the old TeamServer class, and Cloudflare will not delete a class in the same deploy that reuses its binding.)
 [[durable_objects.bindings]]
-name = "TEAM"
+name = "TEAMS"
 class_name = "Team"
 
 # One object per live room or online match.
