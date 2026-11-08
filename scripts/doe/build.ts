@@ -34,6 +34,7 @@
  *   --report <file>     default scripts/doe/REPORT.md (REPORT-MS.md for ms)
  *   --fetch-log <file>  default .cache/doe/fetch-log.json (fetch-log-ms.json for ms; only read, for the report)
  *   --topic-eval <file> default scripts/doe/topic-eval.json (high school; only read, for the report)
+ *   --split-eval <file> default scripts/doe/split-eval-ms.json (middle school Physical Science labels; only read)
  *   --set <n|name>      build only this set (repeatable); the index and catalog then list only those sets
  *
  * The PDFs are untrusted input: they are only read as data by pdf.js (with eval disabled).
@@ -238,17 +239,78 @@ const NOTES = [
 const MS_NOTES = [
   '## Notes',
   '',
-  '- (to be written)',
+  "- **What the sets are.** DOE's page lists Sample Questions Sets 1-16 (\"used at the regional competitions in previous years\") and a section \"Sample Rounds\". Most sets print regional headers or footers (see \"Where the sets come from\"). Set 2's footers name the \"Junior National Science Bowl\" (round robin and single elimination rounds), and its PDFs were made in February 2004 although the page says \"from 2008\"; the year is kept as DOE gives it.",
+  '- **Sample Rounds (`doe-ms-finals`).** Four tournament rounds, titled as on the page: Round Robin Rounds 2 and 5 and Double Elimination Rounds 1 and 3 (printed "ROUND ROBIN 2", "DOUBLE ELIMINATION ROUND 1", ...), 25 toss-ups and bonuses each, in the 2000s middle school categories (General Science, Earth Science, Mathematics, Life Science, Physical Science). No year or event is printed; the PDFs were made in October 2006. The National Middle School Science Bowl website listed them in 2008 as new round robin and double elimination samples next to "Sample Rounds 1-10" (seen in a search-engine summary of the archived page, which could not be opened from here), so they are most likely rounds of the national middle school event from about 2006. The set has no year and no set number, and its rounds have order 1-4 in page order.',
+  '- **Years.** Sets 1-13 take the year from the page\'s table of contents ("Sample Questions Set 1 (from 2009)", "Sample Questions 10 (from 2016)"), which matches the file names where they carry one (Sets 10 and 13); Sets 14-16 take it from the file names (2020-MS-Rd1.pdf, Set-1-MS-2021.pdf, 2022-MS-1.pdf).',
+  '- **Packet sizes.** 25 toss-ups and bonuses per round through 2013 and in the Sample Rounds, 23 for 2014-2020, 15 in the 2021 virtual set (Set 15) and 18 in 2022 (Set 16). Set 3 Round 7 has 24: DOE printed "The toss-up and bonus for Question 8 have been omitted."',
+  '- **Subjects.** Life Science → biology, Earth Science and Earth and Space → earth_space, Mathematics → math. Physical Science is split between physics and chemistry where the evidence is clear (see "Physical Science split"). General Science (1,384 questions in Sets 1-10 and the Sample Rounds) stays the legacy subject `general_science`, as in the high school sets: it mixes every subject with units, lab practice and the history of science, so those questions get no topic.',
+  '- **Source problems handled** (each is flagged on the question or listed under Warnings): the page links Set 15 Round 7 to the high school file, so the middle school file next to the other Set 15 rounds is used (see the manifest note); numbers printed with an asterisk ("*1)", Set 2; the asterisk is not explained); headers without the parenthesis ("17 LIFE SCIENCE Short Answer", "46 MATH", Sets 2 and 4); "Mutliple Choice"; "ANWER:"; a category printed twice ("MATH Math"); options printed in lower case ("w) light"); a bonus printed under a second TOSS-UP marker (Set 10 Round 14, flag `kind-corrected`); questions 21 and 20 printed in that order (Set 11 Round 14, numbered by position, flag `number-mismatch`); other misprinted numbers (Set 2, `number-mismatch`); a toss-up with neither category nor type (Sample Rounds, Round Robin 5 #16: `category-unknown`, `type-unknown`); an answer printed without its letter (Set 11 Round 1 bonus 13; the letter of the one option it names is used); mixed numbers printed as a whole number and a stacked fraction (3 ½), now read as "3 1/2".',
+  '- **Duplicates, kept as DOE publishes them.** Set 16 Round 7 has the same 36 questions as high school Set 17 Round 10 (the two PDFs, made from "2022 MS 7.docx" and "2022 HS 10.docx" on the same day, differ only in one ACCEPT list and the moderator\'s closing lines); a team using both libraries will meet them twice. Set 2 Round 2 repeats toss-ups and bonuses 7-19 of Set 2 Round 1. Apart from those, 57 question texts appear in more than one middle school round and 24 also appear in the high school library.',
+  '- **Known gaps.** As in the high school sets, equations drawn with lines or images (radicals, some fractions) and answers that are images (Set 4 Round 11 toss-up 4, Round 17 bonuses 16 and 20; Set 4 Round 4 toss-up 21 lost two of its options) cannot be recovered from text; Sets 6-8 have 15 questions in an equation font whose characters map to unrelated scripts. Such questions carry `possible-lost-formatting` (and `image-not-extracted`, `answer-missing` or `choices-missing` where it applies).',
+  "- **Fetch.** DOE's page answered HTTP 403 to the fetch script (as it did on the last high school run), so the manifest was built from the copy of the page saved on 2026-11-06 by earlier research (`--page-html`) and cross-checked against the link list saved then (251 of 251 links). Of the 251 PDFs, 39 were copied from the research folder and 212 downloaded one at a time, at least 3 s apart, with the importer's User-Agent.",
 ];
 
 /** Middle school questions compared by hand against `pdftotext` output of the PDF (like SPOT_CHECKS). */
-const MS_SPOT_CHECKS: { id: string; note: string }[] = [];
+const MS_SPOT_CHECKS: { id: string; note: string }[] = [
+  // Random sample (mulberry32, seed 20261111) across all sets: stem, options, answer and alternatives match the PDF.
+  { id: 'doe-ms-09-r10-t04', note: 'match' },
+  { id: 'doe-ms-14-r15-t15', note: 'match (Physical Science → physics)' },
+  { id: 'doe-ms-11-r02-t19', note: 'match; ACCEPT parsed' },
+  { id: 'doe-ms-11-r02-t21', note: 'match' },
+  { id: 'doe-ms-01-r13-t18', note: 'match; stacked fractions read as (15x + 5y)/15 and y/3' },
+  { id: 'doe-ms-06-r11-b07', note: 'match; bracket pronunciation kept' },
+  { id: 'doe-ms-04-r08-t20', note: 'match (Physical Science → chemistry)' },
+  { id: 'doe-ms-09-r08-b02', note: 'match' },
+  { id: 'doe-ms-11-r06-b17', note: 'match' },
+  { id: 'doe-ms-13-r17-t20', note: 'match' },
+  { id: 'doe-ms-13-r15-b23', note: 'match' },
+  { id: 'doe-ms-06-r15-t21', note: 'match' },
+  { id: 'doe-ms-04-r09-t02', note: 'match' },
+  { id: 'doe-ms-06-r16-t12', note: 'match; tanθ = 3/4 and the answer 5/3 are stacked fractions in the PDF' },
+  { id: 'doe-ms-02-r01-b15', note: 'match' },
+  { id: 'doe-ms-04-r15-b08', note: 'match; "(read as: ...)" pronunciations in the options become [...]' },
+  { id: 'doe-ms-11-r09-b04', note: 'match; x² from the raised 2' },
+  { id: 'doe-ms-16-r04-t05', note: 'match (2022 em dash format)' },
+  { id: 'doe-ms-12-r15-t05', note: 'match; ACCEPT NH₃ and DO NOT ACCEPT in one parenthesis' },
+  { id: 'doe-ms-14-r17-t19', note: 'match' },
+  { id: 'doe-ms-07-r15-t07', note: 'match (General Science kept as a legacy subject)' },
+  { id: 'doe-ms-05-r09-t08', note: 'match' },
+  { id: 'doe-ms-11-r05-b09', note: 'match' },
+  { id: 'doe-ms-12-r08-b20', note: 'match' },
+  { id: 'doe-ms-15-r01-t15', note: 'match (2021 narrow layout)' },
+  { id: 'doe-ms-12-r11-t22', note: 'match' },
+  { id: 'doe-ms-08-r11-t03', note: 'match' },
+  { id: 'doe-ms-06-r13-t13', note: 'match' },
+  { id: 'doe-ms-12-r12-t13', note: 'match' },
+  { id: 'doe-ms-01-r06-t13', note: 'match' },
+  { id: 'doe-ms-08-r03-t08', note: 'match' },
+  { id: 'doe-ms-16-r06-b09', note: 'match' },
+  // Hard cases checked on purpose.
+  { id: 'doe-ms-02-r10-t01', note: 'number printed "*1)"; asterisk dropped' },
+  { id: 'doe-ms-02-r06-b04', note: 'header printed "46 MATH Multiple Choice" (no parenthesis, wrong number): read as bonus 4, number-mismatch' },
+  { id: 'doe-ms-04-r06-b17', note: 'header printed "17 LIFE SCIENCE Short Answer" (no parenthesis)' },
+  { id: 'doe-ms-02-r06-b03', note: 'options printed "w) x) y) z)"' },
+  { id: 'doe-ms-02-r10-b09', note: 'first option printed "w) plasma cells"' },
+  { id: 'doe-ms-10-r14-b16', note: 'bonus printed under a TOSS-UP marker: kind-corrected; the round keeps 23 pairs and its numbering' },
+  { id: 'doe-ms-11-r14-t20', note: 'printed "21)" before "20)": numbered by position, number-mismatch' },
+  { id: 'doe-ms-09-r09-t10', note: 'answer line printed "ANWER: X) OAK TREE"' },
+  { id: 'doe-ms-02-r10-t16', note: 'mixed numbers printed as whole number + stacked fraction: 3 1/2 + 2 1/3 + 1 1/12, answer 6 11/12' },
+  { id: 'doe-ms-finals-r02-t16', note: 'toss-up printed with neither category nor type: category-unknown, type-unknown' },
+  { id: 'doe-ms-11-r01-b13', note: 'answer printed "IT INCREASES" without a letter: W, the one option it names' },
+  { id: 'doe-ms-07-r07-b17', note: 'type printed "Mutliple Choice"' },
+  { id: 'doe-ms-08-r17-t18', note: 'category printed "MATH Math"' },
+  { id: 'doe-ms-08-r17-t17', note: 'erratum: DOE printed "Y) 2.5"; 2.5 is X' },
+  { id: 'doe-ms-15-r07-t01', note: 'from the middle school file Set-7-MS-2021.pdf, not the high school file the page links to' },
+  { id: 'doe-ms-03-r07-t09', note: 'Round 7 skips question 8 as printed ("omitted"); toss-up 9 keeps its number' },
+];
 
 /** How the Physical Science split was checked (written by hand). */
-const SPLIT_EVAL_NOTES: string[] = [];
-
-/** Hand labels for a random sample of printed Physical Science questions: the subject each one really tests. */
-const SPLIT_LABELS: { id: string; subject: 'physics' | 'chemistry' }[] = [];
+const SPLIT_EVAL_NOTES = [
+  'Checked against hand labels in `scripts/doe/split-eval-ms.json`: random printed Physical Science questions (mulberry32 with a partial Fisher-Yates shuffle), each labelled physics, chemistry or "either" (gas laws, heat and phase changes, temperature scales, nuclear fission, measurement) by reading the question without seeing the result.',
+  '',
+  '- **Sample A** (80 questions, seed 20261108) and **sample B** (60, seed 20261109) were used to choose the rule: the topic scores alone put wave questions under chemistry (2 errors on A), topic plus the full cross-subject score put Gibbs energy, chirality and "physical change" under physics (4 errors on B); topic plus half the cross-subject score did best on both.',
+  '- **Sample C** (50 questions, seed 20261110) was drawn and labelled after the rule was fixed and scored once: it is the fair estimate.',
+];
 
 const SUBJECT_ORDER: Subject[] = [
   'biology',
@@ -272,8 +334,8 @@ interface RoundResult {
   stray: number;
   /** Lines printed on most pages (running headers and footers), digits as "#". */
   repeated?: string[];
-  /** The PDF's own creation date (YYYY-MM-DD) and author, when it has them (middle school report). */
-  pdfInfo?: { created?: string; author?: string };
+  /** The PDF's own creation date (YYYY-MM-DD), when it has one (middle school report). */
+  pdfInfo?: { created?: string };
   /** Physical Science questions moved to physics or chemistry, or kept (middle school). */
   split?: { physics: number; chemistry: number; kept: number };
 }
@@ -293,6 +355,7 @@ function parseArgs(root: string) {
     report: path.join(root, cfg.report),
     fetchLog: path.join(root, cfg.fetchLog),
     topicEval: path.join(root, 'scripts/doe/topic-eval.json'),
+    splitEval: path.join(root, 'scripts/doe/split-eval-ms.json'),
     sets: [] as string[],
   };
   for (let i = 0; i < argv.length; i++) {
@@ -306,6 +369,7 @@ function parseArgs(root: string) {
     else if (a === '--report') opts.report = path.resolve(v);
     else if (a === '--fetch-log') opts.fetchLog = path.resolve(v);
     else if (a === '--topic-eval') opts.topicEval = path.resolve(v);
+    else if (a === '--split-eval') opts.splitEval = path.resolve(v);
     else if (a === '--set') opts.sets.push(v);
     else throw new Error(`unknown option ${a}`);
   }
@@ -326,11 +390,7 @@ async function parseRound(cfg: LevelConfig, setId: string, entry: ManifestEntry,
     const split = cfg.level === 'MS' ? splitPhysicalScience(result.round) : undefined;
     tagRound(result.round);
     let pdfInfo: RoundResult['pdfInfo'];
-    if (cfg.level === 'MS') {
-      const info = (await doc.getMetadata()).info as Record<string, unknown>;
-      const author = typeof info.Author === 'string' ? info.Author.trim() : '';
-      pdfInfo = { created: pdfDate(info.CreationDate), ...(author ? { author } : {}) };
-    }
+    if (cfg.level === 'MS') pdfInfo = { created: pdfDate(((await doc.getMetadata()).info as Record<string, unknown>).CreationDate) };
     return {
       entry,
       round: result.round,
@@ -479,7 +539,8 @@ async function main() {
   await writeFile(conceptsFile, renderConcepts(generatedAt));
 
   const topicEval = cfg.level === 'HS' && existsSync(opts.topicEval) ? (JSON.parse(await readFile(opts.topicEval, 'utf8')) as TopicLabel[]) : undefined;
-  const report = buildReport(cfg, manifest, results, resources, fetchLog, topicEval);
+  const splitEval = cfg.level === 'MS' && existsSync(opts.splitEval) ? (JSON.parse(await readFile(opts.splitEval, 'utf8')) as SplitLabel[]) : undefined;
+  const report = buildReport(cfg, manifest, results, resources, fetchLog, topicEval, splitEval);
   await writeFile(opts.report, report);
   console.log(
     `wrote ${summaries.length} set files + index.json + ${cfg.catalog} (${catalogRows.length} questions) + ${cfg.concepts} to ${path.relative(root, opts.out)}; ` +
@@ -648,6 +709,7 @@ function buildReport(
   resources: ManifestEntry[],
   fetchLog: { totals?: Record<string, number>; seconds?: number; crossCheck?: Record<string, unknown>; results?: { file: string; status: string; error?: string }[] } | undefined,
   topicEval: TopicLabel[] | undefined,
+  splitEval?: SplitLabel[],
 ): string {
   const out: string[] = [];
   const hs = cfg.level === 'HS';
@@ -723,7 +785,7 @@ function buildReport(
   out.push('Printed categories and where they were mapped:', '');
   for (const [k, v] of [...printed.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))) out.push(`- ${k}: ${v}`);
   out.push('');
-  if (!hs) out.push(...splitReport(results, allQuestions));
+  if (!hs) out.push(...splitReport(results, allQuestions, splitEval));
 
   out.push(...topicsReport(cfg, allQuestions, topicEval));
 
@@ -849,25 +911,31 @@ function msSetsReport(cfg: LevelConfig, manifest: Manifest, results: Map<SetKey,
       "the PDFs' own creation dates and the lines printed on every page are listed as a check.",
     '',
   );
-  out.push('| Set | Title | Year (evidence) | PDF created | PDF author | Running header or footer |', '|---|---|---|---|---|---|');
+  out.push('| Set | Title | Year (evidence) | PDFs created | Running header or footer |', '|---|---|---|---|---|');
   for (const [n, rs] of results) {
     const info = manifest.sets.find((s) => s.set === n);
     const dates = rs.map((r) => r.pdfInfo?.created).filter((d): d is string => !!d).sort();
-    const authors = [...new Set(rs.map((r) => r.pdfInfo?.author).filter((a): a is string => !!a))];
     const footers = new Map<string, number>();
     for (const r of rs) for (const f of r.repeated ?? []) footers.set(f, (footers.get(f) ?? 0) + 1);
     const common = [...footers.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 2).map(([f]) => `"${esc(f)}"`);
     const range = dates.length ? (dates[0] === dates[dates.length - 1] ? dates[0] : `${dates[0]} to ${dates[dates.length - 1]}`) : '–';
     out.push(
-      `| ${setIdentity(cfg, n).id} | ${esc(setIdentity(cfg, n).title)} | ${info?.year ? `${info.year} (${esc(info.yearEvidence ?? '')})` : 'none printed'} | ${range} | ${esc(authors.join(', ')) || '–'} | ${common.join('; ') || '–'} |`,
+      `| ${setIdentity(cfg, n).id} | ${esc(setIdentity(cfg, n).title)} | ${info?.year ? `${info.year} (${esc(info.yearEvidence ?? '')})` : 'none printed'} | ${range} | ${common.join('; ') || '–'} |`,
     );
   }
   out.push('');
   return out;
 }
 
+/** One hand label from scripts/doe/split-eval-ms.json. */
+interface SplitLabel {
+  id: string;
+  subject: 'physics' | 'chemistry' | 'either';
+  sample: string;
+}
+
 /** Middle school: how the printed Physical Science questions were split between physics and chemistry. */
-function splitReport(results: Map<SetKey, RoundResult[]>, questions: Question[]): string[] {
+function splitReport(results: Map<SetKey, RoundResult[]>, questions: Question[], labels: SplitLabel[] | undefined): string[] {
   const out: string[] = ['### Physical Science split', ''];
   const printed = questions.filter(isPrintedPhysicalScience);
   const n = (s: Subject) => printed.filter((q) => q.subject === s).length;
@@ -889,28 +957,28 @@ function splitReport(results: Map<SetKey, RoundResult[]>, questions: Question[])
     }
     out.push('');
   }
-  out.push(...SPLIT_EVAL_NOTES.map((l) => l));
+  if (!labels?.length) {
+    out.push('No hand labels found (scripts/doe/split-eval-ms.json).', '');
+    return out;
+  }
+  out.push(...SPLIT_EVAL_NOTES, '');
   const byId = new Map(questions.map((q) => [q.id, q]));
-  const labelled = SPLIT_LABELS.filter((l) => byId.has(l.id));
-  if (labelled.length) {
-    const decided = labelled.filter((l) => byId.get(l.id)!.subject !== 'physical_science');
-    const right = decided.filter((l) => byId.get(l.id)!.subject === l.subject);
-    out.push(
-      '',
-      `Hand-labelled sample: ${labelled.length} questions; ${decided.length} were moved (${pct(decided.length, labelled.length)}), ` +
-        `${right.length} of them to the labelled subject (${pct(right.length, decided.length)} precision); ${labelled.length - decided.length} kept as physical_science.`,
-    );
-    const wrong = decided.filter((l) => byId.get(l.id)!.subject !== l.subject);
-    if (wrong.length) {
-      out.push('', 'Moved to the other subject than the label:', '');
-      for (const l of wrong) {
-        const q = byId.get(l.id)!;
-        const e = physicalScienceEvidence(q);
-        out.push(`- \`${l.id}\` labelled ${l.subject}, moved to ${q.subject} (scores physics ${e.physics}, chemistry ${e.chemistry}): ${esc(q.stem.slice(0, 110))}${q.stem.length > 110 ? '…' : ''}`);
-      }
+  out.push('| Sample | Labelled | "Either" | Clear | Moved | To the labelled subject | Kept as physical_science |', '|---|---|---|---|---|---|---|');
+  const wrong: string[] = [];
+  for (const sample of [...new Set(labels.map((l) => l.sample))]) {
+    const group = labels.filter((l) => l.sample === sample && byId.has(l.id));
+    const clear = group.filter((l) => l.subject !== 'either');
+    const moved = clear.filter((l) => byId.get(l.id)!.subject !== 'physical_science');
+    const right = moved.filter((l) => byId.get(l.id)!.subject === l.subject);
+    out.push(`| ${sample} | ${group.length} | ${group.length - clear.length} | ${clear.length} | ${moved.length} | ${right.length} (${pct(right.length, moved.length)}) | ${clear.length - moved.length} |`);
+    for (const l of moved.filter((x) => byId.get(x.id)!.subject !== x.subject)) {
+      const q = byId.get(l.id)!;
+      const e = physicalScienceEvidence(q);
+      wrong.push(`- sample ${sample} \`${l.id}\`: labelled ${l.subject}, moved to ${q.subject} (physics ${e.physics}, chemistry ${e.chemistry}) — ${esc(q.stem.slice(0, 110))}${q.stem.length > 110 ? '…' : ''}`);
     }
   }
   out.push('');
+  if (wrong.length) out.push('Moved to the other subject than the label:', '', ...wrong, '');
   return out;
 }
 
