@@ -28,46 +28,8 @@ import { attemptOutcome, gameOutcomes } from './outcomes';
 
 const KEY = 'rebound-data-v1';
 
-export interface GamePairRef {
-  tossupId: string;
-  bonusId?: string;
-  subject: Subject;
-}
-
-export interface GameRecord {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  presetId: string;
-  packet: { setId: string; setTitle: string; roundId: string; roundLabel: string; sourceUrl?: string };
-  /** Snapshot of the questions in packet order, so stats never need to reload the set. */
-  pairs: GamePairRef[];
-  teams: [{ name: string; playerIds: string[] }, { name: string; playerIds: string[] }];
-  events: MatchEvent[];
-  status: 'in_progress' | 'finished';
-  finalScores?: [number, number];
-  /** The remote room this game is played in, when players join from their own devices. */
-  roomId?: string;
-  /** "tiebreak": a tiebreaker drill (5 toss-ups, no bonuses, no clock, repeated while tied). */
-  format?: 'game' | 'tiebreak';
-  /** An online match the team server ran (no reader); the server wrote this record. */
-  online?: boolean;
-}
-
-/** One answer in solo practice ("Try a round" while signed in as a player). */
-export interface SoloAttempt {
-  id: string;
-  playerId: string;
-  questionId: string;
-  subject: Subject;
-  kind: 'tossup' | 'bonus';
-  correct: boolean;
-  interrupt: boolean;
-  latencyMs: number | null;
-  /** True when the player overrode the checker's verdict. */
-  overridden: boolean;
-  t: number;
-}
+export type { GamePairRef, GameRecord, SoloAttempt } from '../core/games';
+import type { GameRecord, SoloAttempt } from '../core/games';
 
 export interface ProblemReport {
   id: string;
