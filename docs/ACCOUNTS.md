@@ -129,8 +129,8 @@ captain.
 | `POST /api/me/records` | user | `{ changes: [{ c, id, body \| null }] }` → `{ cursor, rejected }` |
 | `GET /api/me/export` | user | → everything, as one JSON file |
 | `POST /api/teams` | user | `{ name, level, leaveCurrent? }` → 201 `{ team, joinCode }` (the caller becomes captain) |
-| `GET /api/teams/:id` | member | → `{ team: { id, name, level, nextEvent, createdAt }, members, you }` |
-| `PATCH /api/teams/:id` | leader | `{ name?, level?, nextEvent? }` → `{ team }` |
+| `GET /api/teams/:id` | member | → `{ team: { id, name, level, nextEvent, createdAt }, members, you, joinCode? }` (`joinCode` for leaders: the team keeps its current invite secret so leaders can show the link again) |
+| `PATCH /api/teams/:id` | leader | `{ name?, level?, nextEvent? }` (`nextEvent: null` clears it) → `{ team }` |
 | `POST /api/teams/:id/join` | user | `{ secret, leaveCurrent? }` → `{ team }` |
 | `POST /api/teams/:id/leave` | member | → `{ ok: true }` (the last member leaving deletes the team; the last leader must hand over first) |
 | `PATCH /api/teams/:id/members/:userId` | leader (or the member, for their own subjects) | `{ role?, squad?, primarySubject?, secondarySubject?, gradYear? }` → `{ member }` |
@@ -140,7 +140,7 @@ captain.
 | `GET /api/teams/:id/records?cursor=` | member | team collections, as for `/api/me/records` |
 | `POST /api/teams/:id/records` | member | `{ changes }` → `{ cursor, rejected }` |
 | `GET /api/teams/:id/members/:userId/records` | member | that teammate's visible collections |
-| `GET /api/rooms` | user | → `{ rooms }` (the caller's team's open rooms) |
+| `GET /api/rooms` | user | → `{ rooms }` (the caller's team's open rooms; query parameters are ignored) |
 | `POST /api/rooms` | user | `{ name, match? }` → 201 `{ roomId }` |
 | `GET /api/rooms/:id/ws?token=` | user | WebSocket (docs/SERVER.md, Rooms) |
 

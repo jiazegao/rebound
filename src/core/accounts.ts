@@ -109,6 +109,8 @@ export interface TeamResponse {
   team: TeamInfo;
   members: TeamMember[];
   you: { role: MemberRole };
+  /** The current invite code ("<teamId>.<secret>"), for coaches and captains only. */
+  joinCode?: string;
 }
 
 export interface RecordOut {
