@@ -318,9 +318,20 @@ async function main() {
       await shot('02-team');
     });
 
+    await step('the bar has Play online and the Reader console as two items of their own', async () => {
+      const bar = ann.getByRole('navigation', { name: 'Main' });
+      if (await bar.getByRole('link', { name: 'Play', exact: true }).count()) throw new Error('the bar still has a Play item');
+      await bar.getByRole('link', { name: 'Play online', exact: true }).click();
+      await ann.getByRole('heading', { name: 'Play online', level: 1 }).waitFor();
+      if ((await bar.getByRole('link', { name: 'Play online', exact: true }).getAttribute('aria-current')) !== 'page') throw new Error('Play online is not marked as the page being shown');
+      await shot('02b-play-online');
+    });
+
     await step('set up a Reader-console game', async () => {
-      await ann.getByRole('link', { name: 'Play' }).click();
+      const bar = ann.getByRole('navigation', { name: 'Main' });
+      await bar.getByRole('link', { name: 'Reader console', exact: true }).click();
       await see('1. Questions');
+      if ((await bar.getByRole('link', { name: 'Reader console', exact: true }).getAttribute('aria-current')) !== 'page') throw new Error('Reader console is not marked as the page being shown');
       await ann.locator('#round').waitFor();
       for (const [name, side] of [
         ['Ann', 'Team A'],

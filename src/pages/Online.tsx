@@ -331,14 +331,11 @@ export function OnlinePage() {
   const session = useSession();
   return (
     <div className="container">
-      <p className="small">
-        <a href={href('/reader')}>Play</a> /
-      </p>
       <PageHeader title="Play online">
         <p>
           Play from your own devices: teammates, or anyone with a Rebound account you send the link to. In an online match nobody needs to read:
           Rebound reveals each question, times the buzzers fairly, and judges typed answers. Everyone's answers go to their own account. For a game
-          with a reader, open a Reader console game and share its room.
+          with a reader, open a <a href={href('/reader')}>Reader console</a> game and share its room.
         </p>
       </PageHeader>
       <div className="stack">
