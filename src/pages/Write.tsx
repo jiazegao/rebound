@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { fileSlug } from '../components/Downloads';
 import { QuestionView } from '../components/QuestionView';
-import { LoadError, Loading, Notice, PageHeader, SubjectTag } from '../components/ui';
+import { Loading, Notice, PageHeader, SubjectTag } from '../components/ui';
 import { UPLOAD_LEVEL_LABEL } from '../core/levels';
 import { toQuestionsDoc } from '../core/nsbjson';
 import {
@@ -343,7 +343,7 @@ function Editor({ existing }: { existing: WrittenQuestion | null }) {
                 Approve
               </button>
             )}
-            {!reviewer && <span className="small muted">Waiting for the subject owner (or a captain or coach) to review it. Pick your name on Today to review.</span>}
+            {!reviewer && <span className="small muted">Waiting for the subject owner (or a captain or coach) to review it.</span>}
           </>
         )}
         {status === 'approved' && existing && edited && (
@@ -727,11 +727,6 @@ function WriteList() {
           captain or coach) reviews each one; approved questions become team packets.
         </p>
       </PageHeader>
-      {!me && (
-        <Notice>
-          Pick your name on <a href={href('/today')}>Today</a> first, so your questions are credited to you and you can review your subject's.
-        </Notice>
-      )}
       <div className="row" style={{ marginBottom: '1rem' }}>
         <a className="btn btn-primary" href={href('/write/new')}>
           New question
@@ -745,7 +740,7 @@ function WriteList() {
         </>
       )}
       <h2>Your drafts</h2>
-      <Table list={mine} names={names} empty={me ? 'No drafts. Start one with "New question".' : 'Pick your name on Today to see your drafts.'} />
+      <Table list={mine} names={names} empty='No drafts. Start one with "New question".' />
       <h2>In review</h2>
       <Table list={inReview} names={names} empty="Nothing waiting for review." />
       <h2>Approved ({approved.length})</h2>
@@ -772,7 +767,7 @@ export function WritePage({ id }: { id?: string }) {
       <div className="container narrow">
         <PageHeader title="Write" />
         <Notice>
-          Set up your team first on the <a href={href('/team')}>Team</a> page.
+          Teams write their own questions here. <a href={href('/team')}>Create or join a team</a> first.
         </Notice>
       </div>
     );
@@ -783,7 +778,7 @@ export function WritePage({ id }: { id?: string }) {
     if (!existing) {
       return (
         <div className="container narrow">
-          <LoadError error={new Error('That question is not on this device (it may have been deleted, or not synced yet).')} />
+          <Notice kind="error">That question is not in your team's questions (it may have been deleted).</Notice>
           <a href={href('/write')}>Back to Write</a>
         </div>
       );

@@ -3,8 +3,8 @@
  *
  * PDFs are read in the browser with pdf.js and parsed with the same importer as the DOE sets, so
  * packets formatted like DOE's (TOSS-UP / BONUS, the category, W–Z choices, ANSWER lines) come in
- * cleanly; anything that did not parse is flagged on the review screen. Nothing leaves the device
- * except through the team's own sync: community packets carry no open license.
+ * cleanly; anything that did not parse is flagged on the review screen. The packet goes only to the
+ * team's own records on Rebound's server, never anywhere public: community packets carry no open license.
  */
 import { readNsbJson, type NsbJsonDoc } from '../core/nsbjson';
 import { doeRoundId, parseDoeRound, type ParseWarning } from '../core/importers/doe';

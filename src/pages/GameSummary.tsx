@@ -6,21 +6,21 @@ import { href, navigate } from '../lib/router';
 import { bonusLines, gameLines, gameState, median } from '../lib/stats';
 import { deleteGame, useData } from '../lib/store';
 
-/** How many review questions the game gave each player (misses, slow buzzes, dead toss-ups in their subject, missed bonuses). */
+/**
+ * How many review questions the game gave the signed-in player (misses, slow buzzes, dead toss-ups in their subject,
+ * missed bonuses). Review queues are private, so each player sees only their own; the server writes each player's
+ * answers when the game ends, and their device turns them into review questions within a minute.
+ */
 function ReviewNote({ gameId }: { gameId: string }) {
   const data = useData();
+  const me = data.settings.soloPlayerId;
   const prefix = `game:${gameId}:`;
-  const counts = new Map<string, number>();
-  for (const c of Object.values(data.cards)) {
-    // A card came from this game if the game created it (its first source).
-    if (c.sources[0]?.startsWith(prefix)) counts.set(c.playerId, (counts.get(c.playerId) ?? 0) + 1);
-  }
-  if (counts.size === 0) return null;
-  const name = (id: string) => data.players.find((p) => p.id === id)?.name ?? 'A former player';
-  const parts = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([id, n]) => `${name(id)} ${n}`);
+  // A card came from this game if the game created it (its first source).
+  const n = Object.values(data.cards).filter((c) => c.playerId === me && c.sources[0]?.startsWith(prefix)).length;
+  if (n === 0) return null;
   return (
     <Notice>
-      This game added questions to review queues: {parts.join(', ')}. Each player sees them on their <a href={href('/review')}>Review</a> page.
+      This game added {n} question{n === 1 ? '' : 's'} to your <a href={href('/review')}>review queue</a>. Everyone else's misses go to their own.
     </Notice>
   );
 }

@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Notice, useTicker } from '../components/ui';
-import type { Subject } from '../core/schema';
+import { refreshNow } from '../lib/cloud';
 import { type RoomClient, type RoomMember, type RoomSnapshot, type Side } from '../lib/room';
 import { href } from '../lib/router';
-import { applyOnlineGame, markSeen, recordMatchAnswer, useData, type GameRecord } from '../lib/store';
-import { syncNow } from '../lib/sync';
+import { markSeen, useData } from '../lib/store';
 import { RevealedText, RoomFigure, TeamChannel } from './Room';
 
 const seconds = (ms: number) => `${Math.max(0, ms / 1000).toFixed(1)} s`;
@@ -33,37 +32,19 @@ export function MatchRoom({ client, snapshot, roomId }: { client: RoomClient; sn
   const buzz = snapshot.buzz;
   const canBuzz = match?.status === 'playing' && buzz.open && !!side && buzz.sides[side] && !buzz.winner;
 
-  // Each device records its own player's results: free-for-all answers as practice, a team match at its end.
+  // The server writes every player's answers to their account (and a team match's game to the team). This device
+  // only notes what its player heard, then fetches the answers, which become review cards.
   useEffect(() => {
     const memberId = snapshot.you?.memberId;
-    client.onResult = (r) => {
-      if (!memberId || r.memberId !== memberId) return;
-      recordMatchAnswer(`ma-${roomId}-${r.questionId}-${r.playerId}`, {
-        playerId: r.playerId,
-        questionId: r.questionId,
-        subject: r.subject as Subject,
-        kind: r.kind,
-        correct: r.correct,
-        interrupt: r.interrupt,
-        latencyMs: r.latencyMs,
-        overridden: false,
-        t: r.t,
-      });
-    };
     client.onMatchOver = (m) => {
       const mine = m.players.find((p) => p.memberId === memberId);
-      if (mine) {
-        if (m.format === 'teams' && m.game) applyOnlineGame(m.game as GameRecord, mine.playerId, m.heard);
-        else markSeen([mine.playerId], m.heard);
-      }
-      // The game record the server wrote comes down with the next sync.
-      void syncNow();
+      if (mine) markSeen([mine.playerId], m.heard);
+      void refreshNow();
     };
     return () => {
-      client.onResult = null;
       client.onMatchOver = null;
     };
-  }, [client, roomId, snapshot.you?.memberId]);
+  }, [client, snapshot.you?.memberId]);
 
   // Refusals ("It isn't your turn to answer") show for a few seconds.
   useEffect(() => {
@@ -305,11 +286,15 @@ function Finished({ gameId, hasGame, format }: { gameId?: string; hasGame: boole
     <Notice kind="good">
       {format === 'teams' ? (
         <>
-          The match is over. It counts like any practice game: in Stats, and misses go to each player's review queue.{' '}
-          {gameId && hasGame ? <a href={href(`/games/${gameId}`)}>See the game summary</a> : 'The game summary appears here once this device has synced.'}
+          The match is over. Each player's answers go to their account, and misses to their review queue.{' '}
+          {gameId && hasGame ? (
+            <a href={href(`/games/${gameId}`)}>See the game summary</a>
+          ) : gameId ? (
+            "When everyone in it is on the host's team, it counts in Team stats too; its summary shows up here in a moment."
+          ) : null}
         </>
       ) : (
-        <>The game is over. Each player's answers count as practice, and misses go to their review queue.</>
+        <>The game is over. Each player's answers go to their account, and misses to their review queue.</>
       )}{' '}
       <a href={href('/online')}>Back to online play</a>
     </Notice>
@@ -322,7 +307,6 @@ function Lobby({ client, snapshot, isHost, roomId }: { client: RoomClient; snaps
   const myId = snapshot.you?.memberId;
   const me = snapshot.members.find((m) => m.memberId === myId);
   const [copied, setCopied] = useState(false);
-  const linked = !!snapshot.you?.playerId;
   const bySide = (s: Side | null) => snapshot.members.filter((m) => m.side === s);
   const players = snapshot.members.filter((m) => m.side !== null);
   const ready = match.format === 'teams' ? bySide('A').length > 0 && bySide('B').length > 0 : players.length > 0;
@@ -350,12 +334,6 @@ function Lobby({ client, snapshot, isHost, roomId }: { client: RoomClient; snaps
             ? 'Team vs team under the NSB rules, with no reader: the questions appear on everyone’s screen at the same pace, you buzz and type your answer, and the answer checker judges it. On bonuses the captain types the team’s answer after you confer. Close calls go to the other side to accept or reject.'
             : 'Everyone for themselves, toss-ups only: +4 for a right answer, −4 for a wrong interrupt. One buzz each per toss-up. Close calls go to the other players to accept or reject.'}
         </p>
-        {!linked && (
-          <Notice kind="warn">
-            Your sign-in isn’t linked to a player on the roster, so your results would have nowhere to go: you can watch, but not play. Pick your
-            name on the <a href={href('/team')}>Team</a> page first.
-          </Notice>
-        )}
         <div className="row">
           <button
             className="btn btn-small"
@@ -365,7 +343,7 @@ function Lobby({ client, snapshot, isHost, roomId }: { client: RoomClient; snaps
           >
             {copied ? 'Link copied' : 'Copy the invite link'}
           </button>
-          <span className="small muted">Teammates can also find this match under Play online.</span>
+          <span className="small muted">Anyone signed in can join with the link; your teammates also find it under Play online.</span>
         </div>
       </div>
 
@@ -376,7 +354,7 @@ function Lobby({ client, snapshot, isHost, roomId }: { client: RoomClient; snaps
               <h3 style={{ margin: 0 }}>{view.teams[i]}</h3>
               <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>{bySide(s).map((m) => person(m, s))}</ul>
               {bySide(s).length === 0 && <p className="small muted" style={{ margin: 0 }}>Nobody yet.</p>}
-              <button className="btn" disabled={!linked || me?.side === s} onClick={() => client.chooseSide(s)}>
+              <button className="btn" disabled={me?.side === s} onClick={() => client.chooseSide(s)}>
                 {me?.side === s ? 'You are on this side' : `Join ${view.teams[i]}`}
               </button>
             </div>
@@ -394,7 +372,7 @@ function Lobby({ client, snapshot, isHost, roomId }: { client: RoomClient; snaps
             ))}
           </ul>
           {me?.side ? null : (
-            <button className="btn btn-primary" disabled={!linked} onClick={() => client.chooseSide('A')}>
+            <button className="btn btn-primary" onClick={() => client.chooseSide('A')}>
               Join the game
             </button>
           )}

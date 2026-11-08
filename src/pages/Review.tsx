@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { PlayerSwitch, useCurrentPlayer } from '../components/PlayerSwitch';
 import { AiExplain } from '../components/AiExplain';
 import { AnswerBox, Choices, Concepts, ImportNotes, QuestionMeta, RichText } from '../components/QuestionView';
 import { Countdown, LoadError, Loading, Notice, PageHeader, Stat, useTicker } from '../components/ui';
@@ -25,7 +24,7 @@ import { playerCardSummary, playerDue } from '../lib/learning';
 import { loadQuestions } from '../lib/library';
 import { buildReading } from '../lib/reading';
 import { href } from '../lib/router';
-import { completeAssignment, completePlanItem, getData, recordReview, removeFromReview, retentionAt, useData } from '../lib/store';
+import { completeAssignment, completePlanItem, getData, recordReview, removeFromReview, retentionAt, useCurrentPlayer, useData } from '../lib/store';
 
 const DAY_MS = 86_400_000;
 /** After buzzing in a review, the same answer timer as solo practice: start within 2 s, finish within 5 s. */
@@ -409,17 +408,6 @@ export function ReviewPage({ query }: { query: URLSearchParams }) {
     if (playerCardSummary(getData(), player.id).dueToday === 0) completeAssignment(assignment, player.id);
   }, [assignment, player, stage, data.cards]);
 
-  if (!data.team) {
-    return (
-      <div className="container narrow">
-        <PageHeader title="Review" />
-        <Notice>
-          Review brings back the questions each player missed or answered slowly. Set up your team first on the <a href={href('/team')}>Team</a> page.
-        </Notice>
-      </div>
-    );
-  }
-
   const start = async () => {
     if (!player) return;
     setStage('loading');
@@ -490,7 +478,6 @@ export function ReviewPage({ query }: { query: URLSearchParams }) {
           </p>
         </details>
       </PageHeader>
-      <PlayerSwitch />
       {error && <LoadError error={error} />}
       {stage === 'loading' && <Loading what="Loading your review questions" />}
 
@@ -517,7 +504,7 @@ export function ReviewPage({ query }: { query: URLSearchParams }) {
           </div>
           {summary.suspended > 0 && (
             <p className="small muted">
-              {summary.suspended} paused while a problem report on the question is open (see <a href={href('/data')}>Data</a>).
+              {summary.suspended} paused while your problem report on the question is open (see <a href={href('/account')}>Account</a>).
             </p>
           )}
           <div className="row" style={{ marginTop: '1rem' }}>
@@ -545,7 +532,6 @@ export function ReviewPage({ query }: { query: URLSearchParams }) {
           <CardList playerId={player.id} />
         </>
       )}
-      {!player && <Notice>Choose your name to see your review queue.</Notice>}
     </div>
   );
 }

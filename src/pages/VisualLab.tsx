@@ -655,8 +655,8 @@ function TeamVisuals() {
         </div>
       </div>
       <p className="small muted" style={{ margin: 0 }}>
-        Figures and photos your team collects (from your invitationals, textbooks you may use, or drawn yourselves) as visual bonuses. They sync
-        to every member, appear in the Visual lab and in Finals visual scrimmages, and are never published.
+        Figures and photos your team collects (from your invitationals, textbooks you may use, or drawn yourselves) as visual bonuses. They are
+        shared with every member, appear in the Visual lab and in Finals visual scrimmages, and are never published.
       </p>
       {message && <Notice>{message}</Notice>}
       {editing && <VisualEditor editing={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}

@@ -1,16 +1,16 @@
 import { useMemo, useState } from 'react';
 import { useTip } from '../components/VizTip';
-import { PlayerSwitch, useCurrentPlayer } from '../components/PlayerSwitch';
-import { Notice, PageHeader, Stat } from '../components/ui';
+import { Loading, Notice, PageHeader, Stat } from '../components/ui';
 import type { Observation, PlayerModel, SkillLine } from '../core/mastery';
 import { endOfPracticeDay } from '../core/review';
-import { CORE_SUBJECTS, SUBJECT_LABELS } from '../core/schema';
+import { CORE_SUBJECTS, SUBJECT_LABELS, type Player } from '../core/schema';
 import { topicById, topicName, topicsForSubject } from '../core/taxonomy';
 import { percent } from '../lib/format';
 import { playerCardSummary, playerDue, playerObservations, usePlayerModel } from '../lib/learning';
 import { catalogById, useCatalog } from '../lib/library';
 import { href } from '../lib/router';
-import { useData, type AppData } from '../lib/store';
+import { useCurrentPlayer, useData, type AppData } from '../lib/store';
+import { useTeamData } from '../lib/teammates';
 
 const DAY_MS = 86_400_000;
 /** Topics need this many answers before they are colored: fewer is mostly guesswork. */
@@ -140,7 +140,7 @@ function SubjectBars({ model }: { model: PlayerModel }) {
 
 /* ---------------- topic heat map ---------------- */
 
-function TopicHeatMap({ model, due }: { model: PlayerModel; due: Map<string, number> }) {
+function TopicHeatMap({ model, due, own }: { model: PlayerModel; due: Map<string, number>; own: boolean }) {
   const { ref, node, handlers } = useTip();
   const [table, setTable] = useState(false);
   const rows = CORE_SUBJECTS.map((s) => ({ subject: s, topics: topicsForSubject(s) }));
@@ -153,8 +153,9 @@ function TopicHeatMap({ model, due }: { model: PlayerModel; due: Map<string, num
         </button>
       </div>
       <figcaption className="small muted" style={{ margin: '0.25rem 0 0' }}>
-        Each topic colored by mastery, once you have answered at least {MIN_ANSWERS} of its questions. Darker is stronger. Due reviews are marked.
-        Select a topic to drill it.
+        {own
+          ? `Each topic colored by mastery, once you have answered at least ${MIN_ANSWERS} of its questions. Darker is stronger. Due reviews are marked. Select a topic to drill it.`
+          : `Each topic colored by mastery, once at least ${MIN_ANSWERS} of its questions have been answered. Darker is stronger. Select a topic to drill it yourself.`}
       </figcaption>
       {table ? (
         <div className="table-wrap" style={{ marginTop: '0.75rem' }}>
@@ -167,7 +168,7 @@ function TopicHeatMap({ model, due }: { model: PlayerModel; due: Map<string, num
                 <th className="num">Answers</th>
                 <th className="num">Right</th>
                 <th className="num">Median buzz</th>
-                <th className="num">Due reviews</th>
+                {own && <th className="num">Due reviews</th>}
               </tr>
             </thead>
             <tbody>
@@ -182,7 +183,7 @@ function TopicHeatMap({ model, due }: { model: PlayerModel; due: Map<string, num
                       <td className="num">{line?.n ?? 0}</td>
                       <td className="num">{line ? line.correct : 0}</td>
                       <td className="num">{seconds(line?.medianBuzzMs ?? null)}</td>
-                      <td className="num">{due.get(t.id) ?? 0}</td>
+                      {own && <td className="num">{due.get(t.id) ?? 0}</td>}
                     </tr>
                   );
                 }),
@@ -257,7 +258,7 @@ interface DayCount {
   reviews: number;
 }
 
-/** Every practice and game answer (not just first answers) and every review, per practice day. */
+/** Every practice and game answer (not just first answers) and, for the player's own page, every review, per practice day. */
 function activity(data: AppData, playerId: string, answers: Observation[], days: number, now: number): DayCount[] {
   const end = endOfPracticeDay(now);
   const out: DayCount[] = Array.from({ length: days }, (_, i) => ({ start: end - (days - i) * DAY_MS, answers: 0, right: 0, reviews: 0 }));
@@ -282,7 +283,7 @@ function activity(data: AppData, playerId: string, answers: Observation[], days:
 
 const dayLabel = (t: number) => new Date(t + DAY_MS / 2).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 
-function ActivityChart({ days }: { days: DayCount[] }) {
+function ActivityChart({ days, own }: { days: DayCount[]; own: boolean }) {
   const { ref, node, handlers } = useTip();
   const [table, setTable] = useState(false);
   const max = Math.max(1, ...days.map((d) => d.answers + d.reviews));
@@ -297,7 +298,7 @@ function ActivityChart({ days }: { days: DayCount[] }) {
         </button>
       </div>
       <figcaption className="small muted" style={{ margin: '0.25rem 0 0.75rem' }}>
-        Practice answers and reviews over the last {days.length} days · practiced on {active} of them.
+        {own ? 'Practice answers and reviews' : 'Practice and game answers'} over the last {days.length} days · practiced on {active} of them.
       </figcaption>
       {table ? (
         <div className="table-wrap">
@@ -367,37 +368,24 @@ function ActivityChart({ days }: { days: DayCount[] }) {
 
 /* ---------------- page ---------------- */
 
-export function ProgressPage({ query }: { query?: URLSearchParams }) {
-  const data = useData();
-  const current = useCurrentPlayer();
-  // A captain can open any player's progress from Team stats without switching who is practicing on this device.
-  const asked = query?.get('player');
-  const player = (asked && data.players.find((p) => p.id === asked)) || current;
+/**
+ * One player's progress. The player's own page adds their review queue; a teammate's page (open to the whole team,
+ * from Team stats) shows answers only, since review queues stay private.
+ */
+function ProgressView({ data, player, own }: { data: AppData; player: Player; own: boolean }) {
   const catalog = useCatalog();
   const catalogMap = useMemo(() => (catalog.data ? catalogById(catalog.data) : null), [catalog.data]);
-  const model = usePlayerModel(data, player?.id ?? null, catalogMap);
-
-  if (!data.team) {
-    return (
-      <div className="container narrow">
-        <PageHeader title="My progress" />
-        <Notice>
-          Set up your team first on the <a href={href('/team')}>Team</a> page.
-        </Notice>
-      </div>
-    );
-  }
-
+  const model = usePlayerModel(data, player.id, catalogMap);
   const now = Date.now();
-  const summary = player ? playerCardSummary(data, player.id, now) : null;
+  const summary = own ? playerCardSummary(data, player.id, now) : null;
   const obs = model?.observations ?? [];
   const recent = obs.filter((o) => o.t >= now - 30 * DAY_MS);
   const buzzes = obs.filter((o) => o.correct && !o.interrupt && o.kind === 'tossup' && o.latencyMs !== null).map((o) => o.latencyMs!);
   const medianBuzz = buzzes.length ? [...buzzes].sort((a, b) => a - b)[Math.floor(buzzes.length / 2)] : null;
 
-  // Due reviews per topic, for the map.
+  // Due reviews per topic, for the map (the player's own only).
   const due = new Map<string, number>();
-  if (player && catalogMap) {
+  if (own && catalogMap) {
     for (const c of playerDue(data, player.id, now)) {
       const topic = catalogMap.get(c.questionId)?.[2];
       if (topic) due.set(topic, (due.get(topic) ?? 0) + 1);
@@ -414,66 +402,87 @@ export function ProgressPage({ query }: { query?: URLSearchParams }) {
           .slice(0, 3)
       : [];
 
+  if (!model) return null;
+  return (
+    <div className="stack" style={{ marginTop: '1rem' }}>
+      <div className="grid">
+        <Stat label="Questions answered" value={obs.length.toLocaleString()} hint="First answers in practice and games" />
+        <Stat label="Right in the last 30 days" value={percent(recent.filter((o) => o.correct).length, recent.length)} hint={`${recent.length} answers`} />
+        <Stat label="Median buzz on right answers" value={seconds(medianBuzz)} hint="After the reading ends" />
+        {summary && (
+          <Stat label="Review queue" value={`${summary.dueToday} due`} hint={`${summary.total} in the queue${summary.learned ? `, ${summary.learned} learned` : ''}`} />
+        )}
+      </div>
+      {obs.length === 0 ? (
+        own ? (
+          <Notice>
+            No answers yet. Start with today's plan on the <a href={href('/today')}>Today</a> page, a <a href={href('/try')}>practice round</a>, or a game
+            in the <a href={href('/reader')}>Reader console</a>.
+          </Notice>
+        ) : (
+          <Notice>{player.name} has no answers yet.</Notice>
+        )
+      ) : (
+        <>
+          {focus.length > 0 && (
+            <section className="card">
+              <h2>{own ? 'Focus next' : `Where ${player.name} could focus`}</h2>
+              <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
+                {focus.map((f) => {
+                  const subject = topicById(f.id)?.subject;
+                  return (
+                    <li key={f.id}>
+                      <a href={href(`/try?mode=subject&subject=${subject ?? 'biology'}&topic=${encodeURIComponent(f.id)}&count=8`)}>{topicName(f.id)}</a>{' '}
+                      <span className="muted small">
+                        {percent(f.line.p, 1)} mastery from {f.line.n} answers · {catalog.data!.topicCounts[f.id] ?? 0} questions in the library
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
+          <SubjectBars model={model} />
+          {catalog.data ? <TopicHeatMap model={model} due={due} own={own} /> : <p className="muted small">Loading the subject map…</p>}
+          <ActivityChart days={activity(own ? data : { ...data, cards: {} }, player.id, playerObservations(data, player.id, null), 28, now)} own={own} />
+        </>
+      )}
+    </div>
+  );
+}
+
+/** A teammate's progress: their answers come from their visible collections. */
+function TeammateProgress({ player }: { player: Player }) {
+  const { data, loading, error } = useTeamData();
+  return (
+    <>
+      <p>
+        Showing <strong>{player.name}</strong>'s progress, from their practice and game answers (their review queue is private).{' '}
+        <a href={href('/progress')}>Back to yours</a>
+      </p>
+      {error && <Notice kind="error">{error}</Notice>}
+      {loading ? <Loading what={`Loading ${player.name}'s practice`} /> : <ProgressView data={data} player={player} own={false} />}
+    </>
+  );
+}
+
+export function ProgressPage({ query }: { query?: URLSearchParams }) {
+  const data = useData();
+  const current = useCurrentPlayer();
+  // Anyone on the team can open a teammate's progress from Team stats: the whole team sees stats.
+  const asked = query?.get('player');
+  const teammate = asked && asked !== current?.id ? (data.players.find((p) => p.id === asked) ?? null) : null;
+
   return (
     <div className="container">
-      <PageHeader title="My progress">
+      <PageHeader title={teammate ? `${teammate.name}'s progress` : 'My progress'}>
         <p>
-          How you are doing by subject and topic, from your practice rounds, drills and Reader console games. Reviews are tracked separately: they
-          show memory of a question you have already seen.
+          How {teammate ? 'they are' : 'you are'} doing by subject and topic, from practice rounds, drills, Reader console games and online matches.
+          Reviews are tracked separately: they show memory of a question already seen.
         </p>
       </PageHeader>
-      {player && current?.id !== player.id ? (
-        <p>
-          Showing <strong>{player.name}</strong>'s progress. <a href={href('/progress')}>Back to {current ? 'yours' : 'the player picker'}</a>
-        </p>
-      ) : (
-        <PlayerSwitch label="Progress for" />
-      )}
-      {!player && <Notice>Choose your name to see your progress.</Notice>}
-      {player && model && summary && (
-        <div className="stack" style={{ marginTop: '1rem' }}>
-          <div className="grid">
-            <Stat label="Questions answered" value={obs.length.toLocaleString()} hint="First answers in practice and games" />
-            <Stat label="Right in the last 30 days" value={percent(recent.filter((o) => o.correct).length, recent.length)} hint={`${recent.length} answers`} />
-            <Stat label="Median buzz on right answers" value={seconds(medianBuzz)} hint="After the reading ends" />
-            <Stat
-              label="Review queue"
-              value={`${summary.dueToday} due`}
-              hint={`${summary.total} in the queue${summary.learned ? `, ${summary.learned} learned` : ''}`}
-            />
-          </div>
-          {obs.length === 0 ? (
-            <Notice>
-              No answers yet. Start with today's plan on the <a href={href('/today')}>Today</a> page, a <a href={href('/try')}>practice round</a>, or a
-              game in the <a href={href('/reader')}>Reader console</a>.
-            </Notice>
-          ) : (
-            <>
-              {focus.length > 0 && (
-                <section className="card">
-                  <h2>Focus next</h2>
-                  <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
-                    {focus.map((f) => {
-                      const subject = topicById(f.id)?.subject;
-                      return (
-                        <li key={f.id}>
-                          <a href={href(`/try?mode=subject&subject=${subject ?? 'biology'}&topic=${encodeURIComponent(f.id)}&count=8`)}>{topicName(f.id)}</a>{' '}
-                          <span className="muted small">
-                            {percent(f.line.p, 1)} mastery from {f.line.n} answers · {catalog.data!.topicCounts[f.id] ?? 0} questions in the library
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </section>
-              )}
-              <SubjectBars model={model} />
-              {catalog.data ? <TopicHeatMap model={model} due={due} /> : <p className="muted small">Loading the subject map…</p>}
-              <ActivityChart days={activity(data, player.id, playerObservations(data, player.id, null), 28, now)} />
-            </>
-          )}
-        </div>
-      )}
+      {asked && !teammate && asked !== current?.id && <Notice>That player is not on your team (any more).</Notice>}
+      {teammate ? <TeammateProgress player={teammate} /> : current && <ProgressView data={data} player={current} own />}
     </div>
   );
 }

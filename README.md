@@ -2,9 +2,10 @@
 
 A free, team-first practice website for the National Science Bowl (NSB). This covers **Phases 0–4** of the plan in
 [`docs/PROPOSAL.md`](docs/PROPOSAL.md): every practice is logged, every player opens **Today** to find a daily plan and a review queue
-built from their own misses, and the captain runs the team from the **Team** pages (lineups, assignments, scrimmages), with an optional
-team server for sharing between devices and remote rooms, Finals preparation (visual bonuses, Finals formats, tiebreakers), a
-question-writing studio, reading paths, middle school mode, and an open format ([NSB-JSON](docs/NSB-JSON.md)) for questions and games.
+built from their own misses, and the captain runs the team from the **Team** pages (lineups, assignments, scrimmages). Players sign in
+to an account, so their practice follows them to any device ([`docs/ACCOUNTS.md`](docs/ACCOUNTS.md)); there are remote rooms and online
+matches, Finals preparation (visual bonuses, Finals formats, tiebreakers), a question-writing studio, reading paths, middle school mode,
+and an open format ([NSB-JSON](docs/NSB-JSON.md)) for questions and games.
 Any school's team can use it; [`MAINTAINING.md`](MAINTAINING.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md) are for whoever looks after it next.
 
 Rebound is an unofficial study tool, not affiliated with or endorsed by the U.S. Department of Energy (DOE).
@@ -13,31 +14,32 @@ Rebound is an unofficial study tool, not affiliated with or endorsed by the U.S.
 
 | Page | What it does |
 |---|---|
-| **Home**, **Try a round** | Public pages. Anyone can play a DOE round solo without an account. |
-| **Today** | Each player picks their name and gets a plan for 15, 30 or 45 minutes: due reviews (capped at a third of the time), a targeted drill on a weak, high-frequency topic in their primary subject, one in their secondary subject, and a mixed round. Every item says why it is there. The mix shifts toward timed mixed rounds in the last three weeks before the team's next competition (set on the Team page). |
-| **Review** | Timed review of misses, wrong interrupts, slow correct answers, toss-ups nobody got in your subject, and bonuses your team missed, from solo practice and Reader console games. Scheduled with FSRS ([ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs)) in whole days; the grade comes from correctness and buzz time. New misses join a few a day (wrong interrupts and the player's own subjects first), and a question answered right after a month's gap is learned and leaves the queue, so the daily load stays steady. Cards pause while their question has an open problem report. |
+| **Home**, **Try a round**, **Library**, **Rules** | Public pages. Anyone can play a DOE round solo or browse the library without an account; signed out, nothing is saved. |
+| **Sign in**, **Account** | Sign in with Google (Google Identity Services) or, where the server turns it on, a one-time link by email; no passwords. A new account asks for a name and the confirmation that the person is 13 or older. Account: name, subjects and graduation year, settings, your problem reports, **Download my data**, **Delete my account**, sign out. |
+| **Today** | Each signed-in player gets a plan for 15, 30 or 45 minutes: due reviews (capped at a third of the time), a targeted drill on a weak, high-frequency topic in their primary subject, one in their secondary subject, and a mixed round. Every item says why it is there. The mix shifts toward timed mixed rounds in the last three weeks before the team's next competition (set on the Team page). |
+| **Review** | Timed review of misses, wrong interrupts, slow correct answers, toss-ups nobody got in your subject, and bonuses your team missed, from solo practice, Reader console games and online matches (the server writes each player's game answers to their account, and their device turns new answers into review cards when it next loads). Scheduled with FSRS ([ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs)) in whole days; the grade comes from correctness and buzz time. New misses join a few a day (wrong interrupts and the player's own subjects first), and a question answered right after a month's gap is learned and leaves the queue, so the daily load stays steady. Cards pause while their question has an open problem report. |
 | **Practice → drills** | Subject and topic drills drawn from the whole library (fresh questions first, aimed at a 70–85% expected success rate, from a few set files), an option to add Energy questions that test the subject, and balanced mixed toss-ups. A level filter follows the difficulty ladder: early regional (DOE rounds 1–10), late regional (rounds 11–17), and invitational or nationals-level from the team's uploaded packets. |
-| **Practice → Visual lab** | Practice for the Finals' visual bonuses: a figure, the question read at the player's pace, then 30 seconds (the warning at 25) to begin the answer. Figures come from generators that draw graphs, circuits, diagrams and charts in all six subjects with exactly computed answers; from 70 public-domain photos (cloud genera, rocks, minerals, planets, moons, galaxy types, volcano types, animal phyla, bacteria shapes, energy technologies); and from the team's own visual questions (a picture shrunk in the browser, synced to every member, importable and exportable as JSON). |
+| **Practice → Visual lab** | Practice for the Finals' visual bonuses: a figure, the question read at the player's pace, then 30 seconds (the warning at 25) to begin the answer. Figures come from generators that draw graphs, circuits, diagrams and charts in all six subjects with exactly computed answers; from 70 public-domain photos (cloud genera, rocks, minerals, planets, moons, galaxy types, volcano types, animal phyla, bacteria shapes, energy technologies); and from the team's own visual questions (a picture shrunk in the browser, shared with every member, importable and exportable as JSON). |
 | **Practice → Tiebreakers** | The two tie formats: a 5 toss-up tiebreaker game in the Reader console (no bonuses, no clock, repeated while tied, Rule 6-4), a shootout drill on your own (five fully read toss-ups, +1 / −1 / 0, Rule 9-1), and a shootout console for three or more groups that says who advances and how a remaining tie is broken. |
-| **My progress** | Mastery by subject and a topic map (difficulty-adjusted ratings from each player's first answers), buzz speed, the review queue and daily activity, each with a table view. |
+| **My progress** | Mastery by subject and a topic map (difficulty-adjusted ratings from each player's first answers), buzz speed, the review queue and daily activity, each with a table view. Teammates can open each other's from Team stats (answers only: review queues stay private). |
 | **Team → Lineups** | Estimated points per regional round for any four players, subject by subject (difficulty-adjusted results, buzz speed, overlapping knowledge, a reference opponent); the five best foursomes; a suggested alternate; saved lineups, one set for the next competition. |
-| **Team** | Create the team and add players, each with a primary and secondary subject and a graduation year; who covers what, and who takes over each subject next season; the team's best player in every topic, with gaps counted; the chosen lineup; sharing (below). |
+| **Team** | Create a team (you become its captain) or join one with the invite link a coach or captain posts; a player is on one team at a time, and their own practice goes with them when they leave. Members with roles (coach, captain, member), sub-teams, subjects and graduation years (leaders edit anyone's, players their own subjects); the invite link (leaders; a new one stops the old); leave, or delete the team (leaders). Who covers what, and who takes over each subject next season; the team's best player in every topic, with gaps counted; the next competition and its lineup. |
 | **Team → Write** | The question-writing studio. Write in DOE's format with checks as you type: four parallel choices with exactly one right (each other choice is run through the answer checker), answers in simplest form (Rule A-2), units the checker knows, a cited source, toss-up length, brackets and voice. It warns about near-duplicates of library questions (64-bit SimHash fingerprints of every library question) and of the team's own. The subject's owner, or a captain or coach, approves each question (never its author) or sends it back with a note; approved questions become team packets or download as Word or NSB-JSON. |
-| **AI help (optional)** | Off unless the team server has a Claude API key ([`server/README.md`](server/README.md)). Write → **Draft from a passage**: an AI model drafts questions from a passage a member pastes and cites, and a second call answers each draft without its key, so a wrong answer line shows. Under answers in drills and reviews, **Explain this answer**. On concept cards, **Draft from a passage**. Everything AI-made is labeled, needs a person's approval, and stays in the team's practice; each team has a daily limit. |
-| **Team → Assignments** | Drills, team packets, concept cards or clearing reviews, for chosen players with a due date; they show on each player's Today page and tick off when done; drills suggested from coverage gaps. |
+| **AI help (optional)** | Off unless the server has a Claude API key ([`server/README.md`](server/README.md)); for any signed-in player, with or without a team. Write → **Draft from a passage**: an AI model drafts questions from a passage a member pastes and cites, and a second call answers each draft without its key, so a wrong answer line shows. Under answers in drills and reviews, **Explain this answer**. On concept cards, **Draft from a passage**. Everything AI-made is labeled, needs a person's approval, and stays in the team's practice; each player has a daily limit. |
+| **Team → Assignments** | Coaches and captains give drills, team packets, concept cards or clearing reviews, for chosen players with a due date; they show on each player's Today page and tick off when done; drills suggested from coverage gaps. |
 | **Library → Team packets** | Scrimmages of questions nobody in the room has heard (balanced like a DOE round, at a chosen level of the difficulty ladder) for a format: a regional round, a Finals round, a Finals visual bonus round (a share of the bonuses replaced by visual bonuses in the same subject, spread through the round) or a tiebreaker drill; packets uploaded as PDF (parsed in the browser) or NSB-JSON, with a review screen and a difficulty level. Print (including a visual bonus worksheet for the players), download as Word (a moderator's copy or the players' copy, laid out like DOE's packets) or NSB-JSON, play in the Reader console or solo. Uploaded packets stay in the team's data. |
 | **Learn** | Concept cards written by the team (summary, key facts, traps, sources), reviewed by a second player, next to the library questions that test each concept; concept drills; unread cards join the daily plan. **Reading paths**: each subject's topics in prerequisite order, each with what NSB asks about, free readings (OpenStax textbooks, U.S. agency pages) and a five-question check from DOE questions on the topic. |
-| **Team stats** | Adds rebounds, net points per interrupt, small samples marked, and a week-by-week trend of practice games. |
-| **Play online** | Members play each other from their own devices with no reader: a team match under the NSB rules (toss-ups, bonuses the captain answers after the side confers, the game clock) or an everyone-for-themselves toss-up game. The team server reveals each question at the same pace on every screen, times the buzzers fairly, and judges typed answers with the answer checker; close calls go to the opponents to accept or reject. Team matches count like any game in Stats and review queues; free-for-all answers count as practice. |
-| **Sharing and remote rooms** | Optional, through the team server ([`docs/SERVER.md`](docs/SERVER.md)), open to any school's team: the captain shares the team, players join with a link, a display name and a PIN, and everything syncs between devices. The Reader console can open a remote room: players buzz from their own devices (server-timed, with latency correction), see the question read aloud or revealed in step, confer in a private team channel during bonuses, and their captain answers in an answer box. |
-| **Offline** | A service worker keeps the site available offline after the first visit; **Data → Save all questions for offline use** stores the whole library and the Visual lab's photos (about 12 MB) for drills, reviews and visual practice without a connection. The site can be installed to a home screen. |
+| **Team stats** | Everyone on the team sees everyone's: the team's games plus each member's practice answers. Adds rebounds, net points per interrupt, small samples marked, and a week-by-week trend of practice games. |
+| **Play online** | Any signed-in players (teammates, or anyone with the link) play each other from their own devices with no reader: a team match under the NSB rules (toss-ups, bonuses the captain answers after the side confers, the game clock) or an everyone-for-themselves toss-up game. The team server reveals each question at the same pace on every screen, times the buzzers fairly, and judges typed answers with the answer checker; close calls go to the opponents to accept or reject. Every player's answers go to their own account (and their review queue); a team match whose players are all on the host's team also counts in that team's Stats. |
+| **Accounts and remote rooms** | Everything lives on Rebound's server ([`docs/ACCOUNTS.md`](docs/ACCOUNTS.md), [`docs/SERVER.md`](docs/SERVER.md)), open to any school's team: each player's practice with their account, the team's games and shared work with the team. Changes go up within a moment, and teammates' changes show up within 30 seconds. The Reader console can open a remote room: players buzz from their own devices (server-timed, with latency correction), see the question read aloud or revealed in step, confer in a private team channel during bonuses, and their captain answers in an answer box. |
+| **Connection** | Practice needs a connection: nothing about a player is kept on the device. If a change cannot be saved, a banner says "Not connected: your last change was not saved" and Rebound keeps trying until it is. A service worker caches the site and the public question files so pages open quickly, and the site can be installed to a home screen. |
 | **Play → Reader console** | Run an in-person practice game from one laptop: question in large type, answer for the reader, 5 s / 20 s answer clocks, game clock, two-tap scoring under the **2027 rules** (interrupts, blurts, rebounds, double interrupts, halves, tiebreakers), undo, keyboard shortcuts. Every toss-up is logged. Presets for regionals, virtual events and the Finals: 10-minute halves, and visual bonus rounds with 12-minute halves and 30-second visual bonuses whose figure can be projected full screen (remote players see it on their own screens). |
 | **Game summary**, **Stats** | Per-player toss-up accuracy by subject, interrupts, points given away, median buzz time, bonus conversion; CSV export, and the whole game as an NSB-JSON game log that other tools can re-score. |
 | **Practice (solo)** | Questions appear letter by letter at a moderator's pace (the words-per-minute setting is converted to letters using the library's average word length, about 6 characters with the space); the word still appearing is shown fainter. Buzz with Space, start typing within 2 seconds (NSB's natural pause) and finish within 5, and the answer checker grades it (close calls go to "your call"). The answer timer can be switched off. |
 | **Library** | Every DOE high school and middle school sample set, by set and round, the team's level first; searchable, printable, downloadable as Word or NSB-JSON, with links to the original PDFs and a "report a problem" button. Shows which questions the team has already heard, and lets a player add any question to their review queue. **Library → Topics** shows how often each topic comes up in each subject. |
-| **Middle school mode** | Choose middle school when setting up the team: drills, daily plans, scrimmages, the Learn pages and offline downloads then use DOE's 16 middle school sets and its middle school national sample rounds (nationals-level on the difficulty ladder). High school sets stay available for practicing up. Games follow the same 2027 rules; the rules page notes the one difference, how Finals round robin ties are broken (Rules 10-2 and 10-3). |
+| **Middle school mode** | Choose middle school when creating the team: drills, daily plans, scrimmages and the Learn pages then use DOE's 16 middle school sets and its middle school national sample rounds (nationals-level on the difficulty ladder). High school sets stay available for practicing up. Games follow the same 2027 rules; the rules page notes the one difference, how Finals round robin ties are broken (Rules 10-2 and 10-3). |
 | **NSB rules at a glance** | Generated from the same rule presets the game engine uses. |
-| **For coaches**, **For school IT staff**, **Privacy, terms and credits**, **Data and backup** | Setup guide, network needs, credits, export/import/delete. |
+| **For coaches**, **For school IT staff**, **Privacy, terms and credits** | Setup guide, what is stored where, network needs (including Google's sign-in from accounts.google.com), the 13+ rule, credits. |
 
 The library holds **23,720 questions**: 12,024 from all 17 DOE high school sample sets (257 rounds) and 11,696 from the
 16 middle school sets plus DOE's middle school sample rounds from a national event (250 rounds). About 2.5% of the high
@@ -45,9 +47,11 @@ school questions and a similar share of the middle school ones, nearly all in th
 example, an equation that was an image in the PDF); the site says so and links to the original page, and solo practice
 skips the few whose answers could not be read.
 
-All team data is stored **in the browser on the device** (IndexedDB), and the site works without any server. A team that
-shares itself through the team server also keeps a copy there, and every signed-in device syncs with it. Use
-**Data → Download backup file** regularly either way; the file can be loaded on another device.
+Each player's practice (answers, review queue, daily plan, heard questions, reads, finished assignments, problem reports)
+is stored **with their account on Rebound's server**, and each team's shared work (games, lineups, assignments, packets,
+written questions, concept cards, visual questions) **with the team** ([`docs/ACCOUNTS.md`](docs/ACCOUNTS.md)). The
+browser keeps only the session token. Teammates see each other's stats; review queues and plans stay private. Any player
+can download everything in their account, or delete it, from the Account page.
 
 ## Run it locally
 
@@ -57,6 +61,11 @@ Requires Node.js 20 or newer.
 npm install
 npm run dev        # http://localhost:5173
 ```
+
+The public pages work on their own. Signing in needs Rebound's server: run it locally ([`server/README.md`](server/README.md);
+with `DEV_EMAIL_OUTBOX = "1"` the sign-in page offers an email link and a **Sign in (development)** button, and no email is
+sent), then either start the site with `VITE_SERVER_URL=http://localhost:8787 npm run dev` or enter the server's address on
+the sign-in page.
 
 Other commands:
 
@@ -87,13 +96,15 @@ on every push to `main`.
 **Netlify or Cloudflare Pages (free tiers):** connect the repository, set the build command to `npm run build` and the
 output folder to `dist`.
 
-**The team server (optional).** Sharing a team between devices and remote rooms need the team server in `server/`: a
-Cloudflare Worker with one Durable Object per team, which fits Cloudflare's free plan. [`server/README.md`](server/README.md)
+**The server.** Accounts, teams, practice and rooms live on Rebound's server in `server/`: a Cloudflare Worker with Durable
+Objects for users, teams and rooms, which fits Cloudflare's free plan. [`server/README.md`](server/README.md)
 covers testing it locally (no account needed), the API token and deploying it with Wrangler. The site finds the server
 through `VITE_SERVER_URL` at build time; for the published site it belongs in the build step of
 `.github/workflows/deploy.yml`. A build without it (such as `npm run build` on your own computer) asks for the server
-address on the Share and Join forms instead, so local tests never touch the real server. A site hosted somewhere other than `https://jiazegao.github.io` must also be added to
-`ALLOWED_ORIGINS` in `server/wrangler.toml`.
+address on the sign-in page instead, so local tests never touch the real server. A site hosted somewhere other than `https://jiazegao.github.io` must also be added to
+`ALLOWED_ORIGINS` in `server/wrangler.toml`. Google sign-in uses the OAuth client id the server reports (`GOOGLE_CLIENT_ID`);
+the site's origin must be listed under the client's *Authorized JavaScript origins* in Google Cloud Console, or Google's
+button refuses to sign in.
 
 Before giving members the link, go through the launch checklist in the proposal ([Section 12](docs/PROPOSAL.md)): a team- or club-owned
 domain the coach can access, the privacy and credits pages, asking school IT to allow the domain (the site's
@@ -175,17 +186,22 @@ src/core/            framework-free logic, unit-tested
   lineup.ts          the lineup model: expected points per round for any four players
   scrimmage.ts       scrimmage packets from questions nobody in the room has heard
   assignments.ts     assignment due dates, progress and suggestions from coverage gaps
-  sync.ts            the sync contract (collections, who may write what, merges), shared with the server
+  accounts.ts        the account contract (user and team collections, what teammates see, who writes what, merges, API
+                     shapes), shared with the server
+  games.ts           game records, practice answers and turning them into per-player outcomes, shared with the server
+  sync.ts            record merges (heard ledgers, review cards) and fingerprints, used by accounts.ts
   levels.ts          the difficulty ladder: DOE round levels and the levels of uploaded packets
   rules/shootout.ts  the round robin shootout (+1 / −1 / 0) and who advances
   visual/            generated visual bonuses: templates, SVG building blocks, exact answers, the photo-set questions
   studio.ts          the writing studio: checks on a draft, who may review, near-duplicates, packets from approved questions
   fingerprint.ts     SimHash fingerprints and word overlap for duplicate search
   readingPaths.ts    each subject's reading path: topics in prerequisite order, focus lines and free readings
-src/lib/             browser-side helpers: store (IndexedDB), library loading, learning glue, offline, stats, router, sound,
-                     team-server sync (sync.ts, syncRecords.ts), the remote room client (room.ts), visual questions
-                     (visuals.ts: generated, photo set and team-made; visualPool.ts; images.ts), Word export (docx.ts,
-                     loaded only when someone downloads), AI help requests (ai.ts)
+src/lib/             browser-side helpers: the in-memory store (store.ts), the server's API (api.ts), sign-in and account
+                     actions (account.ts), loading, sending and refreshing data (cloud.ts, with the record mapping in
+                     records.ts), teammates' practice for team pages (teammates.ts), library loading, learning glue,
+                     stats, router, sound, the service worker (offline.ts), the remote room client (room.ts), visual
+                     questions (visuals.ts: generated, photo set and team-made; visualPool.ts; images.ts), Word export
+                     (docx.ts, loaded only when someone downloads), AI help requests (ai.ts)
 src/pages/           one file per page
 src/components/      shared UI pieces
 src/sw/              the service worker template (vite.config.ts fills in the file list at build time)
@@ -195,9 +211,10 @@ scripts/rules/       the fall check for next season's rulebook (run by .github/w
 scripts/icons/       renders the app icons with Playwright
 scripts/visual/      builds the public-domain photo set for the Visual lab
 e2e/                 browser smoke test, the two-browser team-server test, and a small fixture question set
-server/              the team server: Cloudflare Worker, Durable Object per team, the sign-up registry, optional AI help,
+server/              the server: Cloudflare Worker, Durable Objects for users, teams and rooms, sign-in, optional AI help,
                      tests (see server/README.md)
-docs/                PROPOSAL.md (the plan), SERVER.md (the team server's API), NSB-JSON.md (the open format)
+docs/                PROPOSAL.md (the plan), ACCOUNTS.md (accounts, teams and the API), SERVER.md (rooms and matches),
+                     NSB-JSON.md (the open format)
 schema/              nsb-json.schema.json (JSON Schema for NSB-JSON files)
 ```
 
@@ -210,11 +227,13 @@ Key design choices:
   and the "seen" ledger are all derived by replaying them, so undo is exact and old games can be re-scored.
 - **The answer checker never guesses.** It returns `correct`, `incorrect` or `review`; near-miss spellings and equal
   values written in a different form come back as `review` and the player decides.
-- **Pages only talk to `src/lib/store.ts`.** Sync watches the store and turns it into records (`src/lib/syncRecords.ts`),
-  so sharing a team needed no changes to the pages beyond the sharing screens.
-- **The site never depends on the server.** Without a connection everything works locally and sync catches up later. The
-  synced collections, who may write what and how concurrent edits merge are defined once in `src/core/sync.ts`, which the
-  server imports too, so the two cannot disagree.
+- **Pages only talk to `src/lib/store.ts`.** `update()` is the one way to change data; `cloud.ts` watches the store, works
+  out which records a change touched (`records.ts`) and sends the player's own to their account and the team's to the
+  team. A teammate's practice is never sent: only the signed-in player's records are ever produced.
+- **Practice lives on the server.** Nothing about a player is kept on the device: the site loads everything at sign-in,
+  sends each change within a moment, refreshes every 30 seconds, and says plainly when a change could not be saved. The
+  collections, what teammates may see, who may write what and how concurrent edits merge are defined once in
+  `src/core/accounts.ts`, which the server imports too, so the two cannot disagree.
 - **Learning logic is pure.** Review scheduling, mastery, plans and drill choice are plain functions of the saved data, so
   they are unit-tested and can move to a server unchanged. Mastery counts only a player's first answer to each question;
   reviews measure memory of a question already seen, so they feed the schedule, not the mastery map.

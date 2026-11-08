@@ -256,7 +256,7 @@ export function readNsbJson(text: string): NsbJsonDoc {
   if (!isObject(data)) fail('This is not an NSB-JSON file: it should hold one JSON object that starts with "nsbjson" and "kind".');
 
   if (!('nsbjson' in data)) {
-    if (data.app === 'rebound' && isObject(data.data)) fail('This is a Rebound backup file, not an NSB-JSON file. Load it on the Data page instead.');
+    if (data.app === 'rebound' && isObject(data.data)) fail('This is a backup file from an older version of Rebound, not an NSB-JSON file. Rebound keeps practice in accounts now and does not load backups.');
     if (Array.isArray(data.rounds)) {
       fail('This looks like a question set without the NSB-JSON header. Add "nsbjson": "1.0" and "kind": "question-set" around it, or upload it as a packet.');
     }

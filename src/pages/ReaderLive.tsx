@@ -161,6 +161,8 @@ function ReaderGame({ game, round }: { game: GameRecord; round: Round }) {
         return;
       }
       appendEvent(game.id, event);
+      // Only the reader's own ledger is written here (if they play); for everyone else, questions read in the team's
+      // games count as heard through the game record itself (learning.heardLedger).
       markSeen([...next.lineups[0], ...next.lineups[1]], questionIdsRead(next, game));
       if (next.phase === 'game_over') finishGame(game.id, next.scores);
       else if (game.status === 'finished') {
@@ -635,7 +637,7 @@ export function ReaderLive({ gameId }: { gameId: string }) {
     return (
       <div className="container narrow">
         <Notice kind="error">
-          Game not found. It may have been deleted, or it was played in another browser. <a href={href('/reader')}>Start a new game</a>.
+          Game not found. It may have been deleted. <a href={href('/reader')}>Start a new game</a>.
         </Notice>
       </div>
     );

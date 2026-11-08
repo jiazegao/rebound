@@ -4,10 +4,11 @@ import { currentPresets, DEFAULT_PRESET_ID } from '../core/rules/presets';
 import { LETTERS, type Question, type Round } from '../core/schema';
 import { dateTimeText } from '../lib/format';
 import { setGroups, setLabel, useAsync, useIndex, useSet, useTeamLevel } from '../lib/library';
+import { createRoom, listRooms, type RoomListing } from '../lib/api';
+import { useSession } from '../lib/cloud';
 import { packetRound, packetRounds } from '../lib/packets';
 import { href, navigate } from '../lib/router';
 import { useData } from '../lib/store';
-import { createRoom, currentSession, listRooms, useSync, type RoomListing } from '../lib/sync';
 
 /** The most questions one match carries (server/src/match.ts, MAX_MATCH_PAIRS). */
 const MAX_PAIRS = 40;
@@ -42,6 +43,7 @@ function matchPairs(round: Round) {
     .map((p) => (playable(p.bonus) ? { tossup: forMatch(p.tossup), bonus: forMatch(p.bonus) } : { tossup: forMatch(p.tossup) }));
 }
 
+/** Open games made by members of the player's team (anyone else's need their link). */
 function RoomList() {
   const [refresh, setRefresh] = useState(0);
   const rooms = useAsync(`rooms-${refresh}`, listRooms);
@@ -65,7 +67,7 @@ function RoomList() {
         </button>
       </div>
       {rooms.loading && !rooms.data && <Loading what="Looking for games" />}
-      {rooms.error && <LoadError error={rooms.error} />}
+      {rooms.error && <Notice kind="error">{rooms.error.message}</Notice>}
       {rooms.data && open.length === 0 && <p className="small muted" style={{ margin: 0 }}>No games open right now. Start one below.</p>}
       {open.length > 0 && (
         <div className="table-wrap">
@@ -324,10 +326,9 @@ function NewMatch() {
   );
 }
 
-/** Play online: join an open game, or start an online match with no reader. */
+/** Play online: join an open game, or start an online match with no reader. Open to any signed-in player. */
 export function OnlinePage() {
-  useSync();
-  const session = currentSession();
+  const session = useSession();
   return (
     <div className="container">
       <p className="small">
@@ -335,21 +336,22 @@ export function OnlinePage() {
       </p>
       <PageHeader title="Play online">
         <p>
-          Play teammates from your own devices. In an online match nobody needs to read: Rebound reveals each question, times the buzzers fairly,
-          and judges typed answers. For a game with a reader, open a Reader console game and share its room.
+          Play from your own devices: teammates, or anyone with a Rebound account you send the link to. In an online match nobody needs to read:
+          Rebound reveals each question, times the buzzers fairly, and judges typed answers. Everyone's answers go to their own account. For a game
+          with a reader, open a Reader console game and share its room.
         </p>
       </PageHeader>
-      {!session ? (
-        <Notice>
-          Online play goes through your team’s shared space. Share your team (<a href={href('/team')}>Team</a> → Share with your team), or open
-          the join link your captain posted, then come back here.
-        </Notice>
-      ) : (
-        <div className="stack">
+      <div className="stack">
+        {session.team ? (
           <RoomList />
-          <NewMatch />
-        </div>
-      )}
+        ) : (
+          <Notice>
+            Games your teammates open show up here once you are on a team (<a href={href('/team')}>Team</a>). Without one, start a match below and
+            send its link, or open a link someone sent you.
+          </Notice>
+        )}
+        <NewMatch />
+      </div>
     </div>
   );
 }

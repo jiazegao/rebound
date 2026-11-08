@@ -1,11 +1,13 @@
 /**
- * Optional AI help from the team server (server/src/ai.ts): question drafts from a cited passage, answer
- * explanations and concept card drafts. It shows up only when this device is connected to a shared team whose
- * server has AI turned on. Everything it returns is a draft for a person to check, and stays labeled.
+ * Optional AI help from Rebound's server (server/src/ai.ts): question drafts from a cited passage, answer
+ * explanations and concept card drafts. It shows up for a signed-in player (with or without a team) when the server
+ * has AI turned on, within a daily number of calls per player. Everything it returns is a draft for a person to
+ * check, and stays labeled.
  */
 import { useEffect, useSyncExternalStore } from 'react';
 import type { CoreSubject, Letter, Question } from '../core/schema';
-import { currentSession, teamRequest, useSync } from './sync';
+import { getAiStatus, postAiCard, postAiDraft, postAiExplain, serverUrl } from './api';
+import { getSession, useSession } from './cloud';
 
 export const MIN_PASSAGE_CHARS = 200;
 export const MAX_PASSAGE_CHARS = 12_000;
@@ -78,30 +80,30 @@ function emit(next: typeof snapshot) {
 }
 
 function sessionKey(): string {
-  const s = currentSession();
-  return s ? `${s.serverUrl}|${s.teamId}|${s.member.id}` : '';
+  const user = getSession().user;
+  return user ? `${serverUrl()}|${user.id}` : '';
 }
 
-/** Asks the server once per session (again a minute after a failure, for a device that was offline). */
+/** Asks the server once per session (again a minute after a failure, in case the connection was down). */
 async function ensureStatus(key: string): Promise<void> {
   if (loadingKey === key) return;
   if (snapshot.key === key && (snapshot.value?.enabled || Date.now() - snapshot.at < 60_000)) return;
   loadingKey = key;
   try {
-    const value = await teamRequest<AiStatus>('/ai');
+    const value = await getAiStatus();
     if (sessionKey() === key) emit({ key, value: { ...value, enabled: value.enabled === true }, at: Date.now() });
   } catch {
-    // An older server without AI routes, or no connection: no AI help for now.
+    // A server without AI routes, or no connection: no AI help for now.
     if (sessionKey() === key) emit({ key, value: { enabled: false }, at: Date.now() });
   } finally {
     if (loadingKey === key) loadingKey = null;
   }
 }
 
-/** AI help for this device's shared team, or null while unknown or when the device is not connected. */
+/** AI help for the signed-in player, or null while unknown or when signed out. */
 export function useAiStatus(): AiStatus | null {
-  const { state } = useSync();
-  const key = state ? `${state.serverUrl}|${state.teamId}|${state.member.id}` : '';
+  const user = useSession().user;
+  const key = user ? `${serverUrl()}|${user.id}` : '';
   const snap = useSyncExternalStore(
     (l) => {
       listeners.add(l);
@@ -126,8 +128,6 @@ export function usageText(s: AiStatus | null): string {
 
 /* ---------------- requests ---------------- */
 
-const post = (body: unknown): RequestInit => ({ method: 'POST', body: JSON.stringify(body) });
-
 export async function aiDraftQuestions(input: {
   passage: string;
   source: string;
@@ -135,7 +135,7 @@ export async function aiDraftQuestions(input: {
   kind: 'tossup' | 'bonus' | 'either';
   count: number;
 }): Promise<{ drafts: AiDraft[]; model: string }> {
-  const res = await teamRequest<{ drafts: AiDraft[]; model: string } & Usage>('/ai/draft', post(input));
+  const res = await postAiDraft(input);
   noteUsage(res);
   return res;
 }
@@ -148,13 +148,13 @@ export function explainable(q: Pick<Question, 'answer' | 'answerLetter' | 'figur
 export async function aiExplain(q: Pick<Question, 'subject' | 'stem' | 'choices' | 'answer' | 'answerLetter' | 'format'>): Promise<AiExplanation> {
   const answer = q.format === 'multiple_choice' && q.answerLetter ? `${q.answerLetter}) ${q.answer}` : q.answer;
   const choices = q.format === 'multiple_choice' && q.choices ? { choices: q.choices } : {};
-  const res = await teamRequest<AiExplanation & Usage>('/ai/explain', post({ subject: q.subject, stem: q.stem, ...choices, answer }));
+  const res = await postAiExplain({ subject: q.subject, stem: q.stem, ...choices, answer });
   noteUsage(res);
   return res;
 }
 
 export async function aiDraftCard(input: { concept: string; passage: string; source: string }): Promise<{ card: AiCardDraft; model: string }> {
-  const res = await teamRequest<{ card: AiCardDraft; model: string } & Usage>('/ai/card', post(input));
+  const res = await postAiCard(input);
   noteUsage(res);
   return res;
 }

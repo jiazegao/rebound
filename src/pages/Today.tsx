@@ -1,6 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { PlayerSwitch, useCurrentPlayer } from '../components/PlayerSwitch';
-import { Notice, PageHeader } from '../components/ui';
+import { PageHeader } from '../components/ui';
 import { MINUTES_PER_REVIEW, PLAN_LENGTHS, type DayPlan, type PlanItem } from '../core/plan';
 import { daysUntil, PHASE_TEXT, practiceDay, seasonPhase } from '../core/review';
 import { topicName } from '../core/taxonomy';
@@ -11,9 +10,9 @@ import { catalogById, useCatalog, useConceptIndex } from '../lib/library';
 import { assignmentMinutes, openAssignments, type OpenAssignment } from '../core/assignments';
 import type { Assignment } from '../core/schema';
 import { href } from '../lib/router';
-import { savePlan, updateSettings, useData } from '../lib/store';
-
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+import { isLeader } from '../core/accounts';
+import { useSession } from '../lib/cloud';
+import { savePlan, updateSettings, useCurrentPlayer, useData } from '../lib/store';
 
 function itemLink(item: PlanItem, plan: DayPlan, reviewCards: number): string {
   const tail = `plan=${encodeURIComponent(item.id)}&day=${plan.day}`;
@@ -96,7 +95,7 @@ function PlanList({ player }: { player: Player }) {
     <section aria-labelledby="plan-heading">
       <div className="row spread" style={{ marginTop: '1rem' }}>
         <h2 id="plan-heading" style={{ margin: 0 }}>
-          {player.name}'s plan · about {Math.round(total)} minutes
+          Your plan · about {Math.round(total)} minutes
         </h2>
         <div className="row" role="group" aria-label="Time today">
           <span className="small muted">Time today:</span>
@@ -107,9 +106,7 @@ function PlanList({ player }: { player: Player }) {
           ))}
         </div>
       </div>
-      {catalog.error && (
-        <p className="small muted">The topic list could not be loaded (offline?), so drills cover whole subjects today.</p>
-      )}
+      {catalog.error && <p className="small muted">The topic list could not be loaded, so drills cover whole subjects today.</p>}
       <ol className="plan">
         {plan.items.map((item, index) => {
           const isReview = item.kind === 'review';
@@ -157,58 +154,38 @@ function PlanList({ player }: { player: Player }) {
         })}
       </ol>
       <p className="small muted">
-        Plans use {player.name}'s subjects (set on the <a href={href('/team')}>Team</a> page), how they have been doing by topic (see{' '}
-        <a href={href('/progress')}>My progress</a>) and the team's next competition. Practice that is not in the plan counts too.
+        Plans use your subjects (set on your <a href={href('/account')}>Account</a> page), how you have been doing by topic (see{' '}
+        <a href={href('/progress')}>My progress</a>){data.team ? " and the team's next competition" : ''}. Practice that is not in the plan counts
+        too.
       </p>
-    </section>
-  );
-}
-
-function ChoosePlayer({ players }: { players: Player[] }) {
-  return (
-    <section className="card">
-      <h2>Who's practicing?</h2>
-      <div className="row">
-        {players.map((p) => (
-          <button key={p.id} className="btn btn-big" onClick={() => updateSettings({ soloPlayerId: p.id })}>
-            {p.name}
-          </button>
-        ))}
-      </div>
-      <p className="small muted">Rebound remembers the choice on this device. Switch any time at the top of this page.</p>
     </section>
   );
 }
 
 export function TodayPage() {
   const data = useData();
+  const session = useSession();
   const player = useCurrentPlayer();
-  if (!data.team) {
-    return (
-      <div className="container narrow">
-        <PageHeader title="Today" />
-        <Notice>
-          Set up your team first: <a href={href('/team')}>Team</a>. Or <a href={href('/try')}>try a round</a> on your own.
-        </Notice>
-      </div>
-    );
-  }
-
   const now = Date.now();
+  const team = data.team;
   const unfinished = data.games.filter((g) => g.status === 'in_progress');
   const recent = data.games.filter((g) => g.status === 'finished').slice(0, 5);
-  const activePlayers = data.players.filter((p) => p.active);
-  const exportedRecently = data.lastExportAt !== null && now - new Date(data.lastExportAt).getTime() < WEEK_MS;
-  const event = data.team.nextEvent;
+  const event = team?.nextEvent;
   const days = daysUntil(event?.date, now);
   const phase = seasonPhase(now, event?.date);
-  const checklist = [
-    { done: activePlayers.length >= 2, text: 'Add your players', link: '/team' },
-    { done: data.players.some((p) => p.primarySubject), text: 'Give players their subjects', link: '/team' },
-    { done: days !== null, text: 'Enter your next competition date', link: '/team' },
-    { done: data.games.some((g) => g.status === 'finished'), text: 'Run a practice game in the Reader console', link: '/reader' },
-    { done: exportedRecently, text: 'Export a backup this week', link: '/data' },
-  ];
+  const leader = isLeader(session.team?.you.role);
+  const checklist = team
+    ? [
+        { done: !!player?.primarySubject, text: 'Choose your subjects', link: '/account' },
+        { done: data.players.length >= 2, text: leader ? 'Invite your players' : 'See who is on the team', link: '/team' },
+        { done: days !== null, text: leader ? 'Enter your next competition date' : 'Check the next competition date', link: '/team' },
+        { done: data.games.some((g) => g.status === 'finished'), text: 'Run a practice game in the Reader console', link: '/reader' },
+      ]
+    : [
+        { done: !!player?.primarySubject, text: 'Choose your subjects', link: '/account' },
+        { done: data.attempts.length > 0, text: 'Play a practice round', link: '/try' },
+        { done: false, text: 'Create or join your team', link: '/team' },
+      ];
   const dateLabel = new Date(`${practiceDay(now)}T12:00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
 
   return (
@@ -225,27 +202,16 @@ export function TodayPage() {
         </p>
       </PageHeader>
 
-      {activePlayers.length === 0 ? (
-        <Notice>
-          Add your players on the <a href={href('/team')}>Team</a> page, and each one gets a daily plan here.
-        </Notice>
-      ) : player ? (
-        <>
-          <div className="row spread">
-            <PlayerSwitch label="Practicing as" />
-          </div>
-          <PlanList player={player} />
-        </>
-      ) : (
-        <ChoosePlayer players={activePlayers} />
-      )}
+      {player && <PlanList player={player} />}
 
-      <h2 style={{ marginTop: '2rem' }}>Team</h2>
+      <h2 style={{ marginTop: '2rem' }}>{team ? 'Team' : 'More practice'}</h2>
       <div className="grid">
-        <a className="card" href={href('/reader')}>
-          <h3>Run a practice game</h3>
-          <p className="muted">Open the Reader console on the practice laptop. Every toss-up is logged, and misses go to review.</p>
-        </a>
+        {team && (
+          <a className="card" href={href('/reader')}>
+            <h3>Run a practice game</h3>
+            <p className="muted">Open the Reader console on the practice laptop. Every toss-up is logged, and misses go to each player's review.</p>
+          </a>
+        )}
         <a className="card" href={href('/try')}>
           <h3>Practice solo</h3>
           <p className="muted">Whole rounds, subject and topic drills, or mixed toss-ups at reading speed.</p>
@@ -254,10 +220,17 @@ export function TodayPage() {
           <h3>My progress</h3>
           <p className="muted">Mastery by subject and topic, buzz speed, and what is coming up for review.</p>
         </a>
-        <a className="card" href={href('/stats')}>
-          <h3>Team stats</h3>
-          <p className="muted">Accuracy by subject, interrupts and buzz speed for each player.</p>
-        </a>
+        {team ? (
+          <a className="card" href={href('/stats')}>
+            <h3>Team stats</h3>
+            <p className="muted">Accuracy by subject, interrupts and buzz speed for each player.</p>
+          </a>
+        ) : (
+          <a className="card" href={href('/online')}>
+            <h3>Play online</h3>
+            <p className="muted">Matches against other players from their own devices, with no reader needed.</p>
+          </a>
+        )}
       </div>
 
       {unfinished.length > 0 && (
@@ -269,7 +242,7 @@ export function TodayPage() {
                 <a href={href(`/reader/${g.id}`)}>
                   {g.teams[0].name} vs {g.teams[1].name} · {g.packet.setTitle}, {g.packet.roundLabel}
                 </a>{' '}
-                <span className="muted small">started {dateTimeText(g.createdAt)}. Finish it so misses reach the review queue.</span>
+                <span className="muted small">started {dateTimeText(g.createdAt)}. Finish it so misses reach everyone's review queue.</span>
               </li>
             ))}
           </ul>
@@ -291,23 +264,25 @@ export function TodayPage() {
             ))}
           </ul>
         </section>
-        <section className="card">
-          <h2>Recent games</h2>
-          {recent.length === 0 ? (
-            <p className="muted">No finished games yet.</p>
-          ) : (
-            <ul style={{ paddingLeft: '1.1rem', margin: 0 }}>
-              {recent.map((g) => (
-                <li key={g.id}>
-                  <a href={href(`/games/${g.id}`)}>
-                    {g.teams[0].name} {g.finalScores?.[0]} – {g.finalScores?.[1]} {g.teams[1].name}
-                  </a>{' '}
-                  <span className="muted small">{dateTimeText(g.updatedAt)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        {team && (
+          <section className="card">
+            <h2>Recent games</h2>
+            {recent.length === 0 ? (
+              <p className="muted">No finished games yet.</p>
+            ) : (
+              <ul style={{ paddingLeft: '1.1rem', margin: 0 }}>
+                {recent.map((g) => (
+                  <li key={g.id}>
+                    <a href={href(`/games/${g.id}`)}>
+                      {g.teams[0].name} {g.finalScores?.[0]} – {g.finalScores?.[1]} {g.teams[1].name}
+                    </a>{' '}
+                    <span className="muted small">{dateTimeText(g.updatedAt)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
       </div>
     </div>
   );

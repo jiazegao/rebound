@@ -1,11 +1,12 @@
 import { PageHeader } from '../components/ui';
+import { serverUrl } from '../lib/api';
 import { href } from '../lib/router';
-import { SERVER_URL } from '../lib/sync';
 
-/** The team server's host name, when this build has one. */
+/** The server's host name, when this build has one (or one was entered on the sign-in page). */
 function serverHost(): string | null {
   try {
-    return SERVER_URL ? new URL(SERVER_URL).host : null;
+    const url = serverUrl();
+    return url ? new URL(url).host : null;
   } catch {
     return null;
   }
@@ -21,59 +22,73 @@ export function CoachesPage() {
       <h2>Set up in five minutes</h2>
       <ol>
         <li>
-          Open Rebound on the laptop you use at practice and go to <a href={href('/team')}>Team</a>. Name the team and choose high school or
-          middle school.
-        </li>
-        <li>Add your players. First names or nicknames are enough. Give each player a primary and a secondary subject if you assign them.</li>
-        <li>
-          Go to <a href={href('/reader')}>Play</a>, pick a DOE round and the rules to use (DOE Regional 2027 is the default), and put players on
-          two teams.
+          <a href={href('/signin')}>Sign in</a> with your Google account, then go to <a href={href('/team')}>Team</a> and create the team: its name, and
+          high school or middle school. You become its captain.
         </li>
         <li>
-          The reader taps <strong>Done reading</strong> after each question, taps the player who buzzed, then the result. Clocks, interrupts,
-          rebounds and bonuses are handled automatically.
+          Post the team's invite link where only your players see it (your team chat). Each player signs in with their own account and opens the
+          link to join. You can make a new link at any time; the old one stops working.
         </li>
         <li>
-          After practice, <a href={href('/stats')}>Stats</a> shows each player's accuracy by subject, interrupts and buzz speed. Export a backup
-          from <a href={href('/data')}>Data</a> each week.
+          On the Team page, make your assistant coaches coaches and your captains captains, and give players their sub-team and subjects (players
+          can set their own subjects too).
         </li>
         <li>
-          Enter your next competition on the <a href={href('/team')}>Team</a> page. Each player then picks their name on{' '}
-          <a href={href('/today')}>Today</a> and gets a daily plan: reviews of what they missed in games and drills, a topic drill in their
-          subject, and a mixed round. Misses from Reader console games reach the review queue when the game ends.
+          Go to <a href={href('/reader')}>Play</a>, pick a DOE round and the rules to use (DOE Regional 2027 is the default), and put players on two
+          teams. The reader taps <strong>Done reading</strong> after each question, taps the player who buzzed, then the result. Clocks,
+          interrupts, rebounds and bonuses are handled automatically.
+        </li>
+        <li>
+          When the game ends, each player's answers go to their own account: misses and slow buzzes reach their review queue, and{' '}
+          <a href={href('/stats')}>Stats</a> shows each player's accuracy by subject, interrupts and buzz speed.
+        </li>
+        <li>
+          Enter your next competition on the Team page. Each player gets a daily plan on <a href={href('/today')}>Today</a>: reviews of what they
+          missed, a topic drill in their subject and a mixed round, shifting toward game play as the date gets close.
         </li>
       </ol>
 
       <h2>What Rebound stores, and where</h2>
       <ul>
         <li>
-          The team name, players' display names, roles and subjects, the next competition date, practice game records, solo answers, which
-          questions each player has heard, review schedules, daily plans, lineups, assignments, team packets, concept cards, and visual
-          questions the team adds (with their pictures).
+          <strong>Each player's account:</strong> their email address, name, when they confirmed they are 13 or older, subjects, graduation year and
+          settings, and all their practice: practice and game answers, review queue, daily plan, which questions they have heard and which concept
+          cards and readings they have read, finished assignments and problem reports. It belongs to the player and goes with them if they change
+          teams.
         </li>
         <li>
-          All of it is kept in this browser on this device. Anyone using the same browser profile on this device can see it. You can download it
-          as a file, load it on another device, or delete it, from the <a href={href('/data')}>Data</a> page.
+          <strong>The team:</strong> its name, level and next competition, its members and their roles, the invite link, Reader console games,
+          lineups, assignments, packets, written questions, concept cards and visual questions.
         </li>
         <li>
-          If you share the team (<a href={href('/team')}>Team</a> → Share with your team), a copy is also kept on Rebound's team server, which runs
-          on Cloudflare, so players' devices stay in sync. Only the team's signed-in members can read it. Members sign in with a display name and
-          a PIN, which is stored only as a salted hash; there are no emails or passwords to reset. The coach or captain can remove members, and can
-          delete the whole team from the server on the Team page.
+          All of it is kept on Rebound's server, which runs on Cloudflare, not on the device: a laptop or phone keeps only a sign-in token. So
+          practice needs an internet connection, and a shared laptop shows nothing of anyone's once they sign out.
         </li>
-        <li>Remote rooms pass the game, the buzzes and the team channel through the same server while the room is open; team-channel messages are not saved.</li>
         <li>
-          If the team server has AI help turned on, a passage a member pastes for AI drafts, or a question a member asks to have explained, is sent
-          to Anthropic's Claude API to write the reply. Nothing else about the team is sent, and every AI draft stays labeled and needs a person's
-          approval.
+          Teammates see each other's stats: game results, accuracy and practice activity. A player's review queue and daily plan stay private.
+          Coaches and captains manage members and roles, set lineups and assignments, and can delete the team (members keep their own practice).
+        </li>
+        <li>
+          Any player can download everything in their account, or delete the account and everything in it, from their{' '}
+          <a href={href('/account')}>Account</a> page.
+        </li>
+        <li>
+          Online matches are open to anyone signed in who has the link, whatever their team. Each player's results go to their own account; a team
+          match whose players are all on the host's team also counts in that team's stats. Team-channel messages are not saved.
+        </li>
+        <li>
+          If the server has AI help turned on, a passage a player pastes for AI drafts, or a question they ask to have explained, is sent to
+          Anthropic's Claude API to write the reply. Nothing else is sent, and every AI draft stays labeled and needs a person's approval.
         </li>
         <li>No ads, no analytics, no tracking.</li>
       </ul>
 
       <h2>Students under 13</h2>
       <p>
-        If middle school students use Rebound, keep accounts coach-managed and use first names or nicknames only, and check your school's
-        policy on student data in web apps.
+        Rebound accounts are for people 13 and older, as U.S. law on children's privacy (COPPA) expects of a free service like this; personal
+        Google accounts start at 13 too. Everyone confirms their age when they create an account. Middle school players who are younger can still
+        practice with <a href={href('/try')}>Try a round</a> and the <a href={href('/library')}>Library</a> without an account (nothing is saved),
+        and coaches can print any round from the Library to read aloud.
       </p>
     </div>
   );
@@ -87,26 +102,36 @@ export function ItStaffPage() {
         <p>What Rebound needs from the network, so it works on school devices.</p>
       </PageHeader>
       <ul>
-        <li>Rebound is a static website. Allow the domain it is hosted on; it loads all of its pages, code and question files from there.</li>
-        <li>It loads HTML, JavaScript, CSS and JSON question files from its own domain over standard HTTPS.</li>
+        <li>Rebound is a static website. Allow the domain it is hosted on; it loads all of its pages, code and question files from there over HTTPS.</li>
         <li>
-          Teams that share their data between devices, or play in remote rooms, also connect to Rebound's team server
+          Players sign in to an account. Everything about their practice is kept on Rebound's server
           {host ? (
             <>
               {' '}
               at <code>{host}</code>
             </>
           ) : (
-            ' (the address the team enters when it shares)'
+            ''
           )}
-          : HTTPS requests to keep data in sync, and a secure WebSocket (<code>wss://</code>) during a remote room. Allow that host, including
-          WebSocket upgrades. Without it, everything else still works on each device.
+          : HTTPS requests for accounts and practice, and a secure WebSocket (<code>wss://</code>) during remote rooms and online matches. Allow that
+          host, including WebSocket upgrades. Practice needs this connection: nothing about a player is kept on the device.
         </li>
-        <li>It uses no cookies, ads, analytics or trackers, and makes no requests to any other domain.</li>
-        <li>Team data is stored in the browser's IndexedDB on the device and, for teams that share, on the team server.</li>
         <li>
-          A service worker keeps a copy of the site (and, if a player chooses, the question files and the Visual lab's photos, about 12 MB) in the browser's Cache Storage
-          so practice works offline. It only caches files from Rebound's own domain.
+          Sign-in uses Google: the sign-in page (and only that page) loads Google's sign-in script from <code>accounts.google.com</code> and opens
+          Google's sign-in window from there. Allow <code>accounts.google.com</code>. With school Google accounts, your Google Workspace admin may
+          need to allow Rebound as a third-party app before students can sign in (Google can block sign-in to apps an admin has not allowed,
+          especially for student accounts).
+        </li>
+        <li>
+          Where the server has email sign-in turned on, players can instead get a one-time sign-in link by email; it comes from Rebound's email
+          sender (through Resend), so make sure those messages are not filtered out.
+        </li>
+        <li>
+          On the device, Rebound keeps only a sign-in token (in the browser's local storage). It uses no cookies, ads, analytics or trackers.
+        </li>
+        <li>
+          A service worker keeps a copy of the site and of the public question files in the browser's Cache Storage, so pages open quickly. It only
+          caches files from Rebound's own domain, never a player's data.
         </li>
         <li>
           Links to official DOE question PDFs and rulebooks point to <code>science.osti.gov</code>; allowing it lets students open the originals.
@@ -138,20 +163,36 @@ export function AboutPage() {
 
       <h2>Privacy</h2>
       <p>
-        Rebound keeps your team's data in your browser on your device. If your captain shares the team, a copy is also kept on Rebound's team
-        server (on Cloudflare), where only the team's signed-in members can read it. Members sign in with a display name and a PIN; the PIN is
-        stored only as a salted hash, and no emails are collected. To slow down PIN guessing, the server counts sign-ins from each network
-        address over the past hour, and to keep sign-up open to every school it counts new teams from each address per day, keeping only a
-        salted hash of the address in both cases. The coach or captain can delete the team from the server on the Team page.
+        You can try a round and use the Library without an account; then Rebound saves nothing. To keep your practice, you sign in. Accounts are
+        for people 13 and older, and you confirm your age when you create one.
       </p>
       <p>
-        AI help is optional and off unless the team server has it turned on. When a member asks for AI drafts or an explanation, the passage or
-        question they send goes to Anthropic's Claude API to write the reply; nothing else about the team is sent.
+        <strong>Signing in.</strong> With Google, the sign-in page loads Google's sign-in script from accounts.google.com, and Google gives Rebound
+        a signed note with your email address (which Google has checked), your Google account number and your Google profile name. Rebound keeps
+        the email address and the account number to recognize you, uses the name you choose, and never sees your Google password. With an email
+        link (where it is turned on), Rebound sends a one-time link to your address through its email service, Resend. There are no Rebound
+        passwords. To slow down abuse, the server counts sign-in emails and new accounts from each network address for a day.
       </p>
       <p>
-        Rebound does not use cookies for tracking, has no analytics and shows no ads. You can export or delete everything on a device from the{' '}
-        <a href={href('/data')}>Data</a> page.
+        <strong>What is kept.</strong> Your account holds your email address, the name you choose, when you confirmed you are 13 or older, your
+        subjects, graduation year and settings, and your practice: answers, review queue, daily plan, which questions you have heard and what you
+        have read, finished assignments and problem reports. It is kept on Rebound's server (on Cloudflare), not on your device; your device keeps
+        only a sign-in token, which lasts until you sign out or for 180 days of not using it. Your team keeps its own games, lineups, packets and
+        other shared work, and a copy of each member's name and subjects.
       </p>
+      <p>
+        <strong>Who sees it.</strong> Your teammates see your stats (game results, accuracy and practice activity), and you see theirs. Your review
+        queue and daily plan are only yours. In an online match, the other players see your name and your answers during the match.
+      </p>
+      <p>
+        <strong>Your choices.</strong> On your <a href={href('/account')}>Account</a> page you can download everything in your account, or delete
+        the account and everything in it. Leaving a team takes your practice history with you. Coaches and captains can delete their team.
+      </p>
+      <p>
+        AI help is optional and off unless the server has it turned on. When you ask for AI drafts or an explanation, the passage or question you
+        send goes to Anthropic's Claude API to write the reply; nothing else about you is sent.
+      </p>
+      <p>Rebound does not use cookies for tracking, has no analytics and shows no ads.</p>
 
       <h2>Terms</h2>
       <p>
@@ -159,9 +200,10 @@ export function AboutPage() {
         officials have the final say.
       </p>
       <p>
-        Any school's Science Bowl team may use Rebound and its team server. Use first names or nicknames, keep to practice material, and keep a
-        backup from the <a href={href('/data')}>Data</a> page: the server is run by volunteers and may be unavailable at times. Questions a team
-        writes or uploads stay with that team; do not upload packets you are not allowed to share. Teams that abuse the service may be removed.
+        Any school's Science Bowl team may use Rebound and its server, with accounts for people 13 and older. Keep to practice material, and
+        download your data from your Account page now and then: the server is run by volunteers and may be unavailable at times. Questions a team
+        writes or uploads stay with that team; do not upload packets you are not allowed to share. Accounts or teams that abuse the service may be
+        removed.
       </p>
       <p>
         AI-drafted questions and explanations can be wrong. They are labeled, need a person's approval, and are for a team's own practice, not

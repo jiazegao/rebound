@@ -1,152 +1,129 @@
-import { useEffect, useState } from 'react';
-import { Notice, PageHeader } from '../components/ui';
-import { downloadFile } from '../lib/format';
+import { useState } from 'react';
+import { signInHref } from '../components/Gates';
+import { Loading, Notice, PageHeader } from '../components/ui';
+import { joinTeam } from '../lib/account';
+import { parseJoinCode } from '../lib/api';
+import { useSession } from '../lib/cloud';
 import { href, navigate } from '../lib/router';
-import { exportData, updateSettings, useData } from '../lib/store';
-import { choosePlayer, joinSharedTeam, parseJoinCode, SERVER_URL, useSync } from '../lib/sync';
 
+/** An invite link (`#/join/<code>`): sign in first, then join (leaving the current team, if any, after a confirmation). */
 export function JoinPage({ code }: { code?: string }) {
-  const data = useData();
-  const { state } = useSync();
-  const [joinCode, setJoinCode] = useState(code ?? '');
-  const [name, setName] = useState('');
-  const [pin, setPin] = useState('');
-  const [server, setServer] = useState(SERVER_URL);
+  const session = useSession();
+  const [pasted, setPasted] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [joined, setJoined] = useState<{ name: string; pin: string } | null>(null);
+  const parsed = code ? parseJoinCode(code) : null;
 
-  const parsed = parseJoinCode(joinCode);
-  const hasLocalTeam = !!data.team && !state;
-  const linkedPlayer = state && joined ? state.member.playerId : null;
-
-  // Linked to a roster player (by name, or after choosing): straight to today's plan.
-  useEffect(() => {
-    if (!linkedPlayer) return;
-    updateSettings({ soloPlayerId: linkedPlayer });
-    navigate('/today');
-  }, [linkedPlayer]);
-
-  // Step 2: after joining, a member who is not linked yet says which roster player they are.
-  if (state && joined && !state.member.playerId) {
-    const unclaimed = data.players.filter((p) => p.active);
+  if (!code) {
+    const fromPaste = parseJoinCode(pasted);
     return (
       <div className="container narrow">
-        <PageHeader title={`Welcome to ${data.team?.name ?? state.teamName}`} />
-        <section className="card stack">
-          <h2 style={{ margin: 0 }}>Which player are you?</h2>
-          <p className="small muted">Your answers, reviews and plan are saved under your player.</p>
-          <div className="row">
-            {unclaimed.map((p) => (
-              <button
-                key={p.id}
-                className="btn btn-big"
-                disabled={busy}
-                onClick={() => {
-                  setBusy(true);
-                  // Sign in again with the chosen player; the server links a member who has no player yet.
-                  choosePlayer(joined.name, joined.pin, p.id).then(
-                    () => {
-                      updateSettings({ soloPlayerId: p.id });
-                      navigate('/today');
-                    },
-                    (err: Error) => {
-                      setError(err.message);
-                      setBusy(false);
-                    },
-                  );
-                }}
-              >
-                {p.name}
-              </button>
-            ))}
+        <PageHeader title="Join a team">
+          <p>Open the invite link your coach or captain posted, or paste it here.</p>
+        </PageHeader>
+        <form
+          className="card stack"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (fromPaste) navigate(`/join/${fromPaste.code}`);
+          }}
+        >
+          <div className="field">
+            <label htmlFor="join-code">Invite link</label>
+            <input id="join-code" type="text" value={pasted} placeholder="https://…#/join/…" onChange={(e) => setPasted(e.target.value)} />
           </div>
-          <p className="small muted">
-            Not on the list? Ask your captain to add you on the Team page, or <a href={href('/today')}>continue without choosing</a>.
-          </p>
-          {error && <Notice kind="error">{error}</Notice>}
-        </section>
+          {pasted.trim() && !fromPaste && <p className="small" style={{ color: 'var(--warn)', margin: 0 }}>That invite link does not look complete.</p>}
+          <div>
+            <button className="btn btn-primary" type="submit" disabled={!fromPaste}>
+              Continue
+            </button>
+          </div>
+        </form>
       </div>
     );
   }
 
-  if (state && !joined) {
+  if (!parsed) {
     return (
       <div className="container narrow">
         <PageHeader title="Join a team" />
-        <Notice>
-          This device is already signed in to <strong>{state.teamName || data.team?.name}</strong> as {state.member.name}. To join a different team,
-          sign out first on the <a href={href('/team')}>Team</a> page.
+        <Notice kind="error">
+          That invite link does not look complete. Ask your coach or captain to send it again, or copy the whole link.
         </Notice>
       </div>
     );
   }
 
-  const ok = !!parsed && name.trim().length > 0 && pin.length >= 4 && /^https?:\/\//.test(server);
+  if (session.status === 'signed-out') {
+    return (
+      <div className="container narrow">
+        <PageHeader title="Join your team">
+          <p>Your coach or captain invited you. Sign in first (or create your account); then you join with one more click.</p>
+        </PageHeader>
+        <a className="btn btn-primary btn-big" href={signInHref(`/join/${parsed.code}`)}>
+          Sign in to join
+        </a>
+      </div>
+    );
+  }
+
+  if (session.status !== 'ready' || !session.user) {
+    return (
+      <div className="container narrow">
+        <PageHeader title="Join your team" />
+        {session.status === 'failed' ? <Notice kind="warn">{session.message ?? "Rebound can't reach its server."} Rebound keeps trying.</Notice> : <Loading what="Loading your account" />}
+      </div>
+    );
+  }
+
+  const current = session.team;
+  if (current?.team.id === parsed.teamId) {
+    return (
+      <div className="container narrow">
+        <PageHeader title="Join your team" />
+        <Notice kind="good">
+          You are already on <strong>{current.team.name}</strong>. <a href={href('/team')}>Go to the team</a>
+        </Notice>
+      </div>
+    );
+  }
+
+  const join = async () => {
+    if (current && !confirm(`Leave ${current.team.name} and join the new team? Your practice history stays in your account and goes with you.`)) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await joinTeam(parsed.code, !!current);
+      navigate('/team');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="container narrow">
       <PageHeader title="Join your team">
-        <p>Your captain shared a link. Choose a display name and a PIN; use the same name and PIN to sign in on your other devices.</p>
+        <p>
+          Signed in as <strong>{session.user.name}</strong>. Teammates see your practice stats (answers and accuracy, not your review queue or daily
+          plan), and you see theirs.
+        </p>
       </PageHeader>
-      {hasLocalTeam && (
+      {current && (
         <Notice kind="warn">
-          This device already has team data for <strong>{data.team!.name}</strong>. Joining replaces it with the shared team's data.{' '}
-          <button
-            className="btn btn-small"
-            onClick={() => downloadFile(`rebound-backup-${new Date().toISOString().slice(0, 10)}.json`, exportData())}
-          >
-            Download a backup first
-          </button>
+          You are on <strong>{current.team.name}</strong>. You can be on one team at a time, so joining leaves it. Your own practice goes with you;
+          {` ${current.team.name}`} keeps its games, lineups and packets.
         </Notice>
       )}
-      <form
-        className="card stack"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!ok) return;
-          setBusy(true);
-          setError(null);
-          joinSharedTeam(server.replace(/\/$/, ''), joinCode, name.trim(), pin).then(
-            () => {
-              setJoined({ name: name.trim(), pin });
-              setBusy(false);
-            },
-            (err: Error) => {
-              setError(err.message);
-              setBusy(false);
-            },
-          );
-        }}
-      >
-        {!code && (
-          <div className="field">
-            <label htmlFor="join-code">Join link</label>
-            <input id="join-code" type="text" value={joinCode} placeholder="Paste the link your captain posted" onChange={(e) => setJoinCode(e.target.value)} />
-          </div>
-        )}
-        <div className="field">
-          <label htmlFor="join-name">Display name</label>
-          <input id="join-name" type="text" value={name} maxLength={40} placeholder="First name or nickname" onChange={(e) => setName(e.target.value)} />
-        </div>
-        <div className="field">
-          <label htmlFor="join-pin">PIN (4–8 digits)</label>
-          <input id="join-pin" type="password" inputMode="numeric" autoComplete="current-password" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 8))} />
-          <span className="hint">New here? This sets your PIN. Already joined on another device? Use the same name and PIN.</span>
-        </div>
-        {!SERVER_URL && (
-          <div className="field">
-            <label htmlFor="join-server">Team server address</label>
-            <input id="join-server" type="url" value={server} onChange={(e) => setServer(e.target.value)} />
-          </div>
-        )}
-        {joinCode && !parsed && <p className="small" style={{ color: 'var(--warn)' }}>That join link does not look complete.</p>}
-        {error && <Notice kind="error">{error}</Notice>}
-        <div>
-          <button className="btn btn-primary btn-big" type="submit" disabled={!ok || busy}>
-            {busy ? 'Joining…' : 'Join'}
-          </button>
-        </div>
-      </form>
+      {error && <Notice kind="error">{error}</Notice>}
+      <div className="row" style={{ marginTop: '1rem' }}>
+        <button className="btn btn-primary btn-big" disabled={busy} onClick={() => void join()}>
+          {busy ? 'Joining…' : current ? `Leave ${current.team.name} and join` : 'Join the team'}
+        </button>
+        <a className="btn btn-ghost" href={href(current ? '/team' : '/today')}>
+          Not now
+        </a>
+      </div>
     </div>
   );
 }

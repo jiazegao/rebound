@@ -16,7 +16,7 @@ const catalogPromises = new Map<Level, Promise<Catalog>>();
 const conceptPromises = new Map<Level, Promise<ConceptIndex>>();
 const setPromises = new Map<string, Promise<QuestionSet>>();
 
-/** The level this device's team plays at (high school until a team says otherwise). */
+/** The level the player's team plays at (high school until a team says otherwise). */
 export function teamLevel(): Level {
   return getData().team?.level === 'MS' ? 'MS' : 'HS';
 }

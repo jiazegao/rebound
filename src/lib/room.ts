@@ -1,8 +1,8 @@
 /**
- * The device side of a remote room (docs/SERVER.md, "Rooms"): a WebSocket client that keeps the
- * room's members, the reader's published view, the buzzer state, the team channel and the captain's
- * answers, and estimates this device's clock offset from the server so a text reveal lines up on
- * every screen.
+ * The device side of a remote room (docs/SERVER.md, "Rooms"; docs/ACCOUNTS.md, "Online matches and rooms"): a
+ * WebSocket client that keeps the room's members, the reader's published view, the buzzer state, the team channel
+ * and the captain's answers, and estimates this device's clock offset from the server so a text reveal lines up on
+ * every screen. Any signed-in player can be in a room; a member's `memberId` and `playerId` are both their user id.
  */
 import { useEffect, useState, useSyncExternalStore } from 'react';
 
@@ -44,7 +44,7 @@ export interface MatchInfo {
   gameId?: string;
 }
 
-/** One judged answer in a free-for-all, for the player's own device to record as practice. */
+/** One judged answer in a free-for-all (the server also writes it to the player's account). */
 export interface MatchResult {
   memberId: string;
   playerId: string;
@@ -132,12 +132,8 @@ export class RoomClient {
   onResult: ((r: MatchResult) => void) | null = null;
   onMatchOver: ((m: MatchOver) => void) | null = null;
 
+  /** `url` comes from api.roomSocketUrl. */
   constructor(private readonly url: string) {}
-
-  static url(serverUrl: string, teamId: string, roomId: string, token: string): string {
-    const base = serverUrl.replace(/^http/, 'ws');
-    return `${base}/api/teams/${encodeURIComponent(teamId)}/rooms/${encodeURIComponent(roomId)}/ws?token=${encodeURIComponent(token)}`;
-  }
 
   get snapshot(): RoomSnapshot {
     return this.snap;
@@ -186,8 +182,8 @@ export class RoomClient {
       if (this.closed) return;
       // The server's own reasons for closing: don't keep reconnecting.
       const final: Record<number, string> = {
-        4001: 'This device is signed out of the team. Sign in again on the Team page.',
-        4003: 'You were removed from the team.',
+        4001: 'You are signed out. Sign in again, then open the room link again.',
+        4003: 'You can no longer be in this room.',
         4004: 'This room was closed.',
       };
       if (final[e.code]) {

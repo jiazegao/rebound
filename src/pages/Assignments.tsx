@@ -1,13 +1,16 @@
 import { useMemo, useState } from 'react';
-import { Notice, PageHeader, SubjectTag } from '../components/ui';
+import { PageHeader, SubjectTag } from '../components/ui';
 import { completionId, daysBetween, defaultTitle, dueState, gapSuggestions, progress } from '../core/assignments';
 import { practiceDay } from '../core/review';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type AssignmentKind, type CoreSubject } from '../core/schema';
 import { TOPICS, topicName, topicsForSubject } from '../core/taxonomy';
+import { isLeader } from '../core/accounts';
+import { useSession } from '../lib/cloud';
 import { catalogById, useCatalog } from '../lib/library';
 import { href } from '../lib/router';
-import { createAssignment, deleteAssignment, useData } from '../lib/store';
+import { createAssignment, deleteAssignment } from '../lib/store';
 import { teamPlayers, topicCoverage, useTeamModels } from '../lib/team';
+import { useTeamData } from '../lib/teammates';
 
 const KIND_TEXT: Record<AssignmentKind, string> = {
   drill: 'A drill',
@@ -23,7 +26,10 @@ function addDays(day: string, n: number): string {
 }
 
 export function AssignmentsPage() {
-  const data = useData();
+  // Progress counts each player's own completions, and gap suggestions use everyone's answers: load teammates too.
+  const { data } = useTeamData();
+  const session = useSession();
+  const leader = isLeader(session.team?.you.role);
   const catalog = useCatalog();
   const catalogMap = useMemo(() => (catalog.data ? catalogById(catalog.data) : null), [catalog.data]);
   const models = useTeamModels(data, catalogMap);
@@ -41,18 +47,8 @@ export function AssignmentsPage() {
   const [due, setDue] = useState(addDays(today, 3));
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
-  const creator = data.players.find((p) => p.id === data.settings.soloPlayerId && (p.role === 'captain' || p.role === 'coach')) ?? null;
-
-  if (!data.team) {
-    return (
-      <div className="container narrow">
-        <PageHeader title="Assignments" />
-        <Notice>
-          Set up your team first on the <a href={href('/team')}>Team</a> page.
-        </Notice>
-      </div>
-    );
-  }
+  // Only coaches and captains give assignments (the server refuses anyone else).
+  const creator = leader ? data.settings.soloPlayerId : null;
 
   const coverage = topicCoverage(models);
   const suggestions = catalog.data ? gapSuggestions(coverage, catalog.data.topicCounts, data.players) : [];
@@ -72,7 +68,7 @@ export function AssignmentsPage() {
       conceptId: kind === 'concept' ? conceptId : undefined,
       playerIds: [...assignees],
       due,
-      createdBy: creator?.id ?? data.settings.soloPlayerId,
+      createdBy: creator,
     });
     setTitle('');
     setNote('');
@@ -90,7 +86,7 @@ export function AssignmentsPage() {
         </p>
       </PageHeader>
 
-      {suggestions.length > 0 && (
+      {leader && suggestions.length > 0 && (
         <section className="card" style={{ marginBottom: '1rem' }}>
           <h2>Suggested from coverage gaps</h2>
           <p className="small muted">Frequent topics where nobody on the team is above 60% yet. Each goes to the subject's owners.</p>
@@ -115,7 +111,7 @@ export function AssignmentsPage() {
                         count: 8,
                         playerIds: g.playerIds,
                         due: addDays(today, 7),
-                        createdBy: creator?.id ?? data.settings.soloPlayerId,
+                        createdBy: creator,
                       })
                     }
                   >
@@ -129,126 +125,138 @@ export function AssignmentsPage() {
       )}
 
       <div className="grid-2">
-        <form
-          className="card stack"
-          aria-labelledby="new-assignment"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (ready) create();
-          }}
-        >
-          <h2 id="new-assignment">New assignment</h2>
-          <div className="field">
-            <label htmlFor="as-kind">What</label>
-            <select id="as-kind" value={kind} onChange={(e) => setKind(e.target.value as AssignmentKind)}>
-              {(Object.keys(KIND_TEXT) as AssignmentKind[]).map((k) => (
-                <option key={k} value={k} disabled={(k === 'packet' && data.packets.length === 0) || (k === 'concept' && Object.keys(data.conceptCards).length === 0)}>
-                  {KIND_TEXT[k]}
-                </option>
-              ))}
-            </select>
-          </div>
-          {kind === 'drill' && (
-            <div className="grid">
-              <div className="field">
-                <label htmlFor="as-subject">Subject</label>
-                <select id="as-subject" value={subject} onChange={(e) => { setSubject(e.target.value as CoreSubject); setTopic(''); }}>
-                  {CORE_SUBJECTS.map((s) => (
-                    <option key={s} value={s}>
-                      {SUBJECT_LABELS[s]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="as-topic">Topic</label>
-                <select id="as-topic" value={topic} onChange={(e) => setTopic(e.target.value)}>
-                  <option value="">All of {SUBJECT_LABELS[subject]}</option>
-                  {topicsForSubject(subject).map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="as-count">Questions</label>
-                <select id="as-count" value={count} onChange={(e) => setCount(Number(e.target.value))}>
-                  {[5, 8, 10, 15, 20].map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          )}
-          {kind === 'packet' && (
+        {leader ? (
+          <form
+            className="card stack"
+            aria-labelledby="new-assignment"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (ready) create();
+            }}
+          >
+            <h2 id="new-assignment">New assignment</h2>
             <div className="field">
-              <label htmlFor="as-packet">Packet</label>
-              <select id="as-packet" value={packetId} onChange={(e) => setPacketId(e.target.value)}>
-                {data.packets.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.title}
+              <label htmlFor="as-kind">What</label>
+              <select id="as-kind" value={kind} onChange={(e) => setKind(e.target.value as AssignmentKind)}>
+                {(Object.keys(KIND_TEXT) as AssignmentKind[]).map((k) => (
+                  <option key={k} value={k} disabled={(k === 'packet' && data.packets.length === 0) || (k === 'concept' && Object.keys(data.conceptCards).length === 0)}>
+                    {KIND_TEXT[k]}
                   </option>
                 ))}
               </select>
             </div>
-          )}
-          {kind === 'concept' && (
-            <div className="field">
-              <label htmlFor="as-concept">Concept card</label>
-              <select id="as-concept" value={conceptId} onChange={(e) => setConceptId(e.target.value)}>
-                {TOPICS.flatMap((t) => t.concepts)
-                  .filter((c) => data.conceptCards[c.id])
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
+            {kind === 'drill' && (
+              <div className="grid">
+                <div className="field">
+                  <label htmlFor="as-subject">Subject</label>
+                  <select id="as-subject" value={subject} onChange={(e) => { setSubject(e.target.value as CoreSubject); setTopic(''); }}>
+                    {CORE_SUBJECTS.map((s) => (
+                      <option key={s} value={s}>
+                        {SUBJECT_LABELS[s]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="as-topic">Topic</label>
+                  <select id="as-topic" value={topic} onChange={(e) => setTopic(e.target.value)}>
+                    <option value="">All of {SUBJECT_LABELS[subject]}</option>
+                    {topicsForSubject(subject).map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="as-count">Questions</label>
+                  <select id="as-count" value={count} onChange={(e) => setCount(Number(e.target.value))}>
+                    {[5, 8, 10, 15, 20].map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+            {kind === 'packet' && (
+              <div className="field">
+                <label htmlFor="as-packet">Packet</label>
+                <select id="as-packet" value={packetId} onChange={(e) => setPacketId(e.target.value)}>
+                  {data.packets.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.title}
                     </option>
                   ))}
-              </select>
+                </select>
+              </div>
+            )}
+            {kind === 'concept' && (
+              <div className="field">
+                <label htmlFor="as-concept">Concept card</label>
+                <select id="as-concept" value={conceptId} onChange={(e) => setConceptId(e.target.value)}>
+                  {TOPICS.flatMap((t) => t.concepts)
+                    .filter((c) => data.conceptCards[c.id])
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            )}
+            <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
+              <legend className="label">For</legend>
+              <div className="row" style={{ gap: '0.25rem 1rem' }}>
+                {players.map((p) => (
+                  <label key={p.id} className="checkbox">
+                    <input
+                      type="checkbox"
+                      checked={assignees.has(p.id)}
+                      onChange={(e) => {
+                        const next = new Set(assignees);
+                        if (e.target.checked) next.add(p.id);
+                        else next.delete(p.id);
+                        setAssignees(next);
+                      }}
+                    />{' '}
+                    {p.name}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <div className="grid">
+              <div className="field">
+                <label htmlFor="as-due">Due</label>
+                <input id="as-due" type="date" value={due} min={today} onChange={(e) => setDue(e.target.value)} />
+              </div>
+              <div className="field">
+                <label htmlFor="as-title">Title</label>
+                <input id="as-title" type="text" value={title} placeholder={defaultTitle(draft, packetTitle)} onChange={(e) => setTitle(e.target.value)} />
+              </div>
             </div>
-          )}
-          <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
-            <legend className="label">For</legend>
-            <div className="row" style={{ gap: '0.25rem 1rem' }}>
-              {players.map((p) => (
-                <label key={p.id} className="checkbox">
-                  <input
-                    type="checkbox"
-                    checked={assignees.has(p.id)}
-                    onChange={(e) => {
-                      const next = new Set(assignees);
-                      if (e.target.checked) next.add(p.id);
-                      else next.delete(p.id);
-                      setAssignees(next);
-                    }}
-                  />{' '}
-                  {p.name}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <div className="grid">
             <div className="field">
-              <label htmlFor="as-due">Due</label>
-              <input id="as-due" type="date" value={due} min={today} onChange={(e) => setDue(e.target.value)} />
+              <label htmlFor="as-note">Note (optional)</label>
+              <input id="as-note" type="text" value={note} placeholder="e.g. Before Saturday's scrimmage" onChange={(e) => setNote(e.target.value)} />
             </div>
-            <div className="field">
-              <label htmlFor="as-title">Title</label>
-              <input id="as-title" type="text" value={title} placeholder={defaultTitle(draft, packetTitle)} onChange={(e) => setTitle(e.target.value)} />
+            <div>
+              <button className="btn btn-primary" type="submit" disabled={!ready}>
+                Assign
+              </button>
             </div>
-          </div>
-          <div className="field">
-            <label htmlFor="as-note">Note (optional)</label>
-            <input id="as-note" type="text" value={note} placeholder="e.g. Before Saturday's scrimmage" onChange={(e) => setNote(e.target.value)} />
-          </div>
-          <div>
-            <button className="btn btn-primary" type="submit" disabled={!ready}>
-              Assign
-            </button>
-          </div>
-        </form>
+          </form>
+        ) : (
+          <section className="card stack" aria-labelledby="new-assignment">
+            <h2 id="new-assignment" style={{ margin: 0 }}>
+              Your assignments
+            </h2>
+            <p className="muted" style={{ margin: 0 }}>
+              Coaches and captains give assignments. Yours show on your <a href={href('/today')}>Today</a> page and tick themselves off when you
+              finish.
+            </p>
+          </section>
+        )}
 
         <section className="card" aria-labelledby="current-assignments">
           <h2 id="current-assignments">Current assignments</h2>
@@ -277,14 +285,16 @@ export function AssignmentsPage() {
                         </span>
                       ))}
                       {a.topic && <span className="muted"> · {topicName(a.topic)}</span>}{' '}
-                      <button
-                        className="btn btn-small btn-ghost"
-                        onClick={() => {
-                          if (confirm(`Delete “${a.title}”?`)) deleteAssignment(a.id);
-                        }}
-                      >
-                        Delete
-                      </button>
+                      {leader && (
+                        <button
+                          className="btn btn-small btn-ghost"
+                          onClick={() => {
+                            if (confirm(`Delete “${a.title}”?`)) deleteAssignment(a.id);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </li>
                 );
@@ -293,11 +303,6 @@ export function AssignmentsPage() {
           )}
         </section>
       </div>
-      {!creator && (
-        <p className="small muted" style={{ marginTop: '1rem' }}>
-          Assignments show who set them: choose your name on the Today page (as the captain or coach) before assigning.
-        </p>
-      )}
     </div>
   );
 }
