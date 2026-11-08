@@ -30,7 +30,7 @@ import {
 } from '../core/accounts';
 import type { Outcome } from '../core/review';
 import type { Level, Player, Team } from '../core/schema';
-import { fingerprint } from '../core/sync';
+import { fingerprint } from '../core/merge';
 import * as api from './api';
 import {
   applyTeamRecords,

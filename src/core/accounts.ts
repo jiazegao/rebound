@@ -4,7 +4,7 @@
  * shapes the API sends. Shared by both sides, so they cannot disagree.
  */
 import type { CoreSubject, Level } from './schema';
-import { mergeCard, mergeSeen } from './sync';
+import { mergeCard, mergeSeen } from './merge';
 
 /* ---------------- ids and tokens ---------------- */
 

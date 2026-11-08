@@ -41,7 +41,9 @@ npx wrangler dev             # local server on http://localhost:8787 (data kept 
 `.dev.vars` (git-ignored) sets `DEV_EMAIL_OUTBOX=1`: email sign-in then sends nothing and
 `POST /api/auth/email/start` answers `{ ok: true, devCode }`, the code to finish with. The tests set the same
 variable, and their own `GOOGLE_CLIENT_ID`, in `vitest.config.ts`; they sign Google ID tokens with a test key they
-make (`test/helpers.ts`). Never put `DEV_EMAIL_OUTBOX` in `wrangler.toml`. The sign-in limits apply locally too.
+make (`test/helpers.ts`). Never put `DEV_EMAIL_OUTBOX` in `wrangler.toml`. The sign-in limits apply locally too,
+except that `.dev.vars` lifts the daily cap on sign-in emails (none are sent); the per-network limits read the
+`CF-Connecting-IP` header, which the browser tests (`e2e/accounts.cjs`) set to a made-up address for each sign-up.
 
 Quick check against `wrangler dev`:
 
@@ -92,10 +94,16 @@ SQLite-backed Durable Objects are available on the Workers Free plan.
 
 ### Google sign-in
 
-In the Google Cloud console (APIs & Services → Credentials), an OAuth client of type **Web application** with the
-site's origins (`https://jiazegao.github.io`, and `http://localhost:5173` for development) under **Authorized
-JavaScript origins**. Its client id goes in `wrangler.toml` as `GOOGLE_CLIENT_ID`; no client secret is used. Without
-`GOOGLE_CLIENT_ID`, Google sign-in is off.
+In the Google Cloud console (Google Auth Platform → Clients, or APIs & Services → Credentials), an OAuth client of
+type **Web application** with the site's origins under **Authorized JavaScript origins**: `https://jiazegao.github.io`,
+and for development `http://localhost:5173` and `http://localhost:4173` (origins only: no path such as `/rebound/`).
+Its client id goes in `wrangler.toml` as `GOOGLE_CLIENT_ID`; no client secret is used. Without `GOOGLE_CLIENT_ID`,
+Google sign-in is off.
+
+Rebound asks Google only for the basic sign-in scopes (`openid`, `email`, `profile`), so the app needs no Google
+verification, but its **Audience** (the OAuth consent screen's publishing status) must be **In production**: while
+it says *Testing*, only the test users listed there can sign in. Under **Branding**, give the app's name, a support
+email, and the home page and the privacy page (`https://jiazegao.github.io/rebound/#/about`).
 
 ### Email sign-in
 

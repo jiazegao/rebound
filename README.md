@@ -73,13 +73,18 @@ Other commands:
 npm test           # unit tests (rules engine, answer checker, review scheduler, plans, drills, tagging, importer, studio, NSB-JSON)
 npm run build      # type-check and build the static site into dist/
 npm run preview    # serve dist/ at http://localhost:4173
-node e2e/smoke.cjs # browser walkthrough against the preview server (needs Playwright + Chromium)
-node e2e/team-server.cjs # a captain and a player in two browsers against a local team server (see the file's header)
+node e2e/smoke.cjs # browser walkthrough: a team of four accounts, each in its own browser (see below)
+node e2e/team-server.cjs # joining by invite link, teammates' data, remote rooms and online matches, with outsiders
 node e2e/middle-school.cjs # a middle school team against the real library
 npx tsx scripts/checks/judge-self-check.ts   # grade every printed answer in the library against itself
 npx tsx scripts/checks/review-load.ts 30 0.6 # simulate 90 days of reviews for a 30-minute plan and a 60% player
 cd server && npm test                        # the team server's tests, in the Workers runtime
 ```
+
+The browser tests need Playwright with Chromium, a local server with the development email outbox
+(`cd server && cp .dev.vars.example .dev.vars && npx wrangler dev`) and the site built without `VITE_SERVER_URL` and
+served by `npx vite preview --port 4173`. They sign accounts up through the server's API (`e2e/accounts.cjs`), so
+they never touch the real server.
 
 The unit tests include a check that the answer checker accepts at least 99.9% of the 19,000+ printed answers and
 alternatives in the DOE library (currently all but 2, both damaged in the source PDFs).
@@ -189,7 +194,7 @@ src/core/            framework-free logic, unit-tested
   accounts.ts        the account contract (user and team collections, what teammates see, who writes what, merges, API
                      shapes), shared with the server
   games.ts           game records, practice answers and turning them into per-player outcomes, shared with the server
-  sync.ts            record merges (heard ledgers, review cards) and fingerprints, used by accounts.ts
+  merge.ts           merging two writes of a record (heard ledgers, review cards) and record fingerprints
   levels.ts          the difficulty ladder: DOE round levels and the levels of uploaded packets
   rules/shootout.ts  the round robin shootout (+1 / −1 / 0) and who advances
   visual/            generated visual bonuses: templates, SVG building blocks, exact answers, the photo-set questions
@@ -210,7 +215,8 @@ scripts/studio/      builds public/data/doe/fingerprints.json for the writing st
 scripts/rules/       the fall check for next season's rulebook (run by .github/workflows/rules-watch.yml)
 scripts/icons/       renders the app icons with Playwright
 scripts/visual/      builds the public-domain photo set for the Visual lab
-e2e/                 browser smoke test, the two-browser team-server test, and a small fixture question set
+e2e/                 browser tests (the smoke test, the team-server test with several accounts, middle school), the
+                     accounts helper they share, and a small fixture question set
 server/              the server: Cloudflare Worker, Durable Objects for users, teams and rooms, sign-in, optional AI help,
                      tests (see server/README.md)
 docs/                PROPOSAL.md (the plan), ACCOUNTS.md (accounts, teams and the API), SERVER.md (rooms and matches),

@@ -68,7 +68,7 @@ User collections (in the user's storage; written only by the user, plus the serv
 | `plans` | `today` | `DayPlan` | **no** |
 
 Team collections (in the team's storage): `lineups`, `assignments` (leaders write), `games`, `packets`,
-`visuals`, `written`, `conceptCards` (members write; today's rules from src/core/sync.ts). The team's name,
+`visuals`, `written`, `conceptCards` (members write; `canWriteTeam` in src/core/accounts.ts). The team's name,
 level and next competition, and its members and their roles, are team settings with their own endpoints.
 
 Player identity everywhere (`playerId` in attempts, games, lineups, cards...) is the user's id.
