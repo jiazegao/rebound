@@ -208,16 +208,45 @@ export class UserServer extends DurableObject<Env> {
     if (this.ready && this.teamId() === teamId) this.setTeam(null, null);
   }
 
-  /** Answers from a team game or an online match (server writes: they replace what is stored under the same id). */
+  /** Answers from an online match (server writes: they replace what is stored under the same id). */
   async putAnswers(outcomes: Outcome[]): Promise<void> {
     if (!this.ready || !Array.isArray(outcomes)) return;
     const userId = this.profile()!.id;
     this.ctx.storage.transactionSync(() => {
+      for (const o of outcomes) if (this.isAnswerFor(userId, o)) this.records.put('answers', o.key, o);
+    });
+  }
+
+  /**
+   * This user's answers from one team game (`game:<gameId>:...`), replacing whatever an earlier save of the game
+   * gave: a game judged again after it ended changes them, and a game put back in progress or deleted takes them
+   * away (an empty list). `version` grows with every save of the game, so an older save that arrives late (a retried
+   * delivery) never undoes a newer one.
+   */
+  async putGameAnswers(gameId: string, version: number, outcomes: Outcome[]): Promise<void> {
+    if (!this.ready || typeof gameId !== 'string' || !gameId || gameId.length > MAX_ID_LENGTH || !Number.isSafeInteger(version) || !Array.isArray(outcomes)) return;
+    const userId = this.profile()!.id;
+    const prefix = `game:${gameId}:`;
+    this.ctx.storage.transactionSync(() => {
+      this.sql.exec('CREATE TABLE IF NOT EXISTS game_answers (game_id TEXT PRIMARY KEY, version INTEGER NOT NULL)');
+      const applied = this.sql.exec<{ version: number }>('SELECT version FROM game_answers WHERE game_id = ?', gameId).toArray()[0]?.version;
+      if (applied !== undefined && applied >= version) return;
+      this.sql.exec('INSERT INTO game_answers (game_id, version) VALUES (?, ?) ON CONFLICT (game_id) DO UPDATE SET version = excluded.version', gameId, version);
+      const kept = new Set<string>();
       for (const o of outcomes) {
-        if (!o || typeof o.key !== 'string' || o.key.length < 1 || o.key.length > MAX_ID_LENGTH || o.playerId !== userId || tooLarge(o)) continue;
+        if (!this.isAnswerFor(userId, o) || !o.key.startsWith(prefix)) continue;
+        kept.add(o.key);
         this.records.put('answers', o.key, o);
       }
+      const stored = this.sql
+        .exec<{ id: string }>("SELECT id FROM records WHERE c = 'answers' AND body IS NOT NULL AND substr(id, 1, ?) = ?", prefix.length, prefix)
+        .toArray();
+      for (const { id } of stored) if (!kept.has(id)) this.records.put('answers', id, null);
     });
+  }
+
+  private isAnswerFor(userId: string, o: Outcome | null | undefined): o is Outcome {
+    return !!o && typeof o.key === 'string' && o.key.length >= 1 && o.key.length <= MAX_ID_LENGTH && o.playerId === userId && !tooLarge(o);
   }
 
   /** What teammates may read: the TEAM_VISIBLE collections, as a records page (JSON text). */

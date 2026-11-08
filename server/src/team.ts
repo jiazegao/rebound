@@ -6,7 +6,8 @@
  * on and is told when a leader removes them or deletes the team.
  *
  * A finished Reader console game saved in `games` becomes answers in each player's account (`gameOutcomes`),
- * delivered through the outbox so a busy account does not lose them.
+ * delivered through the outbox so a busy account does not lose them; saving it again, undoing past its end or
+ * deleting it replaces or takes back those answers.
  */
 
 import { DurableObject } from 'cloudflare:workers';
@@ -98,6 +99,22 @@ function asPlayer(r: MemberRow): Player {
     ...(r.secondary_subject !== null ? { secondarySubject: r.secondary_subject } : {}),
     ...(r.grad_year !== null ? { gradYear: r.grad_year } : {}),
   };
+}
+
+/** A `games` record body that is a finished Reader console game (not an online match's), or null. */
+function finishedReaderGame(body: unknown): GameRecord | null {
+  const game = body as GameRecord | null;
+  return game !== null && typeof game === 'object' && game.status === 'finished' && game.online !== true ? game : null;
+}
+
+/** Everyone a game lists on its two sides (a malformed record lists no one). */
+function playersIn(game: GameRecord | null): string[] {
+  const teams: unknown = game?.teams;
+  if (!Array.isArray(teams)) return [];
+  return teams.flatMap((t: unknown) => {
+    const ids: unknown = (t as { playerIds?: unknown } | null)?.playerIds;
+    return Array.isArray(ids) ? ids.filter((id): id is string => typeof id === 'string') : [];
+  });
 }
 
 export class Team extends DurableObject<Env> {
@@ -403,7 +420,8 @@ export class Team extends DurableObject<Env> {
           continue;
         }
         // Team records are last-writer-wins.
-        if (this.records.put(change.c, change.id, change.body, caller) && change.c === 'games') this.queueGameAnswers(change.body, now);
+        const before = change.c === 'games' ? this.records.body(change.c, change.id) : null;
+        if (this.records.put(change.c, change.id, change.body, caller) && change.c === 'games') this.queueGameAnswers(change.id, before, change.body, now);
       }
       return { cursor: this.records.rev(), rejected };
     });
@@ -413,28 +431,33 @@ export class Team extends DurableObject<Env> {
   }
 
   /**
-   * A finished Reader console game: each player's outcomes go to their account's `answers` (ids fixed by the game,
-   * so saving it again gives the same answers). Online matches are left out: their room already wrote them. Only
-   * members get answers, so a game cannot write into other people's accounts.
+   * A Reader console game that is, or was until this save, finished: each player's outcomes (`gameOutcomes`) go to
+   * their account's `answers`, replacing what the earlier save gave. So a game judged again after it ended, put back
+   * in progress (an undo) or deleted leaves no stale answers behind. Online matches are left out: their room wrote
+   * their answers. Only members get answers, so a game cannot write into other people's accounts; a player who has
+   * left the team keeps what they had. Each delivery carries this save's revision, so a late retry of an older save
+   * never undoes a newer one.
    */
-  private queueGameAnswers(body: unknown, now: number): void {
-    const game = body as GameRecord | null;
-    if (!game || game.status !== 'finished' || game.online === true) return;
+  private queueGameAnswers(gameId: string, before: unknown, after: unknown, now: number): void {
+    const was = finishedReaderGame(before);
+    const is = finishedReaderGame(after);
+    if (!was && !is) return;
     const rows = this.members();
-    let outcomes: Outcome[];
-    try {
-      outcomes = gameOutcomes(game, rows.map(asPlayer));
-    } catch {
-      return; // A game the rules cannot replay has no answers to give.
+    let outcomes: Outcome[] = [];
+    if (is) {
+      try {
+        outcomes = gameOutcomes(is, rows.map(asPlayer));
+      } catch {
+        return; // A game the rules cannot replay changes no one's answers.
+      }
     }
     const members = new Set(rows.map((r) => r.user_id));
     const byPlayer = new Map<string, Outcome[]>();
-    for (const o of outcomes) {
-      if (!members.has(o.playerId)) continue;
-      if (!byPlayer.has(o.playerId)) byPlayer.set(o.playerId, []);
-      byPlayer.get(o.playerId)!.push(o);
-    }
-    for (const [playerId, list] of byPlayer) this.outbox.add('answers', playerId, list, now);
+    // Everyone in either version hears about this one, even when it gives them nothing (any more).
+    for (const id of [...playersIn(was), ...playersIn(is)]) if (members.has(id)) byPlayer.set(id, []);
+    for (const o of outcomes) byPlayer.get(o.playerId)?.push(o);
+    const version = this.records.rev();
+    for (const [playerId, list] of byPlayer) this.outbox.add('gameAnswers', playerId, { gameId, version, outcomes: list }, now);
   }
 
   private async flushOutbox(all = false): Promise<void> {
@@ -446,7 +469,10 @@ export class Team extends DurableObject<Env> {
   }
 
   private async deliver(d: Delivery): Promise<void> {
-    if (d.kind === 'answers') await userObject(this.env, d.target).putAnswers(JSON.parse(d.payload) as Outcome[]);
+    if (d.kind === 'gameAnswers') {
+      const { gameId, version, outcomes } = JSON.parse(d.payload) as { gameId: string; version: number; outcomes: Outcome[] };
+      await userObject(this.env, d.target).putGameAnswers(gameId, version, outcomes);
+    }
   }
 
   /** Retries deliveries that failed. */

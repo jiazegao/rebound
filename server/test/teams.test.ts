@@ -3,6 +3,7 @@ import { runInDurableObject } from 'cloudflare:test';
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { JOIN_CODE_PATTERN } from '../../src/core/accounts';
+import type { Outcome } from '../../src/core/review';
 import { Outbox } from '../src/outbox';
 import { allMyRecords, call, eventually, getRecords, join, makeTeam, putRecords, signUp, teamWith, type Json, type TestTeam, type TestUser } from './helpers';
 
@@ -331,12 +332,85 @@ describe('team records', () => {
     expect((await putRecords(path, cora.token, [{ c: 'games', id: 'g3', body: { id: 'g3', status: 'finished', teams: 'none' } }])).rejected).toEqual([]);
   });
 
+  it('replaces a game’s answers when it is judged again after it ended, and takes them away when it is undone or deleted', async () => {
+    const { team, members: [ana] } = await teamWith('Cora', 'Ana');
+    const cora = team.captain;
+    // Neither covers biology, so the dead toss-up below gives no one an answer.
+    for (const user of [cora, ana!]) await call('/api/me', { method: 'PATCH', token: user.token, body: { primarySubject: 'chemistry' } });
+    const opening = [
+      { type: 'start', t: 1000 },
+      { type: 'tossup_read', t: 5000 },
+      { type: 'buzz', t: 6000, team: 1, playerId: ana!.id },
+    ];
+    const game = (events: unknown[], status: 'in_progress' | 'finished') => ({
+      id: 'g7',
+      createdAt: '2026-11-08T10:00:00.000Z',
+      updatedAt: `2026-11-08T10:${String(events.length).padStart(2, '0')}:00.000Z`,
+      presetId: 'doe-regional-2027',
+      packet: { setId: 'doe-hs-17', setTitle: 'DOE Set 17', roundId: 'doe-hs-17-r01', roundLabel: 'Round 1' },
+      pairs: [{ tossupId: 't1', bonusId: 'b1', subject: 'biology' }],
+      teams: [
+        { name: 'Red', playerIds: [cora.id] },
+        { name: 'Blue', playerIds: [ana!.id] },
+      ],
+      events,
+      status,
+    });
+    const right = [...opening, { type: 'tossup_judged', t: 7000, result: 'correct' }, { type: 'bonus_read', t: 9000 }, { type: 'bonus_judged', t: 15000, result: 'correct' }, { type: 'end_game', t: 20000 }];
+    const wrong = [...opening, { type: 'tossup_judged', t: 8000, result: 'incorrect' }, { type: 'tossup_dead', t: 14000 }, { type: 'end_game', t: 21000 }];
+    const path = `${teamPath(team)}/records`;
+    const save = (body: unknown) => putRecords(path, cora.token, [{ c: 'games', id: 'g7', body }]);
+    const answers = async (user: TestUser) =>
+      (await allMyRecords(user.token))
+        .filter((r) => r.c === 'answers' && r.body !== null)
+        .map((r) => [r.body.questionId, r.body.correct])
+        .sort();
+
+    await save(game(right, 'finished'));
+    expect(await answers(ana!)).toEqual([
+      ['b1', true],
+      ['t1', true],
+    ]);
+    // The reader undoes the last judgement: the game is in progress again, so its answers are taken away...
+    await save(game(opening, 'in_progress'));
+    expect(await answers(ana!)).toEqual([]);
+    // ...and judging it again gives the new answer, not the old one beside it.
+    await save(game(wrong, 'finished'));
+    expect(await answers(ana!)).toEqual([['t1', false]]);
+    const tombstones = (await allMyRecords(ana!.token)).filter((r) => r.c === 'answers' && r.body === null).map((r) => r.id);
+    expect(tombstones.sort()).toEqual(['game:g7:0:b:15000', 'game:g7:0:t:7000']);
+    // Judged again after it ended, without an undo in between: the answers follow it the same way.
+    await save(game(right, 'finished'));
+    expect(await answers(ana!)).toEqual([
+      ['b1', true],
+      ['t1', true],
+    ]);
+    // Deleting the game takes its answers away.
+    await save(null);
+    expect(await answers(ana!)).toEqual([]);
+    expect(await answers(cora)).toEqual([]);
+  });
+
+  it('never lets an older save of a game that arrives late undo a newer one', async () => {
+    const { members: [ana] } = await teamWith('Cora', 'Ana');
+    const answer = (t: number, correct: boolean): Outcome => ({ key: `game:g8:0:t:${t}`, playerId: ana!.id, questionId: 't8', subject: 'physics', kind: 'tossup', correct, interrupt: false, latencyMs: 800, t, via: 'game' });
+    const user = env.USER.get(env.USER.idFromName(ana!.id));
+    await user.putGameAnswers('g8', 7, [answer(2, false)]);
+    await user.putGameAnswers('g8', 5, [answer(1, true)]);
+    const live = (await allMyRecords(ana!.token)).filter((r) => r.c === 'answers' && r.body !== null);
+    expect(live.map((r) => r.id)).toEqual(['game:g8:0:t:2']);
+    // Answers for another game, or for someone else, are not taken.
+    await user.putGameAnswers('g8', 8, [answer(2, false), { ...answer(3, true), key: 'game:g9:0:t:3' }, { ...answer(4, true), playerId: 'someoneelse00000' }]);
+    expect((await allMyRecords(ana!.token)).filter((r) => r.c === 'answers' && r.body !== null).map((r) => r.id)).toEqual(['game:g8:0:t:2']);
+  });
+
   it('retries answers that could not be delivered, from its alarm', async () => {
     const { team, members: [ana] } = await teamWith('Cora', 'Ana');
     const outcome = { key: 'game:g9:0:t:5', playerId: ana!.id, questionId: 't9', subject: 'physics', kind: 'tossup', correct: true, interrupt: false, latencyMs: 800, t: 5, via: 'game' };
     // A delivery that failed once and is due again.
     await runInDurableObject(teamStub(team.teamId), async (_i, state) => {
-      state.storage.sql.exec("INSERT INTO outbox (kind, target, payload, tries, next_at) VALUES ('answers', ?, ?, 1, ?)", ana!.id, JSON.stringify([outcome]), Date.now() - 1);
+      const payload = JSON.stringify({ gameId: 'g9', version: 3, outcomes: [outcome] });
+      state.storage.sql.exec("INSERT INTO outbox (kind, target, payload, tries, next_at) VALUES ('gameAnswers', ?, ?, 1, ?)", ana!.id, payload, Date.now() - 1);
       await state.storage.setAlarm(Date.now() + 10);
     });
     const delivered = await eventually(async () => {

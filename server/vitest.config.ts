@@ -3,12 +3,13 @@ import { defineConfig } from 'vitest/config';
 
 // Tests run inside workerd with the real Worker and Durable Objects from wrangler.toml (no Cloudflare account needed).
 // Sign-in for tests: email codes come back from the development outbox, and Google ID tokens are signed with a test
-// key for this client id (test/helpers.ts). These bindings exist only here, never in wrangler.toml.
+// key for this client id (test/helpers.ts). These bindings exist only here, never in wrangler.toml. The daily email
+// cap is pinned to the shipped one, because a local server/.dev.vars (read by the tests too) lifts it.
 export default defineConfig({
   plugins: [
     cloudflareTest({
       wrangler: { configPath: './wrangler.toml' },
-      miniflare: { bindings: { DEV_EMAIL_OUTBOX: '1', GOOGLE_CLIENT_ID: 'test-client.apps.googleusercontent.com' } },
+      miniflare: { bindings: { DEV_EMAIL_OUTBOX: '1', GOOGLE_CLIENT_ID: 'test-client.apps.googleusercontent.com', EMAIL_DAILY_LIMIT: '90' } },
     }),
   ],
   test: {

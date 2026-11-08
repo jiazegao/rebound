@@ -76,9 +76,12 @@ Player identity everywhere (`playerId` in attempts, games, lineups, cards...) is
 ## Team games and answers
 
 A game played in the Reader console belongs to the team. When a `games` record is written with
-`status: "finished"`, the team server turns it into outcomes (`gameOutcomes`, src/lib/outcomes.ts, moved to
-src/core) and stores each player's outcomes in that player's `answers` (ids fixed by the game, so a game saved
-twice gives the same answers). A player's mastery and review cards come from their `attempts` and `answers`;
+`status: "finished"`, the team server turns it into outcomes (`gameOutcomes`, src/core/games.ts) and stores each
+player's outcomes in that player's `answers` (ids fixed by the game, so a game saved twice gives the same answers).
+Each save of a finished game replaces that game's answers in its players' accounts: a game judged again after it
+ended changes them, and one put back in progress (an undo past the end) or deleted takes them away. Only current
+members' accounts are written; a player who has left the team keeps what they had. Every delivery carries the
+game's revision on the team, so a retried older one never undoes a newer one. A player's mastery and review cards come from their `attempts` and `answers`;
 team stats come from the team's `games` and its members' `attempts`.
 
 A player's device turns new answers into review cards when it next loads (a cursor in the user's settings marks
@@ -134,7 +137,7 @@ captain.
 | `POST /api/teams/:id/join` | user | `{ secret, leaveCurrent? }` → `{ team }` |
 | `POST /api/teams/:id/leave` | member | → `{ ok: true }` (the last member leaving deletes the team; the last leader must hand over first) |
 | `PATCH /api/teams/:id/members/:userId` | leader (or the member, for their own subjects) | `{ role?, squad?, primarySubject?, secondarySubject?, gradYear? }` → `{ member }` |
-| `DELETE /api/teams/:id/members/:userId` | leader | → `{ ok: true }` |
+| `DELETE /api/teams/:id/members/:userId` | leader (or the member, to leave) | → `{ ok: true }` |
 | `POST /api/teams/:id/join-code` | leader | → `{ joinCode }` |
 | `DELETE /api/teams/:id` | leader | → `{ ok: true }` |
 | `GET /api/teams/:id/records?cursor=` | member | team collections, as for `/api/me/records` |

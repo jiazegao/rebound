@@ -179,6 +179,14 @@ the same answers; server writes replace what is stored). Players who are not on 
 write into other people's accounts. The answers are delivered before the records response returns; a delivery that
 fails is retried from the team's alarm.
 
+Each delivery is the whole of one game's answers for one player (`putGameAnswers(gameId, version, outcomes)` on
+their `UserServer`), and it replaces whatever an earlier save gave: answers of that game the new save no longer
+gives are deleted (tombstones, so devices drop them too). A finished game saved again with a different judgement,
+put back to `in_progress` (an undo past the end) or deleted therefore leaves no stale answers; every member listed
+in either version of the game gets a delivery, even an empty one. `version` is the game record's revision on the
+team: a player's account remembers the last one it applied for each game and ignores older ones, so a retried
+delivery can never undo a newer save. Online matches' records are left alone (their room wrote the answers).
+
 A player's devices turn new answers into review cards (`settings.cardsCursor` marks how far they have gone).
 
 ## Rooms
