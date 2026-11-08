@@ -85,9 +85,16 @@ async function main() {
 
   // Ann's browser is the main page for most steps; the helpers use it unless given another page.
   let ann = null;
-  const see = (text, p = ann, timeout = 5000) => p.getByText(text, { exact: false }).first().waitFor({ timeout });
+  // Visible matches only: a closed menu in the bar holds hidden links whose text a page may repeat.
+  const see = (text, p = ann, timeout = 5000) => p.getByText(text, { exact: false }).filter({ visible: true }).first().waitFor({ timeout });
   const shot = async (name, p = ann) => {
     if (SHOTS) await p.screenshot({ path: path.join(SHOTS, `${name}.png`), fullPage: true });
+  };
+  /** Opens one of the Practice menu's pages from the bar, as a player would. */
+  const practicePage = async (p, label) => {
+    const bar = p.getByRole('navigation', { name: 'Main' });
+    await bar.getByRole('button', { name: 'Practice' }).click();
+    await bar.getByRole('link', { name: label, exact: true }).click();
   };
   const key = async (k, p = ann) => {
     await p.keyboard.press(k);
@@ -318,20 +325,34 @@ async function main() {
       await shot('02-team');
     });
 
-    await step('the bar has Play online and the Reader console as two items of their own', async () => {
+    await step('the bar: Today, Practice (a menu: Solo practice, Play online, Reader console), Learn, Library, Team', async () => {
       const bar = ann.getByRole('navigation', { name: 'Main' });
-      if (await bar.getByRole('link', { name: 'Play', exact: true }).count()) throw new Error('the bar still has a Play item');
-      await bar.getByRole('link', { name: 'Play online', exact: true }).click();
+      const items = (await bar.locator(':scope > a, :scope > .nav-menu > button').allInnerTexts()).map((t) => t.replace('▾', '').trim());
+      if (items.join() !== 'Today,Practice,Learn,Library,Team') throw new Error(`the bar shows ${items.join(', ')}`);
+      const practice = bar.getByRole('button', { name: 'Practice' });
+      const online = bar.getByRole('link', { name: 'Play online', exact: true });
+      // A mouse opens the menu by hovering, and leaving closes it.
+      await practice.hover();
+      await online.waitFor();
+      for (const name of ['Solo practice', 'Reader console']) await bar.getByRole('link', { name, exact: true }).waitFor();
+      await shot('02b-practice-menu');
+      await ann.mouse.move(600, 700);
+      await online.waitFor({ state: 'hidden' });
+      // A click (or a tap) opens it too, and Esc closes it.
+      await practice.click();
+      if ((await practice.getAttribute('aria-expanded')) !== 'true') throw new Error('a click does not open the Practice menu');
+      await ann.keyboard.press('Escape');
+      await online.waitFor({ state: 'hidden' });
+      await practice.click();
+      await online.click();
       await ann.getByRole('heading', { name: 'Play online', level: 1 }).waitFor();
-      if ((await bar.getByRole('link', { name: 'Play online', exact: true }).getAttribute('aria-current')) !== 'page') throw new Error('Play online is not marked as the page being shown');
-      await shot('02b-play-online');
+      if (!(await practice.getAttribute('class')).includes('current')) throw new Error('Practice is not marked while Play online is shown');
+      if (await online.isVisible()) throw new Error('the menu stays open after a choice');
     });
 
     await step('set up a Reader-console game', async () => {
-      const bar = ann.getByRole('navigation', { name: 'Main' });
-      await bar.getByRole('link', { name: 'Reader console', exact: true }).click();
+      await practicePage(ann, 'Reader console');
       await see('1. Questions');
-      if ((await bar.getByRole('link', { name: 'Reader console', exact: true }).getAttribute('aria-current')) !== 'page') throw new Error('Reader console is not marked as the page being shown');
       await ann.locator('#round').waitFor();
       for (const [name, side] of [
         ['Ann', 'Team A'],
@@ -409,7 +430,7 @@ async function main() {
 
     await step('solo round with typed answers (saved to Ann’s account)', async () => {
       await ann.goto(`${BASE}#/try`);
-      await see('Solo practice');
+      await ann.getByRole('heading', { name: 'Solo practice', level: 1 }).waitFor();
       await ann.locator('#set').selectOption('doe-hs-99');
       await ann.locator('#round').selectOption('doe-hs-99-r01');
       await ann.locator('#wpm').fill('320');
@@ -762,9 +783,14 @@ async function main() {
       await ann.goto(`${BASE}#/library/doe-hs-99/doe-hs-99-r01`);
       await ann.getByRole('button', { name: 'Add to my review' }).first().click();
       await see("In Ann's review queue");
-      await ann.goto(`${BASE}#/review`);
-      await ann.getByRole('button', { name: /Start review \(1\)/ }).click();
+      // Reviews are at the top of Learn; Start review there begins it at once.
+      await ann.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Learn', exact: true }).click();
+      await ann.getByRole('heading', { name: 'Review', level: 2 }).waitFor();
+      await ann.getByRole('heading', { name: 'Concept cards', level: 2 }).waitFor();
+      await shot('12e-learn-reviews');
+      await ann.getByRole('link', { name: 'Start review (1)' }).click();
       await ann.getByRole('button', { name: /Buzz/ }).waitFor();
+      if (!ann.url().endsWith('#/review')) throw new Error(`the review should leave its start flag behind: ${ann.url()}`);
       await shot('13-review-question');
       await key('Space');
       await ann.locator('#review-answer').fill('phenotype');

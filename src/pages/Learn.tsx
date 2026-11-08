@@ -8,6 +8,7 @@ import { dateText } from '../lib/format';
 import { loadQuestions, useAsync, useConceptIndex } from '../lib/library';
 import { href } from '../lib/router';
 import { completeAssignment, completePlanItem, markConceptRead, reviewConceptCard, saveConceptCard, useCurrentPlayer, useData } from '../lib/store';
+import { ReviewAtAGlance } from './Review';
 
 /** The summary should stay short enough to read before a drill. */
 const SUMMARY_WORDS = 150;
@@ -332,30 +333,33 @@ export function LearnPage() {
   const written = Object.keys(data.conceptCards).length;
   return (
     <div className="container">
-      <PageHeader title="Concept cards">
-        <p>
-          Short notes on the ideas NSB asks about most: a summary, key facts, traps and sources, next to the questions that test each idea. Each
-          subject's owner writes the cards and a second player reviews them, so writing them is good study too.
-          {data.team ? ` ${written} of ${total} written so far.` : ' Cards belong to a team: join yours to read and write them; the questions on each concept are open to everyone.'}
-        </p>
-        <p>
-          <a href={href('/learn/paths')}>Reading paths</a>: each subject's topics in the order to learn them, with free readings and a short check
-          after each.
-        </p>
+      <PageHeader title="Learn">
+        <p>Your reviews first, then the ideas NSB asks about most.</p>
       </PageHeader>
+      <ReviewAtAGlance />
+      <h2>Concept cards</h2>
+      <p>
+        Short notes on the ideas NSB asks about most: a summary, key facts, traps and sources, next to the questions that test each idea. Each
+        subject's owner writes the cards and a second player reviews them, so writing them is good study too.
+        {data.team ? ` ${written} of ${total} written so far.` : ' Cards belong to a team: join yours to read and write them; the questions on each concept are open to everyone.'}
+      </p>
+      <p>
+        <a href={href('/learn/paths')}>Reading paths</a>: each subject's topics in the order to learn them, with free readings and a short check after
+        each.
+      </p>
       {index.error && <LoadError error={index.error} />}
       {CORE_SUBJECTS.map((subject) => {
         const topics = withConcepts.filter((t) => t.subject === subject);
         if (topics.length === 0) return null;
         return (
           <section key={subject} style={{ marginBottom: '1.5rem' }}>
-            <h2>
+            <h3>
               <SubjectTag subject={subject} />
-            </h2>
+            </h3>
             <div className="grid">
               {topics.map((t) => (
                 <section key={t.id} className="card">
-                  <h3 style={{ marginTop: 0 }}>{t.name}</h3>
+                  <h4 style={{ margin: '0 0 0.5rem', fontSize: '1.05rem', lineHeight: 1.25 }}>{t.name}</h4>
                   <ul className="concept-list">
                     {t.concepts.map((c) => {
                       const card = data.conceptCards[c.id];

@@ -32,21 +32,23 @@ import { VisualLabPage } from './pages/VisualLab';
 import { ShootoutConsole, TiebreakersPage } from './pages/Tiebreakers';
 import { WritePage } from './pages/Write';
 import { OnlinePage } from './pages/Online';
+import { NavMenu, type NavMenuLink } from './components/NavMenu';
 
-interface NavItem {
-  label: string;
-  path: string;
-  section: string;
-}
+/** An item in the bar: a page, or a menu of pages. */
+type NavItem = NavMenuLink | { label: string; items: NavMenuLink[] };
 
 const SIGNED_IN_NAV: NavItem[] = [
   { label: 'Today', path: '/today', section: 'today' },
-  { label: 'Practice', path: '/try', section: 'try' },
-  { label: 'Review', path: '/review', section: 'review' },
+  {
+    label: 'Practice',
+    items: [
+      { label: 'Solo practice', path: '/try', section: 'try', hint: 'Rounds and drills on your own' },
+      { label: 'Play online', path: '/online', section: 'online', hint: 'Matches from your own devices, no reader' },
+      { label: 'Reader console', path: '/reader', section: 'reader', hint: 'A game with a reader in the room' },
+    ],
+  },
   { label: 'Learn', path: '/learn', section: 'learn' },
   { label: 'Library', path: '/library', section: 'library' },
-  { label: 'Play online', path: '/online', section: 'online' },
-  { label: 'Reader console', path: '/reader', section: 'reader' },
   { label: 'Team', path: '/team', section: 'team' },
 ];
 
@@ -287,6 +289,8 @@ export function App() {
     tiebreakers: 'try',
     shootout: 'reader',
     write: 'team',
+    // Reviews are at the top of Learn.
+    review: 'learn',
   };
   const activeSection = sectionAliases[section] ?? section;
 
@@ -309,11 +313,15 @@ export function App() {
           {/* The bar and the account menu stay together: when the header runs out of room they move to a second row. */}
           <div className="header-end">
             <nav className="nav" aria-label="Main">
-              {nav.map((item) => (
-                <a key={item.path} href={href(item.path)} aria-current={activeSection === item.section ? 'page' : undefined}>
-                  {item.label}
-                </a>
-              ))}
+              {nav.map((item) =>
+                'items' in item ? (
+                  <NavMenu key={`${item.label}:${route.path}`} label={item.label} items={item.items} active={activeSection} />
+                ) : (
+                  <a key={item.path} href={href(item.path)} aria-current={activeSection === item.section ? 'page' : undefined}>
+                    {item.label}
+                  </a>
+                ),
+              )}
             </nav>
             {session.user && <AccountMenu key={route.path} name={session.user.name} />}
           </div>
