@@ -352,6 +352,22 @@ describe("teammates' practice", () => {
     await sendNow();
     expect(server.calls.filter((c) => c.method !== 'GET')).toEqual([]);
   });
+
+  it('a teammate who has just left is no error: their practice drops out, and the team is fetched again', async () => {
+    seed(99);
+    await signIn(meToken);
+    await m.teammates.loadTeammates();
+    // The teammate leaves, and their practice gets old enough to load again before this page has fetched the team.
+    const team = server.teams.get(TEAM)!;
+    team.members = team.members.filter((x) => x.userId !== TM);
+    server.users.get(TM)!.teamId = null;
+    vi.setSystemTime(T + 26_000);
+    await m.teammates.loadTeammates();
+    await m.cloud.settled();
+    expect(m.teammates.teammatesStatus().error).toBeNull();
+    expect(m.teammates.teamDataFrom(m.store.getData(), TEAM, [ME, TM]).attempts.some((a) => a.playerId === TM)).toBe(false);
+    expect(m.cloud.getSession().team!.members.map((x) => x.userId)).toEqual([ME]);
+  });
 });
 
 describe('the connection', () => {

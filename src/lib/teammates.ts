@@ -2,14 +2,15 @@
  * Teammates' practice, for the pages that compare players: team stats, lineups, who covers what, the scrimmage
  * builder (who has heard what), assignment progress and a teammate's progress page. Each teammate's visible
  * collections (game and match answers, practice answers, heard ledgers, what they have read, finished assignments)
- * load when such a page opens, and refresh every 30 seconds while it stays open. Review cards and daily plans stay
- * private: the server never sends them. Nothing here is ever sent back.
+ * load when such a page opens, and again after each refresh of the team (every 30 seconds while it stays open), so
+ * they follow the member list just fetched. Review cards and daily plans stay private: the server never sends them.
+ * Nothing here is ever sent back.
  */
-import { useEffect, useMemo, useSyncExternalStore } from 'react';
-import type { RecordOut } from '../core/accounts';
+import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
+import type { RecordOut, TeamResponse } from '../core/accounts';
 import type { Outcome } from '../core/review';
 import * as api from './api';
-import { getSession, subscribeSession, useSession } from './cloud';
+import { getSession, refreshNow, subscribeSession, useSession } from './cloud';
 import { applyUserRecords } from './records';
 import { emptyData, useData, type AppData } from './store';
 
@@ -70,31 +71,39 @@ async function loadOne(teamId: string, userId: string): Promise<boolean> {
   return true;
 }
 
-/** Load (or bring up to date) every teammate's practice, a few at a time. */
-export function loadTeammates(): Promise<void> {
+/** Load (or bring up to date) the practice of every teammate not loaded in the last `olderThanMs`, a few at a time. */
+export function loadTeammates(olderThanMs = FRESH_MS): Promise<void> {
   if (inFlight) return inFlight;
   const s = getSession();
   const teamId = s.team?.team.id;
   const me = s.user?.id;
   if (!teamId || !me || s.status !== 'ready') return Promise.resolve();
-  const ids = s.team!.members.map((m) => m.userId).filter((id) => id !== me && Date.now() - (cache.get(`${teamId}:${id}`)?.loadedAt ?? 0) > FRESH_MS);
+  const ids = s.team!.members.map((m) => m.userId).filter((id) => id !== me && Date.now() - (cache.get(`${teamId}:${id}`)?.loadedAt ?? 0) > olderThanMs);
   if (ids.length === 0) return Promise.resolve();
   setState({ loading: true });
   inFlight = (async () => {
     let error: string | null = null;
     let changed = false;
+    let left = false;
     const waiting = [...ids];
     const worker = async () => {
       for (let id = waiting.shift(); id !== undefined; id = waiting.shift()) {
         try {
           if (await loadOne(teamId, id)) changed = true;
         } catch (e) {
-          error ??= e instanceof Error ? e.message : String(e);
+          if (e instanceof api.ApiError && (e.status === 403 || e.status === 404)) {
+            // Not teammates any more (they left or were removed, or this player was, since the member list was
+            // fetched): no error. Their practice stops showing, and the team is fetched again below.
+            if (getSession().team?.team.id === teamId) cache.set(`${teamId}:${id}`, { cursor: 0, view: emptyData(), answers: new Map(), loadedAt: Date.now() });
+            changed = true;
+            left = true;
+          } else error ??= e instanceof Error ? e.message : String(e);
         }
       }
     };
     await Promise.all([worker(), worker(), worker(), worker()]);
     setState({ loading: false, error, ...(changed ? { version: state.version + 1 } : {}) });
+    if (left) void refreshNow();
   })().finally(() => {
     inFlight = null;
   });
@@ -133,6 +142,11 @@ function subscribe(l: () => void) {
   return () => listeners.delete(l);
 }
 
+/** For tests: whether teammates are loading, and the last load's error. */
+export function teammatesStatus(): { loading: boolean; error: string | null } {
+  return { loading: state.loading, error: state.error };
+}
+
 /** `d` (the store's data) with the teammates loaded so far, for the current team's members. */
 export function teamDataFrom(d: AppData, teamId: string | null, memberIds: string[]): AppData {
   if (!teamId) return d;
@@ -145,8 +159,9 @@ export function teamDataFrom(d: AppData, teamId: string | null, memberIds: strin
 }
 
 /**
- * The store's data plus every teammate's visible practice, for team pages. Loads teammates on first use and every
- * 30 seconds while the page is open and visible. `loading` is true until the first load finishes.
+ * The store's data plus every teammate's visible practice, for team pages. Loads teammates on first use and after
+ * each refresh of the team (every 30 seconds while the page is open and visible). `loading` is true until the first
+ * load finishes.
  */
 export function useTeamData(): { data: AppData; loading: boolean; error: string | null } {
   const data = useData();
@@ -155,14 +170,16 @@ export function useTeamData(): { data: AppData; loading: boolean; error: string 
   const teamId = s.team?.team.id ?? null;
   const memberIds = (s.team?.members ?? []).map((m) => m.userId).join(',');
 
+  // On opening, what is not fresh loads (going from one team page to another does not load it all again). After each
+  // later refresh of the team (cloud.ts fetches it every 30 seconds while the page is visible; each fetch is a new
+  // object), everyone's practice is brought up to date, so the members asked for are the ones the team just listed.
+  const team = s.team;
+  const opened = useRef<TeamResponse | null>(null);
   useEffect(() => {
     if (!teamId) return;
-    void loadTeammates();
-    const timer = setInterval(() => {
-      if (document.visibilityState === 'visible') void loadTeammates();
-    }, 30_000);
-    return () => clearInterval(timer);
-  }, [teamId, memberIds]);
+    void loadTeammates(opened.current ? 0 : FRESH_MS);
+    opened.current = team;
+  }, [teamId, team]);
 
   const merged = useMemo(
     () => teamDataFrom(data, teamId, memberIds.split(',')),
