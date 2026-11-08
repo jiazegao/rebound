@@ -11,6 +11,7 @@ import { TopicsPage } from './pages/Topics';
 import { LineupsPage } from './pages/Lineups';
 import { PacketsPage, PacketView } from './pages/Packets';
 import { ConceptPage, LearnPage } from './pages/Learn';
+import { ReadingPathsPage } from './pages/ReadingPaths';
 import { AssignmentsPage } from './pages/Assignments';
 import { RoomPage } from './pages/Room';
 import { JoinPage } from './pages/Join';
@@ -120,7 +121,7 @@ export function App() {
       page = <AssignmentsPage />;
       break;
     case 'learn':
-      page = second ? <ConceptPage id={second} query={route.query} /> : <LearnPage />;
+      page = second === 'paths' ? <ReadingPathsPage subject={third} /> : second ? <ConceptPage id={second} query={route.query} /> : <LearnPage />;
       break;
     case 'packets':
       page = second ? <PacketView id={second} print={route.query.get('print') === '1'} /> : <PacketsPage />;

@@ -1,10 +1,11 @@
 /**
  * Middle school sets printed "PHYSICAL SCIENCE" until 2021; the 2027 rules split that category into Physics
  * and Chemistry, for middle school as for high school. At import, each Physical Science question goes to the
- * subject whose topic rules (src/core/tagging.ts) fit it clearly better. When neither does, it stays in the
+ * subject that the tagger's rules (src/core/tagging.ts) clearly favour. When neither does, it stays in the
  * legacy subject `physical_science`. The printed category stays in `sourceCategory`.
  *
- * Measured against a hand-labelled sample in scripts/doe/REPORT-MS.md ("Physical Science split").
+ * Measured against the hand labels in scripts/doe/split-eval-ms.json; results in scripts/doe/REPORT-MS.md
+ * ("Physical Science split"). Changing the tagging rules can move questions: rebuild with npm run data:build:ms.
  */
 import type { Question, Round } from '../schema';
 import { explainCrossSubject, tagQuestion, type TaggableQuestion } from '../tagging';

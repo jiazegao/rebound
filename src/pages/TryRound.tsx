@@ -6,7 +6,7 @@ import { Verdict } from '../components/Verdict';
 import { pickDrill, pickMixed, setIdOf, type DrillPick } from '../core/drill';
 import { judgeAnswer, type JudgeResult } from '../core/judge/judge';
 import { ratingFor } from '../core/mastery';
-import { LEVEL_LABEL, rowLevel, teamCatalog } from '../core/levels';
+import { LEVEL_LABEL, libraryLevels, rowLevel, teamCatalog } from '../core/levels';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type Catalog, type CatalogRow, type CoreSubject, type DifficultyLevel, type Question, type QuestionPair, type QuestionSet } from '../core/schema';
 import { topicsForSubject } from '../core/taxonomy';
 import { usePlayerModel } from '../lib/learning';
@@ -181,6 +181,7 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
     ...initial,
   });
   const uploadLevels = useMemo(() => new Set(teamCatalog(data.packets).levels.values()), [data.packets]);
+  const doeLevels = useMemo(() => (catalog.data ? libraryLevels(catalog.data.questions) : new Set<DifficultyLevel>(['early', 'late'])), [catalog.data]);
   const [set, setSet] = useState<QuestionSet | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [busy, setBusy] = useState(false);
@@ -388,12 +389,17 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
                 <select id="level" value={s.level} onChange={(e) => setS({ ...s, level: e.target.value as DifficultyLevel | '' })}>
                   <option value="">Any level (DOE library)</option>
                   {(Object.keys(LEVEL_LABEL) as DifficultyLevel[]).map((l) => {
-                    const fromUploads = l === 'invitational' || l === 'nationals';
-                    const off = fromUploads && !uploadLevels.has(l);
+                    const inLibrary = doeLevels.has(l);
+                    const inUploads = uploadLevels.has(l);
+                    const where =
+                      l === 'early'
+                        ? 'DOE rounds 1–10'
+                        : l === 'late'
+                          ? 'DOE rounds 11 and later'
+                          : [inLibrary ? 'DOE national rounds' : '', inUploads ? 'your uploaded packets' : ''].filter(Boolean).join(' and ') || 'upload a packet at this level first';
                     return (
-                      <option key={l} value={l} disabled={off}>
-                        {LEVEL_LABEL[l]}
-                        {fromUploads ? (off ? ' (upload a packet at this level first)' : ' (your uploaded packets)') : l === 'early' ? ' (DOE rounds 1–10)' : ' (DOE rounds 11–17)'}
+                      <option key={l} value={l} disabled={!inLibrary && !inUploads}>
+                        {LEVEL_LABEL[l]} ({where})
                       </option>
                     );
                   })}

@@ -19,7 +19,7 @@ import {
   type WrittenQuestion,
 } from '../core/schema';
 import { canReview, checkWritten, describeWritten, hasErrors, nearDuplicates, normalizeWritten, packetFromWritten, similarWritten } from '../core/studio';
-import { aiDraftQuestions, MAX_AI_DRAFTS, MAX_PASSAGE_CHARS, MIN_PASSAGE_CHARS, usageText, useAiStatus } from '../lib/ai';
+import { AI_RESTRICTED_TEXT, aiDraftQuestions, aiRestrictedSource, MAX_AI_DRAFTS, MAX_PASSAGE_CHARS, MIN_PASSAGE_CHARS, usageText, useAiStatus } from '../lib/ai';
 import { roundToDocx } from '../lib/docx';
 import { dateText, downloadBlob, downloadFile, newId } from '../lib/format';
 import { loadQuestions, useAsync } from '../lib/library';
@@ -431,7 +431,8 @@ function AiDrafts() {
   const left = Math.max(0, (ai.dailyLimit ?? 0) - (ai.usedToday ?? 0));
   const calls = count + 1;
   const length = passage.trim().length;
-  const ready = length >= MIN_PASSAGE_CHARS && length <= MAX_PASSAGE_CHARS && source.trim().length > 0 && calls <= left && !busy;
+  const restricted = aiRestrictedSource(`${source} ${url}`);
+  const ready = length >= MIN_PASSAGE_CHARS && length <= MAX_PASSAGE_CHARS && source.trim().length > 0 && calls <= left && !busy && !restricted;
   return (
     <details className="card" style={{ marginBottom: '1rem' }}>
       <summary>
@@ -489,10 +490,10 @@ function AiDrafts() {
         }}
       >
         <p className="small muted" style={{ margin: 0 }}>
-          Paste a passage from a source your team may quote (an OpenStax section, a NASA, NOAA or DOE page) and say where it is from. An AI model
-          drafts questions from it, and a second call answers each one without the key, to catch a wrong answer line. The drafts land in Your
-          drafts, labeled AI-drafted: check every fact against the source, then send them for review like any question. They stay in your
-          team's practice.
+          Paste a passage whose terms allow it, such as a U.S. government page (NASA, NOAA, USGS, EIA, DOE: public domain), and say where it is
+          from. Not OpenStax: its license does not allow putting the books into AI tools. An AI model drafts questions from the passage, and a
+          second call answers each one without the key, to catch a wrong answer line. The drafts land in Your drafts, labeled AI-drafted: check
+          every fact against the source, then send them for review like any question. They stay in your team's practice.
         </p>
         <div className="grid">
           <div className="field">
@@ -527,13 +528,14 @@ function AiDrafts() {
         <div className="grid-2">
           <div className="field">
             <label htmlFor="ai-source">Source</label>
-            <input id="ai-source" type="text" maxLength={300} placeholder="e.g. OpenStax Chemistry 2e, 6.3 Development of Quantum Theory" value={source} onChange={(e) => setSource(e.target.value)} />
+            <input id="ai-source" type="text" maxLength={300} placeholder="e.g. EIA Energy Explained: Nuclear explained" value={source} onChange={(e) => setSource(e.target.value)} />
           </div>
           <div className="field">
             <label htmlFor="ai-url">Link (optional)</label>
             <input id="ai-url" type="url" placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} />
           </div>
         </div>
+        {restricted && <Notice kind="warn">{AI_RESTRICTED_TEXT}</Notice>}
         <div className="field">
           <label htmlFor="ai-passage">
             Passage ({length.toLocaleString()} of {MAX_PASSAGE_CHARS.toLocaleString()} characters)

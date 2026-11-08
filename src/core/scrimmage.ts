@@ -21,9 +21,9 @@ export type ScrimmageLevel = DifficultyLevel | 'any';
 
 export const LEVEL_TEXT: Record<ScrimmageLevel, string> = {
   early: 'Early regional (DOE rounds 1–10)',
-  late: 'Late regional (DOE rounds 11–17, harder)',
+  late: 'Late regional (DOE rounds 11 and later, harder)',
   invitational: 'Invitational (your uploaded invitational packets)',
-  nationals: 'Nationals-level (your uploaded nationals-level packets)',
+  nationals: 'Nationals-level (DOE middle school national rounds, and your nationals-level packets)',
   any: 'Any level (DOE library)',
 };
 

@@ -3,7 +3,7 @@ import { QuestionView } from '../components/QuestionView';
 import { RoundDownloads } from '../components/Downloads';
 import { LoadError, Loading, Notice, PageHeader, SubjectTag } from '../components/ui';
 import { FigureView } from '../components/Figure';
-import { teamCatalog, UPLOAD_LEVEL_LABEL } from '../core/levels';
+import { libraryLevels, teamCatalog, UPLOAD_LEVEL_LABEL } from '../core/levels';
 import { buildScrimmage, FORMATS, LEVEL_TEXT, type ScrimmageLevel, type ScrimmageResult } from '../core/scrimmage';
 import type { Round, ScrimmageFormat, TeamPacket, UploadLevel } from '../core/schema';
 import { dateText, newId } from '../lib/format';
@@ -42,7 +42,8 @@ function ScrimmageBuilder() {
   const [level, setLevel] = useState<ScrimmageLevel>('early');
   const [visualShare, setVisualShare] = useState(0.5);
   const team = useMemo(() => teamCatalog(data.packets), [data.packets]);
-  const hasLevel = (l: ScrimmageLevel) => (l === 'invitational' || l === 'nationals' ? [...team.levels.values()].includes(l) : true);
+  const doeLevels = useMemo(() => (catalog.data ? libraryLevels(catalog.data.questions) : new Set<string>(['early', 'late'])), [catalog.data]);
+  const hasLevel = (l: ScrimmageLevel) => (l === 'invitational' || l === 'nationals' ? [...team.levels.values()].includes(l) || doeLevels.has(l) : true);
   const [built, setBuilt] = useState<{ result: ScrimmageResult; questions: Map<string, Located> } | null>(null);
   const defaultTitle = (f: ScrimmageFormat) => `${f === 'regional' ? 'Scrimmage' : FORMATS[f].label} ${dateText(new Date().toISOString())}`;
   const [title, setTitle] = useState(() => defaultTitle('regional'));

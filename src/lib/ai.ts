@@ -51,6 +51,21 @@ export interface AiCardDraft {
   traps: string;
 }
 
+/* ---------------- sources AI may read ---------------- */
+
+/**
+ * Sources whose terms forbid putting their text into AI tools. OpenStax's books (November 2026) say they "may not
+ * be used in the training of large language models or otherwise be ingested into" AI products without permission.
+ */
+const AI_RESTRICTED = [/openstax/i];
+
+export function aiRestrictedSource(text: string): boolean {
+  return AI_RESTRICTED.some((re) => re.test(text));
+}
+
+export const AI_RESTRICTED_TEXT =
+  "OpenStax's license does not allow putting its books into AI tools. Use a public-domain U.S. government page (NASA, NOAA, USGS, EIA, DOE) for AI drafts, or write from the textbook yourself.";
+
 /* ---------------- whether AI help is on, and today's use ---------------- */
 
 let snapshot: { key: string; value: AiStatus | null; at: number } = { key: '', value: null, at: 0 };

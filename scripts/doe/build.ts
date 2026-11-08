@@ -59,6 +59,7 @@ import {
   type SetSummary,
   type Subject,
 } from '../../src/core/schema';
+import { catalogRound } from '../../src/core/levels';
 import { tagQuestion } from '../../src/core/tagging';
 import { TOPICS, topicName } from '../../src/core/taxonomy';
 import {
@@ -476,7 +477,7 @@ async function main() {
     await writeFile(path.join(opts.out, fileName), JSON.stringify(set));
     for (const r of rounds) {
       for (const q of questionsOf(r)) {
-        catalogRows.push([q.id, q.subject, q.topic ?? '', q.kind === 'tossup' ? 't' : 'b', r.order, q.crossSubject ?? '']);
+        catalogRows.push([q.id, q.subject, q.topic ?? '', q.kind === 'tossup' ? 't' : 'b', catalogRound(id, r.order), q.crossSubject ?? '']);
         for (const c of q.concepts ?? []) (conceptQuestions[c] ??= []).push(q.id);
       }
     }
@@ -785,7 +786,7 @@ function buildReport(
   out.push('Printed categories and where they were mapped:', '');
   for (const [k, v] of [...printed.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))) out.push(`- ${k}: ${v}`);
   out.push('');
-  if (!hs) out.push(...splitReport(results, allQuestions, splitEval));
+  if (!hs) out.push(...splitReport(cfg, results, allQuestions, splitEval));
 
   out.push(...topicsReport(cfg, allQuestions, topicEval));
 
@@ -935,14 +936,14 @@ interface SplitLabel {
 }
 
 /** Middle school: how the printed Physical Science questions were split between physics and chemistry. */
-function splitReport(results: Map<SetKey, RoundResult[]>, questions: Question[], labels: SplitLabel[] | undefined): string[] {
+function splitReport(cfg: LevelConfig, results: Map<SetKey, RoundResult[]>, questions: Question[], labels: SplitLabel[] | undefined): string[] {
   const out: string[] = ['### Physical Science split', ''];
   const printed = questions.filter(isPrintedPhysicalScience);
   const n = (s: Subject) => printed.filter((q) => q.subject === s).length;
   out.push(
-    'The 2027 rules split middle school Physical Science into Physics and Chemistry. Each question printed as Physical Science goes to the subject whose ' +
-      'topic rules fit it clearly better (`src/core/importers/doeSubjects.ts`: best topic score at least 2 and ahead of the other subject by at least 1); ' +
-      'otherwise it keeps the legacy subject `physical_science`. `sourceCategory` keeps the printed category.',
+    'The 2027 rules split middle school Physical Science into Physics and Chemistry. Each question printed as Physical Science goes to the subject the ' +
+      "tagger's rules clearly favour (`src/core/importers/doeSubjects.ts`: for each subject, the best topic score plus half the Energy cross-subject score; " +
+      'the winner needs at least 2 and a lead of at least 1); otherwise it keeps the legacy subject `physical_science`. `sourceCategory` keeps the printed category.',
     '',
     `Result: ${printed.length} Physical Science questions → ${n('physics')} physics (${pct(n('physics'), printed.length)}), ` +
       `${n('chemistry')} chemistry (${pct(n('chemistry'), printed.length)}), ${n('physical_science')} kept as physical_science (${pct(n('physical_science'), printed.length)}).`,
@@ -953,7 +954,7 @@ function splitReport(results: Map<SetKey, RoundResult[]>, questions: Question[],
     out.push('| Set | Physics | Chemistry | Kept |', '|---|---|---|---|');
     for (const [k, rs] of perSet) {
       const sum = (f: 'physics' | 'chemistry' | 'kept') => rs.reduce((a, r) => a + (r.split?.[f] ?? 0), 0);
-      out.push(`| ${typeof k === 'number' ? `Set ${k}` : k} | ${sum('physics')} | ${sum('chemistry')} | ${sum('kept')} |`);
+      out.push(`| ${setIdentity(cfg, k).id} | ${sum('physics')} | ${sum('chemistry')} | ${sum('kept')} |`);
     }
     out.push('');
   }

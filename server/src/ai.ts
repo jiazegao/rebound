@@ -137,6 +137,10 @@ function passage(v: unknown): string {
 function source(v: unknown): string {
   const s = cleanLine(v, 300);
   if (s === null) throw new HttpError(400, 'Say where the passage comes from: the book and section, or the web page.');
+  // OpenStax's books (November 2026) may not be "ingested into" AI products without permission.
+  if (/openstax/i.test(s)) {
+    throw new HttpError(400, "OpenStax's license does not allow putting its books into AI tools. Use a public-domain U.S. government page instead.");
+  }
   return s;
 }
 

@@ -165,7 +165,8 @@ export function AboutPage() {
       </p>
       <p>
         AI-drafted questions and explanations can be wrong. They are labeled, need a person's approval, and are for a team's own practice, not
-        for publishing or for competitions.
+        for publishing or for competitions. Paste only text whose license allows it into AI drafts: U.S. government pages are public domain, but
+        OpenStax's books may not be put into AI tools.
       </p>
       <p>
         Rebound's code is open source under the MIT License. The DOE questions are public domain and are not covered by that license.

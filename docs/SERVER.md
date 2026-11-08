@@ -94,7 +94,9 @@ for models that have one, the server-side refusal fallback.
   answerLetter?, answer, accept, support }` (`support` quotes the passage), and a second call answers each draft
   without its key or the passage: `blindAnswer` is what it said and `blindAgreed` whether the answer checker
   accepts it for the key. The site saves drafts as written questions labeled with `ai`; they go through the same
-  checks and review as any question, and packets mark them "AI-drafted (internal practice only)".
+  checks and review as any question, and packets mark them "AI-drafted (internal practice only)". Members should
+  paste only text whose terms allow it, such as public-domain U.S. government pages; the site refuses passages it can
+  tell come from OpenStax, whose license does not allow putting its books into AI tools.
 - **Explanations** (`/ai/explain`): at most 120 words; `answerLooksWrong` flags a key the model disputes. Cached
   for the team for 180 days by model and question text (`cached: true` costs nothing).
 - **Limits**: each team may make `AI_DAILY_LIMIT` model calls per UTC day (default 50). A draft request costs one

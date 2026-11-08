@@ -4,7 +4,7 @@ import { QuestionView } from '../components/QuestionView';
 import { LoadError, Loading, Notice, PageHeader, SubjectTag } from '../components/ui';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type ConceptCard } from '../core/schema';
 import { topicById, TOPICS } from '../core/taxonomy';
-import { aiDraftCard, MAX_PASSAGE_CHARS, MIN_PASSAGE_CHARS, usageText, useAiStatus } from '../lib/ai';
+import { AI_RESTRICTED_TEXT, aiDraftCard, aiRestrictedSource, MAX_PASSAGE_CHARS, MIN_PASSAGE_CHARS, usageText, useAiStatus } from '../lib/ai';
 import { dateText } from '../lib/format';
 import { loadQuestions, useAsync, useConceptIndex } from '../lib/library';
 import { href } from '../lib/router';
@@ -44,7 +44,8 @@ function AiCardDraft({ concept, onDraft }: { concept: string; onDraft: (d: { sum
   if (!ai?.enabled) return null;
   const length = passage.trim().length;
   const left = Math.max(0, (ai.dailyLimit ?? 0) - (ai.usedToday ?? 0));
-  const ready = length >= MIN_PASSAGE_CHARS && length <= MAX_PASSAGE_CHARS && source.trim().length > 0 && left > 0 && !busy;
+  const restricted = aiRestrictedSource(source);
+  const ready = length >= MIN_PASSAGE_CHARS && length <= MAX_PASSAGE_CHARS && source.trim().length > 0 && left > 0 && !busy && !restricted;
   return (
     <details className="card">
       <summary>
@@ -52,13 +53,15 @@ function AiCardDraft({ concept, onDraft }: { concept: string; onDraft: (d: { sum
       </summary>
       <div className="stack" style={{ marginTop: '0.75rem' }}>
         <p className="small muted" style={{ margin: 0 }}>
-          Paste a section from a source your team may quote and say where it is from. An AI model drafts the card below from it; edit it, and a
-          second player reviews it as usual. The card stays labeled AI-drafted.
+          Paste a section whose terms allow it, such as a U.S. government page (public domain), and say where it is from; not OpenStax, whose
+          license does not allow putting the books into AI tools. An AI model drafts the card below from it; edit it, and a second player reviews
+          it as usual. The card stays labeled AI-drafted.
         </p>
         <div className="field">
           <label htmlFor="ai-card-source">Source</label>
-          <input id="ai-card-source" type="text" maxLength={300} placeholder="e.g. OpenStax Biology 2e, 12.3" value={source} onChange={(e) => setSource(e.target.value)} />
+          <input id="ai-card-source" type="text" maxLength={300} placeholder="e.g. NOAA JetStream: Air Masses" value={source} onChange={(e) => setSource(e.target.value)} />
         </div>
+        {restricted && <Notice kind="warn">{AI_RESTRICTED_TEXT}</Notice>}
         <div className="field">
           <label htmlFor="ai-card-passage">
             Passage ({length.toLocaleString()} of {MAX_PASSAGE_CHARS.toLocaleString()} characters)
@@ -330,6 +333,10 @@ export function LearnPage() {
           Short notes on the ideas NSB asks about most: a summary, key facts, traps and sources, next to the questions that test each idea. Each
           subject's owner writes the cards and a second player reviews them, so writing them is good study too. {written} of {total} written so
           far.
+        </p>
+        <p>
+          <a href={href('/learn/paths')}>Reading paths</a>: each subject's topics in the order to learn them, with free readings and a short check
+          after each.
         </p>
       </PageHeader>
       {index.error && <LoadError error={index.error} />}

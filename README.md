@@ -33,13 +33,16 @@ Rebound is an unofficial study tool, not affiliated with or endorsed by the U.S.
 | **Play → Reader console** | Run an in-person practice game from one laptop: question in large type, answer for the reader, 5 s / 20 s answer clocks, game clock, two-tap scoring under the **2027 rules** (interrupts, blurts, rebounds, double interrupts, halves, tiebreakers), undo, keyboard shortcuts. Every toss-up is logged. Presets for regionals, virtual events and the Finals: 10-minute halves, and visual bonus rounds with 12-minute halves and 30-second visual bonuses whose figure can be projected full screen (remote players see it on their own screens). |
 | **Game summary**, **Stats** | Per-player toss-up accuracy by subject, interrupts, points given away, median buzz time, bonus conversion; CSV export, and the whole game as an NSB-JSON game log that other tools can re-score. |
 | **Practice (solo)** | Questions appear letter by letter at a moderator's pace (the words-per-minute setting is converted to letters using the library's average word length, about 6 characters with the space); the word still appearing is shown fainter. Buzz with Space, start typing within 2 seconds (NSB's natural pause) and finish within 5, and the answer checker grades it (close calls go to "your call"). The answer timer can be switched off. |
-| **Library** | Every DOE high school sample set, by set and round, searchable, printable, with links to the original PDFs and a "report a problem" button. Shows which questions the team has already heard, and lets a player add any question to their review queue. **Library → Topics** shows how often each topic comes up in each subject. |
+| **Library** | Every DOE high school and middle school sample set, by set and round, the team's level first; searchable, printable, downloadable as Word or NSB-JSON, with links to the original PDFs and a "report a problem" button. Shows which questions the team has already heard, and lets a player add any question to their review queue. **Library → Topics** shows how often each topic comes up in each subject. |
+| **Middle school mode** | Choose middle school when setting up the team: drills, daily plans, scrimmages, the Learn pages and offline downloads then use DOE's 16 middle school sets and its middle school national sample rounds (nationals-level on the difficulty ladder). High school sets stay available for practicing up. Games follow the same 2027 rules; the rules page notes the one difference, how Finals round robin ties are broken (Rules 10-2 and 10-3). |
 | **NSB rules at a glance** | Generated from the same rule presets the game engine uses. |
 | **For coaches**, **For school IT staff**, **Privacy, terms and credits**, **Data and backup** | Setup guide, network needs, credits, export/import/delete. |
 
-The library holds **12,024 questions** (6,012 toss-up/bonus pairs) from all 17 DOE high school sample sets, 257 rounds.
-About 2.5% of them, all in the older sets, carry an import note (for example, an equation that was an image in the PDF);
-the site says so and links to the original page, and solo practice skips the few whose answers could not be read.
+The library holds **23,720 questions**: 12,024 from all 17 DOE high school sample sets (257 rounds) and 11,696 from the
+16 middle school sets plus DOE's middle school sample rounds from a national event (250 rounds). About 2.5% of the high
+school questions and a similar share of the middle school ones, nearly all in the older sets, carry an import note (for
+example, an equation that was an image in the PDF); the site says so and links to the original page, and solo practice
+skips the few whose answers could not be read.
 
 All team data is stored **in the browser on the device** (IndexedDB), and the site works without any server. A team that
 shares itself through the team server also keeps a copy there, and every signed-in device syncs with it. Use
@@ -62,6 +65,7 @@ npm run build      # type-check and build the static site into dist/
 npm run preview    # serve dist/ at http://localhost:4173
 node e2e/smoke.cjs # browser walkthrough against the preview server (needs Playwright + Chromium)
 node e2e/team-server.cjs # a captain and a player in two browsers against a local team server (see the file's header)
+node e2e/middle-school.cjs # a middle school team against the real library
 npx tsx scripts/checks/judge-self-check.ts   # grade every printed answer in the library against itself
 npx tsx scripts/checks/review-load.ts 30 0.6 # simulate 90 days of reviews for a 30-minute plan and a 60% player
 cd server && npm test                        # the team server's tests, in the Workers runtime
@@ -96,10 +100,19 @@ domain the coach can access, the privacy and credits pages, asking school IT to 
 
 ## Question data
 
-The DOE high school sample sets ship with the site as JSON in `public/data/doe/`: one file per set, `index.json`, and
-`catalog.json` (one compact row per question, so drills can choose questions without downloading every set). They are
-U.S. Government works in the public domain; DOE's Office of Science asks to be credited and linked, and every round keeps
-a link to its original PDF.
+The DOE sample sets ship with the site as JSON in `public/data/doe/`: one file per set (`doe-hs-01.json`…,
+`doe-ms-01.json`…, `doe-ms-finals.json`), `index.json` for both levels, and per level a catalog (`catalog.json`,
+`catalog-ms.json`: one compact row per question, so drills can choose questions without downloading every set) and a
+concept index (`concepts.json`, `concepts-ms.json`). `fingerprints.json` holds a SimHash fingerprint of every question
+for the writing studio's duplicate search. They are U.S. Government works in the public domain; DOE's Office of Science
+asks to be credited and linked, and every round keeps a link to its original PDF.
+
+**Middle school categories.** Older middle school sets printed Physical Science, Life Science, Earth Science and General
+Science. Life Science and Earth Science map to Biology and Earth and Space. Physical Science questions move to Physics
+(1,184) or Chemistry (782) when the tagger's rules clearly agree (37 of 38 right on a hand-labelled check,
+`scripts/doe/split-eval-ms.json`); the other 214 stay Physical Science, and General Science stays as printed. The printed
+category is kept with every question. `scripts/doe/REPORT-MS.md` has the details, including two places where DOE
+published the same questions twice.
 
 **Visual bonuses.** DOE publishes no Finals visual bonuses, so the Visual lab has its own sources:
 
@@ -131,8 +144,11 @@ guess when the rules are unsure:
 To rebuild the data (for example when DOE posts a new set):
 
 ```bash
-npm run data:fetch   # list the official PDFs and download missing ones into .cache/ (polite: ≥3 s between requests)
-npm run data:build   # parse the cached PDFs into public/data/doe/ and write scripts/doe/REPORT.md
+npm run data:fetch          # list the official PDFs and download missing ones into .cache/ (polite: ≥3 s between requests)
+npm run data:build          # parse the cached PDFs into public/data/doe/ and write scripts/doe/REPORT.md
+npm run data:fetch:ms       # the same for the middle school sets
+npm run data:build:ms       # … and scripts/doe/REPORT-MS.md
+npm run data:fingerprints   # then refresh the duplicate-search fingerprints (a test checks they match)
 ```
 
 Only DOE-published sets belong in this folder. Community and invitational packets carry no open license: keep them

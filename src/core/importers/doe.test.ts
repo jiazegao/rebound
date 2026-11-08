@@ -45,6 +45,8 @@ const lines = (text: string, page = 1): SourceLine[] => text.split('\n').map((t)
 describe('ids and constants', () => {
   it('builds stable ids', () => {
     expect(doeSetId(7)).toBe('doe-hs-07');
+    expect(doeSetId(7, 'MS')).toBe('doe-ms-07');
+    expect(doeSetId('finals', 'MS')).toBe('doe-ms-finals');
     expect(doeRoundId('doe-hs-17', 1)).toBe('doe-hs-17-r01');
     expect(doeQuestionId('doe-hs-17-r01', 'tossup', 3)).toBe('doe-hs-17-r01-t03');
     expect(doeQuestionId('doe-hs-17-r01', 'bonus', 12)).toBe('doe-hs-17-r01-b12');
@@ -56,6 +58,9 @@ describe('ids and constants', () => {
     expect(expectedPairsForYear(2014)).toBe(23);
     expect(expectedPairsForYear(2020)).toBe(23);
     expect(expectedPairsForYear(2022)).toBe(18);
+    expect(expectedPairsForYear(2021)).toBe(18);
+    expect(expectedPairsForYear(2021, 'MS')).toBe(15);
+    expect(expectedPairsForYear(2022, 'MS')).toBe(18);
     expect(expectedPairsForYear(undefined)).toBeUndefined();
   });
 });
@@ -512,6 +517,152 @@ ANSWER: IT`),
   });
 });
 
+describe('middle school formats', () => {
+  const ms = (text: string) => parseDoeRound(lines(text), { setId: 'doe-ms-99', roundId: 'doe-ms-99-r01', label: 'Round 1', order: 1 });
+
+  it('reads middle school headers and footers as noise and as the printed label', () => {
+    for (const noise of [
+      'MIDDLE SCHOOL - ROUND 1A',
+      'Middle School',
+      'ROUND ROBIN 2',
+      'DOUBLE ELIMINATION ROUND 1',
+      'SINGLE ELIMINATION ROUND 3',
+      'Round Robin 5, Page 3',
+    ]) {
+      expect(isNoiseLine(noise), noise).toBe(true);
+    }
+    expect(ms('DOUBLE ELIMINATION ROUND 3\nTOSS-UP\n1) MATH Short Answer What is 1 + 1?\nANSWER: 2').printedLabel).toBe('DOUBLE ELIMINATION ROUND 3');
+    expect(ms('MIDDLE SCHOOL - ROUND 17A\nTOSS-UP\n1) Math – Short Answer What is 1 + 1?\nANSWER: 2').printedLabel).toBe('MIDDLE SCHOOL - ROUND 17A');
+  });
+
+  it('reads numbers with an asterisk or without the parenthesis, and a doubled category', () => {
+    expect(parseQuestionHeader('*1) GENERAL SCIENCE Multiple Choice Fungi are usually spread by:')).toMatchObject({ number: 1, category: 'GENERAL SCIENCE', format: 'multiple_choice' });
+    expect(parseQuestionHeader('17 LIFE SCIENCE Short Answer There are two main kinds of vaccines.')).toMatchObject({ number: 17, category: 'LIFE SCIENCE', format: 'short_answer' });
+    expect(parseQuestionHeader('17 meters per second is the speed')).toBeUndefined();
+    expect(parseQuestionHeader('17) LIFE SCIENCE Mutliple Choice Among adult humans,')).toMatchObject({ format: 'multiple_choice' });
+    expect(mapCategory('MATH Math')).toBe('math');
+    expect(mapCategory('Physical SCIENCE')).toBe('physical_science');
+  });
+
+  it('reads options printed in lower case and the "ANWER:" typo', () => {
+    const { round } = ms(`TOSS-UP
+1) LIFE SCIENCE Multiple Choice Which cells are capable of the most phagocytosis
+w) plasma cells
+X) lymphocytes
+Y) mast cells
+Z) macrophages
+ANWER: Z) MACROPHAGES
+BONUS
+1) GENERAL SCIENCE Multiple Choice The shape of galaxies is mostly attributed to:
+w) light
+x) matter
+y) electricity
+z) gravity
+ANSWER: Z) GRAVITY`);
+    expect(round.pairs[0].tossup.choices).toEqual({ W: 'plasma cells', X: 'lymphocytes', Y: 'mast cells', Z: 'macrophages' });
+    expect(round.pairs[0].tossup).toMatchObject({ answer: 'MACROPHAGES', answerLetter: 'Z' });
+    expect(round.pairs[0].tossup.flags).toBeUndefined();
+    expect(round.pairs[0].bonus?.choices).toEqual({ W: 'light', X: 'matter', Y: 'electricity', Z: 'gravity' });
+  });
+
+  it('reads a question printed with its number only, right after its marker', () => {
+    const { round, strayLines } = ms(`TOSS-UP
+15) PHYSICAL SCIENCE Short Answer Name the two planets.
+ANSWER: MARS AND JUPITER
+BONUS
+15) MATH Short Answer What is 2 + 2?
+ANSWER: 4
+TOSS-UP
+16) What is the most common term for the 12 constellations the Sun passes in front of?
+ANSWER: ZODIAC
+BONUS
+16) GENERAL SCIENCE Short Answer A 1 pint 9 ounce bottle contains how many fluid ounces?
+ANSWER: 25`);
+    expect(strayLines).toEqual([]);
+    expect(round.pairs.map((p) => p.number)).toEqual([15, 16]);
+    expect(round.pairs[1].tossup).toMatchObject({ answer: 'ZODIAC', sourceCategory: '', subject: 'general_science', flags: ['category-unknown', 'type-unknown'] });
+    expect(round.pairs[1].bonus?.answer).toBe('25');
+  });
+
+  it('reads a bonus printed under a second TOSS-UP marker, and toss-ups printed out of order', () => {
+    const { round } = ms(`TOSS-UP
+16) Physical Science – Short Answer What particle was found in cathode ray experiments?
+ANSWER: ELECTRON
+TOSS-UP
+16) Physical Science – Short Answer What device stores charge?
+ANSWER: CAPACITOR
+TOSS-UP
+17) Math – Short Answer What is 3 + 4?
+ANSWER: 7
+BONUS
+17) Math – Short Answer What is 3 x 4?
+ANSWER: 12
+TOSS-UP
+19) Math – Short Answer What is 9 + 9?
+ANSWER: 18
+BONUS
+19) Math – Short Answer What is 9 x 9?
+ANSWER: 81
+TOSS-UP
+18) Math – Short Answer What is 8 + 8?
+ANSWER: 16
+BONUS
+18) Math – Short Answer What is 8 x 8?
+ANSWER: 64
+TOSS-UP
+20) Math – Short Answer What is 1 + 1?
+ANSWER: 2
+BONUS
+20) Math – Short Answer What is 1 x 1?
+ANSWER: 1`);
+    expect(round.pairs.map((p) => p.number)).toEqual([16, 17, 18, 19, 20]);
+    expect(round.pairs[0].bonus).toMatchObject({ kind: 'bonus', answer: 'CAPACITOR', flags: ['kind-corrected'] });
+    expect(round.pairs[2].tossup).toMatchObject({ answer: '18', flags: ['number-mismatch'] });
+    expect(round.pairs[3].tossup).toMatchObject({ answer: '16', flags: ['number-mismatch'] });
+    expect(round.pairs[4].tossup.flags).toBeUndefined();
+  });
+
+  it('keeps a skipped number when the question was omitted', () => {
+    const { round } = ms(`TOSS-UP
+7) MATH Short Answer What is 7?
+ANSWER: 7
+BONUS
+7) MATH Short Answer What is 77?
+ANSWER: 77
+The toss-up and bonus for Question 8 have been omitted.
+TOSS-UP
+9) MATH Short Answer What is 9?
+ANSWER: 9
+BONUS
+9) MATH Short Answer What is 99?
+ANSWER: 99`);
+    expect(round.pairs.map((p) => p.number)).toEqual([7, 9]);
+    expect(round.pairs[1].tossup.flags).toBeUndefined();
+  });
+
+  it('takes the letter of the one option an answer names when the letter is not printed', () => {
+    const { round, warnings } = ms(`TOSS-UP
+13) Energy – Multiple Choice As a spring is compressed, what happens to its elastic potential energy?
+W) It increases
+X) It decreases
+Y) It is unchanged
+Z) It decreases, then increases
+ANSWER: IT INCREASES
+BONUS
+13) Math – Multiple Choice Which is largest?
+W) 2
+X) 20
+Y) 25
+Z) 3
+ANSWER: 2`);
+    expect(round.pairs[0].tossup).toMatchObject({ answer: 'IT INCREASES', answerLetter: 'W' });
+    expect(round.pairs[0].tossup.flags).toBeUndefined();
+    expect(warnings.map((w) => w.code)).toContain('answer-letter-inferred');
+    // "2" names W exactly; prefixes of other options do not count.
+    expect(round.pairs[0].bonus).toMatchObject({ answerLetter: 'W' });
+  });
+});
+
 describe('category mapping', () => {
   it('maps every printed category', () => {
     const cases: [string, string][] = [
@@ -614,6 +765,24 @@ describe('pdfText: superscripts, subscripts and fractions', () => {
     expect(page).toHaveLength(1);
     expect(page[0].text).toBe('Find the ratio of x to y if: (x−y)/(x+y) = 2/3');
     expect(page[0].hints).toContain('math');
+  });
+
+  it('reads a whole number followed by a stacked fraction as a mixed number', () => {
+    // "Add the following: 3 ½ + 2 ⅓ =" with the fractions stacked in a smaller font (middle school Set 2).
+    const page = buildLines(
+      [
+        item('Add the following: 3', 72, 629.7, 10.98, 120),
+        item('1', 193, 636.18, 7.98, 4.62),
+        item('2', 193, 624.12, 7.98, 4.62),
+        item('+ 2', 200, 629.7, 10.98, 14),
+        item('1', 215, 636.18, 7.98, 4.62),
+        item('3', 215, 624.12, 7.98, 4.62),
+        item('=', 224, 629.7, 10.98, 8.2),
+      ],
+      1,
+    );
+    expect(page).toHaveLength(1);
+    expect(page[0].text).toBe('Add the following: 3 1/2 + 2 1/3 =');
   });
 
   it('keeps exponents of consecutive option lines apart', () => {

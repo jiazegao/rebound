@@ -546,6 +546,7 @@ export function ShootoutConsole() {
 
 export function TiebreakersPage() {
   const [drill, setDrill] = useState(false);
+  const level = useTeamLevel();
   return (
     <div className="container narrow">
       <p className="small">
@@ -577,6 +578,7 @@ export function TiebreakersPage() {
             <p style={{ margin: 0 }}>
               Each team, alone, hears the same 5 toss-ups read in full and has 5 seconds to buzz. +1 for a right answer, −1 for a wrong one, 0 for
               none. Because a wrong answer costs as much as a right one gains, buzz only when you are more likely right than wrong.
+              {level === 'MS' && ' Middle school teams meet it at the National Finals too: ties for the places each round robin division sends on are broken the same way (Rule 10-2).'}
             </p>
             <div className="row">
               <button className="btn btn-primary" onClick={() => setDrill(true)}>

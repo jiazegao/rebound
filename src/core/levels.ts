@@ -33,9 +33,28 @@ export function uploadDifficulty(level: UploadLevel | undefined): DifficultyLeve
  */
 export const NOMINAL_ROUND: Record<UploadLevel, number> = { regional: 12, invitational: 17, nationals: 24 };
 
-/** The level of a DOE round, by its position in the set. */
+/** DOE sample sets from a national event (DOE's middle school "Sample Rounds"): nationals-level on the ladder. */
+export const DOE_NATIONAL_SETS: ReadonlySet<string> = new Set(['doe-ms-finals']);
+
+/**
+ * The round number a DOE question's catalog row carries, which ranks its difficulty: the round's position in its
+ * set, or the nominal nationals round for a national event's set.
+ */
+export function catalogRound(setId: string, order: number): number {
+  return DOE_NATIONAL_SETS.has(setId) ? NOMINAL_ROUND.nationals : order;
+}
+
+/** The level of a DOE round, by its catalog round number. */
 export function roundLevel(round: number): DifficultyLevel {
+  if (round >= NOMINAL_ROUND.nationals) return 'nationals';
   return round <= 10 ? 'early' : 'late';
+}
+
+/** The levels the DOE library of a catalog offers (every catalog has early and late; middle school also nationals). */
+export function libraryLevels(rows: readonly CatalogRow[]): Set<DifficultyLevel> {
+  const out = new Set<DifficultyLevel>();
+  for (const r of rows) out.add(roundLevel(r[4]));
+  return out;
 }
 
 /** Catalog rows for the questions in the team's uploaded packets, with each set's level. */

@@ -79,6 +79,15 @@ const SHOOTOUT_NOTE = {
   text: 'Round robin ties for advancing places: head-to-head record first; two teams still tied play a 5 toss-up tiebreaker; three or more each hear the same 5 toss-ups separately, scored +1 right, −1 wrong, 0 no answer.',
 };
 
+/**
+ * Ties for the four places each Finals round robin division sends on (Rules 10-1 to 10-3): the one place the
+ * 2027 rules treat middle school and high school teams differently. Games themselves follow the same rules.
+ */
+const FINALS_ROUND_ROBIN_NOTE = {
+  rule: '10-2, 10-3',
+  text: 'Round robin standings: 2 points a win, 1 a tie. Middle school ties for the four advancing places go by head-to-head record, then a 5 toss-up tiebreaker (two teams) or the +1 / −1 / 0 shootout (three or more); high school ties go by the Division Team Challenge rankings.',
+};
+
 const COMMON_NOTES: RulesPreset['notes'] = [
   { rule: '3-5', text: 'Nobody may buzz until the moderator has read the subject area. An early buzz is ignored and the player stays eligible.' },
   { rule: '3-7', text: 'Only the first response counts. On multiple choice, a player may give the letter or the answer text; if they give both, both must be right.' },
@@ -158,6 +167,7 @@ export const PRESETS: RulesPreset[] = [
       ...COMMON_NOTES,
       { rule: '6-4', text: 'Elimination games tied at the end go to a tiebreaker: 5 toss-ups, no bonuses and no game clock, repeated until the tie is broken.' },
       { rule: '5-1', text: 'Some double elimination rounds use visual bonuses; those rounds have two 12-minute halves (see the visual bonus preset). Double Elimination Rounds Ten and Eleven have 5-minute breaks.' },
+      FINALS_ROUND_ROBIN_NOTE,
     ],
     source: { title: '2027 National Science Bowl Competition Rules', url: RULES_2027_URL },
   },

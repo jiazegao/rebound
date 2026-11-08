@@ -83,7 +83,7 @@ function standardReply(body: Json): Reply {
   return { status: 400, json: { type: 'error', error: { type: 'invalid_request_error', message: 'unexpected test request' } } };
 }
 
-const draftBody = (over: Record<string, unknown> = {}) => ({ passage: PASSAGE, source: 'OpenStax Biology 2e, section 4.3', subject: 'biology', kind: 'either', count: 2, ...over });
+const draftBody = (over: Record<string, unknown> = {}) => ({ passage: PASSAGE, source: 'NIH National Human Genome Research Institute, Mitochondria', subject: 'biology', kind: 'either', count: 2, ...over });
 
 afterEach(() => setAiTestOverrides({}));
 
@@ -142,7 +142,7 @@ describe('AI help', () => {
     expect(draftCall.body).toMatchObject({ model: 'claude-opus-5-5', max_tokens: 16000, fallbacks: 'default', output_config: { effort: 'high', format: { type: 'json_schema' } } });
     expect(draftCall.body.thinking).toBeUndefined();
     expect(system(draftCall.body)).toContain('high school');
-    expect(draftCall.body.messages[0].content).toContain('OpenStax Biology 2e, section 4.3');
+    expect(draftCall.body.messages[0].content).toContain('NIH National Human Genome Research Institute, Mitochondria');
     // The blind check sees the question but neither the key nor the passage.
     const blind = seen.filter((s) => system(s.body).includes('strong National Science Bowl player'));
     expect(blind).toHaveLength(2);
@@ -170,6 +170,7 @@ describe('AI help', () => {
     expect((await draft({ passage: 'Too short.' })).body.error).toMatch(/Paste a passage of 200/);
     expect((await draft({ passage: 'x'.repeat(12_001) })).status).toBe(400);
     expect((await draft({ source: '  ' })).body.error).toMatch(/where the passage comes from/);
+    expect((await draft({ source: 'OpenStax Biology 2e, 4.3' })).body.error).toMatch(/OpenStax's license/);
     expect((await draft({ subject: 'toString' })).body.error).toBe('Choose a subject.');
     expect((await draft({ count: 6 })).body.error).toMatch(/1 to 5/);
     expect((await draft({ kind: 'lightning' })).status).toBe(400);
@@ -199,7 +200,7 @@ describe('AI help', () => {
     const { fetchFn } = fakeApi(standardReply);
     setAiTestOverrides({ apiKey: 'sk-test', fetch: fetchFn });
     const team = await createTeam();
-    const res = await call(`/api/teams/${team.teamId}/ai/card`, { token: team.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'OpenStax Biology 2e, 4.3' } });
+    const res = await call(`/api/teams/${team.teamId}/ai/card`, { token: team.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'NIH NHGRI, Mitochondria' } });
     expect(res.status).toBe(200);
     expect(res.body.card).toEqual({ summary: 'Mitochondria make most of the cell’s ATP.', facts: ['Cristae add surface area', 'They have circular DNA'], traps: 'Not the same as chloroplasts.' });
     expect(res.body.usedToday).toBe(1);
@@ -216,9 +217,9 @@ describe('AI help', () => {
     expect(tooMany.body.error).toBe('That needs 3 AI calls, and your team has 1 left today. Ask for fewer, or wait until midnight UTC.');
     expect(Number(tooMany.headers.get('Retry-After'))).toBeGreaterThan(0);
     expect(seen).toHaveLength(3);
-    const card = await call(`/api/teams/${team.teamId}/ai/card`, { token: team.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'OpenStax' } });
+    const card = await call(`/api/teams/${team.teamId}/ai/card`, { token: team.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'NIH NHGRI' } });
     expect(card.body.usedToday).toBe(4);
-    const none = await call(`/api/teams/${team.teamId}/ai/card`, { token: team.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'OpenStax' } });
+    const none = await call(`/api/teams/${team.teamId}/ai/card`, { token: team.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'NIH NHGRI' } });
     expect(none.body.error).toBe("Your team has used today's 4 AI calls. They start again at midnight UTC.");
   });
 
@@ -248,7 +249,7 @@ describe('AI help', () => {
     const { fetchFn } = fakeApi((body) => ({ json: { ...message(body, {}).json, content: [{ type: 'text', text: 'not json' }] } }));
     setAiTestOverrides({ apiKey: 'sk-test', fetch: fetchFn });
     const team = await createTeam();
-    const res = await call(`/api/teams/${team.teamId}/ai/card`, { token: team.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'OpenStax' } });
+    const res = await call(`/api/teams/${team.teamId}/ai/card`, { token: team.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'NIH NHGRI' } });
     expect(res.status).toBe(502);
     expect(res.body.error).toBe('The AI reply was not in the expected form. Try again.');
   });
@@ -257,7 +258,7 @@ describe('AI help', () => {
     const { fetchFn, seen } = fakeApi(standardReply);
     setAiTestOverrides({ apiKey: 'sk-test', fetch: fetchFn, model: 'claude-haiku-5-5' });
     const team = await createTeam();
-    const res = await call(`/api/teams/${team.teamId}/ai/card`, { token: team.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'OpenStax' } });
+    const res = await call(`/api/teams/${team.teamId}/ai/card`, { token: team.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'NIH NHGRI' } });
     expect(res.body.model).toBe('claude-haiku-5-5');
     expect(seen[0]!.body.model).toBe('claude-haiku-5-5');
     expect(seen[0]!.body.fallbacks).toBeUndefined();

@@ -403,6 +403,21 @@ async function main() {
       await page.locator('#player-switch').selectOption({ label: 'Ann' });
     });
 
+    await step('reading paths: a subject path in order, with readings, and a step marked read', async () => {
+      await page.goto(`${BASE}#/learn`);
+      await page.getByRole('link', { name: 'Reading paths' }).first().click();
+      await see('the topics in the order to learn them');
+      await page.goto(`${BASE}#/learn/paths/biology`);
+      await see('Biology reading path');
+      await see('Up next');
+      const first = page.locator('ol > li').first();
+      if ((await first.locator('a[href^="https://"]').count()) === 0) throw new Error('the first step has no reading links');
+      await first.getByRole('button', { name: 'I read it' }).click();
+      await first.getByText(/^Read /).waitFor({ timeout: 5000 });
+      await see('1 of');
+      await shot('12d-reading-path');
+    });
+
     await step('Write: a question passes the checks, the subject owner approves it, and it becomes a team packet', async () => {
       await page.goto(`${BASE}#/write`);
       await see('Strong teams write their own questions');

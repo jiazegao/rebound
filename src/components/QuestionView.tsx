@@ -89,6 +89,10 @@ const FLAG_TEXT: Record<string, string> = {
   'mc-answer-mismatch': 'The printed answer does not exactly match any of the choices.',
   'type-mismatch': 'The printed question type did not match its format.',
   'kind-inferred': 'The toss-up or bonus label was missing and was inferred.',
+  'kind-corrected': 'The PDF printed this bonus under a second TOSS-UP label; Rebound pairs it with the toss-up before it.',
+  'number-mismatch': 'The question number printed in the PDF does not match its place in the round.',
+  'type-unknown': 'The PDF did not print whether this is short answer or multiple choice, so Rebound worked it out.',
+  'category-unknown': 'The PDF did not print a subject Rebound recognizes, so it is filed under General Science.',
 };
 
 /** Plain-language notes for questions the importer flagged, with a link to the original. */
