@@ -3,7 +3,7 @@ import type { Question } from '../core/schema';
 import { aiExplain, explainable, useAiStatus, type AiExplanation } from '../lib/ai';
 import { Notice } from './ui';
 
-/** "Explain this answer (AI)" under a revealed answer, for teams whose server has AI help turned on. */
+/** "Explain this answer (AI)" under a revealed answer, for signed-in players when the server has AI help turned on. */
 export function AiExplain({ q }: { q: Question }) {
   const ai = useAiStatus();
   if (!ai?.enabled || !explainable(q)) return null;

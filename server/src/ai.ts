@@ -1,14 +1,14 @@
 /**
- * Optional AI help (docs/PROPOSAL.md sections 8 and 9), served by the team's Durable Object:
+ * Optional AI help (docs/PROPOSAL.md sections 8 and 9), served by each user's Durable Object (user.ts):
  *
- * - question drafts from a passage the member pastes and cites, each answered again blind by a second call
+ * - question drafts from a passage the user pastes and cites, each answered again blind by a second call
  *   to catch a bad key;
- * - explanations of an answer (cached per question);
+ * - explanations of an answer (cached per question, for that user);
  * - concept card drafts from a cited passage.
  *
  * It is off unless the Worker has an ANTHROPIC_API_KEY secret. Everything comes back to a person to
  * check: drafts stay drafts until a subject owner approves them, and AI-drafted questions are labeled and
- * kept to the team's own practice. Each team has a daily limit on AI calls (AI_DAILY_LIMIT).
+ * kept to the team's own practice. Each user has a daily limit on AI calls (AI_DAILY_LIMIT).
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { judgeAnswer } from '../../src/core/judge/judge';
@@ -16,7 +16,7 @@ import { LETTERS, SUBJECT_LABELS, type Letter, type Subject } from '../../src/co
 import { HttpError } from './http';
 import { asObject, cleanLine } from './validate';
 
-/** The model unless AI_MODEL says otherwise (the team decides; a cheaper model is its choice to make). */
+/** The model unless AI_MODEL says otherwise (whoever runs the server decides; a cheaper model is their choice). */
 export const DEFAULT_AI_MODEL = 'claude-opus-5-5';
 export const DEFAULT_DAILY_LIMIT = 50;
 export const MIN_PASSAGE_CHARS = 200;
@@ -33,7 +33,7 @@ export interface AiSettings {
   apiKey: string;
   /** Drafts, explanations and cards. */
   model: string;
-  /** The blind answer check (AI_CHECK_MODEL; the same model unless the team picks another). */
+  /** The blind answer check (AI_CHECK_MODEL; the same model unless the server picks another). */
   checkModel: string;
   dailyLimit: number;
 }
@@ -93,11 +93,11 @@ async function ask<T>(
   } catch (err) {
     if (err instanceof Anthropic.RateLimitError) throw new AiUnavailable(429, 'The AI service is busy right now. Try again in a minute.', 60);
     if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) {
-      throw new AiUnavailable(503, "The team server's AI key is not working. Ask whoever runs the server to check it.");
+      throw new AiUnavailable(503, "The server's AI key is not working. Ask whoever runs the server to check it.");
     }
     if (err instanceof Anthropic.BadRequestError) throw new AiUnavailable(502, 'The AI service could not take that request.');
     if (err instanceof Anthropic.APIError) throw new AiUnavailable(502, 'The AI service had a problem. Try again in a moment.');
-    throw new AiUnavailable(502, 'The team server could not reach the AI service.');
+    throw new AiUnavailable(502, 'The server could not reach the AI service.');
   }
   if (response.stop_reason === 'refusal') throw new HttpError(422, 'The AI model declined this request.');
   if (response.stop_reason === 'max_tokens') throw new HttpError(502, 'The AI reply was cut off. Try fewer questions or a shorter passage.');
@@ -386,7 +386,7 @@ export async function draftCard(s: AiSettings, input: CardInput): Promise<{ card
   return { card: value, model };
 }
 
-/* ---------------- per-team storage: the daily limit and the explanation cache ---------------- */
+/* ---------------- per-user storage: the daily limit and the explanation cache ---------------- */
 
 export function ensureAiTables(sql: SqlStorage): void {
   sql.exec('CREATE TABLE IF NOT EXISTS ai_usage (day TEXT PRIMARY KEY, count INTEGER NOT NULL)');
@@ -409,8 +409,8 @@ export function reserveAiCalls(sql: SqlStorage, limit: number, calls: number, no
     const left = Math.max(0, limit - used);
     const message =
       left === 0
-        ? `Your team has used today's ${limit} AI calls. They start again at midnight UTC.`
-        : `That needs ${calls} AI calls, and your team has ${left} left today. Ask for fewer, or wait until midnight UTC.`;
+        ? `You have used today's ${limit} AI calls. They start again at midnight UTC.`
+        : `That needs ${calls} AI calls, and you have ${left} left today. Ask for fewer, or wait until midnight UTC.`;
     throw new HttpError(429, message, wait);
   }
   sql.exec('DELETE FROM ai_usage WHERE day < ?', day);

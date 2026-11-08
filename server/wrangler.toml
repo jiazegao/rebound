@@ -1,4 +1,4 @@
-# Rebound team server: one Worker (HTTP and WebSocket routing) and one Durable Object per team.
+# Rebound server: one Worker (HTTP and WebSocket routing, sign-in) and Durable Objects for users, teams and rooms.
 # See docs/SERVER.md for the API and server/README.md for running and deploying it.
 name = "rebound-server"
 main = "src/index.ts"
@@ -13,24 +13,52 @@ enabled = false
 # Browser origins allowed to call the API (comma-separated, no trailing slashes). Others get no CORS headers,
 # and their requests are refused.
 ALLOWED_ORIGINS = "https://jiazegao.github.io,http://localhost:5173,http://localhost:4173"
+# The site's address. Email sign-in links are <SITE_URL>#/signin?code=...
+SITE_URL = "https://jiazegao.github.io/rebound/"
+# Google sign-in: the OAuth client id from the Google Cloud console (a public identifier, not a secret).
+GOOGLE_CLIENT_ID = "104477335019-m3a4bk7qvatptofn3cc7bucse6iqe2e3.apps.googleusercontent.com"
+# Email sign-in (one-time links sent through Resend) stays off until the sender is set here and the API key is set
+# as a secret: npx wrangler secret put RESEND_API_KEY. The sender's domain must be verified with Resend.
+# EMAIL_FROM = "Rebound <signin@your-domain.example>"
+# Sign-in emails sent per UTC day in all (under Resend's free 100 a day).
+EMAIL_DAILY_LIMIT = "90"
+# Never set DEV_EMAIL_OUTBOX here: it turns email sign-in into "return the code instead of sending it", for local
+# runs (server/.dev.vars) and tests (vitest.config.ts) only.
 # Optional AI help (question drafts, explanations, concept card drafts). It stays off until a Claude API key is
 # set as a secret: npx wrangler secret put ANTHROPIC_API_KEY. See server/README.md for what it costs.
-# AI calls each team may make per UTC day.
+# AI calls each user may make per UTC day.
 AI_DAILY_LIMIT = "50"
 # The model (default claude-opus-5-5) and the model for the blind answer check (default: the same).
 # AI_MODEL = "claude-opus-5-5"
 # AI_CHECK_MODEL = "claude-opus-5-5"
 
+# One object per user: profile, sessions, the user's own records, AI usage.
 [[durable_objects.bindings]]
-name = "TEAM"
-class_name = "TeamServer"
+name = "USER"
+class_name = "UserServer"
+
+# One object per team: settings, members, team records, the list of its members' rooms. (Not named TEAM: that name
+# bound the old TeamServer class, and Cloudflare will not delete a class in the same deploy that reuses its binding.)
+[[durable_objects.bindings]]
+name = "TEAMS"
+class_name = "Team"
+
+# One object per live room or online match.
+[[durable_objects.bindings]]
+name = "ROOM"
+class_name = "RoomServer"
+
+# One object for the whole server: email and Google account → user, email sign-in codes, sign-in limits.
+[[durable_objects.bindings]]
+name = "DIRECTORY"
+class_name = "Directory"
 
 # One object for the whole server that counts new teams per day (open sign-up limits; see src/registry.ts).
 [[durable_objects.bindings]]
 name = "REGISTRY"
 class_name = "Registry"
 
-# The TeamServer class keeps each team's data in its own SQLite database.
+# Each object keeps its data in its own SQLite database.
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["TeamServer"]
@@ -38,3 +66,10 @@ new_sqlite_classes = ["TeamServer"]
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["Registry"]
+
+# Accounts (docs/ACCOUNTS.md). Deleting TeamServer deletes every old team's data on deploy: the switch to accounts
+# starts fresh.
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["Directory", "UserServer", "Team", "RoomServer"]
+deleted_classes = ["TeamServer"]

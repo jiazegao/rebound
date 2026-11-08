@@ -1,12 +1,12 @@
 /**
  * Pictures for team visual questions: read an image file the person chose, scale it down and re-encode
- * it in the browser (WebP where supported, JPEG otherwise), so it fits in one synced record. Re-encoding
+ * it in the browser (WebP where supported, JPEG otherwise), so it fits in one team record. Re-encoding
  * also drops anything but the pixels (metadata such as GPS position, embedded scripts in odd formats).
  */
 
 const TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
-/** Largest picture kept: about 250 KB of data URL (a synced record holds up to 900 KB). */
+/** Largest picture kept: about 250 KB of data URL (a record holds up to 900 KB). */
 export const MAX_PICTURE_BYTES = 260_000;
 
 export interface Picture {

@@ -7,10 +7,12 @@ import { libraryLevels, teamCatalog, UPLOAD_LEVEL_LABEL } from '../core/levels';
 import { buildScrimmage, FORMATS, LEVEL_TEXT, type ScrimmageLevel, type ScrimmageResult } from '../core/scrimmage';
 import type { Round, ScrimmageFormat, TeamPacket, UploadLevel } from '../core/schema';
 import { dateText, newId } from '../lib/format';
+import { heardLedger } from '../lib/learning';
 import { loadCatalog, loadQuestions, useAsync, useCatalog, type Located } from '../lib/library';
 import { packetRound, packetRounds } from '../lib/packets';
 import { href, navigate } from '../lib/router';
 import { deletePacket, savePacket, useData } from '../lib/store';
+import { useTeamData } from '../lib/teammates';
 import { parseJson, parsePdf, uploadSet, UPLOAD_LICENSE, type ParsedRound } from '../lib/upload';
 import { makeVisualPicker } from '../lib/visualPool';
 import { loadPhotoSet, trustedFigure } from '../lib/visuals';
@@ -33,7 +35,8 @@ export function packetKindText(p: TeamPacket): string {
 }
 
 function ScrimmageBuilder() {
-  const data = useData();
+  // Who has heard what: each player's own heard ledger (loaded from their account) plus the team's games.
+  const { data } = useTeamData();
   const catalog = useCatalog();
   const players = data.players.filter((p) => p.active && p.role !== 'coach');
   const [inRoom, setInRoom] = useState<Set<string>>(() => new Set(players.map((p) => p.id)));
@@ -57,7 +60,7 @@ function ScrimmageBuilder() {
     try {
       const cat = catalog.data ?? (await loadCatalog());
       const heard = new Set<string>();
-      for (const id of inRoom) for (const q of Object.keys(data.seen[id] ?? {})) heard.add(q);
+      for (const id of inRoom) for (const q of Object.keys(heardLedger(data, id))) heard.add(q);
       const pickVisual = format === 'finals-visual' ? makeVisualPicker({ photos: await loadPhotoSet(), team: data.visuals, heard }) : undefined;
       // A level also draws on uploaded packets at that level; "Any level" keeps to the DOE library.
       const rows = level === 'any' ? cat.questions : [...cat.questions, ...team.rows];
@@ -407,7 +410,7 @@ export function PacketsPage() {
       <div className="container narrow">
         <PageHeader title="Team packets" />
         <Notice>
-          Set up your team first on the <a href={href('/team')}>Team</a> page.
+          Team packets are kept by a team. <a href={href('/team')}>Create or join a team</a> first.
         </Notice>
       </div>
     );
@@ -449,7 +452,7 @@ export function PacketView({ id, print }: { id: string; print: boolean }) {
     return (
       <div className="container narrow">
         <Notice kind="error">
-          Packet not found on this device. <a href={href('/packets')}>Team packets</a>
+          Packet not found in your team's packets (it may have been deleted). <a href={href('/packets')}>Team packets</a>
         </Notice>
       </div>
     );

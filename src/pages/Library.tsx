@@ -3,9 +3,11 @@ import { LoadError, Loading, Notice, PageHeader, SubjectTag } from '../component
 import { RoundDownloads } from '../components/Downloads';
 import { QuestionView } from '../components/QuestionView';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type Question, type QuestionSet, type SetSummary, type Subject } from '../core/schema';
+import { heardLedger } from '../lib/learning';
 import { findRound, LEVEL_NAME, roundQuestions, setGroups, setLabel, useIndex, useSet, useTeamLevel } from '../lib/library';
 import { href } from '../lib/router';
 import { addToReview, reportProblem, useData } from '../lib/store';
+import { useTeamData } from '../lib/teammates';
 import { cardId } from '../core/review';
 import { dateText } from '../lib/format';
 
@@ -70,16 +72,26 @@ function SetList() {
   );
 }
 
+/**
+ * Each player's heard questions (their own ledger plus the team's games), for "Heard by". Teammates' ledgers come from
+ * their accounts; signed out, nobody has heard anything.
+ */
+function useHeardByPlayer(): Map<string, Record<string, number>> {
+  const { data } = useTeamData();
+  return useMemo(
+    () => new Map(data.players.filter((p) => p.active).map((p) => [p.id, heardLedger(data, p.id)])),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data.players, data.seen, data.games],
+  );
+}
+
 function useSeenByTeam(): Set<string> {
-  const data = useData();
+  const heard = useHeardByPlayer();
   return useMemo(() => {
     const seen = new Set<string>();
-    for (const p of data.players) {
-      if (!p.active) continue;
-      for (const q of Object.keys(data.seen[p.id] ?? {})) seen.add(q);
-    }
+    for (const ledger of heard.values()) for (const q of Object.keys(ledger)) seen.add(q);
     return seen;
-  }, [data.players, data.seen]);
+  }, [heard]);
 }
 
 function SetView({ set }: { set: QuestionSet }) {
@@ -205,10 +217,13 @@ function ReviewButton({ q }: { q: Question }) {
 }
 
 function ReportButton({ q }: { q: Question }) {
+  const data = useData();
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState('');
   const [sent, setSent] = useState(false);
-  if (sent) return <span className="small muted">Thanks, saved to Data → Problem reports.</span>;
+  // Reports are kept in the player's account; signed out there is nowhere to keep one.
+  if (!data.settings.soloPlayerId) return null;
+  if (sent) return <span className="small muted">Thanks: saved to your Account page, under problem reports.</span>;
   if (!open)
     return (
       <button className="btn btn-small btn-ghost no-print" onClick={() => setOpen(true)}>
@@ -247,6 +262,7 @@ function RoundView({ set, roundId, autoPrint }: { set: QuestionSet; roundId: str
   const [kind, setKind] = useState<'both' | 'tossup' | 'bonus'>('both');
   const [showAnswers, setShowAnswers] = useState(true);
   const data = useData();
+  const heardLedgers = useHeardByPlayer();
 
   useEffect(() => {
     if (autoPrint && round) setTimeout(() => window.print(), 300);
@@ -255,7 +271,7 @@ function RoundView({ set, roundId, autoPrint }: { set: QuestionSet; roundId: str
   if (!round) return <div className="container"><Notice kind="error">Round not found.</Notice></div>;
   const subjects = [...new Set(round.pairs.map((p) => p.tossup.subject))];
   const pairs = round.pairs.filter((p) => subject === 'all' || p.tossup.subject === subject);
-  const heardBy = (q: Question) => data.players.filter((p) => p.active && data.seen[p.id]?.[q.id]).map((p) => p.name);
+  const heardBy = (q: Question) => data.players.filter((p) => heardLedgers.get(p.id)?.[q.id]).map((p) => p.name);
 
   return (
     <div className="container">

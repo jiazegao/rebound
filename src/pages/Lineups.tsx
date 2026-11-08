@@ -4,10 +4,13 @@ import { useTip } from '../components/VizTip';
 import { bestAlternate, estimateLineup, OPPONENTS, ROUND_TOSSUPS, BONUS_POINTS, TOSSUP_POINTS, suggestLineups, type LineupEstimate, type PlayerProfile } from '../core/lineup';
 import { daysUntil } from '../core/review';
 import { CORE_SUBJECTS, SUBJECT_LABELS } from '../core/schema';
+import { isLeader } from '../core/accounts';
+import { useSession } from '../lib/cloud';
 import { catalogById, useCatalog } from '../lib/library';
 import { href } from '../lib/router';
-import { deleteLineup, saveLineup, setEventLineup, useData } from '../lib/store';
+import { deleteLineup, saveLineup, setEventLineup } from '../lib/store';
 import { profileFor, teamPlayers, useTeamModels } from '../lib/team';
+import { useTeamData } from '../lib/teammates';
 
 type OpponentKey = keyof typeof OPPONENTS;
 const pct = (p: number) => `${Math.round(p * 100)}%`;
@@ -104,7 +107,11 @@ function EstimateView({ estimate, name, opponent }: { estimate: LineupEstimate; 
 }
 
 export function LineupsPage() {
-  const data = useData();
+  // Estimates use every player's answers, so teammates' practice is loaded too.
+  const { data, loading } = useTeamData();
+  const session = useSession();
+  // Only coaches and captains save lineups (the server refuses anyone else); everyone can try them out.
+  const leader = isLeader(session.team?.you.role);
   const catalog = useCatalog();
   const catalogMap = useMemo(() => (catalog.data ? catalogById(catalog.data) : null), [catalog.data]);
   const models = useTeamModels(data, catalogMap);
@@ -126,17 +133,6 @@ export function LineupsPage() {
   const alt = chosen.length === 4 ? bestAlternate(chosen, bench, OPPONENTS[opponent]) : null;
   const event = data.team?.nextEvent;
   const eventDays = daysUntil(event?.date, Date.now());
-
-  if (!data.team) {
-    return (
-      <div className="container narrow">
-        <PageHeader title="Lineups" />
-        <Notice>
-          Set up your team first on the <a href={href('/team')}>Team</a> page.
-        </Notice>
-      </div>
-    );
-  }
 
   const setRole = (id: string, role: 'starter' | 'alternate' | 'none') => {
     setStarters((s) => (role === 'starter' ? (s.includes(id) || s.length >= 4 ? s : [...s, id]) : s.filter((x) => x !== id)));
@@ -161,11 +157,12 @@ export function LineupsPage() {
           player's results (difficulty-adjusted, from games and solo practice) and buzz speed. It ignores rebounds, interrupts and the clock, so use
           it to compare lineups, not to predict scores.
         </p>
+        {loading && <p className="small muted">Loading teammates' practice…</p>}
       </PageHeader>
 
       {players.length < 2 ? (
         <Notice>
-          Add players on the <a href={href('/team')}>Team</a> page first.
+          Lineups need at least two players on the team. Invite them from the <a href={href('/team')}>Team</a> page.
         </Notice>
       ) : (
         <>
@@ -226,28 +223,31 @@ export function LineupsPage() {
                   </button>
                 </p>
               )}
-              <form
-                className="row"
-                style={{ marginTop: '0.75rem', alignItems: 'flex-end' }}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const id = saveLineup({ id: editingId ?? undefined, name: lineupName, starters, alternates });
-                  setEditingId(id);
-                }}
-              >
-                <div className="field" style={{ flex: '1 1 200px' }}>
-                  <label htmlFor="lineup-name">Lineup name</label>
-                  <input id="lineup-name" type="text" value={lineupName} placeholder="e.g. Regional A" onChange={(e) => setLineupName(e.target.value)} />
-                </div>
-                <button className="btn btn-primary" type="submit" disabled={starters.length === 0}>
-                  {editingId ? 'Save changes' : 'Save lineup'}
-                </button>
-                {editingId && (
-                  <button className="btn btn-ghost" type="button" onClick={() => load([], [])}>
-                    New lineup
+              {!leader && <p className="small muted">Coaches and captains save lineups; try any lineup here to see its estimate.</p>}
+              {leader && (
+                <form
+                  className="row"
+                  style={{ marginTop: '0.75rem', alignItems: 'flex-end' }}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const id = saveLineup({ id: editingId ?? undefined, name: lineupName, starters, alternates });
+                    setEditingId(id);
+                  }}
+                >
+                  <div className="field" style={{ flex: '1 1 200px' }}>
+                    <label htmlFor="lineup-name">Lineup name</label>
+                    <input id="lineup-name" type="text" value={lineupName} placeholder="e.g. Regional A" onChange={(e) => setLineupName(e.target.value)} />
+                  </div>
+                  <button className="btn btn-primary" type="submit" disabled={starters.length === 0}>
+                    {editingId ? 'Save changes' : 'Save lineup'}
                   </button>
-                )}
-              </form>
+                  {editingId && (
+                    <button className="btn btn-ghost" type="button" onClick={() => load([], [])}>
+                      New lineup
+                    </button>
+                  )}
+                </form>
+              )}
             </section>
 
             {estimate ? (
@@ -285,7 +285,7 @@ export function LineupsPage() {
 
           <h2>Saved lineups</h2>
           {data.lineups.length === 0 ? (
-            <p className="muted">None yet. Build one above and save it.</p>
+            <p className="muted">{leader ? 'None yet. Build one above and save it.' : 'None yet.'}</p>
           ) : (
             <div className="table-wrap">
               <table>
@@ -320,26 +320,28 @@ export function LineupsPage() {
                         <td>
                           <div className="row" style={{ gap: '0.25rem', flexWrap: 'nowrap' }}>
                             <button className="btn btn-small" onClick={() => load(l.starters, l.alternates, l)}>
-                              Edit
+                              {leader ? 'Edit' : 'Show'}
                             </button>
-                            {event && eventDays !== null && !forEvent && (
+                            {leader && event && eventDays !== null && !forEvent && (
                               <button className="btn btn-small btn-primary" onClick={() => setEventLineup(l.id)}>
                                 Use for {event.name || 'the next competition'}
                               </button>
                             )}
-                            {forEvent && (
+                            {leader && forEvent && (
                               <button className="btn btn-small btn-ghost" onClick={() => setEventLineup(null)}>
                                 Unset
                               </button>
                             )}
-                            <button
-                              className="btn btn-small btn-ghost"
-                              onClick={() => {
-                                if (confirm(`Delete the lineup “${l.name}”?`)) deleteLineup(l.id);
-                              }}
-                            >
-                              Delete
-                            </button>
+                            {leader && (
+                              <button
+                                className="btn btn-small btn-ghost"
+                                onClick={() => {
+                                  if (confirm(`Delete the lineup “${l.name}”?`)) deleteLineup(l.id);
+                                }}
+                              >
+                                Delete
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -349,7 +351,7 @@ export function LineupsPage() {
               </table>
             </div>
           )}
-          {!event || eventDays === null ? (
+          {leader && (!event || eventDays === null) ? (
             <p className="small muted">
               Enter the next competition on the <a href={href('/team')}>Team</a> page to choose its lineup here.
             </p>

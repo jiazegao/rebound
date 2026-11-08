@@ -1,0 +1,5 @@
+# Copy to server/.dev.vars for `npx wrangler dev` (.dev.vars is git-ignored). Never put these in wrangler.toml.
+# Email sign-in without sending email: /api/auth/email/start returns { ok: true, devCode } to sign in with.
+DEV_EMAIL_OUTBOX=1
+# Local runs send no email, so the daily cap on sign-in emails is lifted (browser tests sign up many accounts).
+EMAIL_DAILY_LIMIT=1000000

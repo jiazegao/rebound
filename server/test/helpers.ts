@@ -1,12 +1,15 @@
-/** Helpers for end-to-end tests: every call goes through the real Worker and Durable Object in workerd. */
+/** Helpers for end-to-end tests: every call goes through the real Worker and Durable Objects in workerd. */
 
 import { exports } from 'cloudflare:workers';
 import { expect } from 'vitest';
-import type { PushChange, SyncResponse } from '../../src/core/sync';
+import { setAuthTestOverrides } from '../src/auth';
+import { base64url } from '../src/crypto';
 
 export const BASE = 'https://rebound.test';
 /** In ALLOWED_ORIGINS (wrangler.toml). */
 export const SITE = 'http://localhost:5173';
+/** GOOGLE_CLIENT_ID in vitest.config.ts. */
+export const CLIENT_ID = 'test-client.apps.googleusercontent.com';
 
 // Test responses are loosely typed on purpose: the assertions check their shape.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,53 +45,155 @@ export async function call(path: string, options: CallOptions = {}): Promise<Api
   return { status: response.status, body: text ? JSON.parse(text) : null, headers: response.headers };
 }
 
+export const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/** Polls `check` until it returns something truthy. */
+export async function eventually<T>(check: () => Promise<T | null | undefined | false>, timeoutMs = 5000): Promise<T> {
+  const start = Date.now();
+  for (;;) {
+    const value = await check();
+    if (value) return value;
+    if (Date.now() - start > timeoutMs) throw new Error('Timed out waiting');
+    await sleep(25);
+  }
+}
+
+/* ---------------- Google sign-in, with a test key in place of Google's ---------------- */
+
+export const KID = 'test-key-1';
+let keys: { privateKey: CryptoKey; jwk: JsonWebKey } | null = null;
+
+/** A test RSA key pair; its public half is what the server trusts instead of Google's published keys. */
+export async function testKeys(): Promise<{ privateKey: CryptoKey; jwk: JsonWebKey }> {
+  if (keys) return keys;
+  const pair = (await crypto.subtle.generateKey(
+    { name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' },
+    true,
+    ['sign', 'verify'],
+  )) as CryptoKeyPair;
+  const jwk = { ...((await crypto.subtle.exportKey('jwk', pair.publicKey)) as JsonWebKey), kid: KID, alg: 'RS256', use: 'sig' } as JsonWebKey;
+  keys = { privateKey: pair.privateKey, jwk };
+  return keys;
+}
+
+type AuthOverrides = Parameters<typeof setAuthTestOverrides>[0];
+let extraOverrides: AuthOverrides = {};
+
+/** Trusts the test key, plus any other overrides (email settings, fetches), until the next call. */
+export async function useAuthOverrides(extra: AuthOverrides = {}): Promise<void> {
+  extraOverrides = extra;
+  setAuthTestOverrides({ googleKeys: [(await testKeys()).jwk], ...extra });
+}
+
+const encode = (value: unknown) => base64url(new TextEncoder().encode(JSON.stringify(value)));
+
+/** A Google ID token for `claims`, signed with the test key (or `key`). */
+export async function googleToken(claims: Record<string, unknown>, options: { kid?: string; key?: CryptoKey; header?: Record<string, unknown> } = {}): Promise<string> {
+  const key = options.key ?? (await testKeys()).privateKey;
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: 'RS256', kid: options.kid ?? KID, typ: 'JWT', ...options.header };
+  const payload = { iss: 'https://accounts.google.com', aud: CLIENT_ID, iat: now, exp: now + 3600, email_verified: true, ...claims };
+  const signed = `${encode(header)}.${encode(payload)}`;
+  const signature = new Uint8Array(await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(signed)));
+  return `${signed}.${base64url(signature)}`;
+}
+
+let counter = 0;
+
+/** A fresh Google account: a unique `sub` and email address. */
+export function newGoogleAccount(name = 'Player'): { sub: string; email: string } {
+  const n = `${Date.now().toString(36)}${(counter++).toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  return { sub: `sub-${n}`, email: `${name.toLowerCase().replace(/[^a-z]+/g, '.')}.${n}@example.org` };
+}
+
+export interface TestUser {
+  id: string;
+  token: string;
+  user: Json;
+  email: string;
+  sub: string;
+}
+
+/** A new account, made through Google sign-in. */
+export async function signUp(name: string, options: { headers?: Record<string, string> } = {}): Promise<TestUser> {
+  await useAuthOverrides(extraOverrides);
+  const account = newGoogleAccount(name);
+  const credential = await googleToken(account);
+  const res = await call('/api/auth/google', { body: { credential, over13: true, name }, headers: options.headers });
+  expect(res.status).toBe(200);
+  return { id: res.body.user.id, token: res.body.token, user: res.body.user, ...account };
+}
+
+/** Signs `user` in again with Google: a second session (another device). */
+export async function signInAgain(user: TestUser): Promise<string> {
+  await useAuthOverrides(extraOverrides);
+  const res = await call('/api/auth/google', { body: { credential: await googleToken({ sub: user.sub, email: user.email }) } });
+  expect(res.status).toBe(200);
+  return res.body.token;
+}
+
+/* ---------------- teams ---------------- */
+
 export interface TestTeam {
   teamId: string;
   joinCode: string;
   secret: string;
-  /** The captain who created the team. */
-  token: string;
-  member: Json;
+  captain: TestUser;
 }
 
-export async function createTeam(input: Record<string, unknown> = {}): Promise<TestTeam> {
-  const res = await call('/api/teams', {
-    body: { teamName: 'Ridgeview Science Bowl', level: 'HS', memberName: 'Cora Captain', pin: '2468', playerId: 'p-cora', ...input },
-  });
+export async function makeTeam(captain: TestUser, body: Record<string, unknown> = {}, headers?: Record<string, string>): Promise<TestTeam> {
+  const res = await call('/api/teams', { token: captain.token, body: { name: 'Ridgeview Science Bowl', level: 'HS', ...body }, headers });
   expect(res.status).toBe(201);
   const joinCode: string = res.body.joinCode;
-  return { teamId: res.body.teamId, joinCode, secret: joinCode.split('.')[1]!, token: res.body.token, member: res.body.member };
+  return { teamId: res.body.team.id, joinCode, secret: joinCode.split('.')[1]!, captain };
 }
 
-/** Joins (or signs in). Each call comes from `ip` (CF-Connecting-IP), so tests can play several networks. */
-export function join(teamId: string, body: Record<string, unknown>, ip = '198.51.100.7'): Promise<ApiResult> {
-  return call(`/api/teams/${teamId}/join`, { body, headers: { 'CF-Connecting-IP': ip } });
+export function join(team: TestTeam, user: TestUser, body: Record<string, unknown> = {}): Promise<ApiResult> {
+  return call(`/api/teams/${team.teamId}/join`, { token: user.token, body: { secret: team.secret, ...body } });
 }
 
-export interface TestMember {
-  token: string;
-  member: Json;
+/** A team with a captain and members, each joined with the join code. */
+export async function teamWith(captainName: string, ...memberNames: string[]): Promise<{ team: TestTeam; members: TestUser[] }> {
+  const team = await makeTeam(await signUp(captainName));
+  const members: TestUser[] = [];
+  for (const name of memberNames) {
+    const user = await signUp(name);
+    expect((await join(team, user)).status).toBe(200);
+    members.push(user);
+  }
+  return { team, members };
 }
 
-/** Joins as a new member and returns its session. */
-export async function addMember(team: TestTeam, memberName: string, playerId: string | null, pin = '1357'): Promise<TestMember> {
-  const res = await join(team.teamId, { secret: team.secret, memberName, pin, ...(playerId ? { playerId } : {}) });
+/* ---------------- records ---------------- */
+
+export async function putRecords(path: string, token: string, changes: Array<{ c: string; id: string; body: unknown }>): Promise<Json> {
+  const res = await call(path, { token, body: { changes } });
   expect(res.status).toBe(200);
-  return { token: res.body.token, member: res.body.member };
+  return res.body;
 }
 
-export async function sync(team: TestTeam, token: string, cursor: number, changes: PushChange[] = []): Promise<SyncResponse> {
-  const res = await call(`/api/teams/${team.teamId}/sync`, { token, body: { cursor, changes } });
+export async function getRecords(path: string, token: string, cursor = 0): Promise<Json> {
+  const res = await call(`${path}?cursor=${cursor}`, { token });
   expect(res.status).toBe(200);
-  return res.body as SyncResponse;
+  return res.body;
 }
 
-export const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+/** Every record of a user's own collections, past all pages. */
+export async function allMyRecords(token: string): Promise<Json[]> {
+  const out: Json[] = [];
+  let cursor = 0;
+  for (;;) {
+    const page = await getRecords('/api/me/records', token, cursor);
+    out.push(...page.records);
+    cursor = page.cursor;
+    if (!page.more) return out;
+  }
+}
 
 /* ---------------- live rooms ---------------- */
 
-export async function createRoom(team: TestTeam, token: string, name = 'Tuesday scrimmage'): Promise<string> {
-  const res = await call(`/api/teams/${team.teamId}/rooms`, { token, body: { name } });
+export async function createRoom(token: string, name = 'Tuesday scrimmage', match?: Record<string, unknown>): Promise<string> {
+  const res = await call('/api/rooms', { token, body: { name, ...(match ? { match } : {}) } });
   expect(res.status).toBe(201);
   return res.body.roomId;
 }
@@ -207,14 +312,12 @@ export class RoomClient {
   }
 }
 
-export function wsRequest(team: TestTeam, roomId: string, token: string, headers: Record<string, string> = {}): Promise<Response> {
-  return exports.default.fetch(`${BASE}/api/teams/${team.teamId}/rooms/${roomId}/ws?token=${encodeURIComponent(token)}`, {
-    headers: { Upgrade: 'websocket', ...headers },
-  });
+export function wsRequest(roomId: string, token: string, headers: Record<string, string> = {}): Promise<Response> {
+  return exports.default.fetch(`${BASE}/api/rooms/${roomId}/ws?token=${encodeURIComponent(token)}`, { headers: { Upgrade: 'websocket', ...headers } });
 }
 
-export async function connect(team: TestTeam, roomId: string, token: string, options: { pongDelay?: number } = {}): Promise<RoomClient> {
-  const response = await wsRequest(team, roomId, token);
+export async function connect(roomId: string, token: string, options: { pongDelay?: number } = {}): Promise<RoomClient> {
+  const response = await wsRequest(roomId, token);
   expect(response.status).toBe(101);
   const client = new RoomClient(response.webSocket!, options.pongDelay ?? 0);
   client.welcome = await client.next('welcome');

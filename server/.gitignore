@@ -1,0 +1,2 @@
+# The root .gitignore keeps .dev.vars (local secrets) out of git; the example holds none.
+!.dev.vars.example

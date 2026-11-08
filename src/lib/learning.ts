@@ -1,8 +1,9 @@
 /**
  * Browser-side glue between the saved data and the learning logic in src/core:
- * a player's observations and model, due cards, and today's plan.
+ * a player's observations and model, due cards, today's plan, and the questions a player has heard.
  */
 import { useMemo } from 'react';
+import { gameState } from '../core/games';
 import { playerModel, type Observation, type PlayerModel } from '../core/mastery';
 import { buildPlan, resizePlan, type DayPlan } from '../core/plan';
 import {
@@ -20,30 +21,20 @@ import {
 } from '../core/review';
 import type { CatalogRow, ConceptIndex, CoreSubject, Player } from '../core/schema';
 import { topicById } from '../core/taxonomy';
-import { attemptOutcome, gameOutcomes } from './outcomes';
+import { attemptOutcome } from './outcomes';
 import type { AppData, GameRecord } from './store';
 import { isVisualId } from './visuals';
-
-const gameCache = new Map<string, Outcome[]>();
-
-/** Outcomes of a game, cached until the game changes. */
-function cachedGameOutcomes(game: GameRecord, players: Player[]): Outcome[] {
-  const key = `${game.id}|${game.events.length}|${game.updatedAt}|${players.map((p) => `${p.id}:${p.primarySubject ?? ''}:${p.secondarySubject ?? ''}`).join(',')}`;
-  let out = gameCache.get(key);
-  if (!out) {
-    out = gameOutcomes(game, players);
-    gameCache.set(key, out);
-  }
-  return out;
-}
 
 function roundFromId(questionId: string): number {
   const m = /-r(\d+)[a-z]*-[tb]\d+$/i.exec(questionId);
   return m ? Number(m[1]) : 1;
 }
 
-/** Everything the player has answered themselves, in solo practice and in practice games. */
-export function playerObservations(data: AppData, playerId: string, catalog: Map<string, CatalogRow> | null): Observation[] {
+/**
+ * Everything the player has answered themselves: their practice answers, and their answers in team games and online
+ * matches (which the server writes to their account when the game ends).
+ */
+export function playerObservations(data: Pick<AppData, 'attempts' | 'answers'>, playerId: string, catalog: Map<string, CatalogRow> | null): Observation[] {
   const out: Observation[] = [];
   const add = (o: Outcome) => {
     // Visual lab answers (generated figures, photos, team visuals) are their own kind of practice: they are
@@ -64,10 +55,8 @@ export function playerObservations(data: AppData, playerId: string, catalog: Map
     });
   };
   for (const a of data.attempts) if (a.playerId === playerId) add(attemptOutcome(a));
-  for (const g of data.games) {
-    if (!g.teams.some((t) => t.playerIds.includes(playerId))) continue;
-    for (const o of cachedGameOutcomes(g, data.players)) if (o.playerId === playerId && !o.shared) add(o);
-  }
+  // Team bonuses and dead toss-ups are the team's (or nobody's), not the player's own answers.
+  for (const o of data.answers) if (o.playerId === playerId && !o.shared) add(o);
   return out;
 }
 
@@ -76,7 +65,7 @@ export function usePlayerModel(data: AppData, playerId: string | null, catalog: 
     () => (playerId ? playerModel(playerObservations(data, playerId, catalog), Date.now()) : undefined),
     // Recompute when answers change, not on every store update.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [playerId, catalog, data.attempts, data.games, data.players],
+    [playerId, catalog, data.attempts, data.answers],
   );
 }
 
@@ -160,9 +149,44 @@ export function planFor(
     nextEvent: data.team?.nextEvent ?? null,
     model,
     topicCounts: catalog?.topicCounts ?? {},
-    freshCounts: catalog ? freshTopicCounts(catalog.rows, data.seen[player.id]) : undefined,
+    freshCounts: catalog ? freshTopicCounts(catalog.rows, heardLedger(data, player.id)) : undefined,
     learnable: learnableCards(data, player.id, concepts),
   };
   const plan = saved && saved.day === day ? resizePlan(saved, input) : buildPlan(input);
   return { plan, changed: true };
+}
+
+/* ---------------- what a player has heard ---------------- */
+
+const heardInGames = new Map<string, { ids: string[]; players: string[]; t: number }>();
+
+/** The questions read in a game and who played in it (cached until the game changes). */
+function gameHeard(game: GameRecord): { ids: string[]; players: string[]; t: number } {
+  const key = `${game.id}|${game.events.length}|${game.updatedAt}`;
+  let hit = heardInGames.get(key);
+  if (!hit) {
+    const state = gameState(game);
+    const ids = state
+      ? [...state.readTossups.map((i) => game.pairs[i]?.tossupId), ...state.readBonuses.map((i) => game.pairs[i]?.bonusId)].filter((id): id is string => !!id)
+      : [];
+    hit = { ids, players: game.teams.flatMap((t) => t.playerIds), t: Date.parse(game.createdAt) || 0 };
+    if (heardInGames.size > 2_000) heardInGames.clear();
+    heardInGames.set(key, hit);
+  }
+  return hit;
+}
+
+/**
+ * The questions a player has heard, and when: their own "seen" ledger (practice, online matches), plus every
+ * question read in the team's games they played in. Each player's device writes only its own ledger, so a Reader
+ * console game counts for everyone in it this way.
+ */
+export function heardLedger(data: Pick<AppData, 'seen' | 'games'>, playerId: string): Record<string, number> {
+  const out: Record<string, number> = { ...(data.seen[playerId] ?? {}) };
+  for (const game of data.games) {
+    const heard = gameHeard(game);
+    if (!heard.players.includes(playerId)) continue;
+    for (const id of heard.ids) out[id] ??= heard.t;
+  }
+  return out;
 }

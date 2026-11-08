@@ -18,13 +18,16 @@ export function teamPlayers(data: AppData): Player[] {
   return data.players.filter((p) => p.active && p.role !== 'coach');
 }
 
-/** The learner model of every playing member, recomputed when answers change. */
+/**
+ * The learner model of every playing member, recomputed when answers change. Pass the data from useTeamData() so
+ * teammates' answers are in it.
+ */
 export function useTeamModels(data: AppData, catalog: Map<string, CatalogRow> | null): Map<string, PlayerModel> {
   return useMemo(() => {
     const now = Date.now();
     return new Map(teamPlayers(data).map((p) => [p.id, playerModel(playerObservations(data, p.id, catalog), now)]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [catalog, data.attempts, data.games, data.players]);
+  }, [catalog, data.attempts, data.answers, data.players]);
 }
 
 function median(values: number[]): number | null {

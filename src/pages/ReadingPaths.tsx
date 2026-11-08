@@ -1,4 +1,4 @@
-import { useCurrentPlayer } from '../components/PlayerSwitch';
+import { signInHref } from '../components/Gates';
 import { LoadError, Notice, PageHeader, SubjectTag } from '../components/ui';
 import { READING_PATHS, type ReadingPath } from '../core/readingPaths';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type CoreSubject } from '../core/schema';
@@ -6,7 +6,7 @@ import { topicById } from '../core/taxonomy';
 import { dateText } from '../lib/format';
 import { useCatalog } from '../lib/library';
 import { href } from '../lib/router';
-import { markReadingDone, readingKey, useData } from '../lib/store';
+import { markReadingDone, readingKey, useCurrentPlayer, useData } from '../lib/store';
 
 function stepsRead(read: Record<string, number> | undefined, path: ReadingPath): number {
   return path.steps.filter((s) => read?.[readingKey(s.topic)]).length;
@@ -35,7 +35,7 @@ function PathList() {
       </PageHeader>
       {!player && (
         <Notice>
-          Pick your name on <a href={href('/today')}>Today</a> to keep track of what you have read.
+          <a href={signInHref()}>Sign in</a> to keep track of what you have read.
         </Notice>
       )}
       <div className="grid">

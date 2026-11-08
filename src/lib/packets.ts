@@ -44,7 +44,7 @@ export async function packetRound(p: TeamPacket, roundId?: string): Promise<Roun
 export async function loadGameRound(packet: GameRecord['packet']): Promise<Round> {
   if (isTeamSet(packet.setId)) {
     const p = getData().packets.find((x) => teamSetId(x.id) === packet.setId);
-    if (!p) throw new Error('This game uses a team packet that is not on this device (it may have been deleted).');
+    if (!p) throw new Error("This game uses a team packet that is not in the team's packets (it may have been deleted).");
     return packetRound(p, packet.roundId);
   }
   const set = await loadSetById(packet.setId);

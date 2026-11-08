@@ -330,7 +330,7 @@ describe('readNsbJson', () => {
   const cases: Array<[string, string, RegExp]> = [
     ['damaged JSON', '{"nsbjson": "1.0", ', /not valid JSON/],
     ['a list', '[1, 2]', /should hold one JSON object/],
-    ['a Rebound backup', JSON.stringify({ app: 'rebound', exportedAt: 'x', data: { version: 1 } }), /Rebound backup file.*Data page/],
+    ['a Rebound backup', JSON.stringify({ app: 'rebound', exportedAt: 'x', data: { version: 1 } }), /backup file from an older version of Rebound/],
     ['a set without the header', JSON.stringify(smallSet), /question set without the NSB-JSON header/],
     ['no version', JSON.stringify({ kind: 'questions' }), /has no "nsbjson" version/],
     ['a version as a number', JSON.stringify({ ...set, nsbjson: 1 }), /should look like "1\.0".*1\b/],

@@ -2,11 +2,11 @@ import { Fragment, useEffect, useState } from 'react';
 import { FigureView } from '../components/Figure';
 import { RichText } from '../components/QuestionView';
 import { loadQuestions, useAsync } from '../lib/library';
-import { Notice, PageHeader, useTicker } from '../components/ui';
+import { Notice, useTicker } from '../components/ui';
+import { roomSocketUrl } from '../lib/api';
+import { useSession } from '../lib/cloud';
 import { buildReading, revealedCount, splitRevealed } from '../lib/reading';
 import { RoomClient, useRoom, type RoomView, type Side } from '../lib/room';
-import { href } from '../lib/router';
-import { currentSession, useSync } from '../lib/sync';
 import { MatchRoom } from './MatchRoom';
 
 /** The question as revealed so far on this screen (same pace on every device; stopped at `pausedAt`). */
@@ -41,11 +41,11 @@ export function RevealedText({ view, serverNow }: { view: RoomView; serverNow: n
   );
 }
 
-/** A visual bonus's figure, looked up on this device (generated, photo set, or the team's synced data). */
+/** A visual bonus's figure, looked up on this device (generated, photo set, or the team's own visual questions). */
 export function RoomFigure({ questionId }: { questionId: string }) {
   const found = useAsync(questionId, async () => (await loadQuestions([questionId])).get(questionId)?.question ?? null);
   if (found.loading) return <p className="small muted">Loading the figure…</p>;
-  if (!found.data) return <p className="small muted">This figure is not on this device yet. Sync on the Team page, then come back.</p>;
+  if (!found.data) return <p className="small muted">This figure could not be loaded here (a team's own visual questions show only to that team).</p>;
   return <FigureView q={found.data} large />;
 }
 
@@ -124,9 +124,9 @@ export function TeamChannel({
 }
 
 export function RoomPage({ roomId }: { roomId: string }) {
-  useSync();
-  const session = currentSession();
-  const url = session ? RoomClient.url(session.serverUrl, session.teamId, roomId, session.token) : null;
+  // Any signed-in player can be in a room (App asks everyone else to sign in first).
+  const session = useSession();
+  const url = session.user ? roomSocketUrl(roomId) : null;
   const { client, snapshot } = useRoom(url);
   const view = snapshot?.view ?? null;
   const ticking = !!view && (!!view.reading || !!view.window);
@@ -153,19 +153,7 @@ export function RoomPage({ roomId }: { roomId: string }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [canBuzz, client, matchRoom]);
 
-  if (session && client && snapshot && matchRoom) return <MatchRoom client={client} snapshot={snapshot} roomId={roomId} />;
-
-  if (!session) {
-    return (
-      <div className="container narrow">
-        <PageHeader title="Remote room" />
-        <Notice>
-          To join a room, this device needs to be signed in to your team's shared space. Open the join link your captain posted (or go to{' '}
-          <a href={href('/team')}>Team</a> → Share with your team), then open this room link again.
-        </Notice>
-      </div>
-    );
-  }
+  if (client && snapshot && matchRoom) return <MatchRoom client={client} snapshot={snapshot} roomId={roomId} />;
 
   const winnerName = buzz?.winner ? snapshot?.members.find((m) => m.memberId === buzz.winner!.memberId)?.name ?? 'Someone' : null;
   const windowLeft = view?.window ? Math.max(0, view.window.seconds - (serverNow - view.window.openedAt) / 1000) : null;

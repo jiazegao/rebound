@@ -3,15 +3,19 @@ import { LoadError, Loading, Notice, PageHeader, SubjectTag } from '../component
 import { CURRENT_PRESET_IDS, currentPresets, DEFAULT_PRESET_ID, PRESETS } from '../core/rules/presets';
 import { CORE_SUBJECTS } from '../core/schema';
 import { dateTimeText } from '../lib/format';
+import { heardLedger } from '../lib/learning';
 import { newestSet, roundQuestions, setGroups, setLabel, useAsync, useIndex, useSet, useTeamLevel } from '../lib/library';
 import { packetRound, packetRounds, teamSetId } from '../lib/packets';
 import { href, navigate } from '../lib/router';
-import { addPlayer, createGame, useData } from '../lib/store';
+import { createGame, useData } from '../lib/store';
+import { useTeamData } from '../lib/teammates';
 
 type Side = 0 | 1 | null;
 
 export function ReaderSetup({ query }: { query: URLSearchParams }) {
   const data = useData();
+  // Teammates' heard ledgers, for the "some players have heard these questions" warning.
+  const { data: teamData } = useTeamData();
   const index = useIndex();
   const level = useTeamLevel();
   const [source, setSource] = useState<'doe' | 'packet'>(query.get('packet') ? 'packet' : 'doe');
@@ -26,7 +30,6 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
   const [format, setFormat] = useState<'game' | 'tiebreak'>(query.get('format') === 'tiebreak' ? 'tiebreak' : 'game');
   const [names, setNames] = useState<[string, string]>(['Team A', 'Team B']);
   const [sides, setSides] = useState<Record<string, Side>>({});
-  const [quickName, setQuickName] = useState('');
   const set = useSet(setId);
 
   // Default to the newest set once the index loads.
@@ -64,20 +67,19 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
   const heardCounts = useMemo(() => {
     if (!round) return [];
     const ids = roundQuestions(round).map((q) => q.id);
-    return [...teamA, ...teamB].map((pid) => ({
-      pid,
-      name: data.players.find((p) => p.id === pid)?.name ?? pid,
-      heard: ids.filter((q) => data.seen[pid]?.[q]).length,
-      total: ids.length,
-    }));
-  }, [round, teamA, teamB, data.players, data.seen]);
+    return [...teamA, ...teamB].map((pid) => {
+      const heard = heardLedger(teamData, pid);
+      return { pid, name: data.players.find((p) => p.id === pid)?.name ?? 'Former player', heard: ids.filter((q) => heard[q]).length, total: ids.length };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [round, teamA.join(), teamB.join(), data.players, teamData.seen, teamData.games]);
 
   if (!data.team) {
     return (
       <div className="container narrow">
         <PageHeader title="Reader console" />
         <Notice>
-          Set up your team and add players first (it takes a minute): <a href={href('/team')}>Team</a>.
+          Games in the Reader console are saved to a team. <a href={href('/team')}>Create or join a team</a> first.
         </Notice>
       </div>
     );
@@ -124,7 +126,10 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
   return (
     <div className="container">
       <PageHeader title="Reader console">
-        <p>Set up a practice game. The reader runs it from this device; every toss-up is logged to each player's stats.</p>
+        <p>
+          Set up a practice game. The reader runs it from this device; the game is saved to the team, and when it ends each player's answers go to
+          their own account (misses reach their review queue).
+        </p>
         <p>
           No reader? <a href={href('/online')}>Play online</a>: teammates play each other from their own devices, and Rebound reads and judges.
         </p>
@@ -320,7 +325,9 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
           ))}
         </div>
         {players.length === 0 ? (
-          <Notice>No players yet. Add some below or on the Team page.</Notice>
+          <Notice>
+            No players on the team yet. Invite them from the <a href={href('/team')}>Team</a> page; everyone who plays needs their own account.
+          </Notice>
         ) : (
           <div className="table-wrap">
             <table>
@@ -357,21 +364,6 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
             </table>
           </div>
         )}
-        <form
-          className="row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (quickName.trim()) {
-              addPlayer({ name: quickName, role: 'member' });
-              setQuickName('');
-            }
-          }}
-        >
-          <input type="text" aria-label="New player name" placeholder="Add a player" value={quickName} onChange={(e) => setQuickName(e.target.value)} style={{ maxWidth: 260 }} />
-          <button className="btn" type="submit" disabled={!quickName.trim()}>
-            Add
-          </button>
-        </form>
       </section>
 
       <div className="row" style={{ marginTop: '1.25rem' }}>

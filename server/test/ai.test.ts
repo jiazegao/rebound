@@ -1,11 +1,11 @@
 /**
- * AI help through the real Worker and Durable Object, with the Claude API replaced by a fake `fetch` (the SDK
- * sends its requests through it). Checks the request shape, the daily limit, the explanation cache, and that
- * calls which never reached the model are not counted.
+ * AI help through the real Worker and the user's Durable Object, with the Claude API replaced by a fake `fetch`
+ * (the SDK sends its requests through it). Checks the request shape, the daily limit per user, the explanation
+ * cache, and that calls which never reached the model are not counted.
  */
 import { afterEach, describe, expect, it } from 'vitest';
 import { aiSettings, setAiTestOverrides } from '../src/ai';
-import { addMember, call, createTeam, type Json } from './helpers';
+import { call, makeTeam, signUp, type Json } from './helpers';
 
 const PASSAGE = `Mitochondria are membrane-bound organelles found in most eukaryotic cells. They carry out aerobic respiration, making most of the cell's ATP. The inner membrane is folded into cristae, which increase the surface area available for the electron transport chain. Mitochondria have their own circular DNA, which supports the endosymbiotic theory: they descend from bacteria that were engulfed by an ancestral cell.`;
 
@@ -89,34 +89,32 @@ afterEach(() => setAiTestOverrides({}));
 
 describe('AI help', () => {
   it('is off without an API key', async () => {
-    const team = await createTeam();
-    const status = await call(`/api/teams/${team.teamId}/ai`, { token: team.token });
+    const user = await signUp('Ida');
+    const status = await call('/api/ai', { token: user.token });
     expect(status.status).toBe(200);
     expect(status.body).toEqual({ enabled: false });
-    const draft = await call(`/api/teams/${team.teamId}/ai/draft`, { token: team.token, body: draftBody() });
+    const draft = await call('/api/ai/draft', { token: user.token, body: draftBody() });
     expect(draft.status).toBe(404);
-    expect(draft.body.error).toMatch(/not turned on/);
+    expect(draft.body.error).toBe('AI help is not turned on for this server.');
   });
 
-  it('needs a signed-in member', async () => {
+  it('needs a signed-in user', async () => {
     const { fetchFn, seen } = fakeApi(standardReply);
     setAiTestOverrides({ apiKey: 'sk-test', fetch: fetchFn });
-    const team = await createTeam();
-    expect((await call(`/api/teams/${team.teamId}/ai`)).status).toBe(401);
-    expect((await call(`/api/teams/${team.teamId}/ai/draft`, { body: draftBody() })).status).toBe(401);
+    expect((await call('/api/ai')).status).toBe(401);
+    expect((await call('/api/ai/draft', { body: draftBody() })).status).toBe(401);
     expect(seen).toHaveLength(0);
   });
 
   it('drafts questions from a passage with a blind answer check, and counts the calls', async () => {
     const { fetchFn, seen } = fakeApi(standardReply);
     setAiTestOverrides({ apiKey: 'sk-test', fetch: fetchFn });
-    const team = await createTeam();
-    const max = await addMember(team, 'Max', 'p-max');
+    const max = await signUp('Max');
 
-    const status = await call(`/api/teams/${team.teamId}/ai`, { token: max.token });
+    const status = await call('/api/ai', { token: max.token });
     expect(status.body).toEqual({ enabled: true, model: 'claude-opus-5-5', dailyLimit: 50, usedToday: 0 });
 
-    const res = await call(`/api/teams/${team.teamId}/ai/draft`, { token: max.token, body: draftBody() });
+    const res = await call('/api/ai/draft', { token: max.token, body: draftBody() });
     expect(res.status).toBe(200);
     expect(res.body.model).toBe('claude-opus-5-5');
     expect(res.body.drafts).toHaveLength(2);
@@ -156,8 +154,9 @@ describe('AI help', () => {
   it('writes for middle school on a middle school team', async () => {
     const { fetchFn, seen } = fakeApi(standardReply);
     setAiTestOverrides({ apiKey: 'sk-test', fetch: fetchFn });
-    const team = await createTeam({ level: 'MS' });
-    const res = await call(`/api/teams/${team.teamId}/ai/draft`, { token: team.token, body: draftBody({ count: 1 }) });
+    const user = await signUp('Mia');
+    await makeTeam(user, { level: 'MS' });
+    const res = await call('/api/ai/draft', { token: user.token, body: draftBody({ count: 1 }) });
     expect(res.status).toBe(200);
     expect(system(seen[0]!.body)).toContain('middle school');
   });
@@ -165,8 +164,8 @@ describe('AI help', () => {
   it('checks the request before calling the model', async () => {
     const { fetchFn, seen } = fakeApi(standardReply);
     setAiTestOverrides({ apiKey: 'sk-test', fetch: fetchFn });
-    const team = await createTeam();
-    const draft = (over: Record<string, unknown>) => call(`/api/teams/${team.teamId}/ai/draft`, { token: team.token, body: draftBody(over) });
+    const user = await signUp('Nell');
+    const draft = (over: Record<string, unknown>) => call('/api/ai/draft', { token: user.token, body: draftBody(over) });
     expect((await draft({ passage: 'Too short.' })).body.error).toMatch(/Paste a passage of 200/);
     expect((await draft({ passage: 'x'.repeat(12_001) })).status).toBe(400);
     expect((await draft({ source: '  ' })).body.error).toMatch(/where the passage comes from/);
@@ -174,33 +173,38 @@ describe('AI help', () => {
     expect((await draft({ subject: 'toString' })).body.error).toBe('Choose a subject.');
     expect((await draft({ count: 6 })).body.error).toMatch(/1 to 5/);
     expect((await draft({ kind: 'lightning' })).status).toBe(400);
-    const explain = await call(`/api/teams/${team.teamId}/ai/explain`, { token: team.token, body: { stem: 'Q?', answer: 'A', choices: { W: 'a', X: 'b' } } });
+    const explain = await call('/api/ai/explain', { token: user.token, body: { stem: 'Q?', answer: 'A', choices: { W: 'a', X: 'b' } } });
     expect(explain.body.error).toMatch(/Each choice/);
     expect(seen).toHaveLength(0);
-    expect((await call(`/api/teams/${team.teamId}/ai`, { token: team.token })).body.usedToday).toBe(0);
+    expect((await call('/api/ai', { token: user.token })).body.usedToday).toBe(0);
   });
 
-  it('explains an answer once and serves the team from the cache after that', async () => {
+  it('explains an answer once and serves the user from their cache after that', async () => {
     const { fetchFn, seen } = fakeApi(standardReply);
     setAiTestOverrides({ apiKey: 'sk-test', fetch: fetchFn });
-    const team = await createTeam();
-    const max = await addMember(team, 'Max', 'p-max');
+    const user = await signUp('Ora');
     const body = { subject: 'biology', stem: 'What folds of the inner mitochondrial membrane increase its surface area?', answer: 'CRISTAE' };
-    const first = await call(`/api/teams/${team.teamId}/ai/explain`, { token: team.token, body });
+    const first = await call('/api/ai/explain', { token: user.token, body });
     expect(first.status).toBe(200);
     expect(first.body).toMatchObject({ explanation: expect.stringContaining('Cristae'), answerLooksWrong: false, model: 'claude-opus-5-5', cached: false, usedToday: 1 });
     expect(seen[0]!.body.output_config.effort).toBe('medium');
 
-    const again = await call(`/api/teams/${team.teamId}/ai/explain`, { token: max.token, body });
+    const again = await call('/api/ai/explain', { token: user.token, body });
     expect(again.body).toMatchObject({ explanation: first.body.explanation, cached: true, usedToday: 1 });
     expect(seen).toHaveLength(1);
+
+    // The cache and the limit are each user's own.
+    const other = await signUp('Pat');
+    const theirs = await call('/api/ai/explain', { token: other.token, body });
+    expect(theirs.body).toMatchObject({ cached: false, usedToday: 1 });
+    expect(seen).toHaveLength(2);
   });
 
   it('drafts a concept card from a passage', async () => {
     const { fetchFn } = fakeApi(standardReply);
     setAiTestOverrides({ apiKey: 'sk-test', fetch: fetchFn });
-    const team = await createTeam();
-    const res = await call(`/api/teams/${team.teamId}/ai/card`, { token: team.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'NIH NHGRI, Mitochondria' } });
+    const user = await signUp('Quy');
+    const res = await call('/api/ai/card', { token: user.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'NIH NHGRI, Mitochondria' } });
     expect(res.status).toBe(200);
     expect(res.body.card).toEqual({ summary: 'Mitochondria make most of the cell’s ATP.', facts: ['Cristae add surface area', 'They have circular DNA'], traps: 'Not the same as chloroplasts.' });
     expect(res.body.usedToday).toBe(1);
@@ -209,18 +213,18 @@ describe('AI help', () => {
   it('keeps to the daily limit', async () => {
     const { fetchFn, seen } = fakeApi(standardReply);
     setAiTestOverrides({ apiKey: 'sk-test', dailyLimit: 4, fetch: fetchFn });
-    const team = await createTeam();
-    const ok = await call(`/api/teams/${team.teamId}/ai/draft`, { token: team.token, body: draftBody({ count: 2 }) });
+    const user = await signUp('Ria');
+    const ok = await call('/api/ai/draft', { token: user.token, body: draftBody({ count: 2 }) });
     expect(ok.body.usedToday).toBe(3);
-    const tooMany = await call(`/api/teams/${team.teamId}/ai/draft`, { token: team.token, body: draftBody({ count: 2 }) });
+    const tooMany = await call('/api/ai/draft', { token: user.token, body: draftBody({ count: 2 }) });
     expect(tooMany.status).toBe(429);
-    expect(tooMany.body.error).toBe('That needs 3 AI calls, and your team has 1 left today. Ask for fewer, or wait until midnight UTC.');
+    expect(tooMany.body.error).toBe('That needs 3 AI calls, and you have 1 left today. Ask for fewer, or wait until midnight UTC.');
     expect(Number(tooMany.headers.get('Retry-After'))).toBeGreaterThan(0);
     expect(seen).toHaveLength(3);
-    const card = await call(`/api/teams/${team.teamId}/ai/card`, { token: team.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'NIH NHGRI' } });
+    const card = await call('/api/ai/card', { token: user.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'NIH NHGRI' } });
     expect(card.body.usedToday).toBe(4);
-    const none = await call(`/api/teams/${team.teamId}/ai/card`, { token: team.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'NIH NHGRI' } });
-    expect(none.body.error).toBe("Your team has used today's 4 AI calls. They start again at midnight UTC.");
+    const none = await call('/api/ai/card', { token: user.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'NIH NHGRI' } });
+    expect(none.body.error).toBe("You have used today's 4 AI calls. They start again at midnight UTC.");
   });
 
   it('counts a refusal, but not a call that never reached the model', async () => {
@@ -231,25 +235,25 @@ describe('AI help', () => {
         : { status: 401, json: { type: 'error', error: { type: 'authentication_error', message: 'invalid x-api-key' } } },
     );
     setAiTestOverrides({ apiKey: 'sk-test', fetch: fetchFn });
-    const team = await createTeam();
-    const refused = await call(`/api/teams/${team.teamId}/ai/draft`, { token: team.token, body: draftBody({ count: 3 }) });
+    const user = await signUp('Sam');
+    const refused = await call('/api/ai/draft', { token: user.token, body: draftBody({ count: 3 }) });
     expect(refused.status).toBe(422);
     expect(refused.body.error).toBe('The AI model declined this request.');
     // The drafting call ran; the three blind checks it reserved never did.
-    expect((await call(`/api/teams/${team.teamId}/ai`, { token: team.token })).body.usedToday).toBe(1);
+    expect((await call('/api/ai', { token: user.token })).body.usedToday).toBe(1);
 
     mode = 'bad-key';
-    const failed = await call(`/api/teams/${team.teamId}/ai/explain`, { token: team.token, body: { stem: 'What is the powerhouse of the cell?', answer: 'MITOCHONDRION' } });
+    const failed = await call('/api/ai/explain', { token: user.token, body: { stem: 'What is the powerhouse of the cell?', answer: 'MITOCHONDRION' } });
     expect(failed.status).toBe(503);
-    expect(failed.body.error).toMatch(/AI key is not working/);
-    expect((await call(`/api/teams/${team.teamId}/ai`, { token: team.token })).body.usedToday).toBe(1);
+    expect(failed.body.error).toBe("The server's AI key is not working. Ask whoever runs the server to check it.");
+    expect((await call('/api/ai', { token: user.token })).body.usedToday).toBe(1);
   });
 
   it('turns a reply in the wrong form into a plain error', async () => {
     const { fetchFn } = fakeApi((body) => ({ json: { ...message(body, {}).json, content: [{ type: 'text', text: 'not json' }] } }));
     setAiTestOverrides({ apiKey: 'sk-test', fetch: fetchFn });
-    const team = await createTeam();
-    const res = await call(`/api/teams/${team.teamId}/ai/card`, { token: team.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'NIH NHGRI' } });
+    const user = await signUp('Tia');
+    const res = await call('/api/ai/card', { token: user.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'NIH NHGRI' } });
     expect(res.status).toBe(502);
     expect(res.body.error).toBe('The AI reply was not in the expected form. Try again.');
   });
@@ -257,8 +261,8 @@ describe('AI help', () => {
   it('sends no fallback settings to a model without a server-side fallback', async () => {
     const { fetchFn, seen } = fakeApi(standardReply);
     setAiTestOverrides({ apiKey: 'sk-test', fetch: fetchFn, model: 'claude-haiku-5-5' });
-    const team = await createTeam();
-    const res = await call(`/api/teams/${team.teamId}/ai/card`, { token: team.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'NIH NHGRI' } });
+    const user = await signUp('Uri');
+    const res = await call('/api/ai/card', { token: user.token, body: { concept: 'Mitochondria', passage: PASSAGE, source: 'NIH NHGRI' } });
     expect(res.body.model).toBe('claude-haiku-5-5');
     expect(seen[0]!.body.model).toBe('claude-haiku-5-5');
     expect(seen[0]!.body.fallbacks).toBeUndefined();

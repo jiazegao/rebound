@@ -9,11 +9,12 @@ import { ratingFor } from '../core/mastery';
 import { LEVEL_LABEL, libraryLevels, rowLevel, teamCatalog } from '../core/levels';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type Catalog, type CatalogRow, type CoreSubject, type DifficultyLevel, type Question, type QuestionPair, type QuestionSet } from '../core/schema';
 import { topicsForSubject } from '../core/taxonomy';
-import { usePlayerModel } from '../lib/learning';
+import { heardLedger, usePlayerModel } from '../lib/learning';
 import { catalogById, loadCatalog, loadConceptIndex, loadQuestions, loadSetById, setGroups, setLabel, useCatalog, useIndex, useTeamLevel } from '../lib/library';
 import { topicById } from '../core/taxonomy';
 import { buildReading, lettersPerMinute, readingDurationMs, revealedCount, splitRevealed, type Reading } from '../lib/reading';
 import { href } from '../lib/router';
+import { signInHref } from '../components/Gates';
 import { addAttempt, completeAssignment, completePlanItem, getData, markSeen, updateSettings, useData } from '../lib/store';
 import { packetRound } from '../lib/packets';
 
@@ -185,7 +186,8 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
   const [set, setSet] = useState<QuestionSet | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [busy, setBusy] = useState(false);
-  const playerId = data.team ? data.settings.soloPlayerId : null;
+  // Signed in, practice is saved to the player's account; signed out, nothing is saved.
+  const playerId = data.settings.soloPlayerId;
   const catalogMap = useMemo(() => (catalog.data ? catalogById(catalog.data) : null), [catalog.data]);
   const model = usePlayerModel(data, playerId, catalogMap);
 
@@ -211,11 +213,11 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
     setBusy(true);
     setError(null);
     try {
-      const seen = playerId ? data.seen[playerId] ?? {} : {};
+      const seen = playerId ? heardLedger(data, playerId) : {};
       let items: Item[] = [];
       let settings = s;
       const teamPacket = s.packet ? data.packets.find((p) => p.id === s.packet) : undefined;
-      if (s.packet && !teamPacket) throw new Error('That team packet is not on this device.');
+      if (s.packet && !teamPacket) throw new Error("That team packet is not in your team's packets (it may have been deleted).");
       if (teamPacket) {
         const round = await packetRound(teamPacket);
         items = round.pairs.filter(playable).map((pair) => ({ pair, where: teamPacket.title }));
@@ -256,7 +258,7 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
 
   return (
     <div className="container narrow">
-      <PageHeader title={data.team ? 'Solo practice' : 'Try a round'}>
+      <PageHeader title={playerId ? 'Solo practice' : 'Try a round'}>
         <p>
           Questions appear letter by letter, at the pace a moderator reads them. Press <span className="kbd">Space</span> to buzz, type your
           answer, and press <span className="kbd">Enter</span>. You get {TOSSUP_WINDOW_S} seconds after the reading to buzz and{' '}
@@ -273,21 +275,11 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
       {error && <LoadError error={error} />}
       {index.data && (
         <div className="card stack">
-          {data.team && (
-            <div className="field">
-              <label htmlFor="who">Who is practicing?</label>
-              <select id="who" value={playerId ?? ''} onChange={(e) => updateSettings({ soloPlayerId: e.target.value || null })}>
-                <option value="">Just trying it (not saved)</option>
-                {data.players
-                  .filter((p) => p.active)
-                  .map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-              </select>
-              <span className="hint">Saving skips questions you've heard, puts misses in your review queue, and counts your answers in Stats.</span>
-            </div>
+          {!playerId && (
+            <p className="small muted" style={{ margin: 0 }}>
+              Just trying it: nothing is saved. <a href={signInHref()}>Sign in</a> and Rebound skips questions you have heard, puts misses in your review
+              queue, and counts your answers in your progress.
+            </p>
           )}
           <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
             <legend className="label">Practice</legend>
@@ -307,7 +299,7 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
               <div className="field">
                 <span className="label">Team packet</span>
                 <span>
-                  {data.packets.find((p) => p.id === s.packet)?.title ?? 'Not on this device'}{' '}
+                  {data.packets.find((p) => p.id === s.packet)?.title ?? 'Not found'}{' '}
                   <button className="btn btn-small btn-ghost" onClick={() => setS({ ...s, packet: '' })}>
                     Clear
                   </button>
@@ -473,7 +465,7 @@ function Play({
   onQuit: () => void;
 }) {
   const data = useData();
-  const playerId = data.team ? data.settings.soloPlayerId : null;
+  const playerId = data.settings.soloPlayerId;
   const [index, setIndex] = useState(0);
   const [step, setStep] = useState<Step>(() => firstStep(items[0]));
   const [tally, setTally] = useState<Tally>(emptyTally);
@@ -847,9 +839,9 @@ function Done({ tally, fromPlan, onAgain, onSetup }: { tally: Tally; fromPlan: b
           <button className="btn" onClick={onSetup}>
             Change settings
           </button>
-          {!data.team && (
-            <a className="btn btn-ghost" href={href('/team')}>
-              Set up a team to save progress
+          {!data.settings.soloPlayerId && (
+            <a className="btn btn-ghost" href={signInHref('/try')}>
+              Sign in to save your progress
             </a>
           )}
         </div>
@@ -857,13 +849,15 @@ function Done({ tally, fromPlan, onAgain, onSetup }: { tally: Tally; fromPlan: b
       {tally.missed.length > 0 ? (
         <>
           <h2>Review what you missed</h2>
-          {data.team && data.settings.soloPlayerId ? (
+          {data.settings.soloPlayerId ? (
             <p className="muted small">
               These are in your <a href={href('/review')}>review queue</a> and come back tomorrow, then on a spaced schedule. Slow correct
               answers come back too.
             </p>
           ) : (
-            <p className="muted small">Choose your name before you start, and Rebound brings misses back as timed reviews.</p>
+            <p className="muted small">
+              <a href={signInHref('/try')}>Sign in</a> before you start, and Rebound brings misses back as timed reviews.
+            </p>
           )}
           <div className="stack">
             {tally.missed.map((q) => (
@@ -937,7 +931,7 @@ export function TryRound({ query }: { query: URLSearchParams }) {
         onDone={(t) => {
           setTally(t);
           setStage('done');
-          const playerId = data.team ? data.settings.soloPlayerId : null;
+          const playerId = data.settings.soloPlayerId;
           if (playerId && planItem && planDay) completePlanItem(playerId, planDay, planItem);
           if (playerId && assignment) completeAssignment(assignment, playerId);
         }}

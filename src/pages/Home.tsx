@@ -1,9 +1,10 @@
 import { CURRENT_SEASON } from '../core/rules/presets';
+import { useSession } from '../lib/cloud';
 import { href } from '../lib/router';
-import { useData } from '../lib/store';
 
 export function Home() {
-  const data = useData();
+  const session = useSession();
+  const signedIn = session.status !== 'signed-out';
   return (
     <div className="container">
       <section className="hero">
@@ -16,12 +17,18 @@ export function Home() {
           <a className="btn btn-primary btn-big" href={href('/try')}>
             Try a round
           </a>
-          <a className="btn btn-big" href={href(data.team ? '/today' : '/team')}>
-            {data.team ? `Go to ${data.team.name}` : 'Set up your team'}
-          </a>
+          {signedIn ? (
+            <a className="btn btn-big" href={href('/today')}>
+              {session.team ? `Go to ${session.team.team.name}` : 'Go to Today'}
+            </a>
+          ) : (
+            <a className="btn btn-big" href={href('/signin')}>
+              Sign in
+            </a>
+          )}
         </div>
         <p className="small muted" style={{ marginTop: '0.75rem' }}>
-          Nothing to install. No account needed. Works on Chromebooks, laptops and phones.
+          Nothing to install, and no account needed to try a round or browse the library. Works on Chromebooks, laptops and phones.
         </p>
       </section>
 
@@ -36,8 +43,8 @@ export function Home() {
         <div className="card">
           <h3>Every official sample question</h3>
           <p>
-            All of DOE's high school sample sets, cleaned up and searchable by subject, with a link back to each original PDF. Rebound tracks
-            which questions each player has already heard.
+            All of DOE's high school and middle school sample sets, cleaned up and searchable by subject, with a link back to each original PDF.
+            Rebound tracks which questions each player has already heard.
           </p>
         </div>
         <div className="card">
@@ -55,24 +62,24 @@ export function Home() {
           </p>
         </div>
         <div className="card">
-          <h3>Practice without Wi-Fi</h3>
+          <h3>Your practice follows you</h3>
           <p>
-            After the first visit the site opens offline, and players can save every question to their device so drills and reviews keep working
-            on the bus or a patchy school network.
+            Sign in with Google and your answers, review queue and plan are saved to your account, on the school laptop, your phone or at home.
+            Accounts are for players 13 and older.
           </p>
         </div>
         <div className="card">
-          <h3>Your team's data stays with you</h3>
+          <h3>One team, shared stats</h3>
           <p>
-            In this version everything is stored in your browser, on your device. Export a backup file at any time. No ads, no trackers.
+            Join your team with the link your coach posts. Teammates see each other's stats; review queues and plans stay private. No ads, no
+            trackers.
           </p>
         </div>
       </div>
 
       <h2>What's next</h2>
       <p className="muted" style={{ maxWidth: '70ch' }}>
-        New in this release: daily plans, timed review (FSRS), topic drills, My progress and offline practice. Coming next: concept cards for
-        every subject, lineup suggestions, assignments and online team rooms.
+        New in this release: accounts, so practice follows each player from device to device, and online matches open to any player with the link.
       </p>
     </div>
   );

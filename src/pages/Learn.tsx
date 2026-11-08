@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useCurrentPlayer } from '../components/PlayerSwitch';
 import { QuestionView } from '../components/QuestionView';
 import { LoadError, Loading, Notice, PageHeader, SubjectTag } from '../components/ui';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type ConceptCard } from '../core/schema';
@@ -8,7 +7,7 @@ import { AI_RESTRICTED_TEXT, aiDraftCard, aiRestrictedSource, MAX_PASSAGE_CHARS,
 import { dateText } from '../lib/format';
 import { loadQuestions, useAsync, useConceptIndex } from '../lib/library';
 import { href } from '../lib/router';
-import { completeAssignment, completePlanItem, markConceptRead, reviewConceptCard, saveConceptCard, useData } from '../lib/store';
+import { completeAssignment, completePlanItem, markConceptRead, reviewConceptCard, saveConceptCard, useCurrentPlayer, useData } from '../lib/store';
 
 /** The summary should stay short enough to read before a drill. */
 const SUMMARY_WORDS = 150;
@@ -34,7 +33,7 @@ function CardStatus({ card }: { card: ConceptCard }) {
   );
 }
 
-/** Fills the card editor from a pasted, cited passage, when the team server has AI help. */
+/** Fills the card editor from a pasted, cited passage, when Rebound's server has AI help. */
 function AiCardDraft({ concept, onDraft }: { concept: string; onDraft: (d: { summary: string; facts: string[]; traps: string; source: string; model: string }) => void }) {
   const ai = useAiStatus();
   const [source, setSource] = useState('');
@@ -161,7 +160,6 @@ function CardEditor({ id, concept, existing, onDone }: { id: string; concept: st
         <textarea id="card-sources" rows={3} value={sources} placeholder="OpenStax Biology 2e, 12.3 | https://openstax.org/…" onChange={(e) => setSources(e.target.value)} />
         <span className="hint">Use sources the team may quote: OpenStax textbooks, U.S. agency pages (DOE, NASA, USGS, NOAA, EIA).</span>
       </div>
-      {!player && <Notice kind="warn">Choose your name (on Today) so the card shows who wrote it.</Notice>}
       <div className="row">
         <button className="btn btn-primary" type="submit" disabled={!summary.trim()}>
           Save card
@@ -220,7 +218,13 @@ export function ConceptPage({ id, query }: { id: string; query?: URLSearchParams
         </div>
       </PageHeader>
 
-      {editing ? (
+      {!data.team ? (
+        <Notice>
+          Concept cards are notes a team writes for itself: each subject's owner writes them and a teammate checks them.{' '}
+          {player ? <a href={href('/team')}>Create or join a team</a> : 'Sign in and join your team'} to read and write your team's cards. The questions
+          below are open to everyone.
+        </Notice>
+      ) : editing ? (
         <CardEditor id={id} concept={`${concept.name} (${topic.name})`} existing={card} onDone={() => setEditing(false)} />
       ) : card ? (
         <article className="card stack concept-card">
@@ -331,8 +335,8 @@ export function LearnPage() {
       <PageHeader title="Concept cards">
         <p>
           Short notes on the ideas NSB asks about most: a summary, key facts, traps and sources, next to the questions that test each idea. Each
-          subject's owner writes the cards and a second player reviews them, so writing them is good study too. {written} of {total} written so
-          far.
+          subject's owner writes the cards and a second player reviews them, so writing them is good study too.
+          {data.team ? ` ${written} of ${total} written so far.` : ' Cards belong to a team: join yours to read and write them; the questions on each concept are open to everyone.'}
         </p>
         <p>
           <a href={href('/learn/paths')}>Reading paths</a>: each subject's topics in the order to learn them, with free readings and a short check

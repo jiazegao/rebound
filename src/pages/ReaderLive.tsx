@@ -107,7 +107,7 @@ function Lineups({ state, game, names, allowEdit, dispatch }: { state: MatchStat
             </div>
           ) : (
             <p className="muted" style={{ margin: '0.4rem 0 0' }}>
-              {state.lineups[team].map((id) => names.get(id) ?? id).join(', ')}
+              {state.lineups[team].map((id) => names.get(id) ?? 'Former player').join(', ')}
             </p>
           )}
         </div>
@@ -161,6 +161,8 @@ function ReaderGame({ game, round }: { game: GameRecord; round: Round }) {
         return;
       }
       appendEvent(game.id, event);
+      // Only the reader's own ledger is written here (if they play); for everyone else, questions read in the team's
+      // games count as heard through the game record itself (learning.heardLedger).
       markSeen([...next.lineups[0], ...next.lineups[1]], questionIdsRead(next, game));
       if (next.phase === 'game_over') finishGame(game.id, next.scores);
       else if (game.status === 'finished') {
@@ -306,7 +308,7 @@ function ReaderGame({ game, round }: { game: GameRecord; round: Round }) {
               dispatch({ type: 'buzz', team, playerId: pid });
             }}
           >
-            <span>{names.get(pid) ?? pid}</span>
+            <span>{names.get(pid) ?? 'Former player'}</span>
             <span className="kbd">{TEAM_KEYS[team][i]}</span>
           </button>
         ))}
@@ -635,7 +637,7 @@ export function ReaderLive({ gameId }: { gameId: string }) {
     return (
       <div className="container narrow">
         <Notice kind="error">
-          Game not found. It may have been deleted, or it was played in another browser. <a href={href('/reader')}>Start a new game</a>.
+          Game not found. It may have been deleted. <a href={href('/reader')}>Start a new game</a>.
         </Notice>
       </div>
     );

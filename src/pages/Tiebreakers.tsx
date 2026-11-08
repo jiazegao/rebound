@@ -9,6 +9,7 @@ import { loadCatalog, loadQuestions, newestSet, setGroups, setLabel, useIndex, u
 import { buildReading, readingDurationMs, revealedCount, splitRevealed } from '../lib/reading';
 import { href } from '../lib/router';
 import { beep, unlockAudio } from '../lib/sound';
+import { heardLedger } from '../lib/learning';
 import { addAttempt, markSeen, useData } from '../lib/store';
 
 const BUZZ_WINDOW_S = 5;
@@ -46,7 +47,7 @@ function ShootoutDrill({ onExit }: { onExit: () => void }) {
     let live = true;
     (async () => {
       const catalog = await loadCatalog();
-      const seen = player ? (data.seen[player.id] ?? {}) : {};
+      const seen = player ? heardLedger(data, player.id) : {};
       const picks = pickMixed(catalog.questions, { count: SHOOTOUT_TOSSUPS + 4, seen });
       const found = await loadQuestions(picks.map((p) => p.questionId));
       const qs = picks.map((p) => found.get(p.questionId)?.pair.tossup).filter(playableTossup).slice(0, SHOOTOUT_TOSSUPS);

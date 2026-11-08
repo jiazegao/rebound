@@ -4,11 +4,13 @@ import { downloadFile, percent, toCsv } from '../lib/format';
 import { href } from '../lib/router';
 import { fewAnswers, median, netPerInterrupt, playerLines, weeklyTrend } from '../lib/stats';
 import { useData } from '../lib/store';
+import { useTeamData } from '../lib/teammates';
 
 export function StatsPage() {
-  const data = useData();
+  // Everyone on the team sees everyone's stats: the team's games plus each member's practice answers.
+  const { data, loading, error } = useTeamData();
   const lines = playerLines(data).filter((l) => l.tossupAttempts + l.soloAnswered + l.games > 0 || data.players.some((p) => p.id === l.playerId && p.active));
-  const name = (id: string) => data.players.find((p) => p.id === id)?.name ?? 'Unknown player';
+  const name = (id: string) => data.players.find((p) => p.id === id)?.name ?? 'Former player';
   const finished = data.games.filter((g) => g.status === 'finished').length;
 
   const exportCsv = () => {
@@ -66,9 +68,11 @@ export function StatsPage() {
       </p>
       <PageHeader title="Team stats">
         <p>
-          From {finished} finished game{finished === 1 ? '' : 's'} in the Reader console, plus solo practice. Numbers based on a handful of
-          questions move a lot; look for trends over several practices.
+          From {finished} finished game{finished === 1 ? '' : 's'} (Reader console games and online team matches), plus each player's solo practice.
+          Numbers based on a handful of questions move a lot; look for trends over several practices.
         </p>
+        {loading && <p className="small muted">Loading teammates' practice…</p>}
+        {error && <p className="small" style={{ color: 'var(--bad)' }}>Some teammates' practice could not be loaded: {error}</p>}
         <button className="btn" onClick={exportCsv} disabled={lines.length === 0}>
           Download (CSV)
         </button>

@@ -1,12 +1,20 @@
 import { cloudflareTest } from '@cloudflare/vitest-plugin';
 import { defineConfig } from 'vitest/config';
 
-// Tests run inside workerd with the real Worker and Durable Object from wrangler.toml (no Cloudflare account needed).
+// Tests run inside workerd with the real Worker and Durable Objects from wrangler.toml (no Cloudflare account needed).
+// Sign-in for tests: email codes come back from the development outbox, and Google ID tokens are signed with a test
+// key for this client id (test/helpers.ts). These bindings exist only here, never in wrangler.toml. The daily email
+// cap is pinned to the shipped one, because a local server/.dev.vars (read by the tests too) lifts it.
 export default defineConfig({
-  plugins: [cloudflareTest({ wrangler: { configPath: './wrangler.toml' } })],
+  plugins: [
+    cloudflareTest({
+      wrangler: { configPath: './wrangler.toml' },
+      miniflare: { bindings: { DEV_EMAIL_OUTBOX: '1', GOOGLE_CLIENT_ID: 'test-client.apps.googleusercontent.com', EMAIL_DAILY_LIMIT: '90' } },
+    }),
+  ],
   test: {
     include: ['test/**/*.test.ts'],
-    // PIN hashing (100,000 PBKDF2 rounds) and the timing-based room tests take a moment.
+    // The timing-based room and match tests take a moment.
     testTimeout: 30_000,
   },
 });

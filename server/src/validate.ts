@@ -1,9 +1,10 @@
 /** Input checks shared by the routes. Every message here can reach a student's screen. */
 
-import type { MemberRole } from '../../src/core/sync';
+import { MAX_NAME_CHARS, MAX_TEAM_NAME_CHARS, type MemberRole, type NextEvent, type UserSettings } from '../../src/core/accounts';
+import { CORE_SUBJECTS, type CoreSubject } from '../../src/core/schema';
 import { HttpError } from './http';
 
-/** Longest record id, player id or other client-made id (docs/SERVER.md: "ids up to 200 characters"). */
+/** Longest record id or other client-made id (docs/SERVER.md: "ids up to 200 characters"). */
 export const MAX_ID_LENGTH = 200;
 /** JSON nesting deeper than this is refused, so no body can exhaust the stack when it is compared or copied. */
 export const MAX_JSON_DEPTH = 100;
@@ -25,20 +26,18 @@ export function cleanLine(value: unknown, maxChars: number): string | null {
   return text;
 }
 
-export function memberName(value: unknown): string {
-  const name = cleanLine(value, 40);
-  if (name === null) throw new HttpError(400, 'Enter a name of 1 to 40 characters.');
+export const NAME_RULE = `Enter a name of 1 to ${MAX_NAME_CHARS} characters.`;
+
+/** A person's display name (their account name, shown to teammates and in rooms). */
+export function personName(value: unknown): string {
+  const name = cleanLine(value, MAX_NAME_CHARS);
+  if (name === null) throw new HttpError(400, NAME_RULE);
   return name;
 }
 
-/** Names are unique in a team regardless of case (and of compatibility forms such as full-width letters). */
-export function nameKey(name: string): string {
-  return name.normalize('NFKC').toLowerCase();
-}
-
 export function teamName(value: unknown): string {
-  const name = cleanLine(value, 80);
-  if (name === null) throw new HttpError(400, 'Enter a team name of 1 to 80 characters.');
+  const name = cleanLine(value, MAX_TEAM_NAME_CHARS);
+  if (name === null) throw new HttpError(400, `Enter a team name of 1 to ${MAX_TEAM_NAME_CHARS} characters.`);
   return name;
 }
 
@@ -53,44 +52,90 @@ export function level(value: unknown): 'HS' | 'MS' {
   throw new HttpError(400, 'Choose a level: HS (high school) or MS (middle school).');
 }
 
-/** PINs are strings of 4 to 8 digits (a number would lose leading zeros). */
-export function pin(value: unknown, message = 'Your PIN must be 4 to 8 digits.'): string {
-  if (typeof value !== 'string' || !/^[0-9]{4,8}$/.test(value)) throw new HttpError(400, message);
-  return value;
-}
-
 export function role(value: unknown): MemberRole {
   if (value === 'coach' || value === 'captain' || value === 'member') return value;
   throw new HttpError(400, 'A role must be coach, captain or member.');
 }
 
-/** An optional roster player id: absent or null means none. */
-export function playerId(value: unknown): string | null {
-  if (value === undefined || value === null) return null;
-  if (typeof value !== 'string' || value.length < 1 || value.length > MAX_ID_LENGTH) {
-    throw new HttpError(400, `A roster player id must be 1 to ${MAX_ID_LENGTH} characters.`);
+/** A core subject, or null to clear it. */
+export function subject(value: unknown): CoreSubject | null {
+  if (value === null) return null;
+  if (typeof value === 'string' && (CORE_SUBJECTS as string[]).includes(value)) return value as CoreSubject;
+  throw new HttpError(400, `A subject must be one of: ${CORE_SUBJECTS.join(', ')}.`);
+}
+
+/** A graduation year, or null to clear it. */
+export function gradYear(value: unknown): number | null {
+  if (value === null) return null;
+  if (typeof value === 'number' && Number.isInteger(value) && value >= 1900 && value <= 2100) return value;
+  throw new HttpError(400, 'A graduation year must be a year such as 2028.');
+}
+
+/** A squad label (a sub-team such as "A"), or null to clear it. */
+export function squad(value: unknown): string | null {
+  if (value === null) return null;
+  const label = cleanLine(value, 20);
+  if (label === null) throw new HttpError(400, 'A squad name is 1 to 20 characters.');
+  return label;
+}
+
+/** An email address, trimmed and lowercased (one account per address). */
+export function emailAddress(value: unknown): string {
+  const email = typeof value === 'string' ? value.normalize('NFC').trim().toLowerCase() : '';
+  if (email.length > 254 || !/^[^\s@\p{Cc}]+@[^\s@\p{Cc}]+\.[^\s@\p{Cc}]+$/u.test(email)) throw new HttpError(400, 'Enter a valid email address.');
+  return email;
+}
+
+/** The next competition: `{ name, date: "YYYY-MM-DD", lineupId?, finals? }`, or null to clear it. */
+export function nextEvent(value: unknown): NextEvent | null {
+  if (value === null) return null;
+  const o = asObject(value, 'The next competition');
+  const name = cleanLine(o.name, 80);
+  if (name === null) throw new HttpError(400, "Enter the competition's name (1 to 80 characters).");
+  const date = typeof o.date === 'string' ? o.date : '';
+  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(date) ? new Date(`${date}T00:00:00Z`) : null;
+  if (!parsed || Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) {
+    throw new HttpError(400, "Enter the competition's date as YYYY-MM-DD.");
   }
-  return value;
+  const out: NextEvent = { name, date };
+  if (o.lineupId !== undefined && o.lineupId !== null) {
+    if (typeof o.lineupId !== 'string' || o.lineupId.length < 1 || o.lineupId.length > MAX_ID_LENGTH) throw new HttpError(400, 'That lineup id is not valid.');
+    out.lineupId = o.lineupId;
+  }
+  if (o.finals !== undefined && o.finals !== null) {
+    if (typeof o.finals !== 'boolean') throw new HttpError(400, 'finals must be true or false.');
+    if (o.finals) out.finals = true;
+  }
+  return out;
 }
 
-export interface CreateTeamInput {
-  teamName: string;
-  level: 'HS' | 'MS';
-  memberName: string;
-  pin: string;
-  playerId: string | null;
-}
+/** Allowed ranges of the settings the site sends (docs/ACCOUNTS.md: the whole settings object each time). */
+const SETTING_RULES: { [K in keyof UserSettings]-?: (v: unknown) => boolean } = {
+  sound: (v) => typeof v === 'boolean',
+  readingWpm: (v) => typeof v === 'number' && Number.isFinite(v) && v >= 60 && v <= 600,
+  answerTimer: (v) => typeof v === 'boolean',
+  dailyMinutes: (v) => typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 600,
+  cardsCursor: (v) => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0,
+};
 
-/** The body of `POST /api/teams`: `{ teamName, level, memberName, pin, playerId? }`. */
-export function createTeamInput(value: unknown): CreateTeamInput {
-  const body = asObject(value);
-  return {
-    teamName: teamName(body.teamName),
-    level: level(body.level),
-    memberName: memberName(body.memberName),
-    pin: pin(body.pin),
-    playerId: playerId(body.playerId),
-  };
+const SETTING_PROBLEMS: Record<keyof UserSettings, string> = {
+  sound: 'sound must be true or false.',
+  readingWpm: 'The reading speed must be 60 to 600 words per minute.',
+  answerTimer: 'answerTimer must be true or false.',
+  dailyMinutes: 'Daily minutes must be a whole number from 1 to 600.',
+  cardsCursor: 'cardsCursor must be a whole number, 0 or more.',
+};
+
+/** `current` with the known settings in `value` applied (each checked); unknown keys are ignored. */
+export function mergeSettings(current: UserSettings, value: unknown): UserSettings {
+  const o = asObject(value, 'The settings');
+  const out: UserSettings = { ...current };
+  for (const key of Object.keys(SETTING_RULES) as Array<keyof UserSettings>) {
+    if (!(key in o) || o[key] === undefined) continue;
+    if (!SETTING_RULES[key](o[key])) throw new HttpError(400, SETTING_PROBLEMS[key]);
+    (out as unknown as Record<string, unknown>)[key] = o[key];
+  }
+  return out;
 }
 
 /** Whether a parsed JSON value nests deeper than `limit`, checked without recursion. */

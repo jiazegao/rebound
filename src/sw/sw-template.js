@@ -1,12 +1,11 @@
 /*
  * Rebound service worker. The build (vite.config.ts) fills in VERSION and PRECACHE.
  *
- * - The app itself (HTML, script, styles, icons) is cached at install, so the site opens offline
- *   after the first visit.
- * - Pages: network first, so a new version shows up on the next visit; the cached copy when offline.
- * - Question files: kept in their own cache. Set files are served from the cache when present and
+ * - The app itself (HTML, script, styles, icons) is cached at install, so pages open quickly.
+ * - Pages: network first, so a new version shows up on the next visit; the cached copy when the network is slow.
+ * - Public question files: kept in their own cache. Set files are served from the cache when present and
  *   refreshed in the background; the index and catalog are fetched fresh when the network allows.
- *   "Save all questions for offline use" (Data page) fills this cache ahead of time.
+ * - Nothing about a player is cached: their practice lives on Rebound's server, whose requests pass straight through.
  */
 const VERSION = '__VERSION__';
 const SHELL = `rebound-shell-${VERSION}`;

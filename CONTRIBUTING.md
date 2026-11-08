@@ -15,13 +15,17 @@ npm test                        # unit tests
 cd server && npm ci && npm test # the team server's tests, in the Workers runtime
 ```
 
-README.md, "How the code is organised", is the map of the code. `docs/SERVER.md` describes the team server's
-API, and `docs/NSB-JSON.md` the question and game formats.
+README.md, "How the code is organised", is the map of the code. `docs/ACCOUNTS.md` describes accounts, teams and
+the server's API, `docs/SERVER.md` rooms and online matches, and `docs/NSB-JSON.md` the question and game formats.
+The public pages work with `npm run dev` alone; to sign in locally, run the server too (server/README.md, "Run and
+test locally"): its development email outbox gives a **Sign in (development)** link instead of sending email.
 
 ## What a good change looks like
 
-- **It keeps the site working without the server.** Everything a team does is saved on the device first
-  (`src/lib/store.ts`); the server only syncs. Pages talk to the store, not to the network.
+- **Pages talk to the store, not to the network.** A player's data lives on the server, and the site keeps it in
+  memory while they are signed in (`src/lib/store.ts`). Pages read the store and change it with `update()`;
+  `src/lib/cloud.ts` sends each change to the server (the player's own records to their account, the team's to the
+  team). Public pages (Home, Try a round, Library, Rules) must keep working signed out.
 - **Logic is pure and tested.** Rules, answer checking, scheduling, plans, drills and the writing studio's
   checks are plain functions in `src/core/` with tests next to them. Add a test with every behavior change,
   and a regression test with every bug fix.
@@ -34,8 +38,11 @@ API, and `docs/NSB-JSON.md` the question and game formats.
 - **Respect the data's owners.** DOE questions are public domain and credited on every round. Never commit
   community or invitational packets, or anything else you are not allowed to publish (keep it in
   `private-data/`, which git ignores). Photos must be public domain, with their source recorded.
-- **Students' privacy.** No analytics, trackers, ads or third-party requests from the site. The server keeps
-  names, PIN hashes and the team's own records, nothing more.
+- **Students' privacy.** No analytics, trackers, ads or third-party requests from the site, apart from Google's
+  sign-in button. Accounts are for people 13 and older. The server keeps each account's email address (and Google
+  account id), name, profile and settings, sign-in sessions (only their hashes) and practice, and each team's own
+  records, nothing more. Teammates may see only what `TEAM_VISIBLE` in `src/core/accounts.ts` lists; review
+  queues and daily plans stay private.
 
 ## Checks before a pull request
 
@@ -44,14 +51,16 @@ npm test
 npm run build          # type-checks with tsc --noEmit, then builds (never run `tsc -b`: it writes .js files next to the sources)
 ```
 
-For changes you can see, also run the browser smoke test (`node e2e/smoke.cjs` against `npx vite preview --port 4173`;
-see the file's header), and attach a screenshot to the pull request. For server changes, `cd server && npm test`.
+For changes you can see, also run the browser smoke test (`node e2e/smoke.cjs` against a local server and
+`npx vite preview --port 4173`; see `e2e/accounts.cjs` and the file's header), and attach a screenshot to the pull
+request. For server changes, `cd server && npm test`.
 The **Test** workflow runs the unit tests, the build and the server tests on every pull request.
 
 ## Changes that need the server deployed first
 
-A change to the sync contract (`src/core/sync.ts`), to `server/`, or a new route the site calls must reach the
-team server before the site: see MAINTAINING.md, "Ship a change". Say so in the pull request.
+A change to the account contract (`src/core/accounts.ts`), to the game helpers the server uses
+(`src/core/games.ts`), to `server/`, or a new route the site calls must reach the server before the site: see
+MAINTAINING.md, "Ship a change". Say so in the pull request.
 
 ## Reporting a wrong answer or a broken question
 

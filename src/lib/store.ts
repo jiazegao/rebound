@@ -1,11 +1,14 @@
 /**
- * The team's data, stored in this browser (IndexedDB). Phase 0 keeps everything on the
- * device that runs practice; "Data" lets the team export and import a backup file.
- * A shared online database replaces this in a later phase without changing the pages,
- * because pages only use the hooks and actions below.
+ * The signed-in player's data and their team's, in memory (docs/ACCOUNTS.md, "Site"). Pages read it with useData()
+ * and change it only through update() and the actions below. cloud.ts fills it from Rebound's server after sign-in
+ * and sends every change back; nothing is kept on the device. Signed out, the data is empty and practice saves
+ * nothing.
+ *
+ * A player's id is their user id. AppData holds the signed-in player's own practice (attempts, answers, heard
+ * ledgers, review cards, plan…) and the team's shared work (games, lineups, packets…); teammates' practice is
+ * loaded separately when a page needs it (teammates.ts).
  */
 import { useSyncExternalStore } from 'react';
-import { del, get, set } from 'idb-keyval';
 import type { DayPlan } from '../core/plan';
 import {
   applyOutcome,
@@ -14,7 +17,6 @@ import {
   gradeCard,
   isStale,
   manualCard,
-  normalizeCard,
   RETENTION,
   seasonPhase,
   type CardEvent,
@@ -24,50 +26,10 @@ import {
 import type { MatchEvent } from '../core/rules/engine';
 import type { Assignment, Completion, ConceptCard, Lineup, Player, QuestionKind, Subject, Team, TeamPacket, TeamVisual, WrittenQuestion } from '../core/schema';
 import { newId } from './format';
-import { attemptOutcome, gameOutcomes } from './outcomes';
+import { attemptOutcome } from './outcomes';
 
-const KEY = 'rebound-data-v1';
-
-export interface GamePairRef {
-  tossupId: string;
-  bonusId?: string;
-  subject: Subject;
-}
-
-export interface GameRecord {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  presetId: string;
-  packet: { setId: string; setTitle: string; roundId: string; roundLabel: string; sourceUrl?: string };
-  /** Snapshot of the questions in packet order, so stats never need to reload the set. */
-  pairs: GamePairRef[];
-  teams: [{ name: string; playerIds: string[] }, { name: string; playerIds: string[] }];
-  events: MatchEvent[];
-  status: 'in_progress' | 'finished';
-  finalScores?: [number, number];
-  /** The remote room this game is played in, when players join from their own devices. */
-  roomId?: string;
-  /** "tiebreak": a tiebreaker drill (5 toss-ups, no bonuses, no clock, repeated while tied). */
-  format?: 'game' | 'tiebreak';
-  /** An online match the team server ran (no reader); the server wrote this record. */
-  online?: boolean;
-}
-
-/** One answer in solo practice ("Try a round" while signed in as a player). */
-export interface SoloAttempt {
-  id: string;
-  playerId: string;
-  questionId: string;
-  subject: Subject;
-  kind: 'tossup' | 'bonus';
-  correct: boolean;
-  interrupt: boolean;
-  latencyMs: number | null;
-  /** True when the player overrode the checker's verdict. */
-  overridden: boolean;
-  t: number;
-}
+export type { GamePairRef, GameRecord, SoloAttempt } from '../core/games';
+import type { GameRecord, SoloAttempt } from '../core/games';
 
 export interface ProblemReport {
   id: string;
@@ -77,18 +39,31 @@ export interface ProblemReport {
   status: 'open' | 'resolved';
 }
 
+export interface AppSettings {
+  sound: boolean;
+  readingWpm: number;
+  /** The signed-in player's id (null when signed out). */
+  soloPlayerId: string | null;
+  answerTimer: boolean;
+  dailyMinutes: number;
+  /** How far the player's game and match answers have been turned into review cards (an answers revision). */
+  cardsCursor?: number;
+}
+
 export interface AppData {
-  version: 1;
   team: Team | null;
+  /** The team's members, or just the signed-in player when they have no team. */
   players: Player[];
   games: GameRecord[];
-  /** playerId → questionId → when they last heard it (ms). */
+  /** playerId → questionId → when they first heard it (ms). */
   seen: Record<string, Record<string, number>>;
   attempts: SoloAttempt[];
+  /** The player's answers in team games and online matches, oldest first (the server writes them). */
+  answers: Outcome[];
   reports: ProblemReport[];
   /** Review cards, keyed by `${playerId}:${questionId}`. */
   cards: Record<string, ReviewCard>;
-  /** Each player's plan for the current day, keyed by player id. */
+  /** The player's plan for the current day, keyed by player id. */
   plans: Record<string, DayPlan>;
   lineups: Lineup[];
   packets: TeamPacket[];
@@ -97,24 +72,25 @@ export interface AppData {
   assignments: Assignment[];
   /** Keyed by `${assignmentId}:${playerId}`. */
   completions: Record<string, Completion>;
-  /** playerId → conceptId → when they read that concept card. */
+  /** playerId → conceptId (or "reading:<topic>") → when they read it. */
   conceptReads: Record<string, Record<string, number>>;
   /** Visual questions the team added, newest first. */
   visuals: TeamVisual[];
   /** Questions the team writes in the studio (Team → Write), newest first. */
   written: WrittenQuestion[];
-  settings: { sound: boolean; readingWpm: number; soloPlayerId: string | null; answerTimer: boolean; dailyMinutes: number };
-  lastExportAt: string | null;
+  settings: AppSettings;
 }
+
+export const DEFAULT_APP_SETTINGS: AppSettings = { sound: true, readingWpm: 200, soloPlayerId: null, answerTimer: true, dailyMinutes: 30 };
 
 export function emptyData(): AppData {
   return {
-    version: 1,
     team: null,
     players: [],
     games: [],
     seen: {},
     attempts: [],
+    answers: [],
     reports: [],
     cards: {},
     plans: {},
@@ -126,15 +102,12 @@ export function emptyData(): AppData {
     conceptReads: {},
     visuals: [],
     written: [],
-    settings: { sound: true, readingWpm: 200, soloPlayerId: null, answerTimer: true, dailyMinutes: 30 },
-    lastExportAt: null,
+    settings: { ...DEFAULT_APP_SETTINGS },
   };
 }
 
 let data: AppData = emptyData();
-let status = { loaded: false, persistent: true };
 const listeners = new Set<() => void>();
-let saveTimer: ReturnType<typeof setTimeout> | undefined;
 
 function emit() {
   for (const listener of listeners) listener();
@@ -145,114 +118,91 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
-async function save(): Promise<void> {
-  try {
-    await set(KEY, data);
-    if (!status.persistent) {
-      status = { ...status, persistent: true };
-      emit();
-    }
-  } catch {
-    if (status.persistent) {
-      status = { ...status, persistent: false };
-      emit();
-    }
-  }
-}
-
-function scheduleSave() {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => void save(), 200);
-}
-
-/** Load saved data. Call once before rendering. Works (in memory only) if storage is blocked. */
-export async function initStore(): Promise<void> {
-  try {
-    const saved = await get<AppData>(KEY);
-    if (saved && saved.version === 1) {
-      data = normalize({ ...emptyData(), ...saved, settings: { ...emptyData().settings, ...saved.settings } });
-      if (saved.cards === undefined) backfillCards(data);
-    }
-  } catch {
-    status = { ...status, persistent: false };
-  }
-  status = { ...status, loaded: true };
-  if (typeof document !== 'undefined') {
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') {
-        clearTimeout(saveTimer);
-        void save();
-      }
-    });
-  }
-  emit();
-}
-
-/** Run `listener` after every change to the data (for background sync). Returns an unsubscribe function. */
+/** Run `listener` after every change to the data (cloud.ts sends changes this way). Returns an unsubscribe function. */
 export function subscribeStore(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
+  return subscribe(listener);
 }
 
 export function useData(): AppData {
   return useSyncExternalStore(subscribe, () => data);
 }
 
-export function useStoreStatus(): { loaded: boolean; persistent: boolean } {
-  return useSyncExternalStore(subscribe, () => status);
-}
-
 export function getData(): AppData {
   return data;
 }
 
-/** Change data through a draft copy; listeners re-render and the change is saved. */
-export function update(mutate: (draft: AppData) => void): void {
-  const draft = structuredClone(data);
-  mutate(draft);
-  data = draft;
+/** Replace all data at once (cloud.ts, when the player signs in or out). */
+export function replaceData(next: AppData): void {
+  data = next;
   emit();
-  scheduleSave();
 }
 
-/* ---------------- actions ---------------- */
-
-export function createTeam(name: string, level: Team['level']): void {
-  update((d) => {
-    d.team = { id: newId('team'), name: name.trim() || 'Our team', level, createdAt: new Date().toISOString() };
-  });
+/**
+ * Change data through a draft; listeners re-render and cloud.ts sends what changed. Each top-level collection is
+ * copied the first time the change reads it, so untouched collections keep their identity: pages that memoize on
+ * `data.attempts` recompute only when attempts change, and cloud.ts only re-checks collections that were touched.
+ */
+export function update(mutate: (draft: AppData) => void): void {
+  const next: AppData = { ...data };
+  const target = next as unknown as Record<PropertyKey, unknown>;
+  const copied = new Set<PropertyKey>();
+  const draft = new Proxy(target, {
+    get(t, key, receiver) {
+      if (!copied.has(key) && Object.prototype.hasOwnProperty.call(t, key)) {
+        copied.add(key);
+        const value = t[key];
+        if (value !== null && typeof value === 'object') t[key] = structuredClone(value);
+      }
+      return Reflect.get(t, key, receiver);
+    },
+    set(t, key, value) {
+      copied.add(key);
+      t[key] = value;
+      return true;
+    },
+    deleteProperty(t, key) {
+      copied.add(key);
+      delete t[key];
+      return true;
+    },
+  }) as unknown as AppData;
+  mutate(draft);
+  data = next;
+  emit();
 }
 
+/** The signed-in player's id, or null when signed out. */
+export function currentPlayerId(d: AppData = data): string | null {
+  return d.settings.soloPlayerId;
+}
+
+/** The signed-in player (null when signed out). */
+export function useCurrentPlayer(): Player | null {
+  const d = useData();
+  return d.players.find((p) => p.id === d.settings.soloPlayerId) ?? null;
+}
+
+/* ---------------- team settings ---------------- */
+
+/** Rename the team or change its level (coaches and captains; cloud.ts sends it to the team's settings). */
 export function renameTeam(name: string, level: Team['level']): void {
   update((d) => {
     if (d.team) d.team = { ...d.team, name: name.trim() || d.team.name, level };
   });
 }
 
-export function addPlayer(fields: Omit<Player, 'id' | 'active'> & { active?: boolean }): string {
-  const id = newId('p');
+export function setNextEvent(event: { name: string; date: string; finals?: boolean } | null): void {
   update((d) => {
-    d.players.push({ id, active: true, ...fields, name: fields.name.trim() });
-  });
-  return id;
-}
-
-export function updatePlayer(id: string, fields: Partial<Omit<Player, 'id'>>): void {
-  update((d) => {
-    const p = d.players.find((x) => x.id === id);
-    if (p) Object.assign(p, fields);
+    if (!d.team) return;
+    if (event && /^\d{4}-\d{2}-\d{2}$/.test(event.date)) {
+      d.team.nextEvent = { name: event.name.trim(), date: event.date, lineupId: d.team.nextEvent?.lineupId, ...(event.finals ? { finals: true } : {}) };
+      if (!d.team.nextEvent.lineupId) delete d.team.nextEvent.lineupId;
+    } else delete d.team.nextEvent;
+    // Today's plans are rebuilt (keeping what is done) when the date moves them into another season phase.
   });
 }
 
-export function removePlayer(id: string): void {
-  update((d) => {
-    const p = d.players.find((x) => x.id === id);
-    // Keep players who appear in games so old stats still have names; just mark them inactive.
-    const inGames = d.games.some((g) => g.teams.some((t) => t.playerIds.includes(id)));
-    if (p && inGames) p.active = false;
-    else d.players = d.players.filter((x) => x.id !== id);
-  });
-}
+/* ---------------- games ---------------- */
 
 export function createGame(game: Omit<GameRecord, 'id' | 'createdAt' | 'updatedAt' | 'events' | 'status'>): string {
   const id = newId('g');
@@ -283,6 +233,10 @@ export function undoEvent(gameId: string): void {
   });
 }
 
+/**
+ * End a game. The server turns the finished game into each player's answers, and each player's own device makes
+ * their review cards from those answers when it next loads; no device writes cards for anyone else.
+ */
 export function finishGame(gameId: string, scores: [number, number]): void {
   update((d) => {
     const g = d.games.find((x) => x.id === gameId);
@@ -290,15 +244,15 @@ export function finishGame(gameId: string, scores: [number, number]): void {
     g.status = 'finished';
     g.finalScores = scores;
     g.updatedAt = new Date().toISOString();
-    // Misses, slow buzzes and missed bonuses become review cards (each answer only once, even if the game is reopened).
-    applyOutcomes(d, gameOutcomes(g, d.players));
   });
 }
 
 export function setGameRoom(gameId: string, roomId: string | undefined): void {
   update((d) => {
     const g = d.games.find((x) => x.id === gameId);
-    if (g) g.roomId = roomId;
+    if (!g) return;
+    if (roomId) g.roomId = roomId;
+    else delete g.roomId;
   });
 }
 
@@ -308,49 +262,46 @@ export function deleteGame(gameId: string): void {
   });
 }
 
-/** Record that these players heard these questions. */
+/* ---------------- the player's own practice ---------------- */
+
+/**
+ * Record that the signed-in player heard these questions (when they are among `playerIds`). Each player's own
+ * device keeps their ledger; questions read in team games count as heard for everyone who played (learning.ts).
+ */
 export function markSeen(playerIds: string[], questionIds: string[], at = Date.now()): void {
-  if (playerIds.length === 0 || questionIds.length === 0) return;
-  const current = data.seen;
-  const missing = playerIds.some((p) => questionIds.some((q) => !current[p]?.[q]));
-  if (!missing) return;
+  const me = data.settings.soloPlayerId;
+  if (!me || !playerIds.includes(me) || questionIds.length === 0) return;
+  const ledger = data.seen[me];
+  if (ledger && questionIds.every((q) => ledger[q])) return;
   update((d) => {
-    for (const p of playerIds) {
-      const ledger = (d.seen[p] ??= {});
-      for (const q of questionIds) ledger[q] ??= at;
-    }
+    const mine = (d.seen[me] ??= {});
+    for (const q of questionIds) mine[q] ??= at;
   });
 }
 
-/**
- * A finished online team match (the team server writes its game record, which arrives by sync): this device adds
- * its own player's results to their review queue and "seen" ledger. Safe to repeat: each answer counts once.
- */
-export function applyOnlineGame(game: GameRecord, playerId: string, heard: string[]): void {
-  update((d) => {
-    applyOutcomes(d, gameOutcomes(game, d.players).filter((o) => o.playerId === playerId));
-  });
-  markSeen([playerId], heard);
-}
-
-/**
- * One answer from an online free-for-all, recorded as practice for this device's player. The id is fixed by the
- * match, so the same answer recorded on two devices is still one record.
- */
-export function recordMatchAnswer(id: string, attempt: Omit<SoloAttempt, 'id'>): void {
-  if (data.attempts.some((a) => a.id === id)) return;
-  update((d) => {
-    const a = { ...attempt, id };
-    d.attempts.push(a);
-    applyOutcomes(d, [attemptOutcome(a)]);
-  });
-}
-
+/** One practice answer by the signed-in player (anyone else's, or while signed out, is not saved). */
 export function addAttempt(attempt: Omit<SoloAttempt, 'id'>): void {
+  if (!attempt.playerId || attempt.playerId !== data.settings.soloPlayerId) return;
   update((d) => {
     const a = { ...attempt, id: newId('a') };
     d.attempts.push(a);
     applyOutcomes(d, [attemptOutcome(a)]);
+  });
+}
+
+/**
+ * The player's new answers from team games and online matches (written by the server) become review cards, and
+ * the cursor remembers how far that has gone. Each answer counts once even if this runs again.
+ */
+export function applyAnswers(outcomes: Outcome[], cursor: number): void {
+  update((d) => {
+    const me = d.settings.soloPlayerId;
+    if (!me) return;
+    applyOutcomes(
+      d,
+      outcomes.filter((o) => o.playerId === me),
+    );
+    d.settings.cardsCursor = Math.max(d.settings.cardsCursor ?? 0, cursor);
   });
 }
 
@@ -359,18 +310,6 @@ export function addAttempt(attempt: Omit<SoloAttempt, 'id'>): void {
 /** The retention target in force at time `t` (it rises as the next competition gets close). */
 export function retentionAt(d: AppData, t: number): number {
   return RETENTION[seasonPhase(t, d.team?.nextEvent?.date)];
-}
-
-/** Fill in fields that data saved by an earlier version lacks. */
-function normalize(d: AppData): AppData {
-  for (const id of Object.keys(d.cards)) d.cards[id] = normalizeCard(d.cards[id]);
-  return d;
-}
-
-/** Data from before review cards existed: build cards from the practice already logged (recent misses only). */
-function backfillCards(d: AppData): void {
-  const outcomes = [...d.attempts.map(attemptOutcome), ...d.games.filter((g) => g.status === 'finished').flatMap((g) => gameOutcomes(g, d.players))];
-  applyOutcomes(d, outcomes);
 }
 
 function applyOutcomes(d: AppData, outcomes: Outcome[]): void {
@@ -391,8 +330,9 @@ function applyOutcomes(d: AppData, outcomes: Outcome[]): void {
   }
 }
 
-/** Put a question in a player's review queue: it comes up in the next review session. */
+/** Put a question in the player's review queue: it comes up in the next review session. */
 export function addToReview(playerId: string, q: { id: string; subject: Subject; kind: QuestionKind }): void {
+  if (playerId !== data.settings.soloPlayerId) return;
   update((d) => {
     const id = cardId(playerId, q.id);
     const existing = d.cards[id];
@@ -421,9 +361,10 @@ export function recordReview(id: string, event: CardEvent): void {
   });
 }
 
-/* ---------------- plans and the calendar ---------------- */
+/* ---------------- plans ---------------- */
 
 export function savePlan(plan: DayPlan): void {
+  if (plan.playerId !== data.settings.soloPlayerId) return;
   update((d) => {
     d.plans[plan.playerId] = plan;
   });
@@ -439,17 +380,10 @@ export function completePlanItem(playerId: string, day: string, itemId: string):
   });
 }
 
-export function setNextEvent(event: { name: string; date: string; finals?: boolean } | null): void {
-  update((d) => {
-    if (!d.team) return;
-    if (event && /^\d{4}-\d{2}-\d{2}$/.test(event.date)) {
-      d.team.nextEvent = { name: event.name.trim(), date: event.date, lineupId: d.team.nextEvent?.lineupId, ...(event.finals ? { finals: true } : {}) };
-    } else delete d.team.nextEvent;
-    // Today's plans are rebuilt (keeping what is done) when the date moves them into another season phase.
-  });
-}
+/* ---------------- problem reports and settings ---------------- */
 
 export function reportProblem(questionId: string, note: string): void {
+  if (!data.settings.soloPlayerId) return;
   update((d) => {
     d.reports.unshift({ id: newId('r'), questionId, note: note.trim(), createdAt: new Date().toISOString(), status: 'open' });
   });
@@ -462,41 +396,11 @@ export function setReportStatus(id: string, status: ProblemReport['status']): vo
   });
 }
 
-export function updateSettings(fields: Partial<AppData['settings']>): void {
+/** Change the player's settings (sound, reading speed, answer timer, daily minutes). */
+export function updateSettings(fields: Partial<Omit<AppSettings, 'soloPlayerId' | 'cardsCursor'>>): void {
   update((d) => {
     d.settings = { ...d.settings, ...fields };
   });
-}
-
-export function exportData(): string {
-  update((d) => {
-    d.lastExportAt = new Date().toISOString();
-  });
-  return JSON.stringify({ app: 'rebound', exportedAt: new Date().toISOString(), data }, null, 2);
-}
-
-/** Replace all data with an exported file. Throws if the file is not a Rebound export. */
-export function importData(json: string): void {
-  const parsed = JSON.parse(json);
-  const incoming = parsed?.data ?? parsed;
-  if (!incoming || incoming.version !== 1 || !Array.isArray(incoming.players) || !Array.isArray(incoming.games)) {
-    throw new Error('This file is not a Rebound data export.');
-  }
-  update((d) => {
-    Object.assign(d, emptyData(), incoming, { settings: { ...emptyData().settings, ...incoming.settings } });
-    normalize(d);
-    if (incoming.cards === undefined) backfillCards(d);
-  });
-}
-
-export async function resetAll(): Promise<void> {
-  data = emptyData();
-  emit();
-  try {
-    await del(KEY);
-  } catch {
-    /* storage unavailable: nothing to delete */
-  }
 }
 
 /* ---------------- team packets ---------------- */
@@ -564,6 +468,7 @@ export function createAssignment(fields: Omit<Assignment, 'id' | 'createdAt'>): 
   return id;
 }
 
+/** Delete an assignment (teammates' completions of it stay in their own accounts, where nothing shows them). */
 export function deleteAssignment(id: string): void {
   update((d) => {
     d.assignments = d.assignments.filter((a) => a.id !== id);
@@ -571,9 +476,10 @@ export function deleteAssignment(id: string): void {
   });
 }
 
-/** Record that a player finished an assignment (once). */
+/** Record that the signed-in player finished an assignment (once). */
 export function completeAssignment(assignmentId: string, playerId: string): void {
   const id = `${assignmentId}:${playerId}`;
+  if (playerId !== data.settings.soloPlayerId) return;
   if (data.completions[id] || !data.assignments.some((a) => a.id === assignmentId && a.playerIds.includes(playerId))) return;
   update((d) => {
     d.completions[id] = { id, assignmentId, playerId, at: new Date().toISOString() };
@@ -581,15 +487,15 @@ export function completeAssignment(assignmentId: string, playerId: string): void
 }
 
 export function markConceptRead(playerId: string, conceptId: string): void {
-  if (data.conceptReads[playerId]?.[conceptId]) return;
+  if (playerId !== data.settings.soloPlayerId || data.conceptReads[playerId]?.[conceptId]) return;
   update((d) => {
     (d.conceptReads[playerId] ??= {})[conceptId] = Date.now();
   });
 }
 
 /**
- * Reading path steps a player has read share the concept-read ledger (it syncs and merges the same way), under
- * keys no concept id can take: "reading:biology.genetics".
+ * Reading path steps a player has read share the concept-read ledger (it merges the same way), under keys no
+ * concept id can take: "reading:biology.genetics".
  */
 export const readingKey = (topicId: string): string => `reading:${topicId}`;
 

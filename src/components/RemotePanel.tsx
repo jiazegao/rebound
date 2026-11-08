@@ -2,17 +2,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { EventInput, MatchState } from '../core/rules/engine';
 import { currentWindow } from '../core/rules/engine';
 import { SUBJECT_LABELS, type Round } from '../core/schema';
+import { createRoom, roomSocketUrl } from '../lib/api';
+import { useSession } from '../lib/cloud';
 import { buildReading, readingDurationMs } from '../lib/reading';
-import { RoomClient, useRoom, type RoomView } from '../lib/room';
+import { useRoom, type RoomView } from '../lib/room';
 import { trustedFigure } from '../lib/visuals';
-import { href } from '../lib/router';
 import { setGameRoom, useData, type GameRecord } from '../lib/store';
-import { createRoom, currentSession, useSync } from '../lib/sync';
 
 /**
  * The reader's side of a remote room: open a room for this game, see who is in it, and keep their
  * screens in step. The rules engine stays here; the room only relays the view, opens and closes the
- * buzzers for the sides that may buzz, and reports who buzzed first.
+ * buzzers for the sides that may buzz, and reports who buzzed first. Players are matched to the game's
+ * players by user id.
  */
 export function RemotePanel({
   game,
@@ -27,14 +28,13 @@ export function RemotePanel({
   dispatch: (input: EventInput, at?: number) => void;
   names: Map<string, string>;
 }) {
-  useSync();
   const data = useData();
-  const session = currentSession();
+  const session = useSession();
   const [mode, setMode] = useState<'voice' | 'text'>('voice');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const url = session && game.roomId ? RoomClient.url(session.serverUrl, session.teamId, game.roomId, session.token) : null;
+  const url = session.user && game.roomId ? roomSocketUrl(game.roomId) : null;
   const { client, snapshot } = useRoom(url);
   const wpm = data.settings.readingWpm;
 
@@ -42,7 +42,7 @@ export function RemotePanel({
   const onBonus = state.phase === 'bonus_reading' || state.phase === 'bonus_open' || (state.phase === 'question_over' && state.bonus !== null);
   const q = onBonus ? pair?.bonus : pair?.tossup;
 
-  // Place members on the side of the game team their player is on; a team's captain gets the answer box.
+  // Place people on the side of the game team they play on (a member's playerId is their user id); a team's captain gets the answer box.
   useEffect(() => {
     if (!client || !snapshot) return;
     for (const m of snapshot.members) {
@@ -63,7 +63,7 @@ export function RemotePanel({
     if (!client) return;
     client.onWinner = (w) => {
       if (!w.playerId) {
-        setError(`A member who is not linked to a roster player buzzed. Link members on the Team page.`);
+        setError('Someone who is not playing in this game buzzed.');
         return;
       }
       const offset = client.serverNow() - Date.now();
@@ -138,13 +138,7 @@ export function RemotePanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, viewJson, snapshot?.connected]);
 
-  if (!session) {
-    return (
-      <p className="small muted no-print">
-        Remote players? Share the team first (<a href={href('/team')}>Team</a> → Share with your team), then open a room here.
-      </p>
-    );
-  }
+  if (!session.user) return null;
 
   const open = async () => {
     setBusy(true);

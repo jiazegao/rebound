@@ -1,16 +1,10 @@
 /** Player and team statistics, derived from logged games and solo practice. */
-import { replay, type LogEntry, type MatchState } from '../core/rules/engine';
-import { getPreset } from '../core/rules/presets';
+import type { LogEntry, MatchState } from '../core/rules/engine';
 import { CORE_SUBJECTS, type Subject } from '../core/schema';
 import type { AppData, GameRecord } from './store';
 
-export function gameState(game: GameRecord): MatchState | null {
-  try {
-    return replay({ preset: getPreset(game.presetId), teams: game.teams, pairCount: game.pairs.length }, game.events);
-  } catch {
-    return null;
-  }
-}
+export { gameState } from '../core/games';
+import { gameState } from '../core/games';
 
 export interface SubjectLine {
   attempts: number;
