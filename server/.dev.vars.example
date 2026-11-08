@@ -1,0 +1,3 @@
+# Copy to server/.dev.vars for `npx wrangler dev` (.dev.vars is git-ignored). Never put these in wrangler.toml.
+# Email sign-in without sending email: /api/auth/email/start returns { ok: true, devCode } to sign in with.
+DEV_EMAIL_OUTBOX=1

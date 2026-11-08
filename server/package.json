@@ -2,7 +2,7 @@
   "name": "rebound-server",
   "private": true,
   "version": "0.1.0",
-  "description": "Rebound team server: a Cloudflare Worker and one Durable Object per team (shared data sync and live rooms).",
+  "description": "Rebound server: a Cloudflare Worker and Durable Objects for accounts, teams and live rooms.",
   "license": "MIT",
   "type": "module",
   "scripts": {

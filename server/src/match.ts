@@ -1,6 +1,6 @@
 /**
- * Online matches with no reader: the team's Durable Object reveals each question on a schedule, runs the buzzers,
- * judges typed answers with the answer checker and keeps score. Two formats:
+ * Online matches with no reader: the room's Durable Object (room.ts) reveals each question on a schedule, runs the
+ * buzzers, judges typed answers with the answer checker and keeps score. Two formats:
  *
  * - "teams": two sides under the NSB rules, through the shared rules engine (src/core/rules/engine.ts):
  *   interrupts, re-reads, rebounds, bonuses answered by the side's captain after conferring in the team channel,
@@ -12,8 +12,9 @@
  * team match, anyone else in a free-for-all, rules within 10 seconds, and no ruling counts as accepting. Everyone
  * has then seen the official answer, so a rejected close call ends the toss-up: nobody else may answer it.
  *
- * Pure: every method takes the time. rooms.ts stores `MatchData`, opens and closes the buzzers the director asks
- * for, publishes `view()`, and wakes the director at `nextDue()`.
+ * Pure: every method takes the time. room.ts stores `MatchData`, opens and closes the buzzers the director asks
+ * for, publishes `view()`, wakes the director at `nextDue()`, and at the end writes the players' answers. Players
+ * are signed-in users: a player's `memberId` and `playerId` are both their user id.
  */
 import { judgeAnswer } from '../../src/core/judge/judge';
 import { applyEvent, currentWindow, replay, type EventInput, type MatchConfig, type MatchEvent, type MatchState, type TeamIdx } from '../../src/core/rules/engine';
@@ -116,7 +117,7 @@ interface QuestionRun {
   previous: { label: string; answer: string } | null;
 }
 
-/** One judged toss-up in a free-for-all; each device records its own player's as practice. */
+/** One judged toss-up in a free-for-all (the room writes them to the players' accounts at the end). */
 export interface AnswerResult {
   memberId: string;
   playerId: string;
@@ -142,7 +143,7 @@ export interface MatchData {
   ffa: { index: number; scores: Record<string, { score: number; correct: number; negs: number }> } | null;
   q: QuestionRun | null;
   halftimeAt: number | null;
-  /** Free-for-all results not yet sent to the devices. */
+  /** Free-for-all results not yet sent to the room. */
   outbox: AnswerResult[];
   /** Team matches: the game record's id, once finished. */
   gameId: string | null;
@@ -150,7 +151,7 @@ export interface MatchData {
   recorded: boolean;
 }
 
-/** The finished team match, in the site's GameRecord format (src/lib/store.ts). */
+/** The finished team match, in the shared GameRecord format (src/core/games.ts). */
 export interface OnlineGameRecord {
   id: string;
   createdAt: string;
@@ -245,7 +246,7 @@ function question(v: unknown, kind: 'tossup' | 'bonus', where: string): MatchQue
   };
 }
 
-/** Checks the match a member asked for (POST /rooms with `match`). Messages reach the member's screen. */
+/** Checks the match a user asked for (POST /api/rooms with `match`). Messages reach their screen. */
 export function parseMatchSetup(value: unknown): MatchSetup {
   const o = asObject(value, 'The match');
   const format = o.format === 'teams' || o.format === 'ffa' ? o.format : null;

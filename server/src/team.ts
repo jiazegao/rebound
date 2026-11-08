@@ -1,648 +1,561 @@
 /**
- * TeamServer: one Durable Object per team. It owns the team's SQLite database (members, sessions, synced
- * records, rooms) and hosts the team's live rooms. The Worker (index.ts) forwards `/api/teams/:teamId/...`
- * here and creates new teams through CREATE_PATH. One team's object never touches another team's data.
+ * Team: one Durable Object per team (named by the team id). It keeps the team's settings (name, level, next
+ * competition), its members (with a copy of each member's name, subjects and graduation year from their account,
+ * plus their role and squad), the current invite secret, the team's collections, and an index of the rooms its
+ * members opened (docs/ACCOUNTS.md). Membership is decided here; each member's UserServer remembers which team it is
+ * on and is told when a leader removes them or deletes the team.
+ *
+ * A finished Reader console game saved in `games` becomes answers in each player's account (`gameOutcomes`),
+ * delivered through the outbox so a busy account does not lose them.
  */
 
 import { DurableObject } from 'cloudflare:workers';
-import {
-  AI_BODY_BYTES,
-  aiSettings,
-  AiUnavailable,
-  cachedValue,
-  cacheValue,
-  checkExplanation,
-  draftCard,
-  draftQuestions,
-  ensureAiTables,
-  explainAnswer,
-  parseCardInput,
-  parseDraftInput,
-  parseExplainInput,
-  refundAiCalls,
-  reserveAiCalls,
-  usedToday,
-  type AiSettings,
-  type TeamLevel,
-} from './ai';
-import {
-  hashPin,
-  newId,
-  newJoinSecret,
-  newSessionToken,
-  SECRET_PATTERN,
-  secretMatches,
-  sha256Hex,
-  TEAM_ID_PATTERN,
-  TOKEN_PATTERN,
-  verifyPin,
-} from './crypto';
-import { HttpError, json, jsonText, readJson, toErrorResponse } from './http';
-import { parseMatchSetup } from './match';
-import { parseSyncRequest, runSync } from './records';
-import { closeQuietly, Rooms, sessionTag } from './rooms';
-import { isLeader, memberInfo, publicMember, Store, type MemberRow } from './store';
-import { asObject, createTeamInput, memberName, nameKey, pin, playerId, role, roomName } from './validate';
+import { canWriteTeam, isLeader, isTeamCollection, type MemberRole, type TeamInfo, type TeamMember, type TeamResponse } from '../../src/core/accounts';
+import { gameOutcomes, type GameRecord } from '../../src/core/games';
+import type { Outcome } from '../../src/core/review';
+import type { CoreSubject, Level, Player } from '../../src/core/schema';
+import { JOIN_SECRET_PATTERN, newJoinSecret, sameSecret } from './crypto';
+import { cursorParam, dispatch, HttpError, identityOf, json, jsonText, readJson, refusing, toErrorResponse, type Result, type Routes } from './http';
+import { getMeta, hasTable, roomObject, setMeta, userObject } from './objects';
+import { Outbox, OUTBOX_SCHEMA, type Delivery } from './outbox';
+import { parseChanges, Records, RECORDS_SCHEMA, shapeProblem, type Rejection } from './records';
+import type { RoomSummary } from './room';
+import type { MemberCopy, ProfileFields, TeamSummary } from './user';
+import { asObject, gradYear, level, nextEvent, role, squad, subject, teamName } from './validate';
 
-/** The Worker creates teams through this path. Outside requests can't reach it: the Worker only forwards /api/... paths. */
-export const CREATE_PATH = '/internal/create-team';
+const SCHEMA = `
+CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS members (
+  user_id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL,
+  squad TEXT,
+  primary_subject TEXT,
+  secondary_subject TEXT,
+  grad_year INTEGER,
+  joined_at INTEGER NOT NULL,
+  last_seen INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS rooms (room_id TEXT PRIMARY KEY, host_id TEXT NOT NULL, created_at INTEGER NOT NULL);
+${RECORDS_SCHEMA}
+${OUTBOX_SCHEMA}
+`;
+
+/** A safety cap, far above any real team. */
+export const MAX_MEMBERS = 200;
+/** Open rooms the team's members may have at once (rooms close 6 hours after everyone leaves). */
+export const MAX_ROOMS = 20;
+/** A member's last-seen time is written at most once a minute. */
+const TOUCH_EVERY_MS = 60 * 1000;
 
 export const TEAM_NOT_FOUND = "We couldn't find that team. Check the join link with your captain.";
-const SIGN_IN_AGAIN = 'Please sign in again.';
+const NOT_ON_TEAM = "You're not on this team.";
+const NOT_A_MEMBER = "That person isn't on this team.";
 const LEADERS_ONLY = 'Only coaches and captains can do that.';
 const LAST_LEADER = 'A team needs at least one coach or captain. Make someone else a coach or captain first.';
+const OLD_JOIN_LINK = 'This join link no longer works. Ask your captain for the current one.';
 
-const MINUTE = 60 * 1000;
-/** Unused sessions expire after 180 days. */
-const SESSION_IDLE_MS = 180 * 24 * 60 * MINUTE;
-/** Five wrong PINs lock a member for 15 minutes. */
-const PIN_TRIES = 5;
-const LOCK_MS = 15 * MINUTE;
-/** 30 failed joins per address per hour. Kept per team object (see README: a per-team, not global, limit). */
-const ADDRESS_FAILURES = 30;
-const ADDRESS_WINDOW_MS = 60 * MINUTE;
-/** A safety cap, far above any real team. */
-const MAX_MEMBERS = 200;
-/** Session and last-seen times are written at most once a minute, not on every request. */
-const TOUCH_EVERY_MS = MINUTE;
+type MemberRow = {
+  user_id: string;
+  name: string;
+  role: MemberRole;
+  squad: string | null;
+  primary_subject: CoreSubject | null;
+  secondary_subject: CoreSubject | null;
+  grad_year: number | null;
+  joined_at: number;
+  last_seen: number;
+};
 
-/** A wrong secret or PIN, or a try on a locked name: these count against the address's limit. */
-class FailedGuess extends HttpError {}
-
-interface Session {
-  member: MemberRow;
-  tokenHash: string;
-  /** Short id of the session, used to close its live room connections when it signs out. */
-  sid: string;
+export interface CreatedTeam {
+  team: TeamInfo;
+  joinCode: string;
 }
 
-type Handler = (request: Request, url: URL, params: string[], now: number) => Promise<Response> | Response;
-
-function minutes(ms: number): string {
-  const n = Math.max(1, Math.ceil(ms / MINUTE));
-  return n === 1 ? '1 minute' : `${n} minutes`;
+function memberOut(r: MemberRow): TeamMember {
+  return {
+    userId: r.user_id,
+    name: r.name,
+    role: r.role,
+    ...(r.squad !== null ? { squad: r.squad } : {}),
+    ...(r.primary_subject !== null ? { primarySubject: r.primary_subject } : {}),
+    ...(r.secondary_subject !== null ? { secondarySubject: r.secondary_subject } : {}),
+    ...(r.grad_year !== null ? { gradYear: r.grad_year } : {}),
+    joinedAt: r.joined_at,
+    lastSeen: r.last_seen,
+  };
 }
 
-export class TeamServer extends DurableObject<Env> {
-  private readonly store: Store;
-  private readonly rooms: Rooms;
+/** The members as the rules engine's players (who covers which subject decides dead toss-ups and bonuses). */
+function asPlayer(r: MemberRow): Player {
+  return {
+    id: r.user_id,
+    name: r.name,
+    role: r.role,
+    active: true,
+    ...(r.squad !== null ? { squad: r.squad } : {}),
+    ...(r.primary_subject !== null ? { primarySubject: r.primary_subject } : {}),
+    ...(r.secondary_subject !== null ? { secondarySubject: r.secondary_subject } : {}),
+    ...(r.grad_year !== null ? { gradYear: r.grad_year } : {}),
+  };
+}
+
+export class Team extends DurableObject<Env> {
+  private readonly records: Records;
+  private readonly outbox: Outbox;
   /** Whether this object holds a team: false for a fresh object, and again after the team is deleted. */
   private ready: boolean;
 
-  /** Paths after /api/teams/:teamId, with a handler per method. */
-  private readonly routes: Array<[RegExp, Partial<Record<string, Handler>>]> = [
-    [/^$/, { DELETE: (r) => this.deleteTeam(r) }],
-    [/^\/join$/, { POST: (r, _u, _p, now) => this.join(r, now) }],
-    [/^\/me$/, { GET: (r) => this.me(r) }],
-    [/^\/signout$/, { POST: (r) => this.signOut(r) }],
-    [/^\/pin$/, { POST: (r) => this.changePin(r) }],
-    [/^\/sync$/, { POST: (r) => this.sync(r) }],
-    [/^\/members$/, { GET: (r) => this.listMembers(r) }],
-    [/^\/members\/([^/]+)$/, { PATCH: (r, _u, [id]) => this.updateMember(r, id!), DELETE: (r, _u, [id]) => this.removeMember(r, id!) }],
-    [/^\/join-code$/, { POST: (r) => this.rotateJoinCode(r) }],
-    [/^\/rooms$/, { POST: (r) => this.createRoom(r), GET: (r) => this.listRooms(r) }],
-    [/^\/rooms\/([^/]+)\/ws$/, { GET: (r, u, [roomId]) => this.openRoomSocket(r, u, roomId!) }],
-    [/^\/ai$/, { GET: (r) => this.aiStatus(r) }],
-    [/^\/ai\/draft$/, { POST: (r) => this.aiDraft(r) }],
-    [/^\/ai\/explain$/, { POST: (r) => this.aiExplain(r) }],
-    [/^\/ai\/card$/, { POST: (r) => this.aiCard(r) }],
-  ];
-
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
-    this.store = new Store(ctx.storage.sql);
-    this.rooms = new Rooms(ctx, this.store);
-    this.ready = this.store.hasTeam();
-    // Waking up (after hibernation or eviction): re-create timers for buzz windows still being collected.
-    if (this.ready) this.rooms.resume(Date.now());
+    this.records = new Records(ctx.storage.sql);
+    this.outbox = new Outbox(ctx.storage.sql);
+    this.ready = hasTable(ctx.storage.sql, 'meta') && getMeta(ctx.storage.sql, 'teamId') !== null;
   }
 
   private get sql(): SqlStorage {
-    return this.store.sql;
+    return this.ctx.storage.sql;
   }
+
+  /* ---------------- RPC: membership (from the members' UserServers) ---------------- */
+
+  /** Makes this object a new team with `captain` as its first member, or null if it already holds one. */
+  async create(input: { teamId: string; name: string; level: Level; captain: MemberCopy & { userId: string }; now: number }): Promise<CreatedTeam | null> {
+    if (this.ready) return null;
+    const secret = newJoinSecret();
+    this.ctx.storage.transactionSync(() => {
+      this.sql.exec(SCHEMA);
+      setMeta(this.sql, 'teamId', input.teamId);
+      setMeta(this.sql, 'name', input.name);
+      setMeta(this.sql, 'level', input.level);
+      setMeta(this.sql, 'createdAt', input.now);
+      setMeta(this.sql, 'joinSecret', secret);
+      this.insertMember(input.captain, 'captain', input.now);
+    });
+    this.ready = true;
+    return { team: this.info(), joinCode: `${input.teamId}.${secret}` };
+  }
+
+  /**
+   * Adds a member who has the current join secret (compared in constant time). Someone already on the team is
+   * simply welcomed back, whatever link they used.
+   */
+  async addMember(input: { secret: string; member: MemberCopy & { userId: string }; now: number }): Promise<Result<{ team: TeamInfo; role: MemberRole }>> {
+    return refusing(async () => {
+      this.requireReady();
+      const existing = this.member(input.member.userId);
+      if (existing) return { team: this.info(), role: existing.role };
+      const ok = JOIN_SECRET_PATTERN.test(input.secret) && (await sameSecret(input.secret, getMeta(this.sql, 'joinSecret') ?? ''));
+      this.requireReady();
+      if (!ok) throw new HttpError(403, OLD_JOIN_LINK);
+      const again = this.member(input.member.userId);
+      if (again) return { team: this.info(), role: again.role };
+      if (this.countMembers() >= MAX_MEMBERS) {
+        throw new HttpError(409, `This team already has ${MAX_MEMBERS} members. Ask a coach or captain to remove old ones.`);
+      }
+      this.insertMember(input.member, 'member', input.now);
+      return { team: this.info(), role: 'member' as MemberRole };
+    });
+  }
+
+  /** Whether `userId` may leave (not the last coach or captain while others remain). Not being a member is fine. */
+  async canLeave(userId: string): Promise<Result> {
+    return refusing(() => {
+      const me = this.ready ? this.member(userId) : null;
+      if (me) this.checkLastLeader(me);
+      return {};
+    });
+  }
+
+  /** A member leaves (or deletes their account). The last member leaving deletes the team. */
+  async removeMember(userId: string): Promise<Result> {
+    return refusing(async () => {
+      this.requireReady();
+      const me = this.member(userId);
+      if (!me) throw new HttpError(403, NOT_ON_TEAM);
+      this.checkLastLeader(me);
+      if (this.countMembers() <= 1) await this.deleteTeam();
+      else this.dropMember(userId);
+      return {};
+    });
+  }
+
+  /**
+   * The member's summary of the team, after taking the latest copy of their details (GET and PATCH /api/me send it).
+   * Null when they are not on this team.
+   */
+  async syncMember(userId: string, copy: MemberCopy, now: number): Promise<TeamSummary | null> {
+    if (!this.ready) return null;
+    const me = this.member(userId);
+    if (!me) return null;
+    this.sql.exec(
+      'UPDATE members SET name = ?, primary_subject = ?, secondary_subject = ?, grad_year = ?, last_seen = ? WHERE user_id = ?',
+      copy.name,
+      copy.primarySubject ?? null,
+      copy.secondarySubject ?? null,
+      copy.gradYear ?? null,
+      now,
+      userId,
+    );
+    const info = this.info();
+    return { id: info.id, name: info.name, level: info.level, role: me.role };
+  }
+
+  /* ---------------- RPC: rooms and online matches ---------------- */
+
+  /** Adds a room a member opened to the team's list, unless the team already has MAX_ROOMS open. */
+  async registerRoom(userId: string, roomId: string, now: number): Promise<Result> {
+    return refusing(async () => {
+      this.requireReady();
+      if (!this.member(userId)) throw new HttpError(403, NOT_ON_TEAM);
+      if (this.countRooms() >= MAX_ROOMS) {
+        await this.roomSummaries(now);
+        this.requireReady();
+        if (this.countRooms() >= MAX_ROOMS) {
+          throw new HttpError(429, `Your team already has ${MAX_ROOMS} open rooms. Rooms close 6 hours after everyone leaves.`);
+        }
+      }
+      this.sql.exec('INSERT INTO rooms (room_id, host_id, created_at) VALUES (?, ?, ?) ON CONFLICT DO NOTHING', roomId, userId, now);
+      return {};
+    });
+  }
+
+  async unregisterRoom(roomId: string): Promise<void> {
+    if (this.ready) this.sql.exec('DELETE FROM rooms WHERE room_id = ?', roomId);
+  }
+
+  /** The open rooms the team's members opened, newest first (`GET /api/rooms`). */
+  async listRooms(userId: string, now: number): Promise<Result<{ rooms: RoomSummary[] }>> {
+    return refusing(async () => {
+      this.requireReady();
+      if (!this.member(userId)) throw new HttpError(403, NOT_ON_TEAM);
+      return { rooms: await this.roomSummaries(now) };
+    });
+  }
+
+  /**
+   * A finished online team match whose players are all on this team (from its room). Its answers were already
+   * written to the players' accounts by the room, so this only keeps the game. Refused if a player is not a member.
+   */
+  async putOnlineGame(record: GameRecord, by: string): Promise<boolean> {
+    if (!this.ready) return false;
+    const players = record.teams.flatMap((t) => t.playerIds);
+    if (players.length === 0 || !players.every((id) => this.member(id))) return false;
+    this.ctx.storage.transactionSync(() => this.records.put('games', record.id, record, by));
+    return true;
+  }
+
+  /* ---------------- HTTP: team routes, forwarded with the caller's identity ---------------- */
 
   async fetch(request: Request): Promise<Response> {
     try {
-      const url = new URL(request.url);
-      if (url.pathname === CREATE_PATH && request.method === 'POST') return await this.createTeam(request);
-      const match = /^\/api\/teams\/([a-z2-7]{16})(\/.*)?$/.exec(url.pathname);
-      if (!match || !this.ready || this.store.meta('teamId') !== match[1]) throw new HttpError(404, TEAM_NOT_FOUND);
-      const rest = match[2] ?? '';
-      for (const [pattern, methods] of this.routes) {
-        const params = pattern.exec(rest);
-        if (!params) continue;
-        const handler = methods[request.method];
-        if (!handler) throw new HttpError(405, "That action isn't supported here.");
-        return await handler(request, url, params.slice(1), Date.now());
-      }
-      throw new HttpError(404, 'Not found.');
+      const identity = identityOf(request);
+      const match = /^\/api\/teams\/([a-z2-7]{16})(\/.*)?$/.exec(new URL(request.url).pathname);
+      if (!match || !this.ready || getMeta(this.sql, 'teamId') !== match[1]) throw new HttpError(404, TEAM_NOT_FOUND);
+      const me = this.member(identity.userId);
+      if (!me) throw new HttpError(403, NOT_ON_TEAM);
+      const now = Date.now();
+      if (now - me.last_seen >= TOUCH_EVERY_MS) this.sql.exec('UPDATE members SET last_seen = ? WHERE user_id = ?', now, me.user_id);
+      return await dispatch(this.routes(identity.userId), request, match[2] ?? '');
     } catch (error) {
       return toErrorResponse(error);
     }
   }
 
-  /* ---------------- live rooms (WebSocket Hibernation API) ---------------- */
-
-  webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): void {
-    if (!this.ready) return closeQuietly(ws, 4004, 'This team was deleted.');
-    try {
-      this.rooms.message(ws, message, Date.now());
-    } catch (error) {
-      console.error('Room message failed:', error instanceof Error ? (error.stack ?? error.message) : String(error));
-      try {
-        ws.send(JSON.stringify({ type: 'error', message: 'Something went wrong on the team server.' }));
-      } catch {
-        // closing
-      }
-    }
+  private routes(caller: string): Routes {
+    return [
+      [/^$/, { GET: () => this.getTeam(caller), PATCH: (r) => this.patchTeam(r, caller), DELETE: () => this.deleteTeamRoute(caller) }],
+      [/^\/members\/([a-z2-7]{16})$/, { PATCH: (r, _u, [id]) => this.patchMember(r, caller, id!), DELETE: (_r, _u, [id]) => this.removeMemberRoute(caller, id!) }],
+      [/^\/members\/([a-z2-7]{16})\/records$/, { GET: (_r, url, [id]) => this.teammateRecords(url, id!) }],
+      [/^\/join-code$/, { POST: () => this.rotateJoinCode(caller) }],
+      [/^\/records$/, { GET: (_r, url) => jsonText(this.records.page(cursorParam(url), { by: true })), POST: (r) => this.putRecords(r, caller) }],
+    ];
   }
 
-  webSocketClose(ws: WebSocket): void {
-    if (this.ready) this.rooms.closed(ws, Date.now());
-    // Completes the closing handshake on runtimes that do not reply to a close by themselves.
-    closeQuietly(ws, 1000, 'Closed');
+  private getTeam(caller: string): Response {
+    const me = this.member(caller)!;
+    const out: TeamResponse = { team: this.info(), members: this.members().map(memberOut), you: { role: me.role } };
+    // Leaders can show the invite link again; the secret is kept for that (POST /join-code replaces it).
+    if (isLeader(me.role)) out.joinCode = `${this.info().id}.${getMeta(this.sql, 'joinSecret')}`;
+    return json(out);
   }
 
-  webSocketError(ws: WebSocket): void {
-    if (this.ready) this.rooms.closed(ws, Date.now());
-  }
-
-  /** Backup for the buzz window timer (see rooms.ts). */
-  alarm(): void {
-    if (this.ready) this.rooms.alarm(Date.now());
-  }
-
-  /* ---------------- team creation and deletion ---------------- */
-
-  private async createTeam(request: Request): Promise<Response> {
+  private async patchTeam(request: Request, caller: string): Promise<Response> {
     const body = asObject(await readJson(request));
-    const teamId = typeof body.teamId === 'string' && TEAM_ID_PATTERN.test(body.teamId) ? body.teamId : null;
-    if (!teamId) throw new HttpError(400, 'Missing team id.');
-    const input = createTeamInput(body);
-    if (this.ready) throw new HttpError(409, 'That team id is taken.');
-
-    // The slow work (hashing) comes first, so the writes below run in one uninterrupted transaction.
-    const pinHash = await hashPin(input.pin);
-    const secret = newJoinSecret();
-    const secretHash = await sha256Hex(secret);
-    const { token, tokenHash } = await newSession();
-    if (this.ready) throw new HttpError(409, 'That team id is taken.');
-
-    const now = Date.now();
-    const member = newMember(input.memberName, 'captain', input.playerId, pinHash, now);
-    this.ctx.storage.transactionSync(() => {
-      this.store.createSchema();
-      this.store.setMeta('teamId', teamId);
-      this.store.setMeta('teamName', input.teamName);
-      this.store.setMeta('level', input.level);
-      this.store.setMeta('joinSecretHash', secretHash);
-      this.store.setMeta('rev', 0);
-      this.store.setMeta('createdAt', now);
-      // Salt for the hashed addresses in join_failures, so raw IP addresses are never stored.
-      this.store.setMeta('addressSalt', newId(32));
-      this.insertMember(member);
-      this.insertSession(tokenHash, member.id, now);
-    });
-    this.ready = true;
-    return json({ teamId, joinCode: `${teamId}.${secret}`, token, member: publicMember(member) }, 201);
+    this.requireLeader(caller);
+    // Everything is checked before anything is saved.
+    const name = 'name' in body ? teamName(body.name) : null;
+    const teamLevel = 'level' in body ? level(body.level) : null;
+    const event = 'nextEvent' in body ? nextEvent(body.nextEvent) : undefined;
+    if (name !== null) setMeta(this.sql, 'name', name);
+    if (teamLevel !== null) setMeta(this.sql, 'level', teamLevel);
+    if (event !== undefined) setMeta(this.sql, 'nextEvent', event === null ? '' : JSON.stringify(event));
+    return json({ team: this.info() });
   }
 
-  private async deleteTeam(request: Request): Promise<Response> {
-    const session = await this.authenticate(request);
-    this.requireLeader(session.member.id);
-    this.ready = false;
-    this.rooms.shutdown('This team was deleted.');
-    await this.ctx.storage.deleteAlarm();
-    await this.ctx.storage.deleteAll();
+  private async deleteTeamRoute(caller: string): Promise<Response> {
+    this.requireLeader(caller);
+    const teamId = this.info().id;
+    const members = this.members().map((m) => m.user_id);
+    await this.deleteTeam();
+    // Each member's account stops pointing here (a member whose account misses this finds out on their next visit).
+    const told = await Promise.allSettled(members.map((id) => userObject(this.env, id).teamLeft(teamId)));
+    for (const r of told) if (r.status === 'rejected') console.error('Telling a member the team was deleted failed:', String(r.reason));
     return json({ ok: true });
   }
-
-  /* ---------------- joining and signing in ---------------- */
-
-  private async join(request: Request, now: number): Promise<Response> {
-    const body = asObject(await readJson(request));
-    const secret = typeof body.secret === 'string' ? body.secret.trim().toLowerCase() : '';
-    if (!secret) throw new HttpError(400, 'The join code is missing. Open the join link from your captain again.');
-    const name = memberName(body.memberName);
-    const pinValue = pin(body.pin);
-    const player = playerId(body.playerId);
-
-    const address = request.headers.get('CF-Connecting-IP') ?? 'unknown';
-    this.requireReady();
-    const addressKey = await sha256Hex(`${this.store.meta('addressSalt')}|${address}`);
-    this.requireReady();
-    // Count the attempt as failed before any slow check and refund it unless it truly failed, so a burst of
-    // parallel guesses is counted in full.
-    this.reserveAddressFailure(addressKey, now);
-    let failed = false;
-    try {
-      return await this.joinChecked(secret, name, pinValue, player, now);
-    } catch (error) {
-      failed = error instanceof FailedGuess;
-      throw error;
-    } finally {
-      if (!failed && this.ready) this.refundAddressFailure(addressKey);
-    }
-  }
-
-  private async joinChecked(secret: string, name: string, pinValue: string, player: string | null, now: number): Promise<Response> {
-    const secretHash = this.store.meta('joinSecretHash') ?? '';
-    if (!SECRET_PATTERN.test(secret) || !(await secretMatches(secret, secretHash))) {
-      throw new FailedGuess(403, 'This join link no longer works. Ask your captain for the current one.');
-    }
-    this.requireReady();
-    const key = nameKey(name);
-    const existing = this.store.memberByNameKey(key);
-
-    if (existing) {
-      // An existing name signs in with its PIN. A member who is not linked to a roster player yet may
-      // link to a free one here ("Which player are you?" after joining); changing an existing link is
-      // for leaders.
-      this.reservePinTry(existing, now);
-      const ok = await verifyPin(pinValue, existing.pin_hash, existing.pin_salt);
-      this.requireReady();
-      let member = this.store.memberById(existing.id);
-      if (!member) throw new HttpError(409, 'That member was just removed from the team.');
-      if (!ok) throw this.wrongPin(member, now, "That PIN isn't right for this name.");
-      this.sql.exec('UPDATE members SET failed = 0, locked_until = 0 WHERE id = ?', member.id);
-      if (player !== null && member.player_id === null) {
-        this.requirePlayerFree(player, member.id);
-        this.sql.exec('UPDATE members SET player_id = ? WHERE id = ?', player, member.id);
-        member = this.store.memberById(member.id)!;
-      }
-      const { token, tokenHash } = await newSession();
-      this.requireReady();
-      this.insertSession(tokenHash, member.id, now);
-      return json({ token, member: publicMember(member), teamName: this.store.meta('teamName') });
-    }
-
-    // A new name joins as a member.
-    if (this.store.countMembers() >= MAX_MEMBERS) {
-      throw new HttpError(409, `This team already has ${MAX_MEMBERS} members. Ask a coach or captain to remove old ones.`);
-    }
-    this.requirePlayerFree(player, '');
-    const pinHash = await hashPin(pinValue);
-    const { token, tokenHash } = await newSession();
-    this.requireReady();
-    // Check again after the slow hashing: another request may have taken the name or the roster player.
-    if (this.store.memberByNameKey(key)) throw new HttpError(409, 'Someone just joined with that name. Try again to sign in.');
-    this.requirePlayerFree(player, '');
-    // Without a roster player, link the one with the same name when there is exactly one free.
-    const byName = player === null ? this.store.unclaimedPlayersNamed(key, nameKey) : [];
-    const member = newMember(name, 'member', player ?? (byName.length === 1 ? byName[0] : null), pinHash, now);
-    this.ctx.storage.transactionSync(() => {
-      this.insertMember(member);
-      this.insertSession(tokenHash, member.id, now);
-    });
-    return json({ token, member: publicMember(member), teamName: this.store.meta('teamName') });
-  }
-
-  private reserveAddressFailure(key: string, now: number): void {
-    this.sql.exec('DELETE FROM join_failures WHERE window_start <= ?', now - ADDRESS_WINDOW_MS);
-    const row = this.sql
-      .exec<{ window_start: number; count: number }>('SELECT window_start, count FROM join_failures WHERE ip_key = ?', key)
-      .toArray()[0];
-    if (!row) {
-      this.sql.exec('INSERT INTO join_failures (ip_key, window_start, count) VALUES (?, ?, 1)', key, now);
-      return;
-    }
-    if (row.count >= ADDRESS_FAILURES) {
-      const wait = row.window_start + ADDRESS_WINDOW_MS - now;
-      throw new HttpError(429, `Too many failed sign-ins from this network. Try again in ${minutes(wait)}.`, wait / 1000);
-    }
-    this.sql.exec('UPDATE join_failures SET count = count + 1 WHERE ip_key = ?', key);
-  }
-
-  private refundAddressFailure(key: string): void {
-    this.sql.exec('UPDATE join_failures SET count = MAX(count - 1, 0) WHERE ip_key = ?', key);
-  }
-
-  /** Counts a PIN try before the slow check (refused while locked); the fifth try in a row sets the lock. */
-  private reservePinTry(member: MemberRow, now: number): void {
-    if (member.locked_until > now) {
-      const wait = member.locked_until - now;
-      throw new FailedGuess(429, `Too many wrong PINs for this name. Try again in ${minutes(wait)}.`, wait / 1000);
-    }
-    const tries = member.failed + 1;
-    if (tries >= PIN_TRIES) this.sql.exec('UPDATE members SET failed = 0, locked_until = ? WHERE id = ?', now + LOCK_MS, member.id);
-    else this.sql.exec('UPDATE members SET failed = ? WHERE id = ?', tries, member.id);
-  }
-
-  /** The error for a wrong PIN, saying how many tries are left (`member` is read after the try was counted). */
-  private wrongPin(member: MemberRow, now: number, message: string): FailedGuess {
-    if (member.locked_until > now) return new FailedGuess(403, `${message} Too many wrong PINs: try again in ${minutes(LOCK_MS)}.`);
-    const left = PIN_TRIES - member.failed;
-    return new FailedGuess(403, `${message} ${left} ${left === 1 ? 'try' : 'tries'} left before a 15-minute lock.`);
-  }
-
-  private requirePlayerFree(player: string | null, exceptMemberId: string): void {
-    if (player === null) return;
-    const other = this.store.memberByPlayer(player, exceptMemberId);
-    if (other) {
-      throw new HttpError(409, `${other.name} is already linked to that roster player. Ask a coach or captain to change the link.`);
-    }
-  }
-
-  /* ---------------- sessions ---------------- */
 
   /**
-   * The member behind the request's session token: `Authorization: Bearer <token>`, or for the room WebSocket
-   * only, `?token=` (browsers cannot set headers on WebSockets).
+   * Leaders change roles and squads, and anyone's subjects and graduation year; members may change their own
+   * subjects and graduation year. Subject changes go to the member's account (the profile is the source) first.
    */
-  private async authenticate(request: Request, url?: URL): Promise<Session> {
-    const header = request.headers.get('Authorization');
-    const token = header !== null ? (/^Bearer\s+(\S+)$/i.exec(header.trim())?.[1] ?? null) : (url?.searchParams.get('token') ?? null);
-    if (!token || !TOKEN_PATTERN.test(token)) throw new HttpError(401, SIGN_IN_AGAIN);
-    const tokenHash = await sha256Hex(token);
-    this.requireReady();
-    const now = Date.now();
-    const session = this.sql
-      .exec<{ member_id: string; last_used: number }>('SELECT member_id, last_used FROM sessions WHERE token_hash = ?', tokenHash)
-      .toArray()[0];
-    if (!session) throw new HttpError(401, `Your session has ended. ${SIGN_IN_AGAIN}`);
-    const member = this.store.memberById(session.member_id);
-    if (!member || session.last_used <= now - SESSION_IDLE_MS) {
-      this.sql.exec('DELETE FROM sessions WHERE token_hash = ?', tokenHash);
-      throw new HttpError(401, member ? `Your session expired after 180 days without use. ${SIGN_IN_AGAIN}` : `Your session has ended. ${SIGN_IN_AGAIN}`);
-    }
-    if (now - session.last_used >= TOUCH_EVERY_MS) {
-      this.sql.exec('UPDATE sessions SET last_used = ? WHERE token_hash = ?', now, tokenHash);
-      this.sql.exec('UPDATE members SET last_seen = ? WHERE id = ?', now, member.id);
-      member.last_seen = now;
-    }
-    return { member, tokenHash, sid: tokenHash.slice(0, 16) };
-  }
-
-  private async me(request: Request): Promise<Response> {
-    const { member } = await this.authenticate(request);
-    return json({ member: publicMember(member), teamName: this.store.meta('teamName') });
-  }
-
-  private async signOut(request: Request): Promise<Response> {
-    const session = await this.authenticate(request);
-    this.sql.exec('DELETE FROM sessions WHERE token_hash = ?', session.tokenHash);
-    this.rooms.closeTagged(sessionTag(session.sid), 4001, 'Signed out.');
-    return json({ ok: true });
-  }
-
-  private async changePin(request: Request): Promise<Response> {
-    const session = await this.authenticate(request);
+  private async patchMember(request: Request, caller: string, targetId: string): Promise<Response> {
     const body = asObject(await readJson(request));
-    const current = pin(body.pin, 'Enter your current PIN (4 to 8 digits).');
-    const next = pin(body.newPin, 'Your new PIN must be 4 to 8 digits.');
     this.requireReady();
-    const now = Date.now();
-    const member = this.store.memberById(session.member.id);
-    if (!member) throw new HttpError(401, SIGN_IN_AGAIN);
-    this.reservePinTry(member, now);
-    const ok = await verifyPin(current, member.pin_hash, member.pin_salt);
-    this.requireReady();
-    const fresh = this.store.memberById(member.id);
-    if (!fresh) throw new HttpError(401, SIGN_IN_AGAIN);
-    if (!ok) throw this.wrongPin(fresh, now, "Your current PIN isn't right.");
-    const pinHash = await hashPin(next);
-    this.requireReady();
-    this.sql.exec(
-      'UPDATE members SET pin_hash = ?, pin_salt = ?, failed = 0, locked_until = 0 WHERE id = ?',
-      pinHash.hash,
-      pinHash.salt,
-      member.id,
-    );
-    return json({ ok: true });
-  }
-
-  /* ---------------- members (leaders) ---------------- */
-
-  private async listMembers(request: Request): Promise<Response> {
-    const session = await this.authenticate(request);
-    this.requireLeader(session.member.id);
-    const rows = this.sql.exec<MemberRow>('SELECT * FROM members ORDER BY name_key').toArray();
-    return json({ members: rows.map((row) => ({ ...publicMember(row), lastSeen: row.last_seen })) });
-  }
-
-  private async updateMember(request: Request, id: string): Promise<Response> {
-    const session = await this.authenticate(request);
-    const body = asObject(await readJson(request));
-    this.requireLeader(session.member.id);
-    const target = this.store.memberById(id);
-    if (!target) throw new HttpError(404, "That member isn't on the team.");
-    if (!('role' in body) && !('playerId' in body)) throw new HttpError(400, 'Send a role or a playerId to change.');
+    const me = this.member(caller);
+    if (!me) throw new HttpError(403, NOT_ON_TEAM);
+    const target = this.member(targetId);
+    if (!target) throw new HttpError(404, NOT_A_MEMBER);
+    const teamFields = ['role', 'squad'].filter((k) => k in body);
+    const profileKeys = (['primarySubject', 'secondarySubject', 'gradYear'] as const).filter((k) => k in body);
+    if (teamFields.length === 0 && profileKeys.length === 0) throw new HttpError(400, 'Send a role, squad, subject or graduation year to change.');
+    if (teamFields.length > 0 && !isLeader(me.role)) throw new HttpError(403, LEADERS_ONLY);
+    if (profileKeys.length > 0 && !isLeader(me.role) && caller !== targetId) {
+      throw new HttpError(403, "Only coaches, captains and the player themselves can change a player's subjects.");
+    }
     const newRole = 'role' in body ? role(body.role) : target.role;
-    const newPlayer = 'playerId' in body ? playerId(body.playerId) : target.player_id;
-    if (isLeader(target) && newRole === 'member' && this.store.countLeaders() <= 1) throw new HttpError(409, LAST_LEADER);
-    if (newPlayer !== target.player_id) this.requirePlayerFree(newPlayer, target.id);
-    this.sql.exec('UPDATE members SET role = ?, player_id = ? WHERE id = ?', newRole, newPlayer, id);
-    if (newPlayer !== target.player_id) this.rooms.memberChanged(id);
-    return json({ member: publicMember({ ...target, role: newRole, player_id: newPlayer }) });
+    const newSquad = 'squad' in body ? squad(body.squad) : target.squad;
+    const fields: ProfileFields = {};
+    if ('primarySubject' in body) fields.primarySubject = subject(body.primarySubject);
+    if ('secondarySubject' in body) fields.secondarySubject = subject(body.secondarySubject);
+    if ('gradYear' in body) fields.gradYear = gradYear(body.gradYear);
+
+    let copy: MemberCopy | null = null;
+    if (profileKeys.length > 0) {
+      copy = await userObject(this.env, targetId).applyProfile(fields);
+      this.requireReady();
+    }
+    // Read again after the wait: the member may have left, or roles changed meanwhile.
+    const fresh = this.member(targetId);
+    if (!fresh) throw new HttpError(404, NOT_A_MEMBER);
+    if ('role' in body && isLeader(fresh.role) && !isLeader(newRole) && this.countLeaders() <= 1) throw new HttpError(409, LAST_LEADER);
+    this.sql.exec('UPDATE members SET role = ?, squad = ? WHERE user_id = ?', newRole, newSquad, targetId);
+    if (copy) {
+      this.sql.exec(
+        'UPDATE members SET name = ?, primary_subject = ?, secondary_subject = ?, grad_year = ? WHERE user_id = ?',
+        copy.name,
+        copy.primarySubject ?? null,
+        copy.secondarySubject ?? null,
+        copy.gradYear ?? null,
+        targetId,
+      );
+    }
+    return json({ member: memberOut(this.member(targetId)!) });
   }
 
-  /** Removing a member ends their sessions and closes their room connections. Their synced records stay. */
-  private async removeMember(request: Request, id: string): Promise<Response> {
-    const session = await this.authenticate(request);
-    this.requireLeader(session.member.id);
-    const target = this.store.memberById(id);
-    if (!target) throw new HttpError(404, "That member isn't on the team.");
-    if (isLeader(target) && this.store.countLeaders() <= 1) throw new HttpError(409, LAST_LEADER);
-    this.ctx.storage.transactionSync(() => {
-      this.sql.exec('DELETE FROM sessions WHERE member_id = ?', id);
-      this.sql.exec('DELETE FROM members WHERE id = ?', id);
-    });
-    this.rooms.memberRemoved(id);
+  /** A leader removes a member (or anyone removes themselves, which is leaving). */
+  private async removeMemberRoute(caller: string, targetId: string): Promise<Response> {
+    const teamId = this.info().id;
+    if (caller !== targetId) this.requireLeader(caller);
+    const target = this.member(targetId);
+    if (!target) throw new HttpError(404, NOT_A_MEMBER);
+    this.checkLastLeader(target);
+    if (this.countMembers() <= 1) await this.deleteTeam();
+    else this.dropMember(targetId);
+    try {
+      await userObject(this.env, targetId).teamLeft(teamId);
+    } catch (error) {
+      // Their account finds out on its next visit (GET /api/me checks with the team).
+      console.error('Telling a removed member failed:', error instanceof Error ? error.message : String(error));
+    }
     return json({ ok: true });
   }
 
-  private async rotateJoinCode(request: Request): Promise<Response> {
-    const session = await this.authenticate(request);
+  private async rotateJoinCode(caller: string): Promise<Response> {
+    this.requireLeader(caller);
     const secret = newJoinSecret();
-    const secretHash = await sha256Hex(secret);
-    this.requireLeader(session.member.id);
-    this.store.setMeta('joinSecretHash', secretHash);
-    return json({ joinCode: `${this.store.meta('teamId')}.${secret}` });
+    setMeta(this.sql, 'joinSecret', secret);
+    return json({ joinCode: `${this.info().id}.${secret}` });
   }
 
-  /* ---------------- sync ---------------- */
+  /** A teammate's visible collections (their review cards and plans stay private). */
+  private async teammateRecords(url: URL, targetId: string): Promise<Response> {
+    if (!this.member(targetId)) throw new HttpError(404, NOT_A_MEMBER);
+    return jsonText(await userObject(this.env, targetId).visibleRecords(cursorParam(url)));
+  }
 
-  private async sync(request: Request): Promise<Response> {
-    const session = await this.authenticate(request);
-    const parsed = parseSyncRequest(await readJson(request));
+  /* ---------------- team records ---------------- */
+
+  private async putRecords(request: Request, caller: string): Promise<Response> {
+    const changes = parseChanges(await readJson(request));
     this.requireReady();
     // Read the member again: their role may have changed while the body was arriving.
-    const member = this.store.memberById(session.member.id);
-    if (!member) throw new HttpError(401, SIGN_IN_AGAIN);
-    // Pushing and reading back happen in one transaction, so a device never sees half a sync.
-    const text = this.ctx.storage.transactionSync(() => runSync(this.store, memberInfo(member), parsed));
-    return jsonText(text);
-  }
-
-  /* ---------------- rooms ---------------- */
-
-  /** A reader room, or with `match` a room where the server runs the game (online matches with no reader). */
-  private async createRoom(request: Request): Promise<Response> {
-    const session = await this.authenticate(request);
-    const body = asObject(await readJson(request));
-    const name = roomName(body.name);
-    const setup = body.match === undefined || body.match === null ? null : parseMatchSetup(body.match);
-    this.requireReady();
-    return this.rooms.create(session.member, name, Date.now(), setup);
-  }
-
-  private async listRooms(request: Request): Promise<Response> {
-    await this.authenticate(request);
-    return this.rooms.list(Date.now());
-  }
-
-  // (Not named `connect`: DurableObject reserves that for TCP sockets.)
-  private async openRoomSocket(request: Request, url: URL, roomId: string): Promise<Response> {
-    const session = await this.authenticate(request, url);
-    return this.rooms.connect(request, session.member, session.sid, roomId, Date.now());
-  }
-
-  /* ---------------- AI help (optional; see ai.ts) ---------------- */
-
-  private async aiStatus(request: Request): Promise<Response> {
-    await this.authenticate(request);
-    const settings = aiSettings(this.env);
-    if (!settings) return json({ enabled: false });
-    return json({ enabled: true, model: settings.model, ...this.aiUsage(settings) });
-  }
-
-  /** Question drafts from a cited passage, each with a blind answer check. Uses one call plus one per draft. */
-  private async aiDraft(request: Request): Promise<Response> {
-    await this.authenticate(request);
-    const settings = this.requireAi();
-    const input = parseDraftInput(await readJson(request, AI_BODY_BYTES), this.level());
-    const result = await this.withAiCalls(settings, 1 + input.count, () => draftQuestions(settings, input));
-    return json({ drafts: result.drafts, model: result.model, ...this.aiUsage(settings) });
-  }
-
-  /** An explanation of a question's answer. The team shares one cache, so a question is explained once. */
-  private async aiExplain(request: Request): Promise<Response> {
-    await this.authenticate(request);
-    const settings = this.requireAi();
-    const input = parseExplainInput(await readJson(request, AI_BODY_BYTES), this.level());
-    const key = await sha256Hex(JSON.stringify(['explain', settings.model, input]));
-    this.requireReady();
-    ensureAiTables(this.sql);
-    const hit = cachedValue(this.sql, key, Date.now()) as { model?: unknown } | null;
-    const cached = checkExplanation(hit);
-    if (cached && typeof hit?.model === 'string') return json({ ...cached, model: hit.model, cached: true, ...this.aiUsage(settings) });
-    const result = await this.withAiCalls(settings, 1, () => explainAnswer(settings, input));
-    this.requireReady();
-    cacheValue(this.sql, key, result, Date.now());
-    return json({ ...result, cached: false, ...this.aiUsage(settings) });
-  }
-
-  private async aiCard(request: Request): Promise<Response> {
-    await this.authenticate(request);
-    const settings = this.requireAi();
-    const input = parseCardInput(await readJson(request, AI_BODY_BYTES));
-    const result = await this.withAiCalls(settings, 1, () => draftCard(settings, input));
-    return json({ card: result.card, model: result.model, ...this.aiUsage(settings) });
-  }
-
-  private requireAi(): AiSettings {
-    const settings = aiSettings(this.env);
-    if (!settings) throw new HttpError(404, 'AI help is not turned on for this team server.');
-    return settings;
-  }
-
-  private level(): TeamLevel {
-    return this.store.meta('level') === 'MS' ? 'MS' : 'HS';
-  }
-
-  private aiUsage(settings: AiSettings): { dailyLimit: number; usedToday: number } {
-    this.requireReady();
-    ensureAiTables(this.sql);
-    return { dailyLimit: settings.dailyLimit, usedToday: usedToday(this.sql, Date.now()) };
+    const me = this.member(caller);
+    if (!me) throw new HttpError(403, NOT_ON_TEAM);
+    const now = Date.now();
+    const result = this.ctx.storage.transactionSync(() => {
+      const rejected: Rejection[] = [];
+      for (const change of changes) {
+        let reason = shapeProblem(change);
+        if (!reason && !isTeamCollection(change.c)) reason = "This kind of data isn't kept for teams.";
+        if (!reason && isTeamCollection(change.c) && !canWriteTeam(me.role, change.c)) reason = 'Only coaches and captains can change this.';
+        if (reason) {
+          rejected.push({ c: change.c, id: change.id, reason });
+          continue;
+        }
+        // Team records are last-writer-wins.
+        if (this.records.put(change.c, change.id, change.body, caller) && change.c === 'games') this.queueGameAnswers(change.body, now);
+      }
+      return { cursor: this.records.rev(), rejected };
+    });
+    // Deliver the answers before answering, so the players see them when they next load.
+    if (this.outbox.pending() > 0) await this.flushOutbox(true);
+    return json(result);
   }
 
   /**
-   * Counts `calls` against the team's daily limit before `work` starts (so parallel requests can't overrun
-   * it), then gives back the calls that never reached the model: a failed call, or fewer drafts than asked.
+   * A finished Reader console game: each player's outcomes go to their account's `answers` (ids fixed by the game,
+   * so saving it again gives the same answers). Online matches are left out: their room already wrote them. Only
+   * members get answers, so a game cannot write into other people's accounts.
    */
-  private async withAiCalls<T>(settings: AiSettings, calls: number, work: () => Promise<T>): Promise<T> {
-    this.requireReady();
-    ensureAiTables(this.sql);
-    const day = reserveAiCalls(this.sql, settings.dailyLimit, calls, Date.now());
-    let used = calls;
+  private queueGameAnswers(body: unknown, now: number): void {
+    const game = body as GameRecord | null;
+    if (!game || game.status !== 'finished' || game.online === true) return;
+    const rows = this.members();
+    let outcomes: Outcome[];
     try {
-      const result = await work();
-      const reported = (result as { calls?: unknown }).calls;
-      if (typeof reported === 'number') used = Math.min(calls, reported);
-      return result;
-    } catch (error) {
-      // Only the first call runs before anything can fail (drafting stops there), unless it never ran at all.
-      used = error instanceof AiUnavailable ? 0 : 1;
-      throw error;
-    } finally {
-      if (this.ready && used < calls) refundAiCalls(this.sql, day, calls - used);
+      outcomes = gameOutcomes(game, rows.map(asPlayer));
+    } catch {
+      return; // A game the rules cannot replay has no answers to give.
     }
+    const members = new Set(rows.map((r) => r.user_id));
+    const byPlayer = new Map<string, Outcome[]>();
+    for (const o of outcomes) {
+      if (!members.has(o.playerId)) continue;
+      if (!byPlayer.has(o.playerId)) byPlayer.set(o.playerId, []);
+      byPlayer.get(o.playerId)!.push(o);
+    }
+    for (const [playerId, list] of byPlayer) this.outbox.add('answers', playerId, list, now);
+  }
+
+  private async flushOutbox(all = false): Promise<void> {
+    if (!this.ready) return;
+    await this.outbox.flush((d) => this.deliver(d), Date.now(), all);
+    if (!this.ready) return;
+    const next = this.outbox.nextAt();
+    if (next !== null) await this.ctx.storage.setAlarm(next);
+  }
+
+  private async deliver(d: Delivery): Promise<void> {
+    if (d.kind === 'answers') await userObject(this.env, d.target).putAnswers(JSON.parse(d.payload) as Outcome[]);
+  }
+
+  /** Retries deliveries that failed. */
+  async alarm(): Promise<void> {
+    await this.flushOutbox();
   }
 
   /* ---------------- helpers ---------------- */
+
+  private info(): TeamInfo {
+    const event = getMeta(this.sql, 'nextEvent');
+    return {
+      id: getMeta(this.sql, 'teamId')!,
+      name: getMeta(this.sql, 'name')!,
+      level: getMeta(this.sql, 'level') === 'MS' ? 'MS' : 'HS',
+      ...(event ? { nextEvent: JSON.parse(event) } : {}),
+      createdAt: Number(getMeta(this.sql, 'createdAt')),
+    };
+  }
+
+  private member(userId: string): MemberRow | null {
+    return this.sql.exec<MemberRow>('SELECT * FROM members WHERE user_id = ?', userId).toArray()[0] ?? null;
+  }
+
+  private members(): MemberRow[] {
+    return this.sql.exec<MemberRow>('SELECT * FROM members ORDER BY name COLLATE NOCASE, user_id').toArray();
+  }
+
+  private insertMember(m: MemberCopy & { userId: string }, memberRole: MemberRole, now: number): void {
+    this.sql.exec(
+      `INSERT INTO members (user_id, name, role, squad, primary_subject, secondary_subject, grad_year, joined_at, last_seen)
+       VALUES (?, ?, ?, NULL, ?, ?, ?, ?, ?)`,
+      m.userId,
+      m.name,
+      memberRole,
+      m.primarySubject ?? null,
+      m.secondarySubject ?? null,
+      m.gradYear ?? null,
+      now,
+      now,
+    );
+  }
+
+  /** Removes a member and the rooms they listed for the team. */
+  private dropMember(userId: string): void {
+    this.sql.exec('DELETE FROM members WHERE user_id = ?', userId);
+    this.sql.exec('DELETE FROM rooms WHERE host_id = ?', userId);
+  }
+
+  private countMembers(): number {
+    return this.sql.exec<{ n: number }>('SELECT COUNT(*) AS n FROM members').one().n;
+  }
+
+  private countLeaders(): number {
+    return this.sql.exec<{ n: number }>("SELECT COUNT(*) AS n FROM members WHERE role IN ('coach', 'captain')").one().n;
+  }
+
+  private countRooms(): number {
+    return this.sql.exec<{ n: number }>('SELECT COUNT(*) AS n FROM rooms').one().n;
+  }
+
+  /** The last coach or captain may not leave while others remain (they hand over first). */
+  private checkLastLeader(m: MemberRow): void {
+    if (isLeader(m.role) && this.countLeaders() <= 1 && this.countMembers() > 1) throw new HttpError(409, LAST_LEADER);
+  }
+
+  /**
+   * The rooms in the list that are still open, newest first; closed ones leave the list. A room listed in the last
+   * minute may still be opening (it is listed just before it is made), so it stays even if it does not answer yet.
+   */
+  private async roomSummaries(now: number): Promise<RoomSummary[]> {
+    const rows = this.sql.exec<{ room_id: string; created_at: number }>('SELECT room_id, created_at FROM rooms ORDER BY created_at DESC').toArray();
+    const found = await Promise.all(
+      rows.map(async ({ room_id }) => {
+        try {
+          return await roomObject(this.env, room_id).summary(now);
+        } catch (error) {
+          // A room that cannot be reached right now stays in the list, but is not shown.
+          console.error('Reading a room failed:', error instanceof Error ? error.message : String(error));
+          return undefined;
+        }
+      }),
+    );
+    if (this.ready) {
+      rows.forEach(({ room_id, created_at }, i) => {
+        if (found[i] === null && created_at < now - 60_000) this.sql.exec('DELETE FROM rooms WHERE room_id = ?', room_id);
+      });
+    }
+    return found.filter((r) => !!r) as RoomSummary[];
+  }
+
+  /** Deletes everything (the last member left, or a leader deleted the team), after a last try at deliveries. */
+  private async deleteTeam(): Promise<void> {
+    if (this.outbox.pending() > 0) await this.outbox.flush((d) => this.deliver(d), Date.now(), true);
+    this.ready = false;
+    await this.ctx.storage.deleteAlarm();
+    await this.ctx.storage.deleteAll();
+  }
 
   private requireReady(): void {
     if (!this.ready) throw new HttpError(404, TEAM_NOT_FOUND);
   }
 
-  /** Checks leadership on a fresh read (a role can change while a request waits on hashing or its body). */
-  private requireLeader(memberId: string): MemberRow {
+  /** Checks leadership on a fresh read (a role can change while a request waits for its body). */
+  private requireLeader(userId: string): MemberRow {
     this.requireReady();
-    const member = this.store.memberById(memberId);
-    if (!member) throw new HttpError(401, SIGN_IN_AGAIN);
-    if (!isLeader(member)) throw new HttpError(403, LEADERS_ONLY);
-    return member;
+    const me = this.member(userId);
+    if (!me) throw new HttpError(403, NOT_ON_TEAM);
+    if (!isLeader(me.role)) throw new HttpError(403, LEADERS_ONLY);
+    return me;
   }
-
-  private insertMember(m: MemberRow): void {
-    this.sql.exec(
-      `INSERT INTO members (id, name, name_key, role, player_id, pin_hash, pin_salt, failed, locked_until, created_at, last_seen)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      m.id,
-      m.name,
-      m.name_key,
-      m.role,
-      m.player_id,
-      m.pin_hash,
-      m.pin_salt,
-      m.failed,
-      m.locked_until,
-      m.created_at,
-      m.last_seen,
-    );
-  }
-
-  private insertSession(tokenHash: string, memberId: string, now: number): void {
-    // Tidy up first: sessions unused for 180 days are gone for good.
-    this.sql.exec('DELETE FROM sessions WHERE last_used <= ?', now - SESSION_IDLE_MS);
-    this.sql.exec('INSERT INTO sessions (token_hash, member_id, created_at, last_used) VALUES (?, ?, ?, ?)', tokenHash, memberId, now, now);
-    this.sql.exec('UPDATE members SET last_seen = ? WHERE id = ?', now, memberId);
-  }
-}
-
-async function newSession(): Promise<{ token: string; tokenHash: string }> {
-  const token = newSessionToken();
-  return { token, tokenHash: await sha256Hex(token) };
-}
-
-function newMember(
-  name: string,
-  memberRole: MemberRow['role'],
-  player: string | null,
-  pinHash: { hash: string; salt: string },
-  now: number,
-): MemberRow {
-  return {
-    id: newId(),
-    name,
-    name_key: nameKey(name),
-    role: memberRole,
-    player_id: player,
-    pin_hash: pinHash.hash,
-    pin_salt: pinHash.salt,
-    failed: 0,
-    locked_until: 0,
-    created_at: now,
-    last_seen: now,
-  };
 }

@@ -1,17 +1,45 @@
 /**
- * The Worker: CORS, routing and team creation. Everything about a team happens in that team's Durable Object
- * (team.ts), addressed by `idFromName(teamId)`; the Worker itself never reads team data.
+ * The Worker: CORS, routing, signing in, and checking sessions. It holds no data. A request's session is checked
+ * with the user's own Durable Object (user.ts), then the request goes on, with the caller's identity, to the object
+ * that owns what it is about: the user, a team (team.ts) or a room (room.ts). Sign-in runs here: Google ID tokens
+ * and email links (auth.ts), with the Directory (directory.ts) mapping them to users.
  */
 
-import { newTeamId, TEAM_ID_PATTERN } from './crypto';
-import { errorResponse, HttpError, json, MAX_BODY_BYTES, readBody, readJson, toErrorResponse } from './http';
-import { CREATE_PATH, TEAM_NOT_FOUND } from './team';
-import { createTeamInput } from './validate';
+import { ID_PATTERN, MAX_NAME_CHARS, SESSION_TOKEN_PATTERN } from '../../src/core/accounts';
+import { emailEnabled, emailSettings, sendSignInEmail, verifyGoogleToken } from './auth';
+import { newId, SECRET_PATTERN, sha256Hex } from './crypto';
+import type { Resolution } from './directory';
+import {
+  accepted,
+  errorResponse,
+  HttpError,
+  identityHeader,
+  json,
+  MAX_BODY_BYTES,
+  readBody,
+  readJson,
+  toErrorResponse,
+  type Identity,
+} from './http';
+import { parseMatchSetup } from './match';
+import { directoryObject, roomObject, teamObject, userObject } from './objects';
+import { TEAM_NOT_FOUND } from './team';
+import { asObject, cleanLine, emailAddress, NAME_RULE, roomName } from './validate';
 
+export { Directory } from './directory';
 export { Registry } from './registry';
-export { TeamServer } from './team';
+export { RoomServer } from './room';
+export { Team } from './team';
+export { UserServer } from './user';
 
-const ORIGIN_REFUSED = 'This website is not allowed to use the Rebound team server.';
+const ORIGIN_REFUSED = 'This website is not allowed to use the Rebound server.';
+const SIGN_IN_AGAIN = 'Please sign in again.';
+const ROOM_CLOSED = 'This room has closed. Ask the host for a new link.';
+/** Sign-in bodies are small: a Google credential is a couple of kilobytes. */
+const AUTH_BODY_BYTES = 16 * 1024;
+
+/** Routes of the caller's own UserServer. */
+const USER_PATHS = /^\/api\/(?:me(?:\/records|\/export)?|ai(?:\/(?:draft|explain|card))?|auth\/signout)$/;
 
 export default {
   async fetch(request, env): Promise<Response> {
@@ -37,56 +65,218 @@ export default {
   },
 } satisfies ExportedHandler<Env>;
 
+const unsupported = () => new HttpError(405, "That action isn't supported here.");
+
 async function route(request: Request, env: Env): Promise<Response> {
-  const path = new URL(request.url).pathname;
+  const url = new URL(request.url);
+  const path = url.pathname;
+  const method = request.method;
 
-  if (path === '/api/health') {
-    if (request.method !== 'GET') throw new HttpError(405, "That action isn't supported here.");
-    return json({ ok: true });
+  switch (path) {
+    case '/api/health':
+      if (method !== 'GET') throw unsupported();
+      return json({ ok: true });
+    case '/api/auth/config':
+      if (method !== 'GET') throw unsupported();
+      return authConfig(env);
+    case '/api/auth/google':
+      if (method !== 'POST') throw unsupported();
+      return googleSignIn(request, env);
+    case '/api/auth/email/start':
+      if (method !== 'POST') throw unsupported();
+      return emailStart(request, env);
+    case '/api/auth/email/finish':
+      if (method !== 'POST') throw unsupported();
+      return emailFinish(request, env);
+    case '/api/rooms':
+      if (method === 'GET') return listRooms(request, env, url);
+      if (method === 'POST') return createRoom(request, env, url);
+      throw unsupported();
+    case '/api/teams':
+      // Making a team starts with the user, who can be on one team at a time.
+      if (method !== 'POST') throw unsupported();
+      return forward(env, request, url, (id) => userObject(env, id.userId));
   }
 
-  if (path === '/api/teams') {
-    if (request.method !== 'POST') throw new HttpError(405, "That action isn't supported here.");
-    return createTeam(request, env);
-  }
+  if (USER_PATHS.test(path)) return forward(env, request, url, (id) => userObject(env, id.userId));
 
-  const match = /^\/api\/teams\/([^/]+)(?:\/|$)/.exec(path);
-  if (match) {
+  const room = /^\/api\/rooms\/([^/]+)\/ws$/.exec(path);
+  if (room) return connectRoom(request, env, url, room[1]!);
+
+  const team = /^\/api\/teams\/([^/]+)(\/.*)?$/.exec(path);
+  if (team) {
     // Only well-formed ids reach a Durable Object, so random paths never wake one.
-    if (!TEAM_ID_PATTERN.test(match[1]!)) throw new HttpError(404, TEAM_NOT_FOUND);
-    const team = env.TEAM.get(env.TEAM.idFromName(match[1]!));
-    // GET (including the WebSocket upgrade) goes through as is. Other requests are read here first, up to the
-    // 2 MB limit, so an oversized upload never reaches the team's object, and the object can answer early
-    // (say, 401) without leaving a half-read stream behind.
-    if (request.method === 'GET' || request.method === 'HEAD') return team.fetch(request);
-    const body = await readBody(request, MAX_BODY_BYTES);
-    return team.fetch(new Request(request.url, { method: request.method, headers: request.headers, body }));
+    const teamId = team[1]!;
+    if (!ID_PATTERN.test(teamId)) throw new HttpError(404, TEAM_NOT_FOUND);
+    // Joining and leaving start with the user (one team at a time); everything else is the team's.
+    const mine = team[2] === '/join' || team[2] === '/leave';
+    return forward(env, request, url, (id) => (mine ? userObject(env, id.userId) : teamObject(env, teamId)));
   }
 
   throw new HttpError(404, 'Not found.');
 }
 
-/** `POST /api/teams`: a new random team id, and a new Durable Object initialized with the team. */
-async function createTeam(request: Request, env: Env): Promise<Response> {
-  const input = createTeamInput(await readJson(request));
-  // Sign-up is open to any school; the registry caps new teams per network address and per day.
-  const registry = env.REGISTRY.get(env.REGISTRY.idFromName('global'));
-  const reservation = await registry.reserveTeam(request.headers.get('CF-Connecting-IP'), Date.now());
-  if (!reservation.ok) throw new HttpError(429, reservation.message, reservation.retryAfter);
-  // Ids carry 80 random bits, so a clash is practically impossible; the object refuses an id that is already a
-  // team (409) and another is drawn.
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const teamId = newTeamId();
-    const stub = env.TEAM.get(env.TEAM.idFromName(teamId));
-    const response = await stub.fetch(`https://team.internal${CREATE_PATH}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...input, teamId }),
-    });
-    if (response.status !== 409) return response;
-  }
-  throw new HttpError(503, "The team couldn't be created right now. Please try again.");
+/* ---------------- sessions ---------------- */
+
+/**
+ * The signed-in caller: `Authorization: Bearer <userId>.<secret>`, or for the room WebSocket only `?token=`
+ * (browsers cannot set headers on WebSockets). The user's object checks the secret's hash; `visitRoom` records the
+ * room being joined, so signing out can close that connection.
+ */
+async function authenticate(request: Request, env: Env, url: URL, visitRoom: string | null = null): Promise<Identity> {
+  const header = request.headers.get('Authorization');
+  const token = header !== null ? (/^Bearer\s+(\S+)$/i.exec(header.trim())?.[1] ?? null) : visitRoom !== null ? url.searchParams.get('token') : null;
+  if (!token || !SESSION_TOKEN_PATTERN.test(token)) throw new HttpError(401, SIGN_IN_AGAIN);
+  const [userId, secret] = token.split('.') as [string, string];
+  const result = await userObject(env, userId).authenticate(await sha256Hex(secret), Date.now(), visitRoom);
+  if (!result.ok) throw new HttpError(401, result.error);
+  return { ...result.identity, address: request.headers.get('CF-Connecting-IP') };
 }
+
+/**
+ * Sends a signed-in request on to the object `to` picks. GET goes through without a body. Other bodies are read
+ * here first, up to the 2 MB limit, so an oversized upload never reaches an object. Only the identity header and
+ * the body are passed on: a client's own headers never reach the objects.
+ */
+async function forward(env: Env, request: Request, url: URL, to: (identity: Identity) => { fetch(request: Request): Promise<Response> }): Promise<Response> {
+  const identity = await authenticate(request, env, url);
+  const init: RequestInit = { method: request.method, headers: identityHeader(identity) };
+  if (request.method !== 'GET' && request.method !== 'HEAD') init.body = await readBody(request, MAX_BODY_BYTES);
+  return to(identity).fetch(new Request(`https://rebound.internal${url.pathname}${url.search}`, init));
+}
+
+/* ---------------- signing in ---------------- */
+
+function authConfig(env: Env): Response {
+  const clientId = env.GOOGLE_CLIENT_ID?.trim();
+  return json({ google: clientId ? { clientId } : null, email: emailEnabled(emailSettings(env)) });
+}
+
+/** What a sign-in call says for a new account: a name, if the person confirmed they are 13 or older. */
+function signupOf(body: Record<string, unknown>): { name: string | null; problem: string } {
+  if (body.over13 !== true) return { name: null, problem: 'To make your account, confirm you are 13 or older and enter your name.' };
+  const name = cleanLine(body.name, MAX_NAME_CHARS);
+  return name === null ? { name: null, problem: NAME_RULE } : { name, problem: '' };
+}
+
+/** `POST /api/auth/google { credential, over13?, name? }` → `{ token, user }`. */
+async function googleSignIn(request: Request, env: Env): Promise<Response> {
+  const clientId = env.GOOGLE_CLIENT_ID?.trim();
+  if (!clientId) throw new HttpError(404, "Google sign-in isn't turned on for this server.");
+  const body = asObject(await readJson(request, AUTH_BODY_BYTES));
+  const credential = typeof body.credential === 'string' && body.credential.length <= 8192 ? body.credential.trim() : '';
+  if (!credential) throw new HttpError(400, 'Sign in with Google again.');
+  const now = Date.now();
+  const account = await verifyGoogleToken(credential, clientId, now);
+  const signup = signupOf(body);
+  const address = request.headers.get('CF-Connecting-IP');
+  const resolution = accepted(await directoryObject(env).resolveGoogle(account.sub, account.email, signup.name, address, now));
+  return finishSignIn(env, resolution, signup, now, null);
+}
+
+/** `POST /api/auth/email/start { email }` → `{ ok: true }` (and `devCode` with the development outbox). */
+async function emailStart(request: Request, env: Env): Promise<Response> {
+  const settings = emailSettings(env);
+  if (!emailEnabled(settings)) throw new HttpError(404, "Email sign-in isn't turned on for this server.");
+  const email = emailAddress(asObject(await readJson(request, AUTH_BODY_BYTES)).email);
+  // The same answer whether or not the address has an account, so this never tells anyone who uses Rebound.
+  const started = accepted(await directoryObject(env).startEmail(email, request.headers.get('CF-Connecting-IP'), Date.now(), settings.dailyLimit));
+  // Development only: nothing is sent; the code comes back so tests and local runs can sign in.
+  if (settings.devOutbox) return json({ ok: true, devCode: started.code });
+  try {
+    await sendSignInEmail(settings, email, started.code);
+  } catch (error) {
+    await directoryObject(env).cancelEmail(started.codeHash);
+    throw error;
+  }
+  return json({ ok: true });
+}
+
+/** `POST /api/auth/email/finish { code, over13?, name? }` → `{ token, user }`. */
+async function emailFinish(request: Request, env: Env): Promise<Response> {
+  if (!emailEnabled(emailSettings(env))) throw new HttpError(404, "Email sign-in isn't turned on for this server.");
+  const body = asObject(await readJson(request, AUTH_BODY_BYTES));
+  const code = typeof body.code === 'string' ? body.code.trim() : '';
+  if (!SECRET_PATTERN.test(code)) throw new HttpError(400, "This sign-in link isn't complete. Open the link from your email again.");
+  const codeHash = await sha256Hex(code);
+  const signup = signupOf(body);
+  const now = Date.now();
+  const resolution = accepted(await directoryObject(env).finishEmail(codeHash, signup.name, request.headers.get('CF-Connecting-IP'), now));
+  return finishSignIn(env, resolution, signup, now, codeHash);
+}
+
+/**
+ * A session for the person the Directory found, or 403 `{ error, needsSignup: true, email }` when there is no
+ * account yet and the call did not carry the 13+ confirmation and a name (the site asks, then calls again).
+ */
+async function finishSignIn(
+  env: Env,
+  resolution: Extract<Resolution, { ok: true }>,
+  signup: { name: string | null; problem: string },
+  now: number,
+  codeHash: string | null,
+): Promise<Response> {
+  const needsSignup = () => new HttpError(403, signup.problem, undefined, { needsSignup: true, email: resolution.email });
+  if (resolution.userId === null) throw needsSignup();
+  const result = await userObject(env, resolution.userId).signIn(
+    { userId: resolution.userId, email: resolution.email, signup: signup.name !== null ? { name: signup.name } : null },
+    now,
+  );
+  if (!result.ok) {
+    // The account's record exists but its data was never made (an earlier sign-up failed half way): the person
+    // signs up again, with the same email code.
+    if (codeHash !== null && resolution.expiresAt !== undefined) await directoryObject(env).restoreCode(codeHash, resolution.email, resolution.expiresAt);
+    throw needsSignup();
+  }
+  return json({ token: result.token, user: result.user });
+}
+
+/* ---------------- rooms ---------------- */
+
+/** `GET /api/rooms`: the open rooms opened by members of the caller's team (query parameters are ignored). */
+async function listRooms(request: Request, env: Env, url: URL): Promise<Response> {
+  const identity = await authenticate(request, env, url);
+  if (identity.teamId === null) return json({ rooms: [] });
+  const listed = await teamObject(env, identity.teamId).listRooms(identity.userId, Date.now());
+  // No longer on that team (or it was deleted): no team rooms.
+  return json({ rooms: listed.ok ? listed.rooms : [] });
+}
+
+/** `POST /api/rooms { name, match? }`: any signed-in user opens a room; it is listed for their team, if any. */
+async function createRoom(request: Request, env: Env, url: URL): Promise<Response> {
+  const identity = await authenticate(request, env, url);
+  const body = asObject(await readJson(request));
+  const name = roomName(body.name);
+  const setup = body.match === undefined || body.match === null ? null : parseMatchSetup(body.match);
+  const now = Date.now();
+  accepted(await userObject(env, identity.userId).reserveRoom(now));
+  // Ids carry 80 random bits, so a clash is practically impossible; a taken id is refused and another drawn.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const roomId = newId();
+    let listed = false;
+    if (identity.teamId !== null) {
+      const registered = await teamObject(env, identity.teamId).registerRoom(identity.userId, roomId, now);
+      if (registered.ok) listed = true;
+      else if (registered.status === 429) accepted(registered);
+      // Any other refusal: the user has left that team, so the room is simply not listed.
+    }
+    const host = { userId: identity.userId, name: identity.name, teamId: identity.teamId };
+    if (await roomObject(env, roomId).create({ roomId, name, host, setup, now })) return json({ roomId }, 201);
+    if (listed) await teamObject(env, identity.teamId!).unregisterRoom(roomId);
+  }
+  throw new HttpError(503, "The room couldn't be opened right now. Please try again.");
+}
+
+/** `GET /api/rooms/:id/ws?token=`: the WebSocket, accepted by the room once the session checks out. */
+async function connectRoom(request: Request, env: Env, url: URL, roomId: string): Promise<Response> {
+  if (request.method !== 'GET') throw unsupported();
+  if (request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') throw new HttpError(426, 'This address is for live room connections (WebSocket).');
+  if (!ID_PATTERN.test(roomId)) throw new HttpError(404, ROOM_CLOSED);
+  const identity = await authenticate(request, env, url, roomId);
+  return roomObject(env, roomId).fetch(new Request('https://rebound.internal/connect', { headers: { Upgrade: 'websocket', ...identityHeader(identity) } }));
+}
+
+/* ---------------- CORS ---------------- */
 
 function allowedOrigins(env: Env): Set<string> {
   return new Set(
@@ -113,7 +303,7 @@ function withCors(response: Response, origin: string | null): Response {
   out.headers.set('Vary', 'Origin');
   if (origin !== null) {
     out.headers.set('Access-Control-Allow-Origin', origin);
-    out.headers.set('Access-Control-Expose-Headers', 'Retry-After');
+    out.headers.set('Access-Control-Expose-Headers', 'Retry-After, Content-Disposition');
   }
   return out;
 }
