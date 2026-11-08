@@ -59,7 +59,7 @@ User collections (in the user's storage; written only by the user, plus the serv
 | collection | id | body | teammates see it |
 |---|---|---|---|
 | `attempts` | attempt id | `SoloAttempt` (a practice answer) | yes |
-| `answers` | `game:<gameId>:<n>` or `match:<roomId>:<n>` | `Outcome` (src/core/review.ts) from a team game or an online match, written by the server | yes |
+| `answers` | `game:<gameId>:<pair>:<t\|dead\|b>:<time>` (a Reader console game or a team match: the question's place in the packet, a toss-up, a dead toss-up or a bonus, and when it was judged) or `match:<roomId>:<questionId>` (a free-for-all) | `Outcome` (src/core/review.ts) from a team game or an online match, written by the server | yes |
 | `seen` | `ledger` | `{ [questionId]: ms }` (merged as a union) | yes |
 | `conceptReads` | `ledger` | `{ [conceptId or "reading:<topic>"]: ms }` (merged as a union) | yes |
 | `completions` | `<assignmentId>` | `Completion` | yes |
@@ -164,9 +164,11 @@ per user.
 - **Store.** `AppData` stays the in-memory shape the pages use, filled from the server at sign-in (`/api/me`,
   `/api/me/records`, and the team's settings, members and records). Nothing is written to IndexedDB.
   `update(fn)` diffs the records it changed and sends them at once (user collections to `/api/me/records`, team
-  collections to the team), retrying a few times; if it cannot reach the server it shows "Not connected: your
-  last change was not saved" and stops practice until the connection is back. Team records and settings are
-  refreshed every 30 seconds while the page is visible.
+  collections to the team). If the server cannot be reached, the site shows "Not connected: your last change was
+  not saved", keeps the unsent changes in memory and keeps trying (after 1 and 3 seconds, then every 10, and at
+  once when the browser is back online); closing the tab before they are sent asks first, and loses them. Pages
+  that need the account show "Not connected" until it has loaded. Team records and settings are refreshed every 30
+  seconds while the page is visible.
 - `players` = the team's members (or just the signed-in user, with no team); `settings.soloPlayerId` = the user.
   Teammates' visible collections load when a page needs them (Stats, Lineups, Team, scrimmage builder,
   Assignments).

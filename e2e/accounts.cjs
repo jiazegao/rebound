@@ -1,6 +1,8 @@
 /*
  * Accounts for the browser tests (docs/ACCOUNTS.md): signs people up on a local server through its development
- * email outbox, makes and joins teams through the API, and opens browser contexts that are already signed in.
+ * email outbox, makes and joins teams through the API, opens browser contexts that are already signed in (or sign
+ * in through the site's own pages from a test network address), waits until a page has sent its changes, reads
+ * records, and deletes the test accounts afterwards.
  *
  * The server must run with DEV_EMAIL_OUTBOX=1, and the site must be built without VITE_SERVER_URL (it then keeps
  * the server's address with the session):
@@ -123,4 +125,75 @@ function watchErrors(page, label, errors) {
   });
 }
 
-module.exports = { SERVER, BASE, SESSION_KEY, call, signUp, makeTeam, joinTeam, setMember, makeTeamOf, signedInContext, watchErrors };
+/**
+ * Every record a records route lists, all pages read: `/api/me/records`, `/api/teams/:id/records` or
+ * `/api/teams/:id/members/:userId/records`, as `account` sees it. [{ c, id, body, rev }], oldest first, with
+ * `body: null` for a deleted record.
+ */
+async function allRecords(route, account) {
+  const records = [];
+  let cursor = 0;
+  for (;;) {
+    const page = await call(`${route}?cursor=${cursor}`, { token: account.token });
+    records.push(...page.records);
+    if (!page.more || page.cursor <= cursor) return records;
+    cursor = page.cursor;
+  }
+}
+
+/**
+ * Deletes test accounts, so a run leaves nothing behind: first every team one of them coaches or captains (deleted
+ * for everyone on it; a team's last coach or captain cannot leave while others remain), then each account
+ * (DELETE /api/me, which also leaves its team). Accounts already deleted, or never made (null), are skipped.
+ * Resolves to the problems met, as messages: [] when everything is gone.
+ */
+async function deleteAccounts(accounts) {
+  const problems = [];
+  const live = accounts.filter(Boolean);
+  const status = (err, code) => err.message.includes(`: ${code} `);
+  for (const a of live) {
+    try {
+      const { team } = await call('/api/me', { token: a.token });
+      if (team && (team.role === 'coach' || team.role === 'captain')) await call(`/api/teams/${team.id}`, { method: 'DELETE', token: a.token });
+    } catch (err) {
+      if (!status(err, 401) && !status(err, 404)) problems.push(err.message);
+    }
+  }
+  for (const a of live) {
+    try {
+      await call('/api/me', { method: 'DELETE', token: a.token });
+    } catch (err) {
+      if (!status(err, 401)) problems.push(err.message);
+    }
+  }
+  return problems;
+}
+
+/**
+ * Sends a browser context's requests to the server from a made-up network address of its own, as signUp does, so
+ * signing in through the site's own pages never runs into the per-network limits on a later run (a local server
+ * counts every browser on this machine as one network otherwise). The header is added below the page, so CORS is
+ * unaffected.
+ */
+async function fromTestAddress(context) {
+  const address = freshAddress();
+  await context.route(`${SERVER}/**`, (route) => route.continue({ headers: { ...route.request().headers(), 'cf-connecting-ip': address } }));
+}
+
+/**
+ * Waits until `page` has sent every change to the server (at most `timeout` ms). The site asks before a page with
+ * unsent changes is closed (a beforeunload handler); this asks it the same question without closing anything.
+ */
+async function allSaved(page, timeout = 15_000) {
+  await page.waitForFunction(
+    () => {
+      const probe = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(probe);
+      return !probe.defaultPrevented;
+    },
+    null,
+    { timeout, polling: 200 },
+  );
+}
+
+module.exports = { SERVER, BASE, SESSION_KEY, call, signUp, makeTeam, joinTeam, setMember, makeTeamOf, signedInContext, watchErrors, allRecords, deleteAccounts, fromTestAddress, allSaved };
