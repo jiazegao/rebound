@@ -389,6 +389,50 @@ function CardList({ playerId }: { playerId: string }) {
   );
 }
 
+/**
+ * The review queue at a glance, at the top of Learn: what is due, and a button that starts the review at once (the
+ * Review page with `start=1`). Signed out, it says what reviews are.
+ */
+export function ReviewAtAGlance() {
+  const data = useData();
+  const player = useCurrentPlayer();
+  const summary = player ? playerCardSummary(data, player.id) : null;
+  return (
+    <section aria-labelledby="review-glance" style={{ marginBottom: '2rem' }}>
+      <div className="row spread">
+        <h2 id="review-glance" style={{ margin: 0 }}>
+          Review
+        </h2>
+        {summary && <a href={href('/review')}>Your review queue</a>}
+      </div>
+      {!summary ? (
+        <p className="muted">
+          <a href={href('/signin')}>Sign in</a>, and the questions you miss or answer slowly come back here as timed reviews.
+        </p>
+      ) : (
+        <>
+          <div className="grid" style={{ marginTop: '0.75rem' }}>
+            <Stat label="Due today" value={summary.dueToday} />
+            <Stat label="Reviewed today" value={summary.reviewedToday} />
+            <Stat label="In your queue" value={summary.total} />
+          </div>
+          <div className="row" style={{ marginTop: '0.75rem' }}>
+            {summary.dueToday > 0 ? (
+              <a className="btn btn-primary" href={href('/review?start=1')}>
+                {summary.dueToday > DEFAULT_SESSION ? `Review ${DEFAULT_SESSION} of ${summary.dueToday}` : `Start review (${summary.dueToday})`}
+              </a>
+            ) : (
+              <span className="muted">
+                {summary.total === 0 ? 'Nothing to review yet: misses and slow answers from practice and games land here.' : 'All caught up for today.'}
+              </span>
+            )}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
 export function ReviewPage({ query }: { query: URLSearchParams }) {
   const data = useData();
   const player = useCurrentPlayer();
@@ -431,6 +475,20 @@ export function ReviewPage({ query }: { query: URLSearchParams }) {
       setStage('overview');
     }
   };
+
+  // Opened by Start review on Learn: begin at once. The flag leaves the address, so going back or reloading shows the
+  // overview instead of starting again.
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (query.get('start') !== '1' || autoStarted.current || stage !== 'overview' || !player) return;
+    if (playerCardSummary(getData(), player.id).dueToday === 0) return;
+    autoStarted.current = true;
+    const rest = new URLSearchParams(query);
+    rest.delete('start');
+    history.replaceState(null, '', `#/review${rest.size ? `?${rest}` : ''}`);
+    void start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, player, stage, data.cards]);
 
   if (stage === 'session' && player && queue[position]) {
     const item = queue[position];

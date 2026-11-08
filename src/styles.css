@@ -285,6 +285,68 @@ p {
   background: var(--surface-2);
   color: var(--accent);
 }
+/* A menu in the bar (Practice): its button looks like the other items; the pages open in a panel below it. */
+.nav-menu {
+  position: relative;
+}
+.nav-menu-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.7rem;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.nav-menu-button:hover,
+.nav-menu-button[aria-expanded='true'] {
+  background: var(--surface-2);
+}
+.nav-menu-button.current {
+  background: var(--surface-2);
+  color: var(--accent);
+}
+.nav-menu-caret {
+  font-size: 0.75em;
+}
+.nav-menu-panel {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 0.35rem);
+  z-index: 6;
+  display: grid;
+  gap: 0.15rem;
+  width: max-content;
+  max-width: min(20rem, calc(100vw - 32px));
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.nav-menu-panel[hidden] {
+  display: none;
+}
+.nav .nav-menu-panel a {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.5rem 0.65rem;
+}
+.nav-menu-panel a:hover,
+.nav-menu-panel a:focus-visible {
+  background: var(--surface-2);
+}
+.nav-menu-hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
 /* The signed-in player's name, opening their account page and "Sign out". */
 .account-menu {
   position: relative;
@@ -1150,7 +1212,8 @@ a.hbar-label {
   .player-grid {
     grid-template-columns: 1fr;
   }
-  .nav a {
+  .nav a,
+  .nav-menu-button {
     padding: 0.35rem 0.5rem;
     font-size: 0.95rem;
   }
@@ -1167,6 +1230,17 @@ a.hbar-label {
     margin-left: 0;
     width: 100%;
     justify-content: flex-start;
+  }
+  /* On a phone a menu from the bar opens as a panel across the screen, just under the header. */
+  .nav-menu {
+    position: static;
+  }
+  .nav-menu-panel {
+    left: 16px;
+    right: 16px;
+    top: calc(100% - 0.25rem);
+    width: auto;
+    max-width: none;
   }
   .nav {
     width: 100%;
