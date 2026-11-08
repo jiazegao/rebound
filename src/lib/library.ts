@@ -1,16 +1,56 @@
-/** Loading question sets. DOE sets ship with the site as static JSON files under data/doe/. */
+/**
+ * Loading question sets. DOE sets ship with the site as static JSON files under data/doe/. One index lists the
+ * sets of both levels; the catalog and concept files are per level (catalog.json and catalog-ms.json, …), and a
+ * team's level picks which ones drills, plans and the Learn pages use.
+ */
 import { useEffect, useState } from 'react';
 import { setIdOf } from '../core/drill';
-import { getData } from './store';
+import { getData, useData } from './store';
 import { isVisualId, loadVisualQuestions, VISUAL_SET, visualRound } from './visuals';
-import type { Catalog, CatalogRow, ConceptIndex, LibraryIndex, Question, QuestionPair, QuestionSet, Round, SetSummary } from '../core/schema';
+import type { Catalog, CatalogRow, ConceptIndex, Level, LibraryIndex, Question, QuestionPair, QuestionSet, Round, SetSummary } from '../core/schema';
 
 const BASE = 'data/doe/';
 
 let indexPromise: Promise<LibraryIndex> | null = null;
-let catalogPromise: Promise<Catalog> | null = null;
-let conceptPromise: Promise<ConceptIndex> | null = null;
+const catalogPromises = new Map<Level, Promise<Catalog>>();
+const conceptPromises = new Map<Level, Promise<ConceptIndex>>();
 const setPromises = new Map<string, Promise<QuestionSet>>();
+
+/** The level this device's team plays at (high school until a team says otherwise). */
+export function teamLevel(): Level {
+  return getData().team?.level === 'MS' ? 'MS' : 'HS';
+}
+
+export function useTeamLevel(): Level {
+  return useData().team?.level === 'MS' ? 'MS' : 'HS';
+}
+
+/** "catalog.json" for high school, "catalog-ms.json" for middle school. */
+export function levelFile(name: 'catalog' | 'concepts', level: Level): string {
+  return `${name}${level === 'MS' ? '-ms' : ''}.json`;
+}
+
+/** The sets of one level, in index order. */
+export function setsOfLevel(index: LibraryIndex, level: Level): SetSummary[] {
+  return index.sets.filter((s) => (s.level ?? 'HS') === level);
+}
+
+export const LEVEL_NAME: Record<Level, string> = { HS: 'high school', MS: 'middle school' };
+
+const newestFirst = (a: SetSummary, b: SetSummary) => (b.setNumber ?? 0) - (a.setNumber ?? 0);
+
+/** Sets for choosers: the team's level first, newest first, then the other level's (middle school teams often practice up). */
+export function setGroups(index: LibraryIndex, level: Level): Array<{ level: Level; label: string; sets: SetSummary[] }> {
+  const other: Level = level === 'HS' ? 'MS' : 'HS';
+  return [level, other]
+    .map((l) => ({ level: l, label: l === 'HS' ? 'High school' : 'Middle school', sets: setsOfLevel(index, l).sort(newestFirst) }))
+    .filter((g) => g.sets.length > 0);
+}
+
+/** The newest set of the team's level (or of any level when it has none). */
+export function newestSet(index: LibraryIndex, level: Level): SetSummary | undefined {
+  return setGroups(index, level)[0]?.sets[0];
+}
 
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -45,22 +85,29 @@ export async function loadSetById(setId: string): Promise<QuestionSet> {
   return loadSet(summary);
 }
 
-/** One compact row per question (subject, topic, round), for choosing drill questions without loading every set. */
-export function loadCatalog(): Promise<Catalog> {
-  catalogPromise ??= fetchJson<Catalog>(`${BASE}catalog.json`).catch((err) => {
-    catalogPromise = null;
-    throw err;
-  });
-  return catalogPromise;
+function cached<T>(cache: Map<Level, Promise<T>>, level: Level, url: string): Promise<T> {
+  let p = cache.get(level);
+  if (!p) {
+    p = fetchJson<T>(url).catch((err) => {
+      cache.delete(level);
+      throw err;
+    });
+    cache.set(level, p);
+  }
+  return p;
 }
 
-/** The library questions tagged with each concept (for the Learn pages and concept drills). */
-export function loadConceptIndex(): Promise<ConceptIndex> {
-  conceptPromise ??= fetchJson<ConceptIndex>(`${BASE}concepts.json`).catch((err) => {
-    conceptPromise = null;
-    throw err;
-  });
-  return conceptPromise;
+/**
+ * One compact row per question (subject, topic, round) of one level, for choosing drill questions without
+ * loading every set. Defaults to the team's level.
+ */
+export function loadCatalog(level: Level = teamLevel()): Promise<Catalog> {
+  return cached(catalogPromises, level, `${BASE}${levelFile('catalog', level)}`);
+}
+
+/** The library questions of one level tagged with each concept (for the Learn pages and concept drills). */
+export function loadConceptIndex(level: Level = teamLevel()): Promise<ConceptIndex> {
+  return cached(conceptPromises, level, `${BASE}${levelFile('concepts', level)}`);
 }
 
 const catalogMaps = new WeakMap<Catalog, Map<string, CatalogRow>>();
@@ -175,12 +222,15 @@ export function useSet(setId: string | null): AsyncState<QuestionSet> {
   return useAsync(setId, () => loadSetById(setId!));
 }
 
+/** The catalog of the team's level (reloads if the team changes level). */
 export function useCatalog(): AsyncState<Catalog> {
-  return useAsync('catalog', loadCatalog);
+  const level = useTeamLevel();
+  return useAsync(`catalog-${level}`, () => loadCatalog(level));
 }
 
 export function useConceptIndex(): AsyncState<ConceptIndex> {
-  return useAsync('concepts', loadConceptIndex);
+  const level = useTeamLevel();
+  return useAsync(`concepts-${level}`, () => loadConceptIndex(level));
 }
 
 /** Human label for a set, e.g. "Set 17 · 2022". */

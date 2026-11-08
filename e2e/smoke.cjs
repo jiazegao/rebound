@@ -403,6 +403,36 @@ async function main() {
       await page.locator('#player-switch').selectOption({ label: 'Ann' });
     });
 
+    await step('Write: a question passes the checks, the subject owner approves it, and it becomes a team packet', async () => {
+      await page.goto(`${BASE}#/write`);
+      await see('Strong teams write their own questions');
+      await page.getByRole('link', { name: 'New question' }).click();
+      await page.locator('#wq-subject').selectOption('physics');
+      await page.locator('#wq-stem').fill('In meters per second squared, what is the acceleration due to gravity near Earth’s surface, to two significant figures?');
+      await page.locator('#wq-answer').fill('9.8');
+      // Checks run as you type: a missing source blocks sending it for review.
+      await see('Cite at least one source');
+      if (await page.getByRole('button', { name: 'Send for review' }).isEnabled()) throw new Error('sending without a source should be blocked');
+      await page.getByLabel('Source 1', { exact: true }).fill('OpenStax College Physics 2e, 2.7 Falling Objects');
+      await see('No problems found.');
+      await page.getByRole('button', { name: 'Send for review' }).click();
+      await see('Sent to the Physics owner for review.');
+      const url = page.url();
+      // Ann wrote it; Ben owns physics and approves it.
+      await page.goto(`${BASE}#/today`);
+      await page.locator('#player-switch').selectOption({ label: 'Ben' });
+      await page.goto(url);
+      await page.getByRole('button', { name: 'Approve' }).click();
+      await see('Approved: it can now go into team packets.');
+      await page.goto(`${BASE}#/write`);
+      await see('Approved (1)');
+      await shot('12c-write');
+      await page.getByRole('button', { name: /Make the packet \(1 toss-up\)/ }).click();
+      await see('Test High questions');
+      await page.goto(`${BASE}#/today`);
+      await page.locator('#player-switch').selectOption({ label: 'Ann' });
+    });
+
     await step('assignments: the captain assigns a drill, it shows on Today and ticks off when done', async () => {
       await page.goto(`${BASE}#/assignments`);
       await page.locator('#as-subject').selectOption('biology');

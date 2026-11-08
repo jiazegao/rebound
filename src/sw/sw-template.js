@@ -107,7 +107,7 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') event.respondWith(page(request));
   else if (path.startsWith('assets/')) event.respondWith(cacheFirst(request, SHELL));
-  else if (/^data\/.+\/(index|catalog)\.json$/.test(path)) event.respondWith(networkFirst(request, DATA));
+  else if (/^data\/.+\/(index|catalog|catalog-ms)\.json$/.test(path)) event.respondWith(networkFirst(request, DATA));
   else if (path.startsWith('data/')) event.respondWith(staleWhileRevalidate(event, DATA));
   else event.respondWith(cacheFirst(request, SHELL));
 });

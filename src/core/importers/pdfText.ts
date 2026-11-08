@@ -625,8 +625,10 @@ function render(toks: Tok[], spaceAt: (x0: number, x1: number) => boolean, depth
       // An equation set in its own font often ends right before the next word.
       const fontChange =
         depth === 0 && !isScript && head === undefined && gap > 0.1 * size && !!prevFont && !!toks[i].font && prevFont !== toks[i].font && /[\p{L}\p{N}]$/u.test(out) && (/^\p{L}{2}/u.test(piece) || FUNCTION_END.test(out));
+      // A stacked fraction right after a whole number is a mixed number ("3 1/2", not "31/2").
+      const mixed = (head === 'num' || head === 'den') && /\d$/.test(out) && /^\d/.test(piece);
       const unary = isUnarySign(out);
-      if ((wide || hinted || operator || fontChange || preScript) && !unary && !OPENERS.test(out) && !CLOSERS.test(piece)) out += ' ';
+      if ((wide || hinted || operator || fontChange || preScript || mixed) && !unary && !OPENERS.test(out) && !CLOSERS.test(piece)) out += ' ';
     }
     out += piece;
     prevFont = head === undefined ? toks[i].font : undefined;

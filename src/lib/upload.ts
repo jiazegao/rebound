@@ -6,6 +6,7 @@
  * cleanly; anything that did not parse is flagged on the review screen. Nothing leaves the device
  * except through the team's own sync: community packets carry no open license.
  */
+import { readNsbJson, type NsbJsonDoc } from '../core/nsbjson';
 import { doeRoundId, parseDoeRound, type ParseWarning } from '../core/importers/doe';
 import { extractTextLines } from '../core/importers/pdfText';
 import type { Question, QuestionSet, Round } from '../core/schema';
@@ -68,13 +69,15 @@ export async function parsePdf(file: File, packetId: string, order: number, cred
  * rewritten so they cannot collide with the library or another packet.
  */
 export async function parseJson(file: File, packetId: string, credit: string): Promise<ParsedRound[]> {
+  const text = await file.text();
   let parsed: unknown;
   try {
-    parsed = JSON.parse(await file.text());
+    parsed = JSON.parse(text.replace(/^\uFEFF/, ''));
   } catch {
     throw new Error(`${file.name} is not valid JSON.`);
   }
-  const rounds = (parsed as { rounds?: unknown })?.rounds;
+  let rounds = (parsed as { rounds?: unknown })?.rounds;
+  if (parsed && typeof parsed === 'object' && 'nsbjson' in parsed) rounds = nsbJsonRounds(text, file.name);
   if (!Array.isArray(rounds) || rounds.length === 0) throw new Error(`${file.name} has no "rounds" list (Rebound's question-set format).`);
   const setId = teamSetId(packetId);
   const out: ParsedRound[] = [];
@@ -119,6 +122,32 @@ export async function parseJson(file: File, packetId: string, credit: string): P
   });
   await tagAll(out.map((o) => o.round));
   return out;
+}
+
+/**
+ * The rounds in an NSB-JSON file (docs/NSB-JSON.md): a question set's rounds, or a question list as one round,
+ * each toss-up followed by the bonus after it. A game log has no questions to upload.
+ */
+function nsbJsonRounds(text: string, fileName: string): Array<Partial<Round>> {
+  let doc: NsbJsonDoc;
+  try {
+    doc = readNsbJson(text);
+  } catch (e) {
+    throw new Error(`${fileName}: ${e instanceof Error ? e.message : 'not a readable NSB-JSON file.'}`);
+  }
+  if (doc.kind === 'question-set') return doc.set.rounds;
+  if (doc.kind === 'game-log') throw new Error(`${fileName} is a game log, not a packet of questions.`);
+  const pairs: Array<{ number: number; tossup: Question; bonus?: Question }> = [];
+  for (const q of doc.questions) {
+    const last = pairs[pairs.length - 1];
+    if (q.kind === 'bonus') {
+      // A bonus goes with the toss-up just before it; one without a toss-up cannot be played, so it is left out.
+      if (last && !last.bonus) last.bonus = q;
+    } else {
+      pairs.push({ number: pairs.length + 1, tossup: q });
+    }
+  }
+  return [{ label: doc.title, pairs }];
 }
 
 /** The packet's question set, from the rounds the captain kept. */

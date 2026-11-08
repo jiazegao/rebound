@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { PageHeader } from '../components/ui';
-import { PRESETS, type RulesPreset } from '../core/rules/presets';
+import { CURRENT_PRESET_IDS, CURRENT_SEASON, currentPresets, PRESETS, type RulesPreset } from '../core/rules/presets';
 
 function rows(p: RulesPreset): Array<[string, string]> {
   const t = p.timing;
@@ -35,7 +35,7 @@ function rows(p: RulesPreset): Array<[string, string]> {
     ['Talking during bonuses', p.communication.bonus],
     ['Challenges', p.unsuccessfulChallengeLimit ? `Up to ${p.unsuccessfulChallengeLimit} unsuccessful science challenges per team per round.` : 'Not tracked.'],
     ['Ties', `In elimination games, ${p.tiebreakTossups} toss-ups with no bonuses and no clock, repeated until the tie is broken.`],
-    ...(p.id === 'doe-regional-2027'
+    ...(p.id === CURRENT_PRESET_IDS.regional
       ? ([
           [
             'Round robin ties',
@@ -47,14 +47,14 @@ function rows(p: RulesPreset): Array<[string, string]> {
 }
 
 export function RulesPage() {
-  const official = PRESETS.filter((p) => p.official);
-  const [presetId, setPresetId] = useState(official[0].id);
+  const official = currentPresets().filter((p) => p.official);
+  const [presetId, setPresetId] = useState<string>(CURRENT_PRESET_IDS.regional);
   const preset = PRESETS.find((p) => p.id === presetId)!;
   return (
     <div className="container narrow">
       <PageHeader title="NSB rules at a glance">
         <p>
-          A plain-language summary of the 2027 National Science Bowl rules. This page is generated from the same settings Rebound's game engine
+          A plain-language summary of the {CURRENT_SEASON} National Science Bowl rules. This page is generated from the same settings Rebound's game engine
           uses, so the two always agree. The official rulebook is the authority; regional events may adjust some rules.
         </p>
       </PageHeader>

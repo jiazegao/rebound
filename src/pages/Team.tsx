@@ -429,6 +429,9 @@ export function TeamPage() {
           <a className="btn btn-small" href={href('/packets')}>
             Packets
           </a>
+          <a className="btn btn-small" href={href('/write')}>
+            Write
+          </a>
           <a className="btn btn-small" href={href('/stats')}>
             Stats
           </a>

@@ -232,7 +232,26 @@ export const PRESETS: RulesPreset[] = [
   },
 ];
 
-export const DEFAULT_PRESET_ID = 'doe-regional-2027';
+/**
+ * The season whose DOE rules are current, and its official presets. Each fall's update (MAINTAINING.md, "New
+ * rules each season") adds the new season's presets above, keeps the old ones (saved games refer to them), and
+ * points these at the new ones.
+ */
+export const CURRENT_SEASON = '2027';
+export const CURRENT_PRESET_IDS = {
+  regional: 'doe-regional-2027',
+  virtual: 'doe-virtual-2027',
+  finals: 'doe-finals-2027',
+  finalsVisual: 'doe-finals-visual-2027',
+} as const;
+export const CURRENT_RULES_URL = RULES_2027_URL;
+
+export const DEFAULT_PRESET_ID: string = CURRENT_PRESET_IDS.regional;
+
+/** The presets to offer: this season's. Older seasons' stay in PRESETS so saved games still replay. */
+export function currentPresets(): RulesPreset[] {
+  return PRESETS.filter((p) => p.season === CURRENT_SEASON);
+}
 
 export function getPreset(id: string): RulesPreset {
   const preset = PRESETS.find((p) => p.id === id);

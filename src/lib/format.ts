@@ -28,7 +28,11 @@ export function percent(numerator: number, denominator: number): string {
 
 /** Start a file download in the browser. */
 export function downloadFile(filename: string, contents: string, type = 'application/json'): void {
-  const blob = new Blob([contents], { type });
+  downloadBlob(filename, new Blob([contents], { type }));
+}
+
+/** Start a download of a file made in the browser (a Word document, say). */
+export function downloadBlob(filename: string, blob: Blob): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

@@ -1,5 +1,6 @@
 import { Notice, PageHeader } from '../components/ui';
 import { SUBJECT_LABELS } from '../core/schema';
+import { toGameLogDoc } from '../core/nsbjson';
 import { dateTimeText, downloadFile, percent, toCsv } from '../lib/format';
 import { href, navigate } from '../lib/router';
 import { bonusLines, gameLines, gameState, median } from '../lib/stats';
@@ -104,6 +105,20 @@ export function GameSummary({ gameId }: { gameId: string }) {
           )}
           <button className="btn" onClick={exportCsv}>
             Download player stats (CSV)
+          </button>
+          <button
+            className="btn btn-ghost"
+            title="The whole game, event by event, in NSB-JSON: other tools can re-score it"
+            onClick={() => {
+              try {
+                const doc = toGameLogDoc(game, { players: data.players });
+                downloadFile(`rebound-game-${game.createdAt.slice(0, 10)}.nsb.json`, `${JSON.stringify(doc, null, 2)}\n`);
+              } catch (e) {
+                alert(e instanceof Error ? e.message : 'The game log could not be made.');
+              }
+            }}
+          >
+            Download game log (NSB-JSON)
           </button>
           <button
             className="btn btn-ghost"

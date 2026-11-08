@@ -1,6 +1,6 @@
 /**
- * Parser for the U.S. Department of Energy's National Science Bowl high school sample
- * question PDFs (https://science.osti.gov/wdts/nsb, "High School Sample Questions").
+ * Parser for the U.S. Department of Energy's National Science Bowl sample question PDFs
+ * (https://science.osti.gov/wdts/nsb, "High School Sample Questions" and "Middle School Sample Questions").
  *
  * Pure: no Node or DOM APIs. It takes the text lines of one round PDF (from pdfText.ts, or any
  * extractor that gives text plus page numbers) and returns a `Round` of toss-up/bonus pairs plus
@@ -11,18 +11,22 @@
  *   1) BIOLOGY Short Answer What is ...              Sets 1-9 (also "1. BIOLOGY ...")
  *   1) Earth and Space – Multiple Choice Which ...   en dash, 2015-2021
  *   1) Biology — Short Answer ...                    em dash, 2022
+ *   *1) GENERAL SCIENCE Multiple Choice ...          asterisk before the number (middle school Set 2)
+ *   16) What is the most common term ...             no category or type after a TOSS-UP/BONUS marker
  *   W) ... X) ... Y) ... Z) ...                      multiple choice options (may wrap)
  *   ANSWER: W) BASIC   /   Answer: ... (ACCEPT: ...) (DO NOT ACCEPT: ...)
  */
-import type { AnswerFormat, Letter, Question, QuestionKind, QuestionPair, Round, Subject } from '../schema';
+import type { AnswerFormat, Letter, Level, Question, QuestionKind, QuestionPair, Round, Subject } from '../schema';
 import { normalizeMathText } from './pdfText';
 
 export const DOE_CREDIT = 'U.S. Department of Energy, National Science Bowl sample questions (science.osti.gov/wdts/nsb)';
 export const DOE_LICENSE = 'Public domain (U.S. Government work); DOE Office of Science asks to be credited and linked.';
 export const DOE_HS_SAMPLE_PAGE = 'https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions';
+export const DOE_MS_SAMPLE_PAGE = 'https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/MS-Sample-Questions';
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
-export const doeSetId = (setNumber: number) => `doe-hs-${pad2(setNumber)}`;
+/** "doe-hs-07" for high school Set 7, "doe-ms-07" for middle school Set 7, "doe-ms-finals" for a named set. */
+export const doeSetId = (set: number | string, level: Level = 'HS') => `doe-${level.toLowerCase()}-${typeof set === 'number' ? pad2(set) : set}`;
 export const doeRoundId = (setId: string, order: number) => `${setId}-r${pad2(order)}`;
 export const doeQuestionId = (roundId: string, kind: QuestionKind, number: number) =>
   `${roundId}-${kind === 'tossup' ? 't' : 'b'}${pad2(number)}`;
@@ -60,6 +64,8 @@ export interface DoeRoundResult {
   printedLabel?: string;
   /** Lines that were not noise and not part of any question (e.g. a title). */
   strayLines: { page: number; text: string }[];
+  /** Running headers and footers (text printed on most pages, digits as "#"), dropped as noise. */
+  repeated: string[];
 }
 
 /* ------------------------------------------------------------------ */
@@ -134,6 +140,10 @@ export function mapCategory(printed: string): Subject | undefined {
   const exact = CATEGORY_MAP.get(key);
   if (exact) return exact;
   if (/^EARTH\b.*\bSPACE\b/.test(key)) return 'earth_space';
+  // A category printed twice ("MATH Math").
+  const words = key.split(' ');
+  const half = words.length / 2;
+  if (words.length % 2 === 0 && words.slice(0, half).join(' ') === words.slice(half).join(' ')) return CATEGORY_MAP.get(words.slice(0, half).join(' '));
   return undefined;
 }
 
@@ -165,6 +175,10 @@ const NOISE_PATTERNS: RegExp[] = [
   // High School / Set 2 (2021 sets)
   /^high\s+school(?:\s+set\s*\d+)?$/i,
   /^set\s*\d+$/i,
+  // Middle school: MIDDLE SCHOOL - ROUND 1A | Middle School / Set 7 (2021)
+  /^middle\s+school(?:\s*[-–—:]?\s*round\s*\d+\s*[a-z]?|\s+set\s*\d+)?(?:\s*page\s*\d+)?$/i,
+  // ROUND ROBIN 2 | DOUBLE ELIMINATION ROUND 1 | SINGLE ELIMINATION ROUND 3 (middle school tournament rounds)
+  /^(?:round\s+robin|(?:double|single)\s+elimination)(?:\s+round)?\s*\d+\s*[a-z]?(?:\s*,?\s*page\s*\d+)?$/i,
 ];
 
 export function isNoiseLine(text: string): boolean {
@@ -174,7 +188,7 @@ export function isNoiseLine(text: string): boolean {
 
 const KIND_RE = /^(TOSS[\s-]*UP|(?:VISUAL\s+)?BONUS)\s*[:.]?\s*(.*)$/;
 const TYPE_RE = /(short[\s-]*answer|multiple[\s-]*choice)\b\s*[.:;,]?\s*/i;
-const LOOSE_TYPE_RE = /\b(short|mul\w{0,6}[\s-]*cho\w{0,4}|multiple)\b\s*[.:;,]?\s*/i;
+const LOOSE_TYPE_RE = /\b(short|mul\w{0,6}[\s-]*cho\w{0,4}|mut\w{0,6}[\s-]*choice|multiple)\b\s*[.:;,]?\s*/i;
 const CHOICE_RE = /^([WXYZ])\s*\)\s*(.*)$/;
 
 export interface QuestionHeader {
@@ -195,7 +209,11 @@ export interface QuestionHeader {
  * numbered list items inside a stem ("1) rocking, 2) ...") from being read as questions.
  */
 export function parseQuestionHeader(line: string, requireType = true): QuestionHeader | undefined {
-  const m = /^(\d{1,2})\s*[).:]\s*(.*)$/.exec(cleanText(line));
+  // Middle school Set 2 prints some numbers with an asterisk ("*1) GENERAL SCIENCE ..."); its meaning is not given.
+  const t0 = cleanText(line);
+  // A few middle school headers lack the parenthesis ("17 LIFE SCIENCE Short Answer ..."): accepted before a known category and a type.
+  const bare = /^\*?\s*(\d{1,2})\s+(.*)$/.exec(t0);
+  const m = /^\*?\s*(\d{1,2})\s*[).:]\s*(.*)$/.exec(t0) ?? (bare && CATEGORY_START.test(bare[2]) && TYPE_RE.test(bare[2]) ? bare : null);
   if (!m) return undefined;
   const number = Number(m[1]);
   const rest = m[2].replace(/^[\s).:–—-]+/, '');
@@ -225,7 +243,8 @@ export function parseQuestionHeader(line: string, requireType = true): QuestionH
 /** Returns the text after "ANSWER:" when the line is an answer line. */
 export function matchAnswerLine(line: string): string | undefined {
   const t = cleanText(line);
-  const m = /^(?:ANSWER|Answer)\s*[:;.]\s*(.*)$/.exec(t) ?? /^ANSWER\s+(?=[A-Z0-9(\[–-])(.*)$/.exec(t);
+  // "ANWER:" is a typo in one middle school round.
+  const m = /^(?:ANSWER|Answer|ANWER)\s*[:;.]\s*(.*)$/.exec(t) ?? /^ANSWER\s+(?=[A-Z0-9(\[–-])(.*)$/.exec(t);
   return m ? m[1] : undefined;
 }
 
@@ -515,7 +534,7 @@ function repeatedLines(lines: { text: string; page: number }[]): Set<string> {
   for (const l of lines) {
     const key = l.text.replace(/\d+/g, '#');
     if ((key.match(/\p{L}/gu) ?? []).length < 3) continue;
-    if (KIND_RE.test(l.text) || matchAnswerLine(l.text) !== undefined || CHOICE_RE.test(l.text) || /^\d{1,2}\s*[).]/.test(l.text)) continue;
+    if (KIND_RE.test(l.text) || matchAnswerLine(l.text) !== undefined || CHOICE_RE.test(l.text) || QUESTION_NUMBER.test(l.text)) continue;
     if (!seen.has(key)) seen.set(key, new Set());
     seen.get(key)!.add(l.page);
   }
@@ -525,6 +544,11 @@ function repeatedLines(lines: { text: string; page: number }[]): Set<string> {
 
 const PRINTED_LABEL_RE =
   /^(?:high\s+school\s*[-–—]?\s*)?((?:round\s+robin|double\s+elimination)\s*[~–—-]\s*)?round\s*(\d+\s*[a-z]?)$|^(?:high\s+school\s+)?(set\s*\d+)$/i;
+/** Middle school headers, tried when no line matches PRINTED_LABEL_RE: "MIDDLE SCHOOL - ROUND 1A", "ROUND ROBIN 2", "DOUBLE ELIMINATION ROUND 1". */
+const MS_PRINTED_LABEL_RE = /^middle\s+school\s*[-–—:]?\s*round\s*\d+\s*[a-z]?$|^(?:round\s+robin|(?:double|single)\s+elimination)(?:\s+round)?\s*\d+\s*[a-z]?$/i;
+
+/** A question number at the start of a line ("12)", "3.", "*1)"). */
+const QUESTION_NUMBER = /^\*?\s*\d{1,2}\s*[).]/;
 
 /**
  * Parses one round PDF.
@@ -538,9 +562,9 @@ export function parseDoeRound(input: readonly SourceLine[], meta: DoeRoundMeta):
   // 1. Clean lines, find the printed round label, drop headers/footers/separators.
   const cleaned = input.map((l) => ({ text: cleanText(l.text), page: l.page, hints: l.hints ?? [] }));
   let printedLabel: string | undefined;
-  for (const l of cleaned.slice(0, 8)) {
-    const m = PRINTED_LABEL_RE.exec(l.text);
-    if (m && !/page/i.test(l.text)) {
+  for (const re of [PRINTED_LABEL_RE, MS_PRINTED_LABEL_RE]) {
+    const l = cleaned.slice(0, 8).find((x) => re.test(x.text) && !/page/i.test(x.text));
+    if (l) {
       printedLabel = l.text.replace(/\s+/g, ' ');
       break;
     }
@@ -553,7 +577,7 @@ export function parseDoeRound(input: readonly SourceLine[], meta: DoeRoundMeta):
 
   // Re-join a question header whose type wrapped ("3) Earth and Space – Multiple" / "Choice ...").
   for (let i = 0; i < lines.length - 1; i++) {
-    if (/^\d{1,2}\s*[).]/.test(lines[i].text) && /\b(?:Multiple|Short)$/i.test(lines[i].text) && /^(?:Choice|Answer)\b/i.test(lines[i + 1].text)) {
+    if (QUESTION_NUMBER.test(lines[i].text) && /\b(?:Multiple|Short)$/i.test(lines[i].text) && /^(?:Choice|Answer)\b/i.test(lines[i + 1].text)) {
       lines[i] = { ...lines[i], text: `${lines[i].text} ${lines[i + 1].text}` };
       lines.splice(i + 1, 1);
     }
@@ -565,6 +589,8 @@ export function parseDoeRound(input: readonly SourceLine[], meta: DoeRoundMeta):
   let state: 'idle' | 'stem' | 'choice' | 'answer' = 'idle';
   let pending: { kind: QuestionKind; visual: boolean; page: number } | undefined;
   let pendingFragments: string[] = [];
+  /** Printed number of the latest question (toss-up and bonus share it). */
+  let lastPrinted = 0;
 
   const finish = () => {
     if (draft) drafts.push(draft);
@@ -590,7 +616,13 @@ export function parseDoeRound(input: readonly SourceLine[], meta: DoeRoundMeta):
     const headerText = kind && kind[2] ? kind[2] : text;
     // A full header ("N) CAT TYPE") can start a question anywhere except inside a stem that is
     // still waiting for its answer; right after a marker the type may be missing.
-    const header = parseQuestionHeader(headerText, !pending);
+    let header = parseQuestionHeader(headerText, !pending);
+    // Right after a marker, a question printed with its number only ("16) What is the most common term ..."),
+    // when the number is the one expected next.
+    if (!header && pending && !draft) {
+      const bare = /^\*?\s*(\d{1,2})\s*[).]\s+(\S.*)$/.exec(headerText);
+      if (bare && Number(bare[1]) === (pending.kind === 'tossup' ? lastPrinted + 1 : lastPrinted)) header = { number: Number(bare[1]), category: '', rest: bare[2] };
+    }
     if (header && (pending || state === 'idle' || state === 'answer')) {
       finish();
       const fragments = pendingFragments;
@@ -606,6 +638,7 @@ export function parseDoeRound(input: readonly SourceLine[], meta: DoeRoundMeta):
         choices: [],
         hints: new Set(line.hints),
       };
+      lastPrinted = header.number;
       // Pieces of an equation printed above the question's first line belong to this question.
       if (fragments.length) draft.hints.add('orphan-script');
       pending = undefined;
@@ -646,7 +679,15 @@ export function parseDoeRound(input: readonly SourceLine[], meta: DoeRoundMeta):
       continue;
     }
 
-    const choice = CHOICE_RE.exec(text);
+    // Options misprinted in lower case ("w) light", "x) matter"): a "w)" counts when "x)" or "X)" follows it,
+    // and later ones when they are the next letter of options already started.
+    let choice = CHOICE_RE.exec(text);
+    const lower = choice ? null : /^([wxyz])\s*\)\s*(.*)$/.exec(text);
+    if (lower) {
+      const letter = lower[1].toUpperCase();
+      const nextIsX = /^[xX]\s*\)/.test(lines[i + 1]?.text ?? '');
+      if ((state === 'choice' && letter === LETTERS_IN_ORDER[draft.choices.length]) || (letter === 'W' && nextIsX)) choice = CHOICE_RE.exec(`${letter}${text.slice(1)}`);
+    }
     if (choice && (state === 'stem' || state === 'choice') && draft.choices.length < 4) {
       const letter = choice[1] as Letter;
       // In a stem, only a "W)" (or a question printed as multiple choice) starts the options.
@@ -666,22 +707,33 @@ export function parseDoeRound(input: readonly SourceLine[], meta: DoeRoundMeta):
 
   // 3. Turn drafts into questions and pair them.
   const pairs: QuestionPair[] = [];
+  const inferredLetters = new Set<string>();
   let lastNumber = 0;
   let previous: Question | undefined;
-  for (const d of drafts) {
+  drafts.forEach((d, at) => {
     let kind = d.kind;
     if (!kind) {
       kind = previous?.kind === 'tossup' && previous.number === d.printedNumber && !pairs[pairs.length - 1]?.bonus ? 'bonus' : 'tossup';
     }
+    // A bonus printed under a second TOSS-UP marker: same number as the toss-up before it, which has no bonus
+    // yet, and the next question is not a bonus (Set 10 Round 14 of the middle school sets).
+    const next = drafts[at + 1];
+    const misprintedMarker =
+      kind === 'tossup' && !d.kindInferred && previous?.kind === 'tossup' && previous.number === d.printedNumber &&
+      !pairs[pairs.length - 1]?.bonus && next?.kind !== 'bonus';
+    if (misprintedMarker) kind = 'bonus';
     let number: number;
     if (kind === 'tossup') {
       number = d.printedNumber > lastNumber ? d.printedNumber : lastNumber + 1;
+      // Printed ahead of its place while the skipped number follows ("21)" printed before "20)"): it takes its place.
+      if (d.printedNumber > lastNumber + 1 && drafts.slice(at + 1).some((x) => x.kind !== 'bonus' && x.printedNumber === lastNumber + 1)) number = lastNumber + 1;
       lastNumber = number;
     } else {
       number = pairs.length ? pairs[pairs.length - 1].number : d.printedNumber;
     }
-    const q = buildQuestion(d, kind, number, meta, credit);
+    const q = buildQuestion(d, kind, number, meta, credit, inferredLetters);
     if (d.kindInferred) addFlag(q, 'kind-inferred');
+    if (misprintedMarker) addFlag(q, 'kind-corrected');
     if (number !== d.printedNumber) addFlag(q, 'number-mismatch');
 
     if (kind === 'tossup') {
@@ -696,12 +748,12 @@ export function parseDoeRound(input: readonly SourceLine[], meta: DoeRoundMeta):
           page: d.page,
         });
         previous = q;
-        continue;
+        return;
       }
       last.bonus = q;
     }
     previous = q;
-  }
+  });
 
   for (const p of pairs) {
     for (const q of [p.tossup, p.bonus]) {
@@ -712,13 +764,21 @@ export function parseDoeRound(input: readonly SourceLine[], meta: DoeRoundMeta):
     }
     if (!p.bonus) warnings.push({ code: 'bonus-missing', message: `toss-up ${p.number} has no bonus`, questionId: p.tossup.id, page: p.tossup.source.page });
   }
+  for (const q of pairs.flatMap((p) => (p.bonus ? [p.tossup, p.bonus] : [p.tossup])).filter((x) => inferredLetters.has(x.id))) {
+    warnings.push({
+      code: 'answer-letter-inferred',
+      message: `${q.kind === 'tossup' ? 'toss-up' : 'bonus'} ${q.number}: answer "${q.answerRaw}" printed without a letter; it names option ${q.answerLetter}`,
+      questionId: q.id,
+      page: q.source.page,
+    });
+  }
 
   for (const l of strayLines) {
     warnings.push({ code: 'stray-line', message: `text outside any question: "${l.text.slice(0, 100)}"`, page: l.page });
   }
 
   const round: Round = { id: meta.roundId, label: meta.label, order: meta.order, ...(meta.sourceUrl ? { sourceUrl: meta.sourceUrl } : {}), pairs };
-  return { round, warnings, ...(printedLabel ? { printedLabel } : {}), strayLines };
+  return { round, warnings, ...(printedLabel ? { printedLabel } : {}), strayLines, repeated: [...repeated].sort() };
 }
 
 function addFlag(q: Question, flag: string) {
@@ -746,6 +806,8 @@ function describeFlag(flag: string, q: Question): string {
       return `${what}: TOSS-UP/BONUS marker missing; kind inferred`;
     case 'number-mismatch':
       return `${what}: printed number differs from its position`;
+    case 'kind-corrected':
+      return `${what}: printed under a TOSS-UP marker; it is the bonus of the toss-up before it`;
     case 'choice-letters-fixed':
       return `${what}: option letters misprinted in the PDF; read as W, X, Y, Z in order`;
     case 'choices-reordered':
@@ -796,7 +858,7 @@ const LETTERS_IN_ORDER: Letter[] = ['W', 'X', 'Y', 'Z'];
 /** Characters from scripts that never appear in these questions: a sign of a broken font mapping. */
 const GARBLED = /[\u0400-\u052f\u0590-\u08ff\u0900-\u0dff\u0e00-\u0fff\u1000-\u109f\u3040-\u9fff\uac00-\ud7af\ufffd\ue000-\uf8ff]/;
 
-function buildQuestion(d: Draft, kind: QuestionKind, number: number, meta: DoeRoundMeta, credit: string): Question {
+function buildQuestion(d: Draft, kind: QuestionKind, number: number, meta: DoeRoundMeta, credit: string, inferredLetters: Set<string>): Question {
   const flags: string[] = [];
   const sourceCategory = d.header.category.replace(/\s+/g, ' ').trim();
   let subject = sourceCategory ? mapCategory(sourceCategory) : undefined;
@@ -857,7 +919,16 @@ function buildQuestion(d: Draft, kind: QuestionKind, number: number, meta: DoeRo
   if (format === 'multiple_choice') {
     if (!hasAllChoices) flags.push('choices-missing');
     if (!answerLetter) {
-      if (answerText.trim()) flags.push('mc-answer-mismatch');
+      // The answer line printed only an option's text ("ANSWER: IT INCREASES"): use the letter of the one
+      // option it names exactly, or (for readable text) the one it names allowing for typos.
+      const exact = answer ? LETTERS_IN_ORDER.filter((l) => choiceTexts[l] && normalizeForCompare(choiceTexts[l]!) === normalizeForCompare(answer)) : [];
+      const readable = (answer.match(/\p{L}/gu) ?? []).length >= 3 && !GARBLED.test(answer) && !/[\^_]\(/.test(answer);
+      const close = answer && readable ? LETTERS_IN_ORDER.filter((l) => choiceTexts[l] && sameOption(answer, choiceTexts[l]!)) : [];
+      const named = exact.length === 1 ? exact[0] : exact.length === 0 && close.length === 1 ? close[0] : undefined;
+      if (hasAllChoices && named) {
+        answerLetter = named;
+        inferredLetters.add(doeQuestionId(meta.roundId, kind, number));
+      } else if (answerText.trim()) flags.push('mc-answer-mismatch');
     } else {
       const choice = choiceTexts[answerLetter];
       if (!answer && choice) answer = choice;
@@ -923,10 +994,14 @@ export function linesFromPlainText(text: string): SourceLine[] {
   return out;
 }
 
-/** Expected number of toss-ups per round for a regional year (25 through 2013, 23 for 2014-2020, 18 after). */
-export function expectedPairsForYear(year: number | undefined): number | undefined {
+/**
+ * Expected number of toss-ups per round for a regional year: 25 through 2013, 23 for 2014-2020, 18 after
+ * (the middle school 2021 virtual set has 15).
+ */
+export function expectedPairsForYear(year: number | undefined, level: Level = 'HS'): number | undefined {
   if (!year) return undefined;
   if (year <= 2013) return 25;
   if (year <= 2020) return 23;
+  if (level === 'MS' && year === 2021) return 15;
   return 18;
 }

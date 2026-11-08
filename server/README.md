@@ -66,8 +66,28 @@ it resolves this tree without a lockfile. `npm install --legacy-peer-deps` gets 
    uses `https://rebound-server.hanjian.workers.dev`. To test a deployed server end to end, run
    `SERVER_URL=<its address> node e2e/team-server.cjs` against a local build; its last step deletes the test team.
 
-No secrets are needed (`wrangler secret put` is not used). SQLite-backed Durable Objects are available on the
-Workers Free plan.
+No secrets are needed for sync and rooms. SQLite-backed Durable Objects are available on the Workers Free plan.
+
+### Optional: AI help
+
+AI drafts and explanations (docs/SERVER.md, "AI help") stay off until the Worker has a Claude API key. To turn
+them on, create a key in the Claude Console (console.anthropic.com → API Keys), ideally in a workspace with a
+monthly spend limit, then:
+
+```bash
+cd server
+npx wrangler secret put ANTHROPIC_API_KEY     # paste the key at the prompt; it is stored encrypted by Cloudflare
+```
+
+To turn AI help off again: `npx wrangler secret delete ANTHROPIC_API_KEY`. In `wrangler.toml`, `AI_DAILY_LIMIT`
+caps the model calls each team can make per UTC day (default 50); `AI_MODEL` and `AI_CHECK_MODEL` choose the
+models (default `claude-opus-5-5` for both). Redeploy after changing them.
+
+What it costs: Claude Opus 5.5 is $4 per million input tokens and $20 per million output tokens (thinking
+counts as output). Rough figures: a draft of three questions from a page of text, with its blind checks, is
+about $0.15 to $0.35; an explanation about $0.01 to $0.05, and nothing when it is served from the team's cache.
+At the default limit one team can spend at most a few dollars a day. Check real spending in the Claude Console.
+The Workers Free plan's 10 ms CPU limit is not an issue: waiting on the API is not CPU time.
 
 ## Things to know
 
@@ -76,13 +96,19 @@ Workers Free plan.
   PIN is weak against anyone holding its hash whatever the count, so the real defenses are that hashes never
   leave the Durable Object and the five-try lockout. Each stored hash records its own iteration count, so the
   count can change later without breaking existing PINs.
+- **AI calls and privacy.** With AI help on, the passages members paste and the questions they ask about are sent
+  to the Claude API, under the API key owner's agreement with Anthropic (its commercial terms and privacy policy
+  say how API data is handled). Nothing else about the team is sent, and the key never reaches the site.
 - **Logs.** WebSocket URLs carry the session token (browsers cannot set headers on WebSockets), so Workers Logs
   stay off in `wrangler.toml`. Use `npx wrangler tail` to watch errors live. The server never logs PINs,
   secrets or tokens.
 - **Failed-join limit.** The 30-per-hour limit per network address is kept inside each team's object. Every
   sign-in attempt counts against it until it succeeds, and the address is stored only as a salted hash, removed
-  at the first sign-in attempt an hour or more later. It protects each team, but it is not a global limit, and
-  team creation itself is not rate-limited; a Cloudflare rate-limiting rule can be added in front if needed.
+  at the first sign-in attempt an hour or more later. It protects each team, but it is not a global limit.
+- **Open sign-up.** Any school can create a team. A single `Registry` Durable Object (`src/registry.ts`) counts
+  new teams: at most 10 per network address and 300 in all per UTC day (429 with `Retry-After` past either).
+  Addresses are kept only as salted hashes, for the current day. If a school hits the address limit (a whole
+  district behind one address, say), raise `TEAMS_PER_ADDRESS_PER_DAY` and redeploy.
 - **Round-trip times for fair buzzing.** Besides answering the client's `ping` with `pong`, the server sends
   its own `{ "type": "ping", "t": <server time> }` (after `welcome` and after each client ping, at most once a
   second). The client should answer at once with `{ "type": "pong", "t": <same t> }`; the server measures the

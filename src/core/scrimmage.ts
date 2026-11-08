@@ -14,6 +14,7 @@
 import { partnerId, setIdOf } from './drill';
 import { rowLevel } from './levels';
 import { ROUND_TOSSUPS } from './lineup';
+import { CURRENT_PRESET_IDS } from './rules/presets';
 import { CORE_SUBJECTS, type CatalogRow, type CoreSubject, type DifficultyLevel, type ScrimmageFormat, type Subject } from './schema';
 
 export type ScrimmageLevel = DifficultyLevel | 'any';
@@ -27,15 +28,15 @@ export const LEVEL_TEXT: Record<ScrimmageLevel, string> = {
 };
 
 export const FORMATS: Record<ScrimmageFormat, { label: string; hint: string; size: number; presetId: string }> = {
-  regional: { label: 'Regional round', hint: 'Two 8-minute halves, as at regionals.', size: 25, presetId: 'doe-regional-2027' },
-  finals: { label: 'Finals round', hint: 'Two 10-minute halves: Finals round robin and double elimination rounds.', size: 30, presetId: 'doe-finals-2027' },
+  regional: { label: 'Regional round', hint: 'Two 8-minute halves, as at regionals.', size: 25, presetId: CURRENT_PRESET_IDS.regional },
+  finals: { label: 'Finals round', hint: 'Two 10-minute halves: Finals round robin and double elimination rounds.', size: 30, presetId: CURRENT_PRESET_IDS.finals },
   'finals-visual': {
     label: 'Finals visual bonus round',
     hint: 'Two 12-minute halves; visual bonuses show a figure and allow 30 seconds.',
     size: 30,
-    presetId: 'doe-finals-visual-2027',
+    presetId: CURRENT_PRESET_IDS.finalsVisual,
   },
-  tiebreak: { label: 'Tiebreaker drill', hint: 'Toss-ups only, played 5 at a time with no bonuses and no clock (Rule 6-4).', size: 10, presetId: 'doe-regional-2027' },
+  tiebreak: { label: 'Tiebreaker drill', hint: 'Toss-ups only, played 5 at a time with no bonuses and no clock (Rule 6-4).', size: 10, presetId: CURRENT_PRESET_IDS.regional },
 };
 
 export interface ScrimmageOptions {

@@ -266,6 +266,9 @@ export function TeamSharing() {
       {pin2 && pin !== pin2 && <p className="small" style={{ color: 'var(--warn)', margin: 0 }}>The PINs don't match.</p>}
       {error && <p className="small" style={{ color: 'var(--bad)', margin: 0 }}>{error}</p>}
       <p className="small muted" style={{ margin: 0 }}>
+        Any school's team can share. Use first names or nicknames; see <a href={href('/about')}>privacy and terms</a> for what the server keeps.
+      </p>
+      <p className="small muted" style={{ margin: 0 }}>
         Joining a team someone else shared? Open the join link they posted, or <a href={href('/join')}>enter it here</a>.
       </p>
     </section>

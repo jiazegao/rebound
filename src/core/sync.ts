@@ -22,6 +22,7 @@ export const SYNC_COLLECTIONS = [
   'completions',
   'packets',
   'visuals',
+  'written',
   'conceptCards',
   'games',
   'attempts',

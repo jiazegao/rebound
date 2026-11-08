@@ -4,6 +4,7 @@ import { QuestionView } from '../components/QuestionView';
 import { LoadError, Loading, Notice, PageHeader, SubjectTag } from '../components/ui';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type ConceptCard } from '../core/schema';
 import { topicById, TOPICS } from '../core/taxonomy';
+import { aiDraftCard, MAX_PASSAGE_CHARS, MIN_PASSAGE_CHARS, usageText, useAiStatus } from '../lib/ai';
 import { dateText } from '../lib/format';
 import { loadQuestions, useAsync, useConceptIndex } from '../lib/library';
 import { href } from '../lib/router';
@@ -28,16 +29,78 @@ function CardStatus({ card }: { card: ConceptCard }) {
     <span className="small muted">
       {card.status === 'reviewed' ? `Written by ${name(card.authorId)}, reviewed by ${name(card.reviewerId)}` : `Draft by ${name(card.authorId)}, waiting for a second player to review`} · updated{' '}
       {dateText(card.updatedAt)}
+      {card.ai && ` · AI-drafted from ${card.ai.passageSource}`}
     </span>
   );
 }
 
-function CardEditor({ id, existing, onDone }: { id: string; existing?: ConceptCard; onDone: () => void }) {
+/** Fills the card editor from a pasted, cited passage, when the team server has AI help. */
+function AiCardDraft({ concept, onDraft }: { concept: string; onDraft: (d: { summary: string; facts: string[]; traps: string; source: string; model: string }) => void }) {
+  const ai = useAiStatus();
+  const [source, setSource] = useState('');
+  const [passage, setPassage] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (!ai?.enabled) return null;
+  const length = passage.trim().length;
+  const left = Math.max(0, (ai.dailyLimit ?? 0) - (ai.usedToday ?? 0));
+  const ready = length >= MIN_PASSAGE_CHARS && length <= MAX_PASSAGE_CHARS && source.trim().length > 0 && left > 0 && !busy;
+  return (
+    <details className="card">
+      <summary>
+        <strong>Draft from a passage (AI)</strong>
+      </summary>
+      <div className="stack" style={{ marginTop: '0.75rem' }}>
+        <p className="small muted" style={{ margin: 0 }}>
+          Paste a section from a source your team may quote and say where it is from. An AI model drafts the card below from it; edit it, and a
+          second player reviews it as usual. The card stays labeled AI-drafted.
+        </p>
+        <div className="field">
+          <label htmlFor="ai-card-source">Source</label>
+          <input id="ai-card-source" type="text" maxLength={300} placeholder="e.g. OpenStax Biology 2e, 12.3" value={source} onChange={(e) => setSource(e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="ai-card-passage">
+            Passage ({length.toLocaleString()} of {MAX_PASSAGE_CHARS.toLocaleString()} characters)
+          </label>
+          <textarea id="ai-card-passage" rows={6} value={passage} onChange={(e) => setPassage(e.target.value)} />
+        </div>
+        <div className="row">
+          <button
+            type="button"
+            className="btn"
+            disabled={!ready}
+            onClick={async () => {
+              setBusy(true);
+              setError(null);
+              try {
+                const res = await aiDraftCard({ concept, passage: passage.trim(), source: source.trim() });
+                onDraft({ ...res.card, source: source.trim(), model: res.model });
+                setPassage('');
+              } catch (e) {
+                setError(e instanceof Error ? e.message : 'The card could not be drafted.');
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {busy ? 'Drafting…' : 'Draft the card'}
+          </button>
+          <span className="small muted">Uses 1 AI call. {usageText(ai)}.</span>
+        </div>
+        {error && <Notice kind="error">{error}</Notice>}
+      </div>
+    </details>
+  );
+}
+
+function CardEditor({ id, concept, existing, onDone }: { id: string; concept: string; existing?: ConceptCard; onDone: () => void }) {
   const player = useCurrentPlayer();
   const [summary, setSummary] = useState(existing?.summary ?? '');
   const [facts, setFacts] = useState((existing?.facts ?? []).join('\n'));
   const [traps, setTraps] = useState(existing?.traps ?? '');
   const [sources, setSources] = useState((existing?.sources ?? []).map((s) => (s.url ? `${s.title} | ${s.url}` : s.title)).join('\n'));
+  const [ai, setAi] = useState(existing?.ai);
   const count = words(summary);
   return (
     <form
@@ -61,10 +124,22 @@ function CardEditor({ id, existing, onDone }: { id: string; existing?: ConceptCa
           authorId: player?.id ?? existing?.authorId ?? null,
           reviewerId: null,
           status: 'draft',
+          ...(ai ? { ai } : {}),
         });
         onDone();
       }}
     >
+      <AiCardDraft
+        concept={concept}
+        onDraft={(d) => {
+          setSummary(d.summary);
+          setFacts(d.facts.join('\n'));
+          setTraps(d.traps);
+          setSources((cur) => [cur.trim(), d.source].filter(Boolean).join('\n'));
+          setAi({ model: d.model, at: new Date().toISOString(), passageSource: d.source });
+        }}
+      />
+      {ai && <Notice>AI-drafted from {ai.passageSource} ({ai.model}). Check each fact against the source before saving.</Notice>}
       <div className="field">
         <label htmlFor="card-summary">Summary ({count} of {SUMMARY_WORDS} words)</label>
         <textarea id="card-summary" rows={6} value={summary} onChange={(e) => setSummary(e.target.value)} />
@@ -143,7 +218,7 @@ export function ConceptPage({ id, query }: { id: string; query?: URLSearchParams
       </PageHeader>
 
       {editing ? (
-        <CardEditor id={id} existing={card} onDone={() => setEditing(false)} />
+        <CardEditor id={id} concept={`${concept.name} (${topic.name})`} existing={card} onDone={() => setEditing(false)} />
       ) : card ? (
         <article className="card stack concept-card">
           <p style={{ margin: 0 }}>{card.summary}</p>

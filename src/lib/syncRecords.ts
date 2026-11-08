@@ -15,10 +15,10 @@ export interface LocalRecord {
 /** What the device knows about each record it has synced: the fingerprint it had then and the server revision. */
 export type Known = Record<string, { fp: string; rev: number }>;
 
-type ArrayCollection = 'players' | 'lineups' | 'assignments' | 'packets' | 'visuals' | 'games' | 'attempts' | 'reports';
+type ArrayCollection = 'players' | 'lineups' | 'assignments' | 'packets' | 'visuals' | 'written' | 'games' | 'attempts' | 'reports';
 type MapCollection = 'completions' | 'conceptCards' | 'cards' | 'seen' | 'conceptReads' | 'plans';
 
-const ARRAYS: ArrayCollection[] = ['players', 'lineups', 'assignments', 'packets', 'visuals', 'games', 'attempts', 'reports'];
+const ARRAYS: ArrayCollection[] = ['players', 'lineups', 'assignments', 'packets', 'visuals', 'written', 'games', 'attempts', 'reports'];
 const MAPS: MapCollection[] = ['completions', 'conceptCards', 'cards', 'seen', 'conceptReads', 'plans'];
 
 /** Every synced record in the saved data, keyed by `collection/id`. */
@@ -96,6 +96,7 @@ export function applyRecords(d: AppData, records: SyncRecord[]): void {
   d.assignments.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   d.packets.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   d.visuals.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  d.written.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   d.attempts.sort((a, b) => a.t - b.t);
 }
 

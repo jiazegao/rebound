@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { LoadError, Loading, Notice, PageHeader, SubjectTag } from '../components/ui';
-import { DEFAULT_PRESET_ID, PRESETS } from '../core/rules/presets';
+import { CURRENT_PRESET_IDS, currentPresets, DEFAULT_PRESET_ID, PRESETS } from '../core/rules/presets';
 import { CORE_SUBJECTS } from '../core/schema';
 import { dateTimeText } from '../lib/format';
-import { roundQuestions, setLabel, useAsync, useIndex, useSet } from '../lib/library';
+import { newestSet, roundQuestions, setGroups, setLabel, useAsync, useIndex, useSet, useTeamLevel } from '../lib/library';
 import { packetRound, packetRounds, teamSetId } from '../lib/packets';
 import { href, navigate } from '../lib/router';
 import { addPlayer, createGame, useData } from '../lib/store';
@@ -13,6 +13,7 @@ type Side = 0 | 1 | null;
 export function ReaderSetup({ query }: { query: URLSearchParams }) {
   const data = useData();
   const index = useIndex();
+  const level = useTeamLevel();
   const [source, setSource] = useState<'doe' | 'packet'>(query.get('packet') ? 'packet' : 'doe');
   const [packetId, setPacketId] = useState<string | null>(query.get('packet') ?? data.packets[0]?.id ?? null);
   const [packetRoundId, setPacketRoundId] = useState<string | null>(null);
@@ -31,10 +32,10 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
   // Default to the newest set once the index loads.
   useEffect(() => {
     if (!setId && index.data?.sets.length) {
-      const newest = [...index.data.sets].sort((a, b) => (b.setNumber ?? 0) - (a.setNumber ?? 0))[0];
-      setSetId(newest.id);
+      const newest = newestSet(index.data, level);
+      if (newest) setSetId(newest.id);
     }
-  }, [index.data, setId]);
+  }, [index.data, setId, level]);
 
   // Default to the first round of the chosen set.
   useEffect(() => {
@@ -54,8 +55,8 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
   // A scrimmage built for a format brings its rules: Finals timing, visual bonus rounds, tiebreaker drills.
   const packetFormat = source === 'packet' ? packet?.options?.format : undefined;
   useEffect(() => {
-    if (packetFormat === 'finals') setPresetId('doe-finals-2027');
-    else if (packetFormat === 'finals-visual') setPresetId('doe-finals-visual-2027');
+    if (packetFormat === 'finals') setPresetId(CURRENT_PRESET_IDS.finals);
+    else if (packetFormat === 'finals-visual') setPresetId(CURRENT_PRESET_IDS.finalsVisual);
     if (packetFormat === 'tiebreak') setFormat('tiebreak');
     else if (packetFormat) setFormat('game');
   }, [packetFormat]);
@@ -189,13 +190,15 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
             <div className="field">
               <label htmlFor="set">Sample set</label>
               <select id="set" value={setId ?? ''} onChange={(e) => { setSetId(e.target.value); setRoundId(null); }}>
-                {[...index.data.sets]
-                  .sort((a, b) => (b.setNumber ?? 0) - (a.setNumber ?? 0))
-                  .map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {setLabel(s)}
-                    </option>
-                  ))}
+{setGroups(index.data, level).map((g) => (
+                  <optgroup key={g.level} label={g.label}>
+                    {g.sets.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {setLabel(s)}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
               </select>
             </div>
           )}
@@ -241,7 +244,7 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
           <div className="field">
             <label htmlFor="preset">Rules</label>
             <select id="preset" value={presetId} onChange={(e) => setPresetId(e.target.value)}>
-              {PRESETS.map((p) => (
+              {currentPresets().map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
                 </option>

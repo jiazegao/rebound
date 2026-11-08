@@ -5,7 +5,7 @@ import { pickMixed } from '../core/drill';
 import { judgeAnswer, type JudgeResult } from '../core/judge/judge';
 import { SHOOTOUT_POINTS, SHOOTOUT_TOSSUPS, shootoutOutcome, shootoutScore, type ShootoutMark } from '../core/rules/shootout';
 import type { Question, Round } from '../core/schema';
-import { loadCatalog, loadQuestions, setLabel, useIndex, useSet } from '../lib/library';
+import { loadCatalog, loadQuestions, newestSet, setGroups, setLabel, useIndex, useSet, useTeamLevel } from '../lib/library';
 import { buildReading, readingDurationMs, revealedCount, splitRevealed } from '../lib/reading';
 import { href } from '../lib/router';
 import { beep, unlockAudio } from '../lib/sound';
@@ -301,6 +301,7 @@ interface Series {
 export function ShootoutConsole() {
   const data = useData();
   const index = useIndex();
+  const level = useTeamLevel();
   const [setId, setSetId] = useState<string | null>(null);
   const [roundId, setRoundId] = useState<string | null>(null);
   const set = useSet(setId);
@@ -311,8 +312,8 @@ export function ShootoutConsole() {
   const now = useTicker(cursor.readAt !== null, 100);
 
   useEffect(() => {
-    if (!setId && index.data?.sets.length) setSetId([...index.data.sets].sort((a, b) => (b.setNumber ?? 0) - (a.setNumber ?? 0))[0]!.id);
-  }, [index.data, setId]);
+    if (!setId && index.data?.sets.length) setSetId(newestSet(index.data, level)?.id ?? null);
+  }, [index.data, setId, level]);
   useEffect(() => {
     if (set.data && (!roundId || !set.data.rounds.some((r) => r.id === roundId))) setRoundId(set.data.rounds[set.data.rounds.length - 1]?.id ?? null);
   }, [set.data, roundId]);
@@ -352,13 +353,15 @@ export function ShootoutConsole() {
               <div className="field">
                 <label htmlFor="so-set">Sample set</label>
                 <select id="so-set" value={setId ?? ''} onChange={(e) => { setSetId(e.target.value); setRoundId(null); }}>
-                  {[...index.data.sets]
-                    .sort((a, b) => (b.setNumber ?? 0) - (a.setNumber ?? 0))
-                    .map((s) => (
+{setGroups(index.data, level).map((g) => (
+                  <optgroup key={g.level} label={g.label}>
+                    {g.sets.map((s) => (
                       <option key={s.id} value={s.id}>
                         {setLabel(s)}
                       </option>
                     ))}
+                  </optgroup>
+                ))}
                 </select>
               </div>
             )}

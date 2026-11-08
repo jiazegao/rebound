@@ -13,9 +13,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "data:fetch": "tsx scripts/doe/fetch.ts",
-    "data:build": "tsx scripts/doe/build.ts"
+    "data:build": "tsx scripts/doe/build.ts",
+    "data:fetch:ms": "tsx scripts/doe/fetch.ts --level ms",
+    "data:build:ms": "tsx scripts/doe/build.ts --level ms",
+    "data:fingerprints": "tsx scripts/studio/fingerprints.ts"
   },
   "dependencies": {
+    "docx": "^9.14.0",
     "idb-keyval": "^6.2.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -26,6 +30,7 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
+    "ajv": "^8.20.0",
     "pdfjs-dist": "^4.10.38",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",

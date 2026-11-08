@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AiExplain } from '../components/AiExplain';
 import { AnswerBox, Choices, Concepts, QuestionMeta, RichText } from '../components/QuestionView';
 import { Countdown, LoadError, Loading, Notice, PageHeader, useTicker } from '../components/ui';
 import { Verdict } from '../components/Verdict';
@@ -9,7 +10,7 @@ import { LEVEL_LABEL, rowLevel, teamCatalog } from '../core/levels';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type Catalog, type CatalogRow, type CoreSubject, type DifficultyLevel, type Question, type QuestionPair, type QuestionSet } from '../core/schema';
 import { topicsForSubject } from '../core/taxonomy';
 import { usePlayerModel } from '../lib/learning';
-import { catalogById, loadCatalog, loadConceptIndex, loadQuestions, loadSetById, setLabel, useCatalog, useIndex } from '../lib/library';
+import { catalogById, loadCatalog, loadConceptIndex, loadQuestions, loadSetById, setGroups, setLabel, useCatalog, useIndex, useTeamLevel } from '../lib/library';
 import { topicById } from '../core/taxonomy';
 import { buildReading, lettersPerMinute, readingDurationMs, revealedCount, splitRevealed, type Reading } from '../lib/reading';
 import { href } from '../lib/router';
@@ -187,7 +188,10 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
   const catalogMap = useMemo(() => (catalog.data ? catalogById(catalog.data) : null), [catalog.data]);
   const model = usePlayerModel(data, playerId, catalogMap);
 
-  const sets = useMemo(() => [...(index.data?.sets ?? [])].sort((a, b) => (b.setNumber ?? 0) - (a.setNumber ?? 0)), [index.data]);
+  const level = useTeamLevel();
+  const groups = useMemo(() => (index.data ? setGroups(index.data, level) : []), [index.data, level]);
+  // "Surprise me" picks from the team's own level.
+  const sets = useMemo(() => groups[0]?.sets ?? [], [groups]);
   const topics = useMemo(() => topicsForSubject(s.subject).filter((t) => (catalog.data?.topicCounts[t.id] ?? 0) > 0), [s.subject, catalog.data]);
 
   useEffect(() => {
@@ -315,10 +319,14 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
                   <label htmlFor="set">Sample set</label>
                   <select id="set" value={s.setId} onChange={(e) => setS({ ...s, setId: e.target.value, roundId: '' })}>
                     <option value="">Surprise me (recent sets)</option>
-                    {sets.map((x) => (
-                      <option key={x.id} value={x.id}>
-                        {setLabel(x)}
-                      </option>
+                    {groups.map((g) => (
+                      <optgroup key={g.level} label={g.label}>
+                        {g.sets.map((x) => (
+                          <option key={x.id} value={x.id}>
+                            {setLabel(x)}
+                          </option>
+                        ))}
+                      </optgroup>
                     ))}
                   </select>
                 </div>
@@ -789,6 +797,7 @@ function Play({
             {step.response && <p className="small muted">You answered: “{step.response}”</p>}
             <Verdict result={step.result} decided={step.decided} onDecide={decideTossup} />
             <AnswerBox q={tossup} />
+            <AiExplain q={tossup} />
             <Concepts q={tossup} />
           </>
         )}
@@ -797,6 +806,7 @@ function Play({
             {step.response && <p className="small muted">You answered: “{step.response}”</p>}
             <Verdict result={step.result} decided={step.decided} onDecide={decideBonus} />
             <AnswerBox q={bonus} />
+            <AiExplain q={bonus} />
             <Concepts q={bonus} />
           </>
         )}

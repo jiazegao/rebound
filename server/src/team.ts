@@ -6,6 +6,26 @@
 
 import { DurableObject } from 'cloudflare:workers';
 import {
+  AI_BODY_BYTES,
+  aiSettings,
+  AiUnavailable,
+  cachedValue,
+  cacheValue,
+  checkExplanation,
+  draftCard,
+  draftQuestions,
+  ensureAiTables,
+  explainAnswer,
+  parseCardInput,
+  parseDraftInput,
+  parseExplainInput,
+  refundAiCalls,
+  reserveAiCalls,
+  usedToday,
+  type AiSettings,
+  type TeamLevel,
+} from './ai';
+import {
   hashPin,
   newId,
   newJoinSecret,
@@ -81,6 +101,10 @@ export class TeamServer extends DurableObject<Env> {
     [/^\/join-code$/, { POST: (r) => this.rotateJoinCode(r) }],
     [/^\/rooms$/, { POST: (r) => this.createRoom(r), GET: (r) => this.listRooms(r) }],
     [/^\/rooms\/([^/]+)\/ws$/, { GET: (r, u, [roomId]) => this.openRoomSocket(r, u, roomId!) }],
+    [/^\/ai$/, { GET: (r) => this.aiStatus(r) }],
+    [/^\/ai\/draft$/, { POST: (r) => this.aiDraft(r) }],
+    [/^\/ai\/explain$/, { POST: (r) => this.aiExplain(r) }],
+    [/^\/ai\/card$/, { POST: (r) => this.aiCard(r) }],
   ];
 
   constructor(ctx: DurableObjectState, env: Env) {
@@ -467,6 +491,88 @@ export class TeamServer extends DurableObject<Env> {
   private async openRoomSocket(request: Request, url: URL, roomId: string): Promise<Response> {
     const session = await this.authenticate(request, url);
     return this.rooms.connect(request, session.member, session.sid, roomId, Date.now());
+  }
+
+  /* ---------------- AI help (optional; see ai.ts) ---------------- */
+
+  private async aiStatus(request: Request): Promise<Response> {
+    await this.authenticate(request);
+    const settings = aiSettings(this.env);
+    if (!settings) return json({ enabled: false });
+    return json({ enabled: true, model: settings.model, ...this.aiUsage(settings) });
+  }
+
+  /** Question drafts from a cited passage, each with a blind answer check. Uses one call plus one per draft. */
+  private async aiDraft(request: Request): Promise<Response> {
+    await this.authenticate(request);
+    const settings = this.requireAi();
+    const input = parseDraftInput(await readJson(request, AI_BODY_BYTES), this.level());
+    const result = await this.withAiCalls(settings, 1 + input.count, () => draftQuestions(settings, input));
+    return json({ drafts: result.drafts, model: result.model, ...this.aiUsage(settings) });
+  }
+
+  /** An explanation of a question's answer. The team shares one cache, so a question is explained once. */
+  private async aiExplain(request: Request): Promise<Response> {
+    await this.authenticate(request);
+    const settings = this.requireAi();
+    const input = parseExplainInput(await readJson(request, AI_BODY_BYTES), this.level());
+    const key = await sha256Hex(JSON.stringify(['explain', settings.model, input]));
+    this.requireReady();
+    ensureAiTables(this.sql);
+    const hit = cachedValue(this.sql, key, Date.now()) as { model?: unknown } | null;
+    const cached = checkExplanation(hit);
+    if (cached && typeof hit?.model === 'string') return json({ ...cached, model: hit.model, cached: true, ...this.aiUsage(settings) });
+    const result = await this.withAiCalls(settings, 1, () => explainAnswer(settings, input));
+    this.requireReady();
+    cacheValue(this.sql, key, result, Date.now());
+    return json({ ...result, cached: false, ...this.aiUsage(settings) });
+  }
+
+  private async aiCard(request: Request): Promise<Response> {
+    await this.authenticate(request);
+    const settings = this.requireAi();
+    const input = parseCardInput(await readJson(request, AI_BODY_BYTES));
+    const result = await this.withAiCalls(settings, 1, () => draftCard(settings, input));
+    return json({ card: result.card, model: result.model, ...this.aiUsage(settings) });
+  }
+
+  private requireAi(): AiSettings {
+    const settings = aiSettings(this.env);
+    if (!settings) throw new HttpError(404, 'AI help is not turned on for this team server.');
+    return settings;
+  }
+
+  private level(): TeamLevel {
+    return this.store.meta('level') === 'MS' ? 'MS' : 'HS';
+  }
+
+  private aiUsage(settings: AiSettings): { dailyLimit: number; usedToday: number } {
+    this.requireReady();
+    ensureAiTables(this.sql);
+    return { dailyLimit: settings.dailyLimit, usedToday: usedToday(this.sql, Date.now()) };
+  }
+
+  /**
+   * Counts `calls` against the team's daily limit before `work` starts (so parallel requests can't overrun
+   * it), then gives back the calls that never reached the model: a failed call, or fewer drafts than asked.
+   */
+  private async withAiCalls<T>(settings: AiSettings, calls: number, work: () => Promise<T>): Promise<T> {
+    this.requireReady();
+    ensureAiTables(this.sql);
+    const day = reserveAiCalls(this.sql, settings.dailyLimit, calls, Date.now());
+    let used = calls;
+    try {
+      const result = await work();
+      const reported = (result as { calls?: unknown }).calls;
+      if (typeof reported === 'number') used = Math.min(calls, reported);
+      return result;
+    } catch (error) {
+      // Only the first call runs before anything can fail (drafting stops there), unless it never ran at all.
+      used = error instanceof AiUnavailable ? 0 : 1;
+      throw error;
+    } finally {
+      if (this.ready && used < calls) refundAiCalls(this.sql, day, calls - used);
+    }
   }
 
   /* ---------------- helpers ---------------- */

@@ -3,7 +3,7 @@
  * first visit; this module lets a player save every question file ahead of time, so drills and
  * reviews work on a bus or on a school network that drops out.
  */
-import { loadIndex } from './library';
+import { levelFile, loadIndex, setsOfLevel, teamLevel } from './library';
 import { loadPhotoSet } from './visuals';
 
 /** Must match DATA in the service worker. */
@@ -33,11 +33,17 @@ export interface OfflineStatus {
   bytes: number | null;
 }
 
-/** Every data file a device can save: the DOE library and, when the site has one, the photo set for the Visual lab. */
+/**
+ * Every data file a device can save: the DOE library of the team's level and, when the site has one, the photo
+ * set for the Visual lab.
+ */
 async function dataUrls(): Promise<string[]> {
   const index = await loadIndex();
   const photos = await loadPhotoSet();
-  const doe = ['index.json', 'catalog.json', 'concepts.json', ...index.sets.map((s) => s.file)].map((f) => `${DATA_BASE}${f}`);
+  const level = teamLevel();
+  const doe = ['index.json', levelFile('catalog', level), levelFile('concepts', level), ...setsOfLevel(index, level).map((s) => s.file)].map(
+    (f) => `${DATA_BASE}${f}`,
+  );
   const visual = photos.photos.length ? ['data/visual/photos.json', ...photos.photos.map((p) => `data/visual/${p.file}`)] : [];
   return [...doe, ...visual].map((f) => new URL(f, document.baseURI).href);
 }

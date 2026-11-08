@@ -62,6 +62,11 @@ export function CoachesPage() {
           delete the whole team from the server on the Team page.
         </li>
         <li>Remote rooms pass the game, the buzzes and the team channel through the same server while the room is open; team-channel messages are not saved.</li>
+        <li>
+          If the team server has AI help turned on, a passage a member pastes for AI drafts, or a question a member asks to have explained, is sent
+          to Anthropic's Claude API to write the reply. Nothing else about the team is sent, and every AI draft stays labeled and needs a person's
+          approval.
+        </li>
         <li>No ads, no analytics, no tracking.</li>
       </ul>
 
@@ -136,8 +141,12 @@ export function AboutPage() {
         Rebound keeps your team's data in your browser on your device. If your captain shares the team, a copy is also kept on Rebound's team
         server (on Cloudflare), where only the team's signed-in members can read it. Members sign in with a display name and a PIN; the PIN is
         stored only as a salted hash, and no emails are collected. To slow down PIN guessing, the server counts sign-ins from each network
-        address over the past hour, keeping only a salted hash of the address. The coach or captain can delete the team from the server on the
-        Team page.
+        address over the past hour, and to keep sign-up open to every school it counts new teams from each address per day, keeping only a
+        salted hash of the address in both cases. The coach or captain can delete the team from the server on the Team page.
+      </p>
+      <p>
+        AI help is optional and off unless the team server has it turned on. When a member asks for AI drafts or an explanation, the passage or
+        question they send goes to Anthropic's Claude API to write the reply; nothing else about the team is sent.
       </p>
       <p>
         Rebound does not use cookies for tracking, has no analytics and shows no ads. You can export or delete everything on a device from the{' '}
@@ -148,6 +157,15 @@ export function AboutPage() {
       <p>
         Rebound is provided free and as is, for practice. Rule summaries are a convenience; the official DOE rulebook and your competition's
         officials have the final say.
+      </p>
+      <p>
+        Any school's Science Bowl team may use Rebound and its team server. Use first names or nicknames, keep to practice material, and keep a
+        backup from the <a href={href('/data')}>Data</a> page: the server is run by volunteers and may be unavailable at times. Questions a team
+        writes or uploads stay with that team; do not upload packets you are not allowed to share. Teams that abuse the service may be removed.
+      </p>
+      <p>
+        AI-drafted questions and explanations can be wrong. They are labeled, need a person's approval, and are for a team's own practice, not
+        for publishing or for competitions.
       </p>
       <p>
         Rebound's code is open source under the MIT License. The DOE questions are public domain and are not covered by that license.

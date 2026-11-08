@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { QuestionView } from '../components/QuestionView';
+import { RoundDownloads } from '../components/Downloads';
 import { LoadError, Loading, Notice, PageHeader, SubjectTag } from '../components/ui';
 import { FigureView } from '../components/Figure';
 import { teamCatalog, UPLOAD_LEVEL_LABEL } from '../core/levels';
@@ -272,7 +273,7 @@ function UploadPacket() {
     <section className="card stack" aria-labelledby="upload-heading">
       <h2 id="upload-heading">Upload a packet</h2>
       <p className="muted small" style={{ margin: 0 }}>
-        An invitational's PDF (one file per round) or questions in Rebound's JSON format. Packets formatted like DOE's come in cleanly; anything
+        An invitational's PDF (one file per round), or an NSB-JSON file (the open format Rebound and other tools export; see docs/NSB-JSON.md). Packets formatted like DOE's come in cleanly; anything
         that did not parse is flagged below. {UPLOAD_LICENSE} The packet stays in your team's data.
       </p>
       <div className="grid">
@@ -506,6 +507,13 @@ export function PacketView({ id, print }: { id: string; print: boolean }) {
       {round.error && <LoadError error={round.error} />}
       {round.data && (
         <>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <RoundDownloads
+              set={packet.set ?? { id: packet.id, provider: 'team', level: data.team?.level ?? 'HS', title: packet.title, credit: packet.title, license: 'The team’s own practice packet.', rounds: [round.data] }}
+              round={round.data}
+              title={rounds.length > 1 ? `${packet.title}, ${round.data.label}` : packet.title}
+            />
+          </div>
           <div className="row no-print" style={{ gap: '0.3rem', marginBottom: '1rem' }}>
             {subjects.map((s) => (
               <SubjectTag key={s} subject={s} />

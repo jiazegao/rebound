@@ -17,8 +17,9 @@ function serviceWorker(): Plugin {
       const built = Object.keys(bundle).filter((f) => !f.endsWith('.map'));
       const icons = existsSync('public/icons') ? readdirSync('public/icons').map((f) => `icons/${f}`) : [];
       const extra = existsSync('public/manifest.webmanifest') ? ['manifest.webmanifest'] : [];
-      // Chunks loaded only when someone uploads a packet (pdf.js, the tagger) are cached on first use instead.
-      const lazy = (f: string) => /^assets\/(pdf|tagging)[.-]/.test(f);
+      // Chunks loaded only when someone uploads a packet (pdf.js, the tagger) or exports a Word file (docx) are
+      // cached on first use instead.
+      const lazy = (f: string) => /^assets\/(pdf|tagging|docx)[.-]/.test(f);
       const precache = ['./', ...built.filter((f) => f !== 'index.html' && !lazy(f)), ...extra, ...icons].sort();
       const hash = createHash('sha256');
       for (const f of built) {
@@ -41,6 +42,15 @@ function serviceWorker(): Plugin {
 export default defineConfig({
   base: './',
   plugins: [react(), serviceWorker()],
+  build: {
+    rollupOptions: {
+      output: {
+        // Rollup would name the docx library's chunk after its folder ("dist"); a clear name lets the service
+        // worker leave it out of the install-time cache.
+        chunkFileNames: (chunk) => (chunk.facadeModuleId?.includes('/node_modules/docx/') ? 'assets/docx-[hash].js' : 'assets/[name]-[hash].js'),
+      },
+    },
+  },
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],

@@ -32,6 +32,37 @@ export const DOE_ERRATA: DoeErratum[] = [
     note: 'Corrected: DOE printed the answer as "W) WINDS", but winds is choice Z.',
     reviewed: '2026-11-07',
   },
+  // Middle school
+  {
+    id: 'doe-ms-01-r07-t07',
+    answerLetter: 'Y',
+    note: 'Corrected: DOE printed the answer as "X) BRAIDED", but braided is choice Y (streams below glaciers form braided patterns).',
+    reviewed: '2026-11-08',
+  },
+  {
+    id: 'doe-ms-01-r18-t07',
+    answerLetter: 'W',
+    note: 'Corrected: DOE printed the answer as "X) LAVA DOMES", but lava domes is choice W.',
+    reviewed: '2026-11-08',
+  },
+  {
+    id: 'doe-ms-06-r08-b08',
+    answerLetter: 'W',
+    note: 'Corrected: DOE printed the answer as "X) 50%", but 50% is choice W (basaltic lava is about 45-52% silica).',
+    reviewed: '2026-11-08',
+  },
+  {
+    id: 'doe-ms-08-r17-t17',
+    answerLetter: 'X',
+    note: 'Corrected: DOE printed the answer as "Y) 2.5", but 2.5 is choice X (one magnitude is a brightness ratio of about 2.512).',
+    reviewed: '2026-11-08',
+  },
+  {
+    id: 'doe-ms-16-r02-b17',
+    answerLetter: 'X',
+    note: 'Corrected: DOE printed the answer as "W) CARBON DIOXIDE", but carbon dioxide is choice X.',
+    reviewed: '2026-11-08',
+  },
 ];
 
 const compact = (s: string) =>

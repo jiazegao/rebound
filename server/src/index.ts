@@ -8,6 +8,7 @@ import { errorResponse, HttpError, json, MAX_BODY_BYTES, readBody, readJson, toE
 import { CREATE_PATH, TEAM_NOT_FOUND } from './team';
 import { createTeamInput } from './validate';
 
+export { Registry } from './registry';
 export { TeamServer } from './team';
 
 const ORIGIN_REFUSED = 'This website is not allowed to use the Rebound team server.';
@@ -68,6 +69,10 @@ async function route(request: Request, env: Env): Promise<Response> {
 /** `POST /api/teams`: a new random team id, and a new Durable Object initialized with the team. */
 async function createTeam(request: Request, env: Env): Promise<Response> {
   const input = createTeamInput(await readJson(request));
+  // Sign-up is open to any school; the registry caps new teams per network address and per day.
+  const registry = env.REGISTRY.get(env.REGISTRY.idFromName('global'));
+  const reservation = await registry.reserveTeam(request.headers.get('CF-Connecting-IP'), Date.now());
+  if (!reservation.ok) throw new HttpError(429, reservation.message, reservation.retryAfter);
   // Ids carry 80 random bits, so a clash is practically impossible; the object refuses an id that is already a
   // team (409) and another is drawn.
   for (let attempt = 0; attempt < 3; attempt++) {

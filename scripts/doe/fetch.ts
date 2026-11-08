@@ -1,13 +1,16 @@
 /**
- * Builds scripts/doe/manifest.json from the official DOE "High School Sample Questions"
- * page and downloads every listed PDF into .cache/doe/pdf/ (gitignored).
+ * Builds the manifest of one level's official DOE sample-question page and downloads every listed
+ * PDF into .cache/doe/pdf/ (gitignored):
+ *   --level hs (default)  "High School Sample Questions"   → scripts/doe/manifest.json
+ *   --level ms            "Middle School Sample Questions" → scripts/doe/manifest-ms.json
  *
- *   npx tsx scripts/doe/fetch.ts [options]        (npm run data:fetch)
+ *   npx tsx scripts/doe/fetch.ts [options]        (npm run data:fetch, npm run data:fetch:ms)
  *
  * Options (all paths are plain arguments; nothing in the download folder is ever executed):
+ *   --level <hs|ms>      which page to read                   (default hs)
  *   --out <dir>          PDF cache folder                     (default .cache/doe/pdf)
- *   --manifest <file>    manifest to write                    (default scripts/doe/manifest.json)
- *   --log <file>         fetch log (JSON) to write            (default .cache/doe/fetch-log.json)
+ *   --manifest <file>    manifest to write                    (default scripts/doe/manifest.json, manifest-ms.json for ms)
+ *   --log <file>         fetch log (JSON) to write            (default .cache/doe/fetch-log.json, fetch-log-ms.json for ms)
  *   --seed <dir>         copy already-downloaded PDFs from here before any network request
  *                        (default: the earlier research folder, when it exists)
  *   --no-seed            do not seed
@@ -28,6 +31,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const HS_PAGE_URL = 'https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/HS-Sample-Questions';
+export const MS_PAGE_URL = 'https://science.osti.gov/wdts/nsb/Regional-Competitions/Resources/MS-Sample-Questions';
 export const USER_AGENT = 'ReboundStudyImporter/0.1 (student NSB practice tool)';
 const MIN_DELAY_MS = 3000;
 const MAX_BLOCKS_IN_A_ROW = 3;
@@ -49,10 +53,11 @@ const KNOWN_YEARS: Record<number, string> = {
 };
 
 export type ManifestKind = 'round' | 'resource';
+export type FetchLevel = 'HS' | 'MS';
 
 export interface ManifestEntry {
-  /** Sample set number (1-17). */
-  set: number;
+  /** Sample set number (1-17), or the key of an unnumbered section of rounds ("sample-rounds"). */
+  set: number | string;
   /** 1-based position among entries of the same kind within the set, in page order. */
   order: number;
   /** Link text on the official page, e.g. "Round 1" or "Sample Energy Questions". */
@@ -63,11 +68,16 @@ export interface ManifestEntry {
   /** File name inside the PDF cache folder. */
   file: string;
   year?: string;
+  /** The link printed on the page, when it points at another file than `url` (see `note`). */
+  pageUrl?: string;
+  /** Why the entry differs from the page, or what is odd about it. */
+  note?: string;
 }
 
 export interface ManifestSet {
-  set: number;
-  /** Heading text on the page, e.g. "Sample Questions Set 14". */
+  /** Sample set number, or the key of an unnumbered section of rounds. */
+  set: number | string;
+  /** Heading text on the page, e.g. "Sample Questions Set 14" or "Sample Rounds". */
   heading?: string;
   year?: string;
   /** Where the year came from. */
@@ -78,12 +88,83 @@ export interface ManifestSet {
 
 export interface Manifest {
   source: string;
-  level: 'HS';
+  level: FetchLevel;
   /** Extra pages the main page linked to and that were scanned for PDFs. */
   subpages: string[];
   sets: ManifestSet[];
   entries: ManifestEntry[];
 }
+
+/** A link on the official page that points at the wrong file, and the file to use instead. */
+export interface LinkFix {
+  /** Sample set the link is listed under. */
+  set: number;
+  /** The link as printed on the page (absolute URL). */
+  pageUrl: string;
+  /** The file to download instead. */
+  url: string;
+  /** Why, with the evidence. */
+  note: string;
+}
+
+/**
+ * Checked by hand (2026-11-08): DOE's middle school page links Set 15 Round 7 to the high school file of
+ * the same name. The middle school file exists next to the other Set 15 rounds (same naming, same upload
+ * date, 10 Dec 2024) and is printed "Middle School / Set 7"; the high school file is HS Set 16 Round 7.
+ */
+const MS_LINK_FIXES: LinkFix[] = [
+  {
+    set: 15,
+    pageUrl: 'https://science.osti.gov/-/media/wdts/nsb/pdf/HS-Sample-Questions/Sample-Set-16/Set-7-HS-2021.pdf',
+    url: 'https://science.osti.gov/-/media/wdts/nsb/pdf/MS-Sample-Questions/Sample-Set-15/Set-7-MS-2021.pdf',
+    note:
+      'The page links Set 15 Round 7 to the high school file (HS Set 16 Round 7); the middle school file ' +
+      'Set-7-MS-2021.pdf sits next to the other Set 15 rounds and is printed "Middle School / Set 7".',
+  },
+];
+
+/** What differs between the high school and middle school pages. */
+export interface LevelConfig {
+  level: FetchLevel;
+  page: string;
+  /** Folder of the level's PDFs in DOE's media library. */
+  folder: 'HS-Sample-Questions' | 'MS-Sample-Questions';
+  /** Default manifest and fetch log, relative to the repository. */
+  manifest: string;
+  log: string;
+  /** url<TAB>label list saved by earlier research, in the research folder. */
+  linksFile: string;
+  knownYears: Record<number, string>;
+  /** Headings of sections of unnumbered rounds, and the key their entries get as `set`. */
+  groups: { heading: RegExp; key: string }[];
+  linkFixes: LinkFix[];
+}
+
+export const LEVELS: Record<FetchLevel, LevelConfig> = {
+  HS: {
+    level: 'HS',
+    page: HS_PAGE_URL,
+    folder: 'HS-Sample-Questions',
+    manifest: 'scripts/doe/manifest.json',
+    log: '.cache/doe/fetch-log.json',
+    linksFile: 'HS_links.tsv',
+    knownYears: KNOWN_YEARS,
+    groups: [],
+    linkFixes: [],
+  },
+  MS: {
+    level: 'MS',
+    page: MS_PAGE_URL,
+    folder: 'MS-Sample-Questions',
+    manifest: 'scripts/doe/manifest-ms.json',
+    log: '.cache/doe/fetch-log-ms.json',
+    linksFile: 'MS_links.tsv',
+    // Sets 1-13 have a year in the page's table of contents; 14-16 in their file names (2020-MS-Rd1.pdf).
+    knownYears: {},
+    groups: [{ heading: /^Sample\s+Rounds$/i, key: 'sample-rounds' }],
+    linkFixes: MS_LINK_FIXES,
+  },
+};
 
 interface FetchResult {
   url: string;
@@ -156,14 +237,32 @@ export function yearsFromToc(html: string): Map<number, string> {
   return years;
 }
 
-/** Headings such as `<a name="set14"><strong>Sample Questions Set 14*</strong></a>`, by position. */
-function setHeadings(html: string): { index: number; set: number; text: string }[] {
-  const out: { index: number; set: number; text: string }[] = [];
+/**
+ * Years in the middle school page's table of contents, which is written less regularly:
+ * "Sample Questions Set 1 (from 2009)", "Sample Questions 10 (from 2016)", "Sample Questions12* (from 2018)".
+ * Keeps the text as printed, for the manifest's evidence.
+ */
+export function tocYearsLenient(html: string): Map<number, { year: string; text: string }> {
+  const years = new Map<number, { year: string; text: string }>();
+  const text = htmlToText(html);
+  const re = /Sample\s+Questions?\s*(?:Set\s*)?(\d+)\s*\**\s*\(\s*from\s+((?:19|20)\d\d)\s*\)/gi;
+  for (let m = re.exec(text); m; m = re.exec(text)) if (!years.has(Number(m[1]))) years.set(Number(m[1]), { year: m[2], text: m[0] });
+  return years;
+}
+
+/**
+ * Headings such as `<a name="set14"><strong>Sample Questions Set 14*</strong></a>`, by position; with
+ * `groups`, also headings of unnumbered sections such as `<a name="sr">Sample Rounds</a>`.
+ */
+function setHeadings(html: string, groups: LevelConfig['groups'] = []): { index: number; set: number | string; text: string }[] {
+  const out: { index: number; set: number | string; text: string }[] = [];
   const re = /<a\b[^>]*\bname\s*=\s*["'][^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
   for (let m = re.exec(html); m; m = re.exec(html)) {
     const text = htmlToText(m[1]).replace(/\*+$/, '').trim();
     const n = /Set\s+(\d+)/i.exec(text);
+    const group = groups.find((g) => g.heading.test(text));
     if (n) out.push({ index: m.index, set: Number(n[1]), text });
+    else if (group) out.push({ index: m.index, set: group.key, text });
   }
   return out;
 }
@@ -177,20 +276,35 @@ export function cacheFileName(url: string): string {
   return rel.replace(/[\\/]+/g, '_').replace(/[^A-Za-z0-9._-]+/g, '_');
 }
 
-const ROUND_LABEL = /^round\s+\d+\s*[a-z]?$/i;
+/** "Round 1", "Round 17A", and the tournament rounds of the middle school page ("Round Robin Round 2", "Double Elimination Round 1"). */
+const ROUND_LABEL = /^(?:(?:round\s+robin|double\s+elimination|single\s+elimination)\s+)?round\s+\d+\s*[a-z]?$/i;
+
+interface PageLink {
+  set: number | string;
+  label: string;
+  url: string;
+  heading?: string;
+  pageUrl?: string;
+  note?: string;
+}
 
 /** Collect the PDF links of one page (main content only), assigning each to a sample set. */
-export function pdfLinksOfPage(html: string, pageUrl: string): { set: number; label: string; url: string; heading?: string }[] {
+export function pdfLinksOfPage(html: string, pageUrl: string, cfg: LevelConfig = LEVELS.HS): PageLink[] {
   const content = mainContent(html);
-  const headings = setHeadings(content);
-  const out: { set: number; label: string; url: string; heading?: string }[] = [];
+  const headings = setHeadings(content, cfg.groups);
+  const inFolder = new RegExp(`/${cfg.folder}/Sample-Set-(\\d+)/`, 'i');
+  const out: PageLink[] = [];
   for (const link of extractLinks(content, pageUrl)) {
     if (!/\.pdf(?:$|[?#])/i.test(link.href)) continue;
-    const fromUrl = /\/HS-Sample-Questions\/Sample-Set-(\d+)\//i.exec(link.href);
+    const fromUrl = inFolder.exec(link.href);
     const heading = [...headings].reverse().find((h) => h.index < link.index);
     const set = fromUrl ? Number(fromUrl[1]) : heading?.set;
     if (!set) continue;
-    out.push({ set, label: link.text.replace(/\s+/g, ' ').trim(), url: link.href, heading: headings.find((h) => h.set === set)?.text });
+    const item: PageLink = { set, label: link.text.replace(/\s+/g, ' ').trim(), url: link.href, heading: headings.find((h) => h.set === set)?.text };
+    const fix = cfg.linkFixes.find((f) => f.pageUrl === link.href && f.set === set);
+    if (fix) Object.assign(item, { url: fix.url, pageUrl: link.href, note: fix.note });
+    else if (!new RegExp(`/${cfg.folder}/`, 'i').test(link.href)) item.note = `links outside the ${cfg.folder} folder`;
+    out.push(item);
   }
   return out;
 }
@@ -210,14 +324,29 @@ export function subpageLinks(html: string, pageUrl: string): string[] {
   return [...seen].sort();
 }
 
+/** Numbered sets in order, then unnumbered sections in page order. */
+function compareSets(order: (number | string)[]) {
+  return (a: number | string, b: number | string) => {
+    if (typeof a === 'number' && typeof b === 'number') return a - b;
+    if (typeof a === 'number') return -1;
+    if (typeof b === 'number') return 1;
+    return order.indexOf(a) - order.indexOf(b);
+  };
+}
+
+/**
+ * `tocYears`: the years in the page's table of contents (yearsFromToc for the high school page,
+ * tocYearsLenient for the middle school page, whose evidence quotes the printed text).
+ */
 export function buildManifest(
   pages: { url: string; html: string }[],
-  tocYears: Map<number, string>,
+  tocYears: Map<number, string> | Map<number, { year: string; text: string }>,
+  cfg: LevelConfig = LEVELS.HS,
 ): Manifest {
-  const bySet = new Map<number, { label: string; url: string; heading?: string }[]>();
+  const bySet = new Map<number | string, PageLink[]>();
   const seenUrls = new Set<string>();
   for (const page of pages) {
-    for (const link of pdfLinksOfPage(page.html, page.url)) {
+    for (const link of pdfLinksOfPage(page.html, page.url, cfg)) {
       if (seenUrls.has(link.url)) continue;
       seenUrls.add(link.url);
       const list = bySet.get(link.set) ?? [];
@@ -225,25 +354,36 @@ export function buildManifest(
       bySet.set(link.set, list);
     }
   }
+  const tocYear = (set: number | string) => {
+    const t = typeof set === 'number' ? tocYears.get(set) : undefined;
+    return typeof t === 'string' ? { year: t, text: `Sample Questions Set ${set} (from ${t})` } : t;
+  };
+  const filePrefix = new RegExp(`^${cfg.folder}_Sample-Set-\\d+_`, cfg.level === 'HS' ? '' : 'i');
   const entries: ManifestEntry[] = [];
   const sets: ManifestSet[] = [];
-  for (const set of [...bySet.keys()].sort((a, b) => a - b)) {
+  for (const set of [...bySet.keys()].sort(compareSets([...bySet.keys()]))) {
     const links = bySet.get(set)!;
     let year: string | undefined;
     let yearEvidence: string | undefined;
     const fileYears = new Set(
-      links.map((l) => /(?:^|[^0-9])((?:19|20)\d\d)(?:[^0-9]|$)/.exec(cacheFileName(l.url).replace(/^HS-Sample-Questions_Sample-Set-\d+_/, ''))?.[1]).filter(Boolean),
+      links.map((l) => /(?:^|[^0-9])((?:19|20)\d\d)(?:[^0-9]|$)/.exec(cacheFileName(l.url).replace(filePrefix, ''))?.[1]).filter(Boolean),
     );
-    if (KNOWN_YEARS[set]) {
-      year = KNOWN_YEARS[set];
+    const known = typeof set === 'number' ? cfg.knownYears[set] : undefined;
+    const toc = tocYear(set);
+    if (known) {
+      year = known;
       const agree = [
         fileYears.size === 1 && fileYears.has(year) ? 'file names' : '',
-        tocYears.get(set) === year ? `page text "Sample Questions Set ${set} (from ${year})"` : '',
+        toc?.year === year ? `page text "${toc.text}"` : '',
       ].filter(Boolean);
       yearEvidence = agree.length ? `known year; matches ${agree.join(' and ')}` : 'known year (project brief)';
-    } else if (tocYears.has(set)) {
-      year = tocYears.get(set);
-      yearEvidence = `page text "Sample Questions Set ${set} (from ${year})"`;
+    } else if (toc) {
+      year = toc.year;
+      yearEvidence = `page text "${toc.text}"`;
+      // The high school manifest only ever quoted the page; the middle school one also compares the file names.
+      if (cfg.level !== 'HS' && fileYears.size) {
+        yearEvidence += fileYears.size === 1 && fileYears.has(year) ? '; matches file names' : `; file names say ${[...fileYears].sort().join(', ')}`;
+      }
     } else if (fileYears.size === 1) {
       year = [...fileYears][0];
       yearEvidence = 'file names';
@@ -253,11 +393,21 @@ export function buildManifest(
     for (const link of links) {
       const kind: ManifestKind = ROUND_LABEL.test(link.label) ? 'round' : 'resource';
       const order = kind === 'round' ? ++rounds : ++resources;
-      entries.push({ set, order, label: link.label, kind, url: link.url, file: cacheFileName(link.url), ...(year ? { year } : {}) });
+      entries.push({
+        set,
+        order,
+        label: link.label,
+        kind,
+        url: link.url,
+        file: cacheFileName(link.url),
+        ...(year ? { year } : {}),
+        ...(link.pageUrl ? { pageUrl: link.pageUrl } : {}),
+        ...(link.note ? { note: link.note } : {}),
+      });
     }
     sets.push({ set, heading: links[0]?.heading, ...(year ? { year, yearEvidence } : {}), rounds, resources });
   }
-  return { source: HS_PAGE_URL, level: 'HS', subpages: pages.slice(1).map((p) => p.url), sets, entries };
+  return { source: cfg.page, level: cfg.level, subpages: pages.slice(1).map((p) => p.url), sets, entries };
 }
 
 /* ------------------------------------------------------------------ */
@@ -308,6 +458,7 @@ async function isCachedPdf(file: string): Promise<boolean> {
 /* ------------------------------------------------------------------ */
 
 interface Options {
+  level: FetchLevel;
   out: string;
   manifest: string;
   log: string;
@@ -319,13 +470,24 @@ interface Options {
   delay: number;
 }
 
+function parseLevel(v: string): FetchLevel {
+  const level = v.toUpperCase();
+  if (level !== 'HS' && level !== 'MS') throw new Error(`unknown level ${v} (use hs or ms)`);
+  return level;
+}
+
 function parseOptions(argv: string[], root: string): Options {
+  // The level decides the defaults, so read it first.
+  const at = argv.indexOf('--level');
+  const level = at >= 0 && argv[at + 1] !== undefined ? parseLevel(argv[at + 1]) : 'HS';
+  const cfg = LEVELS[level];
   const opts: Options = {
+    level,
     out: path.join(root, '.cache/doe/pdf'),
-    manifest: path.join(root, 'scripts/doe/manifest.json'),
-    log: path.join(root, '.cache/doe/fetch-log.json'),
+    manifest: path.join(root, cfg.manifest),
+    log: path.join(root, cfg.log),
     seed: existsSync(path.join(RESEARCH_DIR, 'samples')) ? path.join(RESEARCH_DIR, 'samples') : undefined,
-    links: existsSync(path.join(RESEARCH_DIR, 'HS_links.tsv')) ? path.join(RESEARCH_DIR, 'HS_links.tsv') : undefined,
+    links: existsSync(path.join(RESEARCH_DIR, cfg.linksFile)) ? path.join(RESEARCH_DIR, cfg.linksFile) : undefined,
     manifestOnly: false,
     limit: Infinity,
     delay: MIN_DELAY_MS,
@@ -337,7 +499,8 @@ function parseOptions(argv: string[], root: string): Options {
       if (v === undefined) throw new Error(`missing value for ${a}`);
       return v;
     };
-    if (a === '--out') opts.out = path.resolve(next());
+    if (a === '--level') next();
+    else if (a === '--out') opts.out = path.resolve(next());
     else if (a === '--manifest') opts.manifest = path.resolve(next());
     else if (a === '--log') opts.log = path.resolve(next());
     else if (a === '--seed') opts.seed = path.resolve(next());
@@ -349,15 +512,17 @@ function parseOptions(argv: string[], root: string): Options {
     else if (a === '--delay') opts.delay = Math.max(MIN_DELAY_MS, Number(next()) || MIN_DELAY_MS);
     else throw new Error(`unknown option ${a}`);
   }
+  if (argv.includes('--level') && at + 1 >= argv.length) throw new Error('missing value for --level');
   return opts;
 }
 
-/** Copy valid HS PDFs saved by earlier research into the cache (never overwrites). */
-async function seedCache(seedDir: string, outDir: string): Promise<{ copied: string[]; rejected: string[] }> {
+/** Copy valid PDFs of one level ("HS-Sample-Questions_*.pdf") saved by earlier research into the cache (never overwrites). */
+async function seedCache(seedDir: string, outDir: string, folder: LevelConfig['folder']): Promise<{ copied: string[]; rejected: string[] }> {
   const copied: string[] = [];
   const rejected: string[] = [];
+  const mine = new RegExp(`^${folder}_.*\\.pdf$`, 'i');
   for (const name of (await readdir(seedDir)).sort()) {
-    if (!/^HS-Sample-Questions_.*\.pdf$/i.test(name)) continue; // skips .hdr files and MS files
+    if (!mine.test(name)) continue; // skips .hdr files and the other level's files
     const dest = path.join(outDir, name.replace(/[^A-Za-z0-9._-]+/g, '_'));
     if (await isCachedPdf(dest)) continue;
     if (!(await isCachedPdf(path.join(seedDir, name)))) {
@@ -376,7 +541,8 @@ async function crossCheck(manifest: Manifest, tsvFile: string) {
     .map((l) => l.split('\t'))
     .filter((r) => /\.pdf$/i.test(r[0] ?? ''));
   const listed = new Map(rows.map((r) => [r[0].trim(), (r[1] ?? '').trim()]));
-  const inManifest = new Map(manifest.entries.map((e) => [e.url, e.label]));
+  // Compare with the links as printed on the page (an entry whose link was corrected keeps it in `pageUrl`).
+  const inManifest = new Map(manifest.entries.map((e) => [e.pageUrl ?? e.url, e.label]));
   const missingFromManifest = [...listed.keys()].filter((u) => !inManifest.has(u)).sort();
   const notInList = [...inManifest.keys()].filter((u) => !listed.has(u)).sort();
   const labelDiffs = [...listed.entries()]
@@ -388,6 +554,8 @@ async function crossCheck(manifest: Manifest, tsvFile: string) {
 async function main() {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
   const opts = parseOptions(process.argv.slice(2), root);
+  const cfg = LEVELS[opts.level];
+  const pageUrl = cfg.page;
   await mkdir(opts.out, { recursive: true });
   await mkdir(path.dirname(opts.log), { recursive: true });
   const startedAt = new Date().toISOString();
@@ -396,7 +564,7 @@ async function main() {
   // 1. Seed the cache before any network request.
   let seed: { copied: string[]; rejected: string[] } = { copied: [], rejected: [] };
   if (opts.seed && existsSync(opts.seed)) {
-    seed = await seedCache(opts.seed, opts.out);
+    seed = await seedCache(opts.seed, opts.out, cfg.folder);
     console.log(`seeded ${seed.copied.length} PDF(s) from ${opts.seed}; rejected ${seed.rejected.length} non-PDF file(s)`);
   }
 
@@ -405,21 +573,21 @@ async function main() {
   let pageStatus: string;
   let pageBlocked = false;
   if (opts.pageHtml) {
-    pages.push({ url: HS_PAGE_URL, html: await readFile(opts.pageHtml, 'utf8') });
+    pages.push({ url: pageUrl, html: await readFile(opts.pageHtml, 'utf8') });
     pageStatus = `read from ${opts.pageHtml}`;
   } else {
-    const res = await politeGet(HS_PAGE_URL, opts.delay);
+    const res = await politeGet(pageUrl, opts.delay);
     pageStatus = `HTTP ${res.status}${res.error ? ` (${res.error})` : ''}`;
     pageBlocked = isBlocking(res.status);
     if (res.status !== 200) {
       if (existsSync(opts.manifest)) {
-        console.warn(`could not load ${HS_PAGE_URL} (${pageStatus}); keeping the existing manifest`);
+        console.warn(`could not load ${pageUrl} (${pageStatus}); keeping the existing manifest`);
       } else {
-        throw new Error(`could not load ${HS_PAGE_URL} (${pageStatus}) and no manifest exists yet`);
+        throw new Error(`could not load ${pageUrl} (${pageStatus}) and no manifest exists yet`);
       }
     } else {
-      pages.push({ url: HS_PAGE_URL, html: new TextDecoder().decode(res.body) });
-      for (const sub of subpageLinks(pages[0].html, HS_PAGE_URL)) {
+      pages.push({ url: pageUrl, html: new TextDecoder().decode(res.body) });
+      for (const sub of subpageLinks(pages[0].html, pageUrl)) {
         const r = await politeGet(sub, opts.delay);
         if (r.status === 200) pages.push({ url: sub, html: new TextDecoder().decode(r.body) });
         else console.warn(`subpage ${sub}: HTTP ${r.status}`);
@@ -429,8 +597,9 @@ async function main() {
 
   let manifest: Manifest;
   if (pages.length) {
-    manifest = buildManifest(pages, yearsFromToc(pages[0].html));
+    manifest = buildManifest(pages, opts.level === 'HS' ? yearsFromToc(pages[0].html) : tocYearsLenient(pages[0].html), cfg);
     if (!manifest.entries.length) throw new Error('no PDF links found on the page; the page layout may have changed');
+    for (const e of manifest.entries.filter((x) => x.note)) console.warn(`  note: set ${e.set} ${e.label}: ${e.note}`);
     await writeFile(opts.manifest, JSON.stringify(manifest, null, 2) + '\n');
     console.log(`manifest: ${manifest.entries.length} PDFs (${manifest.entries.filter((e) => e.kind === 'round').length} rounds) in ${manifest.sets.length} sets -> ${path.relative(root, opts.manifest)}`);
   } else {
@@ -514,7 +683,8 @@ async function main() {
     startedAt,
     finishedAt: new Date().toISOString(),
     seconds,
-    page: HS_PAGE_URL,
+    level: opts.level,
+    page: pageUrl,
     pageStatus,
     userAgent: USER_AGENT,
     delayMs: opts.delay,

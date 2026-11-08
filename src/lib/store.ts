@@ -22,7 +22,7 @@ import {
   type ReviewCard,
 } from '../core/review';
 import type { MatchEvent } from '../core/rules/engine';
-import type { Assignment, Completion, ConceptCard, Lineup, Player, QuestionKind, Subject, Team, TeamPacket, TeamVisual } from '../core/schema';
+import type { Assignment, Completion, ConceptCard, Lineup, Player, QuestionKind, Subject, Team, TeamPacket, TeamVisual, WrittenQuestion } from '../core/schema';
 import { newId } from './format';
 import { attemptOutcome, gameOutcomes } from './outcomes';
 
@@ -99,6 +99,8 @@ export interface AppData {
   conceptReads: Record<string, Record<string, number>>;
   /** Visual questions the team added, newest first. */
   visuals: TeamVisual[];
+  /** Questions the team writes in the studio (Team → Write), newest first. */
+  written: WrittenQuestion[];
   settings: { sound: boolean; readingWpm: number; soloPlayerId: string | null; answerTimer: boolean; dailyMinutes: number };
   lastExportAt: string | null;
 }
@@ -121,6 +123,7 @@ export function emptyData(): AppData {
     completions: {},
     conceptReads: {},
     visuals: [],
+    written: [],
     settings: { sound: true, readingWpm: 200, soloPlayerId: null, answerTimer: true, dailyMinutes: 30 },
     lastExportAt: null,
   };
@@ -504,6 +507,24 @@ export function saveVisual(visual: Omit<TeamVisual, 'createdAt' | 'updatedAt'>):
 export function deleteVisual(id: string): void {
   update((d) => {
     d.visuals = d.visuals.filter((v) => v.id !== id);
+  });
+}
+
+/* ---------------- the question-writing studio ---------------- */
+
+/** Add or update a team-written question. */
+export function saveWritten(w: WrittenQuestion): void {
+  const now = new Date().toISOString();
+  update((d) => {
+    const i = d.written.findIndex((x) => x.id === w.id);
+    if (i >= 0) d.written[i] = { ...w, updatedAt: now };
+    else d.written.unshift({ ...w, createdAt: now, updatedAt: now });
+  });
+}
+
+export function deleteWritten(id: string): void {
+  update((d) => {
+    d.written = d.written.filter((w) => w.id !== id);
   });
 }
 

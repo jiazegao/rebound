@@ -330,12 +330,15 @@ describe.skipIf(!built)('topics in the generated library', () => {
   it('writes a catalog row for every question in library order', () => {
     const raw = readFileSync(join(dir, 'catalog.json'), 'utf8');
     const catalog = JSON.parse(raw) as Catalog;
+    // catalog.json covers the high school sets only (middle school: catalog-ms.json, checked in src/core/importers/doe-library.test.ts).
+    const hs = new Set(index.sets.filter((s) => s.level === 'HS').map((s) => s.id));
+    const hsRows = rows.filter(({ q }) => hs.has(q.source.setId));
     expect(raw.trimEnd()).not.toContain('\n');
     expect(catalog.generatedAt).toBe(index.generatedAt);
     expect(catalog.questions).toEqual(
-      rows.map(({ q, round }) => [q.id, q.subject, q.topic ?? '', q.kind === 'tossup' ? 't' : 'b', round, q.crossSubject ?? '']),
+      hsRows.map(({ q, round }) => [q.id, q.subject, q.topic ?? '', q.kind === 'tossup' ? 't' : 'b', round, q.crossSubject ?? '']),
     );
     expect(Object.keys(catalog.topicCounts)).toEqual(TOPICS.map((t) => t.id));
-    for (const t of TOPICS) expect(catalog.topicCounts[t.id]).toBe(questions.filter((q) => q.topic === t.id).length);
+    for (const t of TOPICS) expect(catalog.topicCounts[t.id]).toBe(hsRows.filter(({ q }) => q.topic === t.id).length);
   });
 });

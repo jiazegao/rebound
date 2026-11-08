@@ -422,3 +422,10 @@ export async function createRoom(name: string): Promise<string> {
 export async function listRooms(): Promise<RoomListing[]> {
   return (await authed<{ rooms: RoomListing[] }>('/rooms')).rooms;
 }
+
+/* ---------------- other team requests ---------------- */
+
+/** A request to the shared team for features beyond sync (AI help). Rejects when this device is not connected. */
+export async function teamRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+  return authed<T>(path, init);
+}

@@ -1,21 +1,47 @@
 import { useEffect, useMemo, useState } from 'react';
 import { LoadError, Loading, Notice, PageHeader, SubjectTag } from '../components/ui';
+import { RoundDownloads } from '../components/Downloads';
 import { QuestionView } from '../components/QuestionView';
-import { CORE_SUBJECTS, SUBJECT_LABELS, type Question, type QuestionSet, type Subject } from '../core/schema';
-import { findRound, roundQuestions, setLabel, useIndex, useSet } from '../lib/library';
+import { CORE_SUBJECTS, SUBJECT_LABELS, type Question, type QuestionSet, type SetSummary, type Subject } from '../core/schema';
+import { findRound, LEVEL_NAME, roundQuestions, setGroups, setLabel, useIndex, useSet, useTeamLevel } from '../lib/library';
 import { href } from '../lib/router';
 import { addToReview, reportProblem, useData } from '../lib/store';
 import { cardId } from '../core/review';
 import { dateText } from '../lib/format';
 
+function SetCards({ sets }: { sets: SetSummary[] }) {
+  return (
+    <div className="grid">
+      {sets.map((s) => (
+        <a key={s.id} className="card" href={href(`/library/${s.id}`)}>
+          <h3>{setLabel(s)}</h3>
+          <p className="muted small" style={{ marginBottom: '0.5rem' }}>
+            {s.rounds.length} rounds · {s.questionCount.toLocaleString()} questions
+          </p>
+          <div className="row" style={{ gap: '0.3rem' }}>
+            {CORE_SUBJECTS.filter((sub) => s.subjectCounts[sub]).map((sub) => (
+              <SubjectTag key={sub} subject={sub} />
+            ))}
+          </div>
+        </a>
+      ))}
+    </div>
+  );
+}
+
 function SetList() {
   const index = useIndex();
+  const level = useTeamLevel();
+  const groups = index.data ? setGroups(index.data, level) : [];
+  const mine = groups.find((g) => g.level === level);
+  const other = groups.find((g) => g.level !== level);
   return (
     <div className="container">
       <PageHeader title="Library">
         <p>
-          Every DOE high school sample set, newest first. These are retired regional rounds that DOE publishes for practice; each round links to
-          its original PDF.
+          Every DOE {LEVEL_NAME[level]} sample set, newest first. These are retired rounds that DOE publishes for practice; each round links to
+          its original PDF.{' '}
+          {other && (level === 'MS' ? 'High school sets are further down, for practicing up.' : 'Middle school sets are further down.')}
         </p>
         <p>
           <a href={href('/library/topics')}>Browse by topic</a>: which topics come up most often in each subject. <a href={href('/packets')}>Team packets</a>:
@@ -25,24 +51,17 @@ function SetList() {
       </PageHeader>
       {index.loading && <Loading what="Loading the library" />}
       {index.error && <LoadError error={index.error} />}
-      {index.data && (
-        <div className="grid">
-          {[...index.data.sets]
-            .sort((a, b) => (b.setNumber ?? 0) - (a.setNumber ?? 0))
-            .map((s) => (
-              <a key={s.id} className="card" href={href(`/library/${s.id}`)}>
-                <h3>{setLabel(s)}</h3>
-                <p className="muted small" style={{ marginBottom: '0.5rem' }}>
-                  {s.rounds.length} rounds · {s.questionCount.toLocaleString()} questions
-                </p>
-                <div className="row" style={{ gap: '0.3rem' }}>
-                  {CORE_SUBJECTS.filter((sub) => s.subjectCounts[sub]).map((sub) => (
-                    <SubjectTag key={sub} subject={sub} />
-                  ))}
-                </div>
-              </a>
-            ))}
-        </div>
+      {mine && <SetCards sets={mine.sets} />}
+      {index.data && !mine && <Notice>No {LEVEL_NAME[level]} sets yet.</Notice>}
+      {other && (
+        <details style={{ marginTop: '1.5rem' }} open={!mine}>
+          <summary>
+            <strong>{other.label} sets</strong> ({other.sets.length})
+          </summary>
+          <div style={{ marginTop: '0.75rem' }}>
+            <SetCards sets={other.sets} />
+          </div>
+        </details>
       )}
       <p className="small muted" style={{ marginTop: '1.5rem' }}>
         Source: U.S. Department of Energy, National Science Bowl sample questions. Public domain; DOE asks to be credited and linked.
@@ -262,6 +281,9 @@ function RoundView({ set, roundId, autoPrint }: { set: QuestionSet; roundId: str
         </div>
       </PageHeader>
 
+      <div style={{ marginBottom: '0.75rem' }}>
+        <RoundDownloads set={set} round={round} title={`${set.title}, ${round.label}`} />
+      </div>
       <div className="row no-print" style={{ marginBottom: '1rem' }}>
         <select aria-label="Subject" value={subject} onChange={(e) => setSubject(e.target.value as Subject | 'all')} style={{ width: 'auto' }}>
           <option value="all">All subjects</option>

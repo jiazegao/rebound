@@ -1,3 +1,4 @@
+import { CURRENT_SEASON } from '../core/rules/presets';
 import { href } from '../lib/router';
 import { useData } from '../lib/store';
 
@@ -8,7 +9,7 @@ export function Home() {
       <section className="hero">
         <h1>Practice like the real thing. Learn from every miss.</h1>
         <p>
-          Rebound is a free practice website for National Science Bowl teams. Run practice games under the official 2027 rules, log every
+          Rebound is a free practice website for National Science Bowl teams. Run practice games under the official {CURRENT_SEASON} rules, log every
           buzz automatically, and study every DOE sample question.
         </p>
         <div className="row">
@@ -28,7 +29,7 @@ export function Home() {
         <div className="card">
           <h3>Run practice from one laptop</h3>
           <p>
-            The Reader console shows each question in large type, runs the 5-second and 20-second clocks, and applies the 2027 scoring rules,
+            The Reader console shows each question in large type, runs the 5-second and 20-second clocks, and applies the {CURRENT_SEASON} scoring rules,
             including interrupts, blurts and rebounds. Two taps record every toss-up.
           </p>
         </div>

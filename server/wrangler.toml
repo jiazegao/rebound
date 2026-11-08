@@ -13,12 +13,28 @@ enabled = false
 # Browser origins allowed to call the API (comma-separated, no trailing slashes). Others get no CORS headers,
 # and their requests are refused.
 ALLOWED_ORIGINS = "https://jiazegao.github.io,http://localhost:5173,http://localhost:4173"
+# Optional AI help (question drafts, explanations, concept card drafts). It stays off until a Claude API key is
+# set as a secret: npx wrangler secret put ANTHROPIC_API_KEY. See server/README.md for what it costs.
+# AI calls each team may make per UTC day.
+AI_DAILY_LIMIT = "50"
+# The model (default claude-opus-5-5) and the model for the blind answer check (default: the same).
+# AI_MODEL = "claude-opus-5-5"
+# AI_CHECK_MODEL = "claude-opus-5-5"
 
 [[durable_objects.bindings]]
 name = "TEAM"
 class_name = "TeamServer"
 
+# One object for the whole server that counts new teams per day (open sign-up limits; see src/registry.ts).
+[[durable_objects.bindings]]
+name = "REGISTRY"
+class_name = "Registry"
+
 # The TeamServer class keeps each team's data in its own SQLite database.
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["TeamServer"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["Registry"]

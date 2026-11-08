@@ -19,5 +19,8 @@
     "vite": "8.3.5",
     "vitest": "5.0.5",
     "wrangler": "4.152.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.6.0"
   }
 }

@@ -67,15 +67,40 @@ response carries CORS headers for the origins in the `ALLOWED_ORIGINS` variable 
 | `POST /api/teams/:teamId/rooms` | member | `{ name }` → 201 `{ roomId }` (the caller hosts it) |
 | `GET /api/teams/:teamId/rooms` | member | → `{ rooms: { roomId, name, host: { memberId, name }, players, createdAt }[] }` (`players`: connected now, not counting the reader) |
 | `GET /api/teams/:teamId/rooms/:roomId/ws?token=…` | member | WebSocket upgrade (see Rooms) |
+| `GET /api/teams/:teamId/ai` | member | → `{ enabled: false }`, or `{ enabled: true, model, dailyLimit, usedToday }` (see AI help) |
+| `POST /api/teams/:teamId/ai/draft` | member | `{ passage, source, subject, kind?: "tossup"\|"bonus"\|"either", count?: 1–5 }` → `{ drafts, model, dailyLimit, usedToday }` |
+| `POST /api/teams/:teamId/ai/explain` | member | `{ stem, answer, choices?: { W, X, Y, Z }, subject? }` → `{ explanation, answerLooksWrong, model, cached, dailyLimit, usedToday }` |
+| `POST /api/teams/:teamId/ai/card` | member | `{ concept, passage, source }` → `{ card: { summary, facts, traps }, model, dailyLimit, usedToday }` |
 
 `member` objects are `{ id, name, role, playerId }` (the `MemberInfo` type plus the name).
 
 Limits: request bodies up to 2 MB (devices send at most about 1.5 MB of changes per request, since a visual question's
 picture can be a few hundred kilobytes); at most `SYNC_PAGE_SIZE` changes per sync request (more is a 413); record
 bodies up to `MAX_RECORD_BYTES`; ids up to 200 characters; 30 failed joins per network address per hour (kept
-per team); 200 members, 20 open rooms and 64 connections per room. Locks and limits answer 429 with
+per team); 10 new teams per network address and 300 in all per UTC day (open sign-up, counted by the `Registry`
+Durable Object); 200 members, 20 open rooms and 64 connections per room. Locks and limits answer 429 with
 `Retry-After`. Requests from origins not in `ALLOWED_ORIGINS` get a 403. The last coach or captain cannot be
 removed or demoted.
+
+## AI help (optional)
+
+Off unless the Worker has an `ANTHROPIC_API_KEY` secret; then `GET /ai` says `enabled: true` and the site shows
+"Draft from a passage (AI)" in Write and on concept cards, and "Explain this answer (AI)" under answers. The
+server calls the Claude API (model `AI_MODEL`, default `claude-opus-5-5`) with a structured-output schema and,
+for models that have one, the server-side refusal fallback.
+
+- **Drafts** (`/ai/draft`): `passage` is 200 to 12,000 characters the member pasted, `source` names it (book and
+  section, or web page), `subject` is a core subject id. Each draft is `{ kind, format, stem, choices?,
+  answerLetter?, answer, accept, support }` (`support` quotes the passage), and a second call answers each draft
+  without its key or the passage: `blindAnswer` is what it said and `blindAgreed` whether the answer checker
+  accepts it for the key. The site saves drafts as written questions labeled with `ai`; they go through the same
+  checks and review as any question, and packets mark them "AI-drafted (internal practice only)".
+- **Explanations** (`/ai/explain`): at most 120 words; `answerLooksWrong` flags a key the model disputes. Cached
+  for the team for 180 days by model and question text (`cached: true` costs nothing).
+- **Limits**: each team may make `AI_DAILY_LIMIT` model calls per UTC day (default 50). A draft request costs one
+  call plus one per draft for the blind check, and is refused whole (429 with `Retry-After`) if it would pass the
+  limit. Calls that never reached the model (the service was busy, the key failed) are not counted; a refusal
+  (422) is.
 
 ## Sync
 
@@ -163,6 +188,8 @@ members(id TEXT PRIMARY KEY, name TEXT, name_key TEXT UNIQUE, role TEXT, player_
 sessions(token_hash TEXT PRIMARY KEY, member_id TEXT, created_at INTEGER, last_used INTEGER)
 records(c TEXT, id TEXT, body TEXT, rev INTEGER, by TEXT, PRIMARY KEY (c, id))   -- index on rev
 rooms(id TEXT PRIMARY KEY, name TEXT, host_id TEXT, created_at INTEGER, last_active INTEGER, state TEXT, seq INTEGER)
+ai_usage(day TEXT PRIMARY KEY, count INTEGER)                   -- AI calls per UTC day (created on first use)
+ai_cache(key TEXT PRIMARY KEY, value TEXT, created_at INTEGER)  -- cached explanations, kept 180 days
 ```
 
 ## Code layout and running it
@@ -172,7 +199,9 @@ server/
   package.json         wrangler, @cloudflare/vitest-plugin, vitest, typescript
   wrangler.toml        Worker "rebound-server", Durable Object binding TEAM (class TeamServer, SQLite)
   src/index.ts         routing, CORS, team creation (a new Durable Object per team)
-  src/team.ts          the TeamServer Durable Object: members, sessions, sync, rooms
+  src/team.ts          the TeamServer Durable Object: members, sessions, sync, rooms, AI routes
+  src/ai.ts            optional AI help: Claude API calls, input checks, daily limit, explanation cache
+  src/registry.ts      the Registry Durable Object: daily caps on new teams (open sign-up)
   src/crypto.ts        ids, tokens, PIN hashing, constant-time comparison
   test/*.test.ts       end-to-end tests in the Workers runtime (vitest-pool-workers)
 ```

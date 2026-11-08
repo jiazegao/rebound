@@ -269,6 +269,41 @@ export interface TeamVisual {
   question: Question;
 }
 
+/** Where a team-written question stands: being written, waiting for its subject owner, or approved. */
+export type WriteStatus = 'draft' | 'review' | 'approved';
+
+/**
+ * A question the team writes in the studio (Team → Write). Approved questions can be made into team
+ * packets. Ids start with "wq-".
+ */
+export interface WrittenQuestion {
+  id: string;
+  /** The question itself (kind, subject, format, stem, choices, answer, accept and reject lists). */
+  question: Question;
+  status: WriteStatus;
+  /** Player who wrote it. */
+  authorId: string | null;
+  /** Player who approved it (the subject owner or a leader, never the author). */
+  reviewerId: string | null;
+  /** Where the facts come from: at least one before it can be sent for review. */
+  sources: Array<{ title: string; url?: string }>;
+  comments: Array<{ by: string | null; text: string; at: string }>;
+  /** Present when an AI model drafted it: the question stays labeled and internal to the team. */
+  /** Set when an AI model drafted it (labeled everywhere, and kept to the team's own practice). */
+  ai?: {
+    model: string;
+    at: string;
+    passageSource: string;
+    /** The passage's sentence that supports the answer. */
+    support?: string;
+    /** A second call's answer, given without the key or the passage, and whether the checker accepted it. */
+    blindAnswer?: string;
+    blindAgreed?: boolean;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 /** A concept card written by the team (one per concept id). */
 export interface ConceptCard {
   id: string;
@@ -281,6 +316,8 @@ export interface ConceptCard {
   reviewerId: string | null;
   status: 'draft' | 'reviewed';
   updatedAt: string;
+  /** Set when an AI model drafted the card from a cited passage. */
+  ai?: { model: string; at: string; passageSource: string };
 }
 
 export type AssignmentKind = 'drill' | 'packet' | 'concept' | 'review';
