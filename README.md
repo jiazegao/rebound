@@ -1,9 +1,11 @@
 # Rebound
 
-A free, team-first practice website for the National Science Bowl (NSB). This covers **Phases 0–3** of the plan in
+A free, team-first practice website for the National Science Bowl (NSB). This covers **Phases 0–4** of the plan in
 [`docs/PROPOSAL.md`](docs/PROPOSAL.md): every practice is logged, every player opens **Today** to find a daily plan and a review queue
 built from their own misses, and the captain runs the team from the **Team** pages (lineups, assignments, scrimmages), with an optional
-team server for sharing between devices and remote rooms, and Finals preparation (visual bonuses, Finals formats, tiebreakers).
+team server for sharing between devices and remote rooms, Finals preparation (visual bonuses, Finals formats, tiebreakers), a
+question-writing studio, reading paths, middle school mode, and an open format ([NSB-JSON](docs/NSB-JSON.md)) for questions and games.
+Any school's team can use it; [`MAINTAINING.md`](MAINTAINING.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md) are for whoever looks after it next.
 
 Rebound is an unofficial study tool, not affiliated with or endorsed by the U.S. Department of Energy (DOE).
 
@@ -20,14 +22,16 @@ Rebound is an unofficial study tool, not affiliated with or endorsed by the U.S.
 | **My progress** | Mastery by subject and a topic map (difficulty-adjusted ratings from each player's first answers), buzz speed, the review queue and daily activity, each with a table view. |
 | **Team → Lineups** | Estimated points per regional round for any four players, subject by subject (difficulty-adjusted results, buzz speed, overlapping knowledge, a reference opponent); the five best foursomes; a suggested alternate; saved lineups, one set for the next competition. |
 | **Team** | Create the team and add players, each with a primary and secondary subject and a graduation year; who covers what, and who takes over each subject next season; the team's best player in every topic, with gaps counted; the chosen lineup; sharing (below). |
+| **Team → Write** | The question-writing studio. Write in DOE's format with checks as you type: four parallel choices with exactly one right (each other choice is run through the answer checker), answers in simplest form (Rule A-2), units the checker knows, a cited source, toss-up length, brackets and voice. It warns about near-duplicates of library questions (64-bit SimHash fingerprints of every library question) and of the team's own. The subject's owner, or a captain or coach, approves each question (never its author) or sends it back with a note; approved questions become team packets or download as Word or NSB-JSON. |
+| **AI help (optional)** | Off unless the team server has a Claude API key ([`server/README.md`](server/README.md)). Write → **Draft from a passage**: an AI model drafts questions from a passage a member pastes and cites, and a second call answers each draft without its key, so a wrong answer line shows. Under answers in drills and reviews, **Explain this answer**. On concept cards, **Draft from a passage**. Everything AI-made is labeled, needs a person's approval, and stays in the team's practice; each team has a daily limit. |
 | **Team → Assignments** | Drills, team packets, concept cards or clearing reviews, for chosen players with a due date; they show on each player's Today page and tick off when done; drills suggested from coverage gaps. |
-| **Library → Team packets** | Scrimmages of questions nobody in the room has heard (balanced like a DOE round, at a chosen level of the difficulty ladder) for a format: a regional round, a Finals round, a Finals visual bonus round (a share of the bonuses replaced by visual bonuses in the same subject, spread through the round) or a tiebreaker drill; packets uploaded as PDF (parsed in the browser) or JSON, with a review screen and a difficulty level. Print (including a visual bonus worksheet for the players), play in the Reader console or solo. Uploaded packets stay in the team's data. |
-| **Learn** | Concept cards written by the team (summary, key facts, traps, sources), reviewed by a second player, next to the library questions that test each concept; concept drills; unread cards join the daily plan. |
+| **Library → Team packets** | Scrimmages of questions nobody in the room has heard (balanced like a DOE round, at a chosen level of the difficulty ladder) for a format: a regional round, a Finals round, a Finals visual bonus round (a share of the bonuses replaced by visual bonuses in the same subject, spread through the round) or a tiebreaker drill; packets uploaded as PDF (parsed in the browser) or NSB-JSON, with a review screen and a difficulty level. Print (including a visual bonus worksheet for the players), download as Word (a moderator's copy or the players' copy, laid out like DOE's packets) or NSB-JSON, play in the Reader console or solo. Uploaded packets stay in the team's data. |
+| **Learn** | Concept cards written by the team (summary, key facts, traps, sources), reviewed by a second player, next to the library questions that test each concept; concept drills; unread cards join the daily plan. **Reading paths**: each subject's topics in prerequisite order, each with what NSB asks about, free readings (OpenStax textbooks, U.S. agency pages) and a five-question check from DOE questions on the topic. |
 | **Team stats** | Adds rebounds, net points per interrupt, small samples marked, and a week-by-week trend of practice games. |
-| **Sharing and remote rooms** | Optional, through the team server ([`docs/SERVER.md`](docs/SERVER.md)): the captain shares the team, players join with a link, a display name and a PIN, and everything syncs between devices. The Reader console can open a remote room: players buzz from their own devices (server-timed, with latency correction), see the question read aloud or revealed in step, confer in a private team channel during bonuses, and their captain answers in an answer box. |
+| **Sharing and remote rooms** | Optional, through the team server ([`docs/SERVER.md`](docs/SERVER.md)), open to any school's team: the captain shares the team, players join with a link, a display name and a PIN, and everything syncs between devices. The Reader console can open a remote room: players buzz from their own devices (server-timed, with latency correction), see the question read aloud or revealed in step, confer in a private team channel during bonuses, and their captain answers in an answer box. |
 | **Offline** | A service worker keeps the site available offline after the first visit; **Data → Save all questions for offline use** stores the whole library and the Visual lab's photos (about 12 MB) for drills, reviews and visual practice without a connection. The site can be installed to a home screen. |
 | **Play → Reader console** | Run an in-person practice game from one laptop: question in large type, answer for the reader, 5 s / 20 s answer clocks, game clock, two-tap scoring under the **2027 rules** (interrupts, blurts, rebounds, double interrupts, halves, tiebreakers), undo, keyboard shortcuts. Every toss-up is logged. Presets for regionals, virtual events and the Finals: 10-minute halves, and visual bonus rounds with 12-minute halves and 30-second visual bonuses whose figure can be projected full screen (remote players see it on their own screens). |
-| **Game summary**, **Stats** | Per-player toss-up accuracy by subject, interrupts, points given away, median buzz time, bonus conversion; CSV export. |
+| **Game summary**, **Stats** | Per-player toss-up accuracy by subject, interrupts, points given away, median buzz time, bonus conversion; CSV export, and the whole game as an NSB-JSON game log that other tools can re-score. |
 | **Practice (solo)** | Questions appear letter by letter at a moderator's pace (the words-per-minute setting is converted to letters using the library's average word length, about 6 characters with the space); the word still appearing is shown fainter. Buzz with Space, start typing within 2 seconds (NSB's natural pause) and finish within 5, and the answer checker grades it (close calls go to "your call"). The answer timer can be switched off. |
 | **Library** | Every DOE high school sample set, by set and round, searchable, printable, with links to the original PDFs and a "report a problem" button. Shows which questions the team has already heard, and lets a player add any question to their review queue. **Library → Topics** shows how often each topic comes up in each subject. |
 | **NSB rules at a glance** | Generated from the same rule presets the game engine uses. |
@@ -53,13 +57,14 @@ npm run dev        # http://localhost:5173
 Other commands:
 
 ```bash
-npm test           # unit tests (rules engine, answer checker, review scheduler, plans, drills, tagging, importer)
+npm test           # unit tests (rules engine, answer checker, review scheduler, plans, drills, tagging, importer, studio, NSB-JSON)
 npm run build      # type-check and build the static site into dist/
 npm run preview    # serve dist/ at http://localhost:4173
 node e2e/smoke.cjs # browser walkthrough against the preview server (needs Playwright + Chromium)
 node e2e/team-server.cjs # a captain and a player in two browsers against a local team server (see the file's header)
 npx tsx scripts/checks/judge-self-check.ts   # grade every printed answer in the library against itself
 npx tsx scripts/checks/review-load.ts 30 0.6 # simulate 90 days of reviews for a 30-minute plan and a 60% player
+cd server && npm test                        # the team server's tests, in the Workers runtime
 ```
 
 The unit tests include a check that the answer checker accepts at least 99.9% of the 19,000+ printed answers and
@@ -137,8 +142,10 @@ private to the team and never commit them (the `private-data/` folder is git-ign
 
 ```
 src/core/            framework-free logic, unit-tested
-  schema.ts          shared data types ("NSB-JSON") for questions, sets, players, the catalog
-  rules/presets.ts   rule presets (DOE Regional/Virtual/Finals 2027, invitational, practice)
+  schema.ts          shared data types for questions, sets, players, the catalog
+  nsbjson.ts         NSB-JSON 1.0 (docs/NSB-JSON.md, schema/nsb-json.schema.json): writing and reading question sets,
+                     question lists and game logs
+  rules/presets.ts   rule presets (DOE Regional/Virtual/Finals 2027, invitational, practice) and the current season
   rules/engine.ts    event-sourced match engine: replay(events) → state; undo = drop last event
   judge/             answer checker: multiple choice rule, accept/reject lists, numbers, units, names
   importers/         DOE PDF → questions (text extraction + parser)
@@ -155,23 +162,33 @@ src/core/            framework-free logic, unit-tested
   levels.ts          the difficulty ladder: DOE round levels and the levels of uploaded packets
   rules/shootout.ts  the round robin shootout (+1 / −1 / 0) and who advances
   visual/            generated visual bonuses: templates, SVG building blocks, exact answers, the photo-set questions
+  studio.ts          the writing studio: checks on a draft, who may review, near-duplicates, packets from approved questions
+  fingerprint.ts     SimHash fingerprints and word overlap for duplicate search
+  readingPaths.ts    each subject's reading path: topics in prerequisite order, focus lines and free readings
 src/lib/             browser-side helpers: store (IndexedDB), library loading, learning glue, offline, stats, router, sound,
                      team-server sync (sync.ts, syncRecords.ts), the remote room client (room.ts), visual questions
-                     (visuals.ts: generated, photo set and team-made; visualPool.ts; images.ts)
+                     (visuals.ts: generated, photo set and team-made; visualPool.ts; images.ts), Word export (docx.ts,
+                     loaded only when someone downloads), AI help requests (ai.ts)
 src/pages/           one file per page
 src/components/      shared UI pieces
 src/sw/              the service worker template (vite.config.ts fills in the file list at build time)
-scripts/doe/         data fetch/build scripts and the validation report
+scripts/doe/         data fetch/build scripts and the validation reports (high school and middle school)
+scripts/studio/      builds public/data/doe/fingerprints.json for the writing studio's duplicate search
+scripts/rules/       the fall check for next season's rulebook (run by .github/workflows/rules-watch.yml)
 scripts/icons/       renders the app icons with Playwright
 scripts/visual/      builds the public-domain photo set for the Visual lab
 e2e/                 browser smoke test, the two-browser team-server test, and a small fixture question set
-server/              the team server: Cloudflare Worker, Durable Object per team, tests (see server/README.md)
+server/              the team server: Cloudflare Worker, Durable Object per team, the sign-up registry, optional AI help,
+                     tests (see server/README.md)
+docs/                PROPOSAL.md (the plan), SERVER.md (the team server's API), NSB-JSON.md (the open format)
+schema/              nsb-json.schema.json (JSON Schema for NSB-JSON files)
 ```
 
 Key design choices:
 
 - **Rules are data.** `presets.ts` holds every number the engine uses, and the public rules page is generated from it.
-  Each October, when DOE posts the next season's rules, update the presets and the tests in `engine.test.ts`.
+  Each fall, when DOE posts the next season's rules, add the new season's presets and point `CURRENT_SEASON` at them
+  (MAINTAINING.md, "New rules each season"; a scheduled workflow opens an issue with the checklist).
 - **Games are event logs.** The Reader console stores events ("toss-up read", "buzz", "judged wrong", …); scores, stats
   and the "seen" ledger are all derived by replaying them, so undo is exact and old games can be re-scored.
 - **The answer checker never guesses.** It returns `correct`, `incorrect` or `review`; near-miss spellings and equal
@@ -189,8 +206,8 @@ Key design choices:
 
 ## Roadmap
 
-From the proposal: Phases 0–3 are built. Phase 4 adds the
-question-writing studio, reading paths, middle school mode, and the open-source handoff.
+All four phases of the proposal are built. What comes next is up to the teams that use it: open an issue, or see
+CONTRIBUTING.md to send a change.
 
 ## License
 

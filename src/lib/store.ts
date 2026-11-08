@@ -561,6 +561,16 @@ export function markConceptRead(playerId: string, conceptId: string): void {
   });
 }
 
+/**
+ * Reading path steps a player has read share the concept-read ledger (it syncs and merges the same way), under
+ * keys no concept id can take: "reading:biology.genetics".
+ */
+export const readingKey = (topicId: string): string => `reading:${topicId}`;
+
+export function markReadingDone(playerId: string, topicId: string): void {
+  markConceptRead(playerId, readingKey(topicId));
+}
+
 /* ---------------- concept cards ---------------- */
 
 export function saveConceptCard(card: Omit<ConceptCard, 'updatedAt'>): void {
