@@ -224,6 +224,7 @@ p {
   gap: 0.4rem;
 }
 .brand-mark {
+  flex-shrink: 0;
   display: inline-grid;
   place-items: center;
   width: 1.7rem;
@@ -233,11 +234,42 @@ p {
   color: var(--accent-contrast);
   font-size: 0.95rem;
 }
+/* The team's name after "Rebound": on a wide screen a long one gives way (with "…") before the header wraps. */
+.brand-team {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.header-end {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-left: auto;
+}
 .nav {
   display: flex;
   gap: 0.25rem;
   flex-wrap: wrap;
-  margin-left: auto;
+}
+/* Wide enough for the whole bar and the longest account name beside "Rebound": one row, the team's name shortened. */
+@media (min-width: 1180px) {
+  .app-header-inner {
+    flex-wrap: nowrap;
+  }
+  .brand {
+    min-width: 0;
+  }
+  .header-end {
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+  }
+  .nav {
+    flex-wrap: nowrap;
+  }
 }
 .nav a {
   padding: 0.4rem 0.7rem;
@@ -1131,8 +1163,12 @@ a.hbar-label {
   .clock .time {
     font-size: 1.4rem;
   }
-  .nav {
+  .header-end {
     margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .nav {
     width: 100%;
   }
   /* The account menu wraps to the left edge on phones: open its panel rightwards. */

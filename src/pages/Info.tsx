@@ -34,7 +34,7 @@ export function CoachesPage() {
           can set their own subjects too).
         </li>
         <li>
-          Go to <a href={href('/reader')}>Play</a>, pick a DOE round and the rules to use (DOE Regional 2027 is the default), and put players on two
+          Open the <a href={href('/reader')}>Reader console</a>, pick a DOE round and the rules to use (DOE Regional 2027 is the default), and put players on two
           teams. The reader taps <strong>Done reading</strong> after each question, taps the player who buzzed, then the result. Clocks,
           interrupts, rebounds and bonuses are handled automatically.
         </li>

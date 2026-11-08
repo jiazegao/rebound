@@ -45,7 +45,8 @@ const SIGNED_IN_NAV: NavItem[] = [
   { label: 'Review', path: '/review', section: 'review' },
   { label: 'Learn', path: '/learn', section: 'learn' },
   { label: 'Library', path: '/library', section: 'library' },
-  { label: 'Play', path: '/reader', section: 'reader' },
+  { label: 'Play online', path: '/online', section: 'online' },
+  { label: 'Reader console', path: '/reader', section: 'reader' },
   { label: 'Team', path: '/team', section: 'team' },
 ];
 
@@ -280,12 +281,12 @@ export function App() {
     lineups: 'team',
     packets: 'library',
     assignments: 'team',
-    room: 'reader',
+    // A room's link is for the players on their own devices (a remote Reader game or an online match).
+    room: 'online',
     visual: 'try',
     tiebreakers: 'try',
     shootout: 'reader',
     write: 'team',
-    online: 'reader',
   };
   const activeSection = sectionAliases[section] ?? section;
 
@@ -299,16 +300,23 @@ export function App() {
           <a className="brand" href={href(signedIn ? '/today' : '/')}>
             <span className="brand-mark" aria-hidden="true">R</span>
             Rebound
-            {data.team && <span className="muted small" style={{ fontWeight: 600 }}>· {data.team.name}</span>}
+            {data.team && (
+              <span className="brand-team muted small" title={data.team.name}>
+                · {data.team.name}
+              </span>
+            )}
           </a>
-          <nav className="nav" aria-label="Main">
-            {nav.map((item) => (
-              <a key={item.path} href={href(item.path)} aria-current={activeSection === item.section ? 'page' : undefined}>
-                {item.label}
-              </a>
-            ))}
-          </nav>
-          {session.user && <AccountMenu key={route.path} name={session.user.name} />}
+          {/* The bar and the account menu stay together: when the header runs out of room they move to a second row. */}
+          <div className="header-end">
+            <nav className="nav" aria-label="Main">
+              {nav.map((item) => (
+                <a key={item.path} href={href(item.path)} aria-current={activeSection === item.section ? 'page' : undefined}>
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+            {session.user && <AccountMenu key={route.path} name={session.user.name} />}
+          </div>
         </div>
       </header>
       {session.status === 'failed' && !need && (
