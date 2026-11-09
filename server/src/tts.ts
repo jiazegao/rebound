@@ -9,11 +9,11 @@
  * Development only: DEV_TTS_FAKE = "1" (server/.dev.vars or the test config) makes silent recordings of the right
  * length instead of calling Google.
  */
-import { spokenQuestion } from '../../src/core/speech';
-import { buildReading } from '../../src/lib/reading';
-import { sha256Hex } from './crypto';
 import { HttpError } from './http';
 import { asObject } from './validate';
+
+/** What the voice says for a question, and a recording's name (shared with scripts/voice, which records elsewhere). */
+export { audioKey, spokenFor } from '../../src/core/speech';
 
 export const GOOGLE_TTS_URL = 'https://texttospeech.googleapis.com/v1/text:synthesize';
 export const DEFAULT_VOICE = 'en-US-Chirp3-HD-Charon';
@@ -57,10 +57,6 @@ export function ttsSettings(env: Env): TtsSettings | null {
   };
 }
 
-/** What the voice says for a question (the reading's text: its stem, then a line per answer choice). */
-export function spokenFor(question: { stem: string; choices?: Record<'W' | 'X' | 'Y' | 'Z', string> }): string {
-  return spokenQuestion(buildReading(question).text);
-}
 
 /** A question to record for solo practice (POST /api/speech): its stem, and its choices if it has them. */
 export function practiceQuestion(value: unknown): { stem: string; choices?: Record<'W' | 'X' | 'Y' | 'Z', string> } {
@@ -75,10 +71,6 @@ export function practiceQuestion(value: unknown): { stem: string; choices?: Reco
   return { stem, choices: choices as Record<'W' | 'X' | 'Y' | 'Z', string> };
 }
 
-/** A recording's key: the voice and the words (40 hex characters). */
-export async function audioKey(voice: string, spoken: string): Promise<string> {
-  return (await sha256Hex(`${voice}|${spoken}`)).slice(0, 40);
-}
 
 export const AUDIO_KEY = /^[0-9a-f]{40}$/;
 

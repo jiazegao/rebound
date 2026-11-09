@@ -1,0 +1,6 @@
+# How Kokoro should say words it gets wrong (scripts/voice/README.md, "Fixing a word").
+# One word a line: the word, a tab, then either
+#   phonemes between slashes, as `kokoro_voice.py try` prints them   e.g.  phenotype<TAB>/fˈinətˌIp/
+#   or a respelling that Kokoro says right                         e.g.  pseudopodia<TAB>sue doe poe dee uh
+# Whole words only, any capitalization. The recordings' names do not change, so after adding a word, record the
+# questions that use it again:  python scripts/voice/kokoro_voice.py generate --force --only-with <word>

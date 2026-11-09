@@ -1,0 +1,8 @@
+# Rebound's voice made with Kokoro (scripts/voice/README.md). Python 3.10 to 3.12.
+# Install PyTorch for your graphics card first (README step 1), then: pip install -r scripts/voice/requirements.txt
+kokoro>=0.9.4
+lameenc>=1.7
+soundfile>=0.12.1
+scipy>=1.10
+# Only for `check` (listening back to find words left out):
+openai-whisper>=20240930
