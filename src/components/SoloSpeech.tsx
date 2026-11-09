@@ -15,7 +15,9 @@ import { buildReading, readingDurationMs, wpmFor } from '../lib/reading';
 import { RecordedReader } from '../lib/recorded';
 import {
   browserSpeech,
+  builtInVoicesOnly,
   chooseVoice,
+  distinctVoices,
   englishVoices,
   loadVoices,
   QuestionSpeaker,
@@ -138,8 +140,9 @@ export function useSoloSpeech(enabled: boolean): SoloSpeech {
       return;
     }
     let live = true;
-    void loadVoices(platform).then((all) => {
+    void loadVoices(platform).then((loaded) => {
       if (!live) return;
+      const all = distinctVoices(loaded, savedVoice());
       const english = englishVoices(all);
       setVoices(english.length ? english : all);
       const chosen = chooseVoice(all, savedVoice());
@@ -394,6 +397,12 @@ export function SoloSoundCheck({ speech, wpm }: { speech: SoloSpeech; wpm: numbe
               Play a sample
             </button>
           </div>
+          {builtInVoicesOnly() && (
+            <p className="small muted" style={{ margin: 0 }}>
+              iPads and iPhones let websites use only their built-in voices, so voices downloaded in Settings (such as Premium ones) don’t
+              appear here.
+            </p>
+          )}
         </>
       )}
     </div>

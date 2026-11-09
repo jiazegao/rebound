@@ -10,7 +10,9 @@ import { RecordedReader } from '../lib/recorded';
 import type { RoomClient, RoomView } from '../lib/room';
 import {
   browserSpeech,
+  builtInVoicesOnly,
   chooseVoice,
+  distinctVoices,
   englishVoices,
   loadVoices,
   QuestionSpeaker,
@@ -80,8 +82,9 @@ export function useMatchSpeech(enabled: boolean, view: RoomView | null, client: 
       return;
     }
     let live = true;
-    void loadVoices(platform).then((all) => {
+    void loadVoices(platform).then((loaded) => {
       if (!live) return;
+      const all = distinctVoices(loaded, savedVoice());
       const english = englishVoices(all);
       setVoices(english.length ? english : all);
       const chosen = chooseVoice(all, savedVoice());
@@ -288,6 +291,12 @@ export function SoundCheck({ speech }: { speech: MatchSpeech }) {
                   Play a sample
                 </button>
               </div>
+              {builtInVoicesOnly() && (
+                <p className="small muted" style={{ margin: 0 }}>
+                  iPads and iPhones let websites use only their built-in voices, so voices downloaded in Settings (such as Premium ones) don’t
+                  appear here.
+                </p>
+              )}
             </>
           )}
         </>
