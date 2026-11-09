@@ -98,6 +98,31 @@ export function voiceLabel(v: VoiceLike): string {
 }
 
 /**
+ * The device's voices, each once: iPads list some voices twice, alike in name, language and quality, so a menu would
+ * show two the same. Of two alike, the one `keep` names (the voice its player chose) stays.
+ */
+export function distinctVoices(voices: VoiceLike[], keep: string | null = null): VoiceLike[] {
+  const seen = new Map<string, VoiceLike>();
+  for (const v of voices) {
+    const label = voiceLabel(v);
+    const had = seen.get(label);
+    if (!had || (v.voiceURI === keep && had.voiceURI !== keep)) seen.set(label, v);
+  }
+  return [...seen.values()];
+}
+
+/**
+ * On iPads and iPhones, browsers offer websites only the voices built into the device: ones downloaded in Settings
+ * (Premium and Enhanced voices, Siri's) are not available to the Web Speech API (as Apple's engineers say).
+ */
+export function builtInVoicesOnly(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  // iPads ask for desktop sites, so their browsers say "Macintosh": a Mac has no touch screen.
+  return /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+}
+
+/**
  * The device's voices, once it has them (some browsers load them a moment after the page). Resolves to an empty
  * list when the device has none after `timeoutMs`.
  */

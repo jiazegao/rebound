@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { speechChunks } from '../core/speech';
 import { buildReading, readingDurationMs } from './reading';
-import { chooseVoice, englishVoices, loadVoices, QuestionSpeaker, voiceLabel, type SpeechPlatform, type UtteranceLike, type VoiceLike } from './speech';
+import { chooseVoice, distinctVoices, englishVoices, loadVoices, QuestionSpeaker, voiceLabel, type SpeechPlatform, type UtteranceLike, type VoiceLike } from './speech';
 
 /**
  * A pretend voice: it starts `startMs` after it is asked to and says `charsPerSecond` characters a second at its
@@ -245,6 +245,26 @@ describe('voices', () => {
       'Kathy (en-US)',
     ]);
     expect(chooseVoice(voices, null)?.name).toBe('Ava (Premium)');
+  });
+
+  it('lists each voice once when a device lists it twice, keeping the one its player chose', () => {
+    // An iPad lists some voices twice: alike in name, language and quality.
+    const voices = [
+      v('Samantha', 'en-US', { localService: true, voiceURI: 'com.apple.voice.compact.en-US.Samantha' }),
+      v('Samantha', 'en-US', { localService: true, voiceURI: 'com.apple.voice.compact.en-US.Samantha' }),
+      v('Daniel', 'en-GB', { localService: true, voiceURI: 'com.apple.voice.compact.en-GB.Daniel' }),
+      v('Daniel', 'en-GB', { localService: true, voiceURI: 'com.apple.voice.compact.en-GB.Daniel-2' }),
+      v('Karen', 'en-AU', { localService: true, voiceURI: 'com.apple.voice.compact.en-AU.Karen' }),
+      // Same name, but another quality: both stay, labelled apart.
+      v('Samantha', 'en-US', { localService: true, voiceURI: 'com.apple.voice.enhanced.en-US.Samantha' }),
+    ];
+    expect(distinctVoices(voices).map(voiceLabel)).toEqual(['Samantha (en-US, Compact)', 'Daniel (en-GB, Compact)', 'Karen (en-AU, Compact)', 'Samantha (en-US, Enhanced)']);
+    expect(distinctVoices(voices).map((x) => x.voiceURI)[1]).toBe('com.apple.voice.compact.en-GB.Daniel');
+    // The second Daniel was chosen on this device: it is the one kept, so the choice still holds.
+    const kept = distinctVoices(voices, 'com.apple.voice.compact.en-GB.Daniel-2');
+    expect(kept.map((x) => x.voiceURI)).toContain('com.apple.voice.compact.en-GB.Daniel-2');
+    expect(kept).toHaveLength(4);
+    expect(chooseVoice(kept, 'com.apple.voice.compact.en-GB.Daniel-2')?.voiceURI).toBe('com.apple.voice.compact.en-GB.Daniel-2');
   });
 
   it('waits for voices that load late, and gives up on a device with none', async () => {
