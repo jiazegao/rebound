@@ -134,8 +134,8 @@ export function ItStaffPage() {
           caches files from Rebound's own domain, never a player's data.
         </li>
         <li>
-          Online matches can be read aloud (no microphone is used). Rebound's own voice is recorded audio that comes from Rebound's server, like
-          everything else. Where that is not set up, each device uses its own text-to-speech voice through the browser; some of those (Chrome's
+          Online matches and solo practice can be read aloud (no microphone is used). Rebound's own voice is recorded audio that comes from
+          Rebound's server, like everything else. Where that is not set up, each device uses its own text-to-speech voice through the browser; some of those (Chrome's
           "Google" voices, Edge's "Natural" ones) come from the browser maker's servers, and if they are blocked Rebound tries another voice, then
           shows the questions as text.
         </li>

@@ -1,6 +1,6 @@
 /**
- * VoiceCache: Rebound's recordings for matches read aloud (tts.ts), kept so each question is recorded once and
- * reused by every later match. Sixteen objects share them, by the first character of each recording's key (a hash
+ * VoiceCache: Rebound's recordings for matches and solo practice read aloud (tts.ts), kept so each question is
+ * recorded once and reused by every later match and every player. Sixteen objects share them, by the first character of each recording's key (a hash
  * of the voice and the words), so no one object serves every request.
  */
 import { DurableObject } from 'cloudflare:workers';
@@ -39,25 +39,26 @@ export class VoiceCache extends DurableObject<Env> {
 
   /**
    * The recording of `text` under `key`, made now unless it is kept: its length in ms, or null when it cannot be
-   * made (no voice set up, this month's characters used up, or Google failed).
+   * made (no voice set up, this month's characters used up, or Google failed). `share`: the part of the month's
+   * characters this request may use (solo practice keeps some for matches).
    */
-  async ensure(key: string, text: string): Promise<number | null> {
+  async ensure(key: string, text: string, share = 1): Promise<number | null> {
     const kept = await this.lookup(key);
     if (kept !== null) return kept;
     let made = this.making.get(key);
     if (!made) {
-      made = this.make(key, text).finally(() => this.making.delete(key));
+      made = this.make(key, text, share).finally(() => this.making.delete(key));
       this.making.set(key, made);
     }
     return made;
   }
 
-  private async make(key: string, text: string): Promise<number | null> {
+  private async make(key: string, text: string, share: number): Promise<number | null> {
     const settings = ttsSettings(this.env);
     if (!settings) return null;
     const month = monthOf(Date.now());
     const registry = registryObject(this.env);
-    if (!settings.fake && !(await registry.reserveTtsChars(month, text.length, settings.monthlyChars))) return null;
+    if (!settings.fake && !(await registry.reserveTtsChars(month, text.length, Math.floor(settings.monthlyChars * share)))) return null;
     try {
       const { mp3, durationMs } = await synthesize(text, settings);
       const bytes = mp3.buffer.slice(mp3.byteOffset, mp3.byteOffset + mp3.byteLength);

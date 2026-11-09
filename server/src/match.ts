@@ -20,6 +20,7 @@ import { judgeAnswer } from '../../src/core/judge/judge';
 import { applyEvent, currentWindow, replay, type EventInput, type MatchConfig, type MatchEvent, type MatchState, type TeamIdx } from '../../src/core/rules/engine';
 import { getPreset, PRESETS } from '../../src/core/rules/presets';
 import { LETTERS, SUBJECT_LABELS, type Letter, type Subject } from '../../src/core/schema';
+import { MAX_SPEECH_WPM, MIN_SPEECH_WPM } from '../../src/core/speech';
 import { buildReading, readingDurationMs, wpmFor } from '../../src/lib/reading';
 import { HttpError } from './http';
 import { asObject, cleanLine, MAX_ID_LENGTH } from './validate';
@@ -55,18 +56,7 @@ export const FFA_POINTS = { correct: 4, wrongInterrupt: -4 } as const;
 
 export const MIN_WPM = 60;
 export const MAX_WPM = 600;
-/** Read aloud: the speeds a device's voice can keep to (from its slowest to its fastest pace). */
-export const MIN_SPEECH_WPM = 100;
-export const MAX_SPEECH_WPM = 300;
-/** Rebound's recorded voice speaks at about this many words a minute; the host's reading speed sets its playback. */
-export const NATURAL_WPM = 160;
-export const MIN_PLAYBACK_RATE = 0.75;
-export const MAX_PLAYBACK_RATE = 1.6;
-
-/** How fast recordings play for a reading speed of `wpm` (pitch is kept). */
-export function playbackRate(wpm: number): number {
-  return Math.round(Math.min(MAX_PLAYBACK_RATE, Math.max(MIN_PLAYBACK_RATE, wpm / NATURAL_WPM)) * 100) / 100;
-}
+export { MAX_PLAYBACK_RATE, MAX_SPEECH_WPM, MIN_PLAYBACK_RATE, MIN_SPEECH_WPM, NATURAL_WPM, playbackRate } from '../../src/core/speech';
 export const MAX_MATCH_PAIRS = 40;
 
 export interface MatchQuestion {

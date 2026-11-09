@@ -24,6 +24,7 @@ import {
 import { parseMatchSetup } from './match';
 import { directoryObject, roomObject, teamObject, userObject, voiceObject } from './objects';
 import { closedSocket } from './room';
+import { audioKey, practiceQuestion, spokenFor, ttsSettings } from './tts';
 import { TEAM_NOT_FOUND } from './team';
 import { asObject, cleanLine, emailAddress, NAME_RULE, roomName } from './validate';
 
@@ -97,11 +98,15 @@ async function route(request: Request, env: Env): Promise<Response> {
       // Making a team starts with the user, who can be on one team at a time.
       if (method !== 'POST') throw unsupported();
       return forward(env, request, url, (id) => userObject(env, id.userId));
+    case '/api/speech':
+      if (method === 'GET') return speechStatus(request, env, url);
+      if (method === 'POST') return recordForPractice(request, env, url);
+      throw unsupported();
   }
 
   if (USER_PATHS.test(path)) return forward(env, request, url, (id) => userObject(env, id.userId));
 
-  // A recording for a match read aloud (signed-in players only; recordings are made only for matches).
+  // A recording of Rebound's voice (signed-in players only; recordings are made for matches and solo practice).
   const speech = /^\/api\/speech\/([0-9a-f]{40})$/.exec(path);
   if (speech) {
     if (method !== 'GET') throw unsupported();
@@ -244,6 +249,37 @@ async function finishSignIn(
     throw needsSignup();
   }
   return json({ token: result.token, user: result.user });
+}
+
+/* ---------------- Rebound's voice for solo practice ---------------- */
+
+/** Solo practice read aloud may use this share of the month's characters, so matches always have some left. */
+const PRACTICE_SHARE = 0.8;
+
+/** `GET /api/speech`: whether Rebound's voice is set up. */
+async function speechStatus(request: Request, env: Env, url: URL): Promise<Response> {
+  await authenticate(request, env, url);
+  return json({ enabled: ttsSettings(env) !== null });
+}
+
+/**
+ * `POST /api/speech { stem, choices? }`: a question's recording for solo practice read aloud, made now unless it is
+ * kept. `key` is null when it cannot be made (this month's share of characters is used, the player has asked for
+ * RECORDINGS_PER_DAY new ones today, or Google failed): the player's device reads that question itself.
+ */
+async function recordForPractice(request: Request, env: Env, url: URL): Promise<Response> {
+  const identity = await authenticate(request, env, url);
+  const settings = ttsSettings(env);
+  if (!settings) return json({ enabled: false });
+  const spoken = spokenFor(practiceQuestion(await readJson(request, 16 * 1024)));
+  if (!spoken.trim()) throw new HttpError(400, 'That question has nothing to read aloud.');
+  const key = await audioKey(settings.voice, spoken);
+  const voice = voiceObject(env, key);
+  const kept = await voice.lookup(key);
+  if (kept !== null) return json({ enabled: true, key, ms: kept });
+  if (!(await userObject(env, identity.userId).reserveRecording(Date.now()))) return json({ enabled: true, key: null, ms: null });
+  const ms = await voice.ensure(key, spoken, PRACTICE_SHARE);
+  return json({ enabled: true, key: ms === null ? null : key, ms });
 }
 
 /* ---------------- rooms ---------------- */
