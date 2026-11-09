@@ -392,6 +392,71 @@ describe('Rebound’s recorded voice', () => {
     expect(google.calls).toHaveLength(3);
   });
 
+  it('records a question for solo practice when it is first asked for, once, and says when there is no voice', async () => {
+    const cora = await signUp('Cora');
+    const auth = { Authorization: `Bearer ${cora.token}`, Origin: SITE };
+    const stem = 'Which organelle holds the cell’s DNA?';
+    // No voice set up: the device reads.
+    expect((await call('/api/speech', { token: cora.token })).body).toEqual({ enabled: false });
+    expect((await call('/api/speech', { token: cora.token, body: { stem } })).body).toEqual({ enabled: false });
+
+    const google = fakeGoogle();
+    setTtsTestOverrides({ apiKey: 'test-key', fetch: google.fetcher });
+    expect((await call('/api/speech', { token: cora.token })).body).toEqual({ enabled: true });
+    const first = await call('/api/speech', { token: cora.token, body: { stem } });
+    expect(first.body).toMatchObject({ enabled: true, key: expect.stringMatching(/^[0-9a-f]{40}$/) });
+    expect(Math.abs(first.body.ms - stem.length * 70)).toBeLessThan(40);
+    expect(google.calls).toEqual([stem]);
+    expect((await workerFetch(`/api/speech/${first.body.key}`, { headers: auth })).status).toBe(200);
+    // Asked again (by anyone), it is the same recording: Google is not asked again.
+    const ana = await signUp('Ana');
+    expect((await call('/api/speech', { token: ana.token, body: { stem } })).body).toEqual(first.body);
+    expect(google.calls).toHaveLength(1);
+    // A match with the question uses the same recording.
+    const roomId = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 160, tossupCount: 1, pairs: [{ tossup: { ...PAIRS[0]!.tossup, stem } }] });
+    const host = await connect(roomId, cora.token);
+    expect((await voiceOf(host)).keys).toEqual([first.body.key]);
+
+    // Multiple choice: each choice is said with its letter.
+    await call('/api/speech', { token: cora.token, body: { stem: 'Which is a noble gas?', choices: { W: 'Neon', X: 'Iron', Y: 'Tin', Z: 'Lead' } } });
+    expect(google.calls[google.calls.length - 1]).toBe('Which is a noble gas? W, Neon. X, Iron. Y, Tin. Z, Lead.');
+
+    expect((await call('/api/speech', { token: cora.token, body: { stem: '  ' } })).status).toBe(400);
+    expect((await call('/api/speech', { token: cora.token, body: { stem: 'Which?', choices: { W: 'a', X: 'b', Y: 'c' } } })).status).toBe(400);
+    expect((await call('/api/speech', { body: { stem } })).status).toBe(401);
+    expect((await call('/api/speech', { method: 'PATCH', token: cora.token, body: {} })).status).toBe(405);
+    host.close();
+  });
+
+  it('keeps solo practice within its share of the month, and each player within a number a day', async () => {
+    const cora = await signUp('Cora');
+    const month = new Date().toISOString().slice(0, 7);
+    const registry = env.REGISTRY.get(env.REGISTRY.idFromName('global'));
+    const start = Number(await registry.ttsCharsUsed(month));
+    const google = fakeGoogle();
+    // Solo practice may use 80% of the month's characters: here 72 more, so matches keep the rest.
+    setTtsTestOverrides({ apiKey: 'test-key', fetch: google.fetcher, monthlyChars: Math.ceil((start + 72) / 0.8) });
+    const ask = (stem: string) => call('/api/speech', { token: cora.token, body: { stem } });
+    expect((await ask(`${'A'.repeat(30)}?`)).body.key).toMatch(/^[0-9a-f]{40}$/);
+    expect((await ask(`${'B'.repeat(40)}?`)).body.key).toMatch(/^[0-9a-f]{40}$/);
+    expect((await ask(`${'C'.repeat(20)}?`)).body).toEqual({ enabled: true, key: null, ms: null });
+    expect(google.calls).toHaveLength(2);
+    const roomId = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 160, tossupCount: 1, pairs: [{ tossup: { ...PAIRS[0]!.tossup, stem: 'Matches first?' } }] });
+    const host = await connect(roomId, cora.token);
+    expect((await voiceOf(host)).keys).toHaveLength(1);
+
+    // A player who has asked for the day's new recordings is read to by their device; kept ones still come.
+    setTtsTestOverrides({ apiKey: 'test-key', fetch: google.fetcher });
+    await runInDurableObject(env.USER.get(env.USER.idFromName(cora.id)), (_i, state) => {
+      state.storage.sql.exec('CREATE TABLE IF NOT EXISTS recordings_made (day TEXT PRIMARY KEY, count INTEGER NOT NULL)');
+      state.storage.sql.exec('INSERT OR REPLACE INTO recordings_made (day, count) VALUES (?, 300)', new Date().toISOString().slice(0, 10));
+    });
+    expect((await ask(`${'D'.repeat(20)}?`)).body).toEqual({ enabled: true, key: null, ms: null });
+    expect((await ask(`${'A'.repeat(30)}?`)).body.key).toMatch(/^[0-9a-f]{40}$/);
+    expect(google.calls).toHaveLength(3);
+    host.close();
+  });
+
   it('holds the start until the questions are recorded', async () => {
     let release = () => {};
     const google = fakeGoogle({ hold: new Promise<void>((r) => (release = r)) });

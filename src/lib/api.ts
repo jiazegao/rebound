@@ -183,7 +183,20 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   return body as T;
 }
 
-/** A recording in Rebound's voice for a match read aloud (an MP3), by its key. */
+/** Whether the server has Rebound's voice set up (for solo practice read aloud). */
+export const speechEnabled = async () => (await request<{ enabled: boolean }>('/api/speech')).enabled;
+
+/**
+ * A question's recording in Rebound's voice for solo practice, made on the server the first time anyone asks for it:
+ * its key and length, or a null key when it cannot be made now (the device reads that question itself).
+ */
+export const recordQuestion = (q: { stem: string; choices?: Record<'W' | 'X' | 'Y' | 'Z', string> }) =>
+  request<{ enabled: boolean; key?: string | null; ms?: number | null }>('/api/speech', {
+    method: 'POST',
+    body: q.choices ? { stem: q.stem, choices: q.choices } : { stem: q.stem },
+  });
+
+/** A recording in Rebound's voice (an MP3), by its key. */
 export async function fetchRecording(key: string): Promise<Blob> {
   const base = serverUrl();
   const token = sessionToken();

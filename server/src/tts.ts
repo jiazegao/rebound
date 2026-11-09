@@ -1,7 +1,7 @@
 /**
- * Rebound's voice for matches read aloud (docs/SERVER.md, "Read aloud"): Google Cloud Text-to-Speech says each
- * question once, as one natural passage, and the recording is kept (voice.ts), so every later match and every player
- * reuses it. The questions are public; nothing about players is sent.
+ * Rebound's voice for matches and solo practice read aloud (docs/SERVER.md, "Read aloud"): Google Cloud
+ * Text-to-Speech says each question once, as one natural passage, and the recording is kept (voice.ts), so every
+ * later match and every player reuses it. Only the questions are sent; nothing about players.
  *
  * On when the Worker has a GOOGLE_TTS_API_KEY secret (a Google Cloud API key allowed to use the Text-to-Speech API).
  * TTS_VOICE picks the voice and TTS_MONTHLY_CHARS caps the characters sent each month (default 900,000, under
@@ -12,6 +12,8 @@
 import { spokenQuestion } from '../../src/core/speech';
 import { buildReading } from '../../src/lib/reading';
 import { sha256Hex } from './crypto';
+import { HttpError } from './http';
+import { asObject } from './validate';
 
 export const GOOGLE_TTS_URL = 'https://texttospeech.googleapis.com/v1/text:synthesize';
 export const DEFAULT_VOICE = 'en-US-Chirp3-HD-Charon';
@@ -58,6 +60,19 @@ export function ttsSettings(env: Env): TtsSettings | null {
 /** What the voice says for a question (the reading's text: its stem, then a line per answer choice). */
 export function spokenFor(question: { stem: string; choices?: Record<'W' | 'X' | 'Y' | 'Z', string> }): string {
   return spokenQuestion(buildReading(question).text);
+}
+
+/** A question to record for solo practice (POST /api/speech): its stem, and its choices if it has them. */
+export function practiceQuestion(value: unknown): { stem: string; choices?: Record<'W' | 'X' | 'Y' | 'Z', string> } {
+  const o = asObject(value, 'The question');
+  const text = (v: unknown, max: number) => (typeof v === 'string' && v.trim() && v.length <= max ? v : null);
+  const stem = text(o.stem, 3000);
+  if (!stem) throw new HttpError(400, "The question's text is missing or too long.");
+  if (o.choices === undefined || o.choices === null) return { stem };
+  const c = asObject(o.choices, "The question's choices");
+  const choices = { W: text(c.W, 500), X: text(c.X, 500), Y: text(c.Y, 500), Z: text(c.Z, 500) };
+  if (!choices.W || !choices.X || !choices.Y || !choices.Z) throw new HttpError(400, 'A multiple choice question needs four choices (W to Z).');
+  return { stem, choices: choices as Record<'W' | 'X' | 'Y' | 'Z', string> };
 }
 
 /** A recording's key: the voice and the words (40 hex characters). */

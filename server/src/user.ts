@@ -69,6 +69,8 @@ const MAX_SESSIONS = 50;
 const VISITS_KEPT_MS = 7 * DAY;
 /** Rooms one user may open per UTC day (a safety limit: rooms are open to anyone signed in). */
 export const ROOMS_PER_DAY = 30;
+/** New recordings of Rebound's voice a person can ask for in a day of solo practice (ones already made are free). */
+export const RECORDINGS_PER_DAY = 300;
 
 const SESSION_ENDED = 'Your session has ended. Please sign in again.';
 const SESSION_EXPIRED = 'Your session expired after 180 days without use. Please sign in again.';
@@ -278,6 +280,18 @@ export class UserServer extends DurableObject<Env> {
       this.sql.exec('INSERT INTO rooms_made (day, count) VALUES (?, 1) ON CONFLICT (day) DO UPDATE SET count = count + 1', day);
       return {};
     });
+  }
+
+  /** Counts a new recording this user's solo practice asks for today; false once RECORDINGS_PER_DAY are used. */
+  async reserveRecording(now: number): Promise<boolean> {
+    if (!this.ready) return false;
+    const day = dayOf(now);
+    this.sql.exec('CREATE TABLE IF NOT EXISTS recordings_made (day TEXT PRIMARY KEY, count INTEGER NOT NULL)');
+    this.sql.exec('DELETE FROM recordings_made WHERE day < ?', day);
+    const made = this.sql.exec<{ count: number }>('SELECT count FROM recordings_made WHERE day = ?', day).toArray()[0]?.count ?? 0;
+    if (made >= RECORDINGS_PER_DAY) return false;
+    this.sql.exec('INSERT INTO recordings_made (day, count) VALUES (?, 1) ON CONFLICT (day) DO UPDATE SET count = count + 1', day);
+    return true;
   }
 
   /* ---------------- HTTP: the user's own routes, forwarded with their identity ---------------- */

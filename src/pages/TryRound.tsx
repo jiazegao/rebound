@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AiExplain } from '../components/AiExplain';
+import { saveReading, savedReading, SoloSoundCheck, useSoloSpeech, type ReadingChoice, type ReadingPlan, type SoloSpeech } from '../components/SoloSpeech';
 import { AnswerBox, Choices, Concepts, QuestionMeta, RichText } from '../components/QuestionView';
 import { Countdown, LoadError, Loading, Notice, PageHeader, useTicker } from '../components/ui';
 import { Verdict } from '../components/Verdict';
@@ -12,7 +13,8 @@ import { topicsForSubject } from '../core/taxonomy';
 import { heardLedger, usePlayerModel } from '../lib/learning';
 import { catalogById, loadCatalog, loadConceptIndex, loadQuestions, loadSetById, setGroups, setLabel, useCatalog, useIndex, useTeamLevel } from '../lib/library';
 import { topicById } from '../core/taxonomy';
-import { buildReading, lettersPerMinute, readingDurationMs, revealedCount, splitRevealed, type Reading } from '../lib/reading';
+import { MAX_SPEECH_WPM } from '../core/speech';
+import { buildReading, lettersPerMinute, readingDurationMs, revealedCount, splitRevealed, wpmFor, type Reading } from '../lib/reading';
 import { href } from '../lib/router';
 import { signInHref } from '../components/Gates';
 import { addAttempt, completeAssignment, completePlanItem, getData, markSeen, updateSettings, useData } from '../lib/store';
@@ -33,11 +35,14 @@ interface Item {
 }
 
 type Step =
-  | { kind: 'tossup_reading'; startedAt: number }
+  /** Read aloud: the question's recording is being made or fetched before its reading starts. */
+  | { kind: 'preparing'; which: 'tossup' | 'bonus' }
+  /** `plan`: read aloud (how, and how long the reading lasts). */
+  | { kind: 'tossup_reading'; startedAt: number; plan?: ReadingPlan }
   | { kind: 'tossup_open'; openedAt: number }
   | { kind: 'tossup_answering'; interrupt: boolean; latencyMs: number | null; shownChars: number; buzzedAt: number; typingAt: number | null }
   | { kind: 'tossup_result'; response: string; result: JudgeResult | null; interrupt: boolean; latencyMs: number | null; decided: boolean | null }
-  | { kind: 'bonus_reading'; startedAt: number }
+  | { kind: 'bonus_reading'; startedAt: number; plan?: ReadingPlan }
   | { kind: 'bonus_open'; openedAt: number }
   | { kind: 'bonus_result'; response: string; result: JudgeResult | null; decided: boolean | null };
 
@@ -162,7 +167,22 @@ function conceptName(id: string): string | null {
   return topic?.concepts.find((c) => c.id === id)?.name ?? null;
 }
 
-function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Settings) => void; initial: Partial<Settings>; autoStart: boolean }) {
+function Setup({
+  onStart,
+  initial,
+  autoStart,
+  reading,
+  onReading,
+  speech,
+}: {
+  onStart: (items: Item[], s: Settings) => void;
+  initial: Partial<Settings>;
+  autoStart: boolean;
+  reading: ReadingChoice;
+  onReading: (choice: ReadingChoice) => void;
+  /** Read aloud: the voices (null when questions are shown). */
+  speech: SoloSpeech | null;
+}) {
   const data = useData();
   const index = useIndex();
   const catalog = useCatalog();
@@ -236,6 +256,7 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
         items = await libraryItems(cat, s, seen, (subject, topic) => ratingFor(model, subject, topic));
       }
       if (items.length === 0) throw new Error('No questions match these settings. Try another topic or subject.');
+      if (speech) settings = { ...settings, wpm: Math.min(MAX_SPEECH_WPM, settings.wpm) };
       updateSettings({ readingWpm: settings.wpm, answerTimer: settings.answerTimer });
       onStart(items, settings);
     } catch (err) {
@@ -260,8 +281,8 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
     <div className="container narrow">
       <PageHeader title={playerId ? 'Solo practice' : 'Try a round'}>
         <p>
-          Questions appear letter by letter, at the pace a moderator reads them. Press <span className="kbd">Space</span> to buzz, type your
-          answer, and press <span className="kbd">Enter</span>. You get {TOSSUP_WINDOW_S} seconds after the reading to buzz and{' '}
+          Questions appear letter by letter, at the pace a moderator reads them, or are read aloud. Press <span className="kbd">Space</span> to
+          buzz, type your answer, and press <span className="kbd">Enter</span>. You get {TOSSUP_WINDOW_S} seconds after the reading to buzz and{' '}
           {BONUS_WINDOW_S} seconds on bonuses. After you buzz, start typing within {ANSWER_START_S} seconds and finish within {ANSWER_TOTAL_S},
           since NSB only allows a short natural pause before answering.
         </p>
@@ -420,11 +441,39 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
             </label>
           )}
           {fromLibrary && catalog.error && <Notice kind="warn">The question catalog could not be loaded, so drills are unavailable right now. {catalog.error.message}</Notice>}
+          <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
+            <legend className="label">How questions are read</legend>
+            <label className="checkbox">
+              <input type="radio" name="reading" checked={reading === 'text'} onChange={() => onReading('text')} /> On screen: each question appears letter
+              by letter
+            </label>
+            <label className="checkbox">
+              <input
+                type="radio"
+                name="reading"
+                checked={reading === 'speech'}
+                onChange={() => {
+                  onReading('speech');
+                  setS((now) => ({ ...now, wpm: Math.min(MAX_SPEECH_WPM, now.wpm) }));
+                }}
+              />{' '}
+              Read aloud: you hear each question, and its text appears with the answer (turn your sound on)
+            </label>
+          </fieldset>
+          {speech && <SoloSoundCheck speech={speech} wpm={s.wpm} />}
           <div className="field">
             <label htmlFor="wpm">
               Reading speed: {s.wpm} words per minute (about {lettersPerMinute(s.wpm).toLocaleString()} letters per minute)
             </label>
-            <input id="wpm" type="range" min={120} max={320} step={10} value={s.wpm} onChange={(e) => setS({ ...s, wpm: Number(e.target.value) })} />
+            <input
+              id="wpm"
+              type="range"
+              min={120}
+              max={speech ? MAX_SPEECH_WPM : 320}
+              step={10}
+              value={s.wpm}
+              onChange={(e) => setS({ ...s, wpm: Number(e.target.value) })}
+            />
             <span className="hint">
               Moderators usually read at roughly 160–220 words per minute. Letters per minute uses the average DOE question word: about 5 letters
               plus a space.
@@ -435,7 +484,15 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
             Time my answers: start typing within {ANSWER_START_S} seconds of buzzing and finish within {ANSWER_TOTAL_S}
           </label>
           <div>
-            <button className="btn btn-primary btn-big" onClick={() => void start()} disabled={busy || (fromLibrary && !catalog.data)}>
+            <button
+              className="btn btn-primary btn-big"
+              onClick={() => {
+                // Read aloud: let the page speak and play from this click on (Safari on iPads and iPhones).
+                speech?.prime();
+                void start();
+              }}
+              disabled={busy || (fromLibrary && !catalog.data)}
+            >
               {busy ? 'Loading…' : 'Start'}
             </button>
           </div>
@@ -447,27 +504,57 @@ function Setup({ onStart, initial, autoStart }: { onStart: (items: Item[], s: Se
 
 /* ---------------- play ---------------- */
 
-function firstStep(item: Item): Step {
-  return item.bonusOnly ? { kind: 'bonus_reading', startedAt: Date.now() } : { kind: 'tossup_reading', startedAt: Date.now() };
+/** The step a question's reading starts with: read aloud, its recording is made ready first. */
+function readingStep(which: 'tossup' | 'bonus', aloud: boolean): Step {
+  if (aloud) return { kind: 'preparing', which };
+  return which === 'bonus' ? { kind: 'bonus_reading', startedAt: Date.now() } : { kind: 'tossup_reading', startedAt: Date.now() };
+}
+
+function firstStep(item: Item, aloud: boolean): Step {
+  return readingStep(item.bonusOnly ? 'bonus' : 'tossup', aloud);
+}
+
+/** Read aloud: the voice starts this long after the question is ready, so its first words are not lost. */
+const LEAD_MS = 300;
+
+/** Read aloud: what shows in place of the question while it is heard (its text comes with the answer). */
+function Listening({ step }: { step: Step }) {
+  const text =
+    step.kind === 'preparing'
+      ? 'Getting the question ready…'
+      : step.kind === 'tossup_reading' || step.kind === 'bonus_reading'
+        ? '🔊 Listening to the question…'
+        : 'The question’s text shows with its answer.';
+  return (
+    <p className="listening" aria-live="off">
+      {text}
+    </p>
+  );
 }
 
 function Play({
   items,
   wpm,
   answerTimer,
+  speech,
   onDone,
   onQuit,
 }: {
   items: Item[];
   wpm: number;
   answerTimer: boolean;
+  /** Read aloud (null: questions appear letter by letter). */
+  speech: SoloSpeech | null;
   onDone: (t: Tally) => void;
   onQuit: () => void;
 }) {
   const data = useData();
   const playerId = data.settings.soloPlayerId;
+  const aloud = !!speech;
   const [index, setIndex] = useState(0);
-  const [step, setStep] = useState<Step>(() => firstStep(items[0]));
+  const [step, setStep] = useState<Step>(() => firstStep(items[0], aloud));
+  // Read aloud, but this question shows as text (the device has no voice, and there is no recording).
+  const [asText, setAsText] = useState(false);
   const [tally, setTally] = useState<Tally>(emptyTally);
   const [response, setResponse] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -500,18 +587,67 @@ function Play({
     [playerId],
   );
 
+  /** How long a reading lasts: read aloud, as its plan says (a recording sets its own length). */
+  const lasts = (st: { plan?: ReadingPlan }, reading: Reading) => st.plan?.durationMs ?? readingDurationMs(reading, wpm);
+  /** The text's pace: in step with the reading, for a question read aloud that shows as text after all. */
+  const pace = (st: { plan?: ReadingPlan }, reading: Reading) => (st.plan ? wpmFor(reading, st.plan.durationMs) : wpm);
   const shownTossup =
     step.kind === 'tossup_reading'
-      ? revealedCount(tossupReading, now - step.startedAt, wpm)
+      ? revealedCount(tossupReading, now - step.startedAt, pace(step, tossupReading))
       : step.kind === 'tossup_answering'
         ? step.shownChars
         : tossupLength;
-  const shownBonus = step.kind === 'bonus_reading' && bonusReading ? revealedCount(bonusReading, now - step.startedAt, wpm) : bonusLength;
+  const shownBonus = step.kind === 'bonus_reading' && bonusReading ? revealedCount(bonusReading, now - step.startedAt, pace(step, bonusReading)) : bonusLength;
+  // Read aloud, the question's text is hidden until its answer, unless it cannot be heard.
+  const hidden = aloud && !asText && !speech?.unheard;
+
+  // Read aloud: have the next questions recorded ahead, so each is ready when its turn comes.
+  useEffect(() => {
+    if (!speech) return;
+    const first = (it?: Item) => (!it ? [] : it.bonusOnly ? (it.pair.bonus ? [it.pair.bonus] : []) : [it.pair.tossup]);
+    const here = items[index]!;
+    speech.prepare([...first(here), ...(!here.bonusOnly && here.pair.bonus ? [here.pair.bonus] : []), ...first(items[index + 1]), ...first(items[index + 2])]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index]);
+
+  // Read aloud: once a question is ready (its recording made and fetched, or the device's voice), its reading starts.
+  useEffect(() => {
+    if (step.kind !== 'preparing' || !speech) return;
+    const which = step.which;
+    const q = which === 'bonus' ? bonus : tossup;
+    if (!q) return;
+    let live = true;
+    void speech.plan(q, wpm).then((plan) => {
+      if (!live) return;
+      const startedAt = Date.now() + LEAD_MS;
+      setAsText(plan.voice === 'text');
+      setStep(which === 'bonus' ? { kind: 'bonus_reading', startedAt, plan } : { kind: 'tossup_reading', startedAt, plan });
+      if (which === 'bonus') setTimeout(() => inputRef.current?.focus(), 0);
+    });
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, index]);
+
+  // Read aloud: the voice follows the reading; a buzz or an answer stops it; the end of the reading lets it finish.
+  const voiceKey = step.kind === 'tossup_reading' || step.kind === 'bonus_reading' ? `${step.kind}:${step.startedAt}` : step.kind;
+  useEffect(() => {
+    if (!speech) return;
+    if ((step.kind === 'tossup_reading' || step.kind === 'bonus_reading') && step.plan) {
+      const q = step.kind === 'bonus_reading' ? bonus : tossup;
+      if (q) speech.read({ q, plan: step.plan, startedAt: step.startedAt, wpm });
+    } else if (step.kind === 'tossup_open' || step.kind === 'bonus_open') speech.read(null, 'finish');
+    else speech.read(null, 'stop');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voiceKey]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => () => speech?.read(null, 'stop'), []);
 
   // Automatic transitions: the end of the reading opens the window; windows and the answer timer run out.
   useEffect(() => {
-    if (step.kind === 'tossup_reading' && shownTossup >= tossupLength) {
-      setStep({ kind: 'tossup_open', openedAt: step.startedAt + readingDurationMs(tossupReading, wpm) });
+    if (step.kind === 'tossup_reading' && now - step.startedAt >= lasts(step, tossupReading)) {
+      setStep({ kind: 'tossup_open', openedAt: step.startedAt + lasts(step, tossupReading) });
     } else if (step.kind === 'tossup_open' && now - step.openedAt >= TOSSUP_WINDOW_S * 1000) {
       setTally((t) => ({ ...t, tossupsHeard: t.tossupsHeard + 1, missed: [...t.missed, tossup] }));
       setStep({ kind: 'tossup_result', response: '', result: null, interrupt: false, latencyMs: null, decided: false });
@@ -519,8 +655,8 @@ function Play({
       const elapsed = now - step.buzzedAt;
       if (step.typingAt === null && !response.trim() && elapsed >= ANSWER_START_S * 1000) stall();
       else if (elapsed >= ANSWER_TOTAL_S * 1000) submitTossup(response, true);
-    } else if (step.kind === 'bonus_reading' && bonusReading && shownBonus >= bonusLength) {
-      setStep({ kind: 'bonus_open', openedAt: step.startedAt + readingDurationMs(bonusReading, wpm) });
+    } else if (step.kind === 'bonus_reading' && bonusReading && now - step.startedAt >= lasts(step, bonusReading)) {
+      setStep({ kind: 'bonus_open', openedAt: step.startedAt + lasts(step, bonusReading) });
     } else if (step.kind === 'bonus_open' && now - step.openedAt >= BONUS_WINDOW_S * 1000) {
       submitBonus(response);
     }
@@ -648,7 +784,7 @@ function Play({
     }
     setResponse('');
     if (goesToBonus) {
-      setStep({ kind: 'bonus_reading', startedAt: Date.now() });
+      setStep(readingStep('bonus', aloud));
       setTimeout(() => inputRef.current?.focus(), 0);
       return;
     }
@@ -657,7 +793,7 @@ function Play({
       return;
     }
     setIndex(index + 1);
-    setStep(firstStep(items[index + 1]));
+    setStep(firstStep(items[index + 1], aloud));
     if (items[index + 1].bonusOnly) setTimeout(() => inputRef.current?.focus(), 0);
   };
 
@@ -684,7 +820,7 @@ function Play({
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  const onBonus = step.kind === 'bonus_reading' || step.kind === 'bonus_open' || step.kind === 'bonus_result';
+  const onBonus = step.kind === 'bonus_reading' || step.kind === 'bonus_open' || step.kind === 'bonus_result' || (step.kind === 'preparing' && step.which === 'bonus');
 
   return (
     <div className="container narrow">
@@ -710,6 +846,8 @@ function Play({
               </p>
               <Choices q={tossup} />
             </>
+          ) : hidden || step.kind === 'preparing' ? (
+            <Listening step={step} />
           ) : (
             <Revealed reading={tossupReading} count={shownTossup} />
           )}
@@ -725,6 +863,8 @@ function Play({
                 </p>
                 <Choices q={bonus} />
               </>
+            ) : hidden || step.kind === 'preparing' ? (
+              <Listening step={step} />
             ) : (
               bonusReading && <Revealed reading={bonusReading} count={shownBonus} />
             )}
@@ -733,6 +873,14 @@ function Play({
       )}
 
       <div className="stack" style={{ marginTop: '1rem' }}>
+        {speech?.blocked && (
+          <Notice kind="warn">
+            Your browser is waiting for a tap before it plays sound.{' '}
+            <button className="btn btn-small" onClick={speech.allow}>
+              Turn on the sound
+            </button>
+          </Notice>
+        )}
         {step.kind === 'tossup_reading' && (
           <button className="btn btn-primary btn-big" onClick={buzz}>
             Buzz <span className="kbd">Space</span>
@@ -902,6 +1050,10 @@ function initialFromQuery(query: URLSearchParams): Partial<Settings> {
 
 export function TryRound({ query }: { query: URLSearchParams }) {
   const data = useData();
+  // On screen or read aloud: remembered on this device, which has (or lacks) the sound and the voices.
+  const [reading, setReading] = useState<ReadingChoice>(savedReading);
+  const voices = useSoloSpeech(reading === 'speech');
+  const speech = reading === 'speech' ? voices : null;
   const [stage, setStage] = useState<'setup' | 'play' | 'done'>('setup');
   const [items, setItems] = useState<Item[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -928,6 +1080,7 @@ export function TryRound({ query }: { query: URLSearchParams }) {
         items={items}
         wpm={settings.wpm}
         answerTimer={settings.answerTimer}
+        speech={speech}
         onDone={(t) => {
           setTally(t);
           setStage('done');
@@ -958,6 +1111,12 @@ export function TryRound({ query }: { query: URLSearchParams }) {
       key={queryKey}
       initial={settings ?? initial}
       autoStart={autoStart && settings === null}
+      reading={reading}
+      onReading={(choice) => {
+        setReading(choice);
+        saveReading(choice);
+      }}
+      speech={speech}
       onStart={(list, s) => {
         if (list.length === 0) return;
         setItems(list);

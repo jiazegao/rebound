@@ -110,7 +110,9 @@ captain.
 | `POST /api/rooms` | user | `{ name, match? }` → 201 `{ roomId }` (the caller hosts it; with `match`, an online match: see Match rooms) |
 | `DELETE /api/rooms/:id` | user | → `{ ok: true }`: the host cancels a match that has not started (see Match rooms); a room already closed counts as cancelled |
 | `GET /api/rooms/:id/ws?token=` | user | WebSocket upgrade (see Rooms) |
-| `GET /api/speech/:key` | user | a recording in Rebound's voice for a match read aloud (`audio/mpeg`, cacheable for good); 404 when there is none |
+| `GET /api/speech` | user | → `{ enabled }`: whether Rebound's voice is set up (see Solo practice read aloud) |
+| `POST /api/speech` | user | `{ stem, choices? }` → `{ enabled, key, ms }`: a question's recording for solo practice, made the first time anyone asks for it; `key` is null when it cannot be made now (the device reads that question) |
+| `GET /api/speech/:key` | user | a recording in Rebound's voice for a match or solo practice read aloud (`audio/mpeg`, cacheable for good); 404 when there is none |
 | `GET /api/ai` | user | → `{ enabled: false }`, or `{ enabled: true, model, dailyLimit, usedToday }` |
 | `POST /api/ai/draft` | user | `{ passage, source, subject, kind?: "tossup"\|"bonus"\|"either", count?: 1–5 }` → `{ drafts, model, dailyLimit, usedToday }` |
 | `POST /api/ai/explain` | user | `{ stem, answer, choices?: { W, X, Y, Z }, subject? }` → `{ explanation, answerLooksWrong, model, cached, dailyLimit, usedToday }` |
@@ -332,6 +334,22 @@ to a reader):
 | server → client | `state` | the match's view: `label`, `text`, `reading { startedAt, wpm, pausedAt? }`, `window`, `scores`, `status`, `answer`, `match { format, mode, status, paused, answering, review, standings, clock, previous, gameId }` | whenever it changes |
 | server → client | `result` | `result: { memberId, playerId, questionId, subject, kind, correct, interrupt, latencyMs, t }` | each judged free-for-all answer (for display; the server records it) |
 | server → client | `match_over` | `format`, `game` (the team match's game record, or null), `heard` (question ids), `players` | once, at the end, after the answers were written |
+
+### Solo practice read aloud
+
+Solo practice can read its questions aloud instead of showing them ("How questions are read", a choice remembered on
+the device; `src/components/SoloSpeech.tsx`): the question's text appears with its answer, the buzzers open when the
+reading ends, and a buzz during it is an interrupt that stops the voice.
+
+- **Rebound's voice** (signed in, when the Worker has it): the site asks `POST /api/speech` for each question a
+  little ahead (the one being read, its bonus and the next two toss-ups) and plays the recording at the reading
+  speed's playback rate, on the device's own clock; the reading lasts as long as the recording. Recordings are the
+  same ones matches use (`VoiceCache`), so a question is recorded once for everyone. Solo practice may use 80% of the
+  month's characters, so matches always have some left, and each player at most 300 new recordings a UTC day
+  (`RECORDINGS_PER_DAY` in `user.ts`; recordings already made are free). Past either, `key` is null.
+- **The device's own voice** (signed out, without Rebound's voice, or for a question without a recording): the
+  device says the question on the text's timeline at the reading speed, as in a match (`src/lib/speech.ts`). With no
+  voice that works, the question shows as text.
 
 ## AI help (optional)
 

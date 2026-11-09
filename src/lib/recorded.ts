@@ -1,7 +1,7 @@
 /**
- * Playing Rebound's recorded voice in a match read aloud (docs/SERVER.md, "Read aloud"): each question was recorded
- * once on the server, and every device plays the recording from the moment the server starts the reading, at the
- * match's playback speed (the pitch is kept). The server times the reading by the recording, so the voice never has
+ * Playing Rebound's recorded voice in a match read aloud (docs/SERVER.md, "Read aloud"), and in solo practice on the
+ * device's own clock: each question was recorded once on the server, and every device plays the recording from the
+ * moment the server starts the reading, at the match's playback speed (the pitch is kept). The server times the reading by the recording, so the voice never has
  * to hurry or slow down; this only keeps the player in step with the server's clock (it starts late joiners at the
  * right place, stops for an interrupt, goes on after one, and starts again for a re-read).
  *
@@ -74,6 +74,11 @@ export class RecordedReader {
           this.pump();
         });
     }
+  }
+
+  /** Resolves once a recording is here (so its question starts only when it can be heard from the start). */
+  async ready(key: string): Promise<void> {
+    await this.url(key);
   }
 
   private url(key: string): Promise<string> {
