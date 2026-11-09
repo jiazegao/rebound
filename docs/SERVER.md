@@ -313,9 +313,12 @@ when its reading starts, and its answer only when it is over or a close call is 
     at `TTS_MONTHLY_CHARS` (default 900,000, under Google's free million for Chirp 3 HD voices); a question that
     cannot be recorded (the cap, or Google failing) gets `null`, and devices read it themselves.
   - **The devices' own voices** (without Rebound's voice, or for a question without a recording): each device
-    says the question with its own voice (`src/lib/speech.ts`), sentence by sentence, each starting at its place
-    on the reading's timeline at a steady pace that ends with the reading. A device with no voice that works says so
-    (`voice`), shows the text revealed in step instead, and the member list marks that player `readsText`.
+    says the question with its own voice (`src/lib/speech.ts`), phrase by phrase (ending at punctuation once a
+    phrase lasts 1.2 seconds on the timeline, at each answer choice, and by 4 seconds), each phrase starting at its
+    place on the reading's timeline and said at the speed that fits its time. Each device learns how fast its voice
+    speaks and how long it takes to start a phrase, so devices with different voices say each phrase at about the same
+    moment. A device with no voice that works says so (`voice`), shows the text revealed in step instead, and the
+    member list marks that player `readsText`.
 
 Extra messages in match rooms (`publish`, `open` and `close` are refused there; `answer` goes to the server, not
 to a reader):

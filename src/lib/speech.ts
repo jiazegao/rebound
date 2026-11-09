@@ -2,13 +2,13 @@
  * Reading questions aloud with the device's own voice, for online matches read aloud (docs/SERVER.md, "Online
  * matches"). The server keeps one reading timeline for everyone (when each question's reading starts, pauses and
  * ends); this follows it phrase by phrase (src/core/speech.ts). Each phrase starts at its place on the timeline,
- * and the voice speeds up or slows down so that it ends on time, learning how fast this device's voice speaks as it
- * goes. So every player hears the end of a question at about the moment the server ends the reading and opens the
- * buzzers' answer window, whatever their voice.
+ * and the voice speeds up or slows down so that it ends on time, learning how fast this device's voice speaks and how
+ * long it takes to start as it goes. So every player hears each phrase at about the same moment, and the end of a
+ * question at about the moment the server ends the reading and opens the buzzers' answer window, whatever their voice.
  *
  * The browser's speech synthesis is reached through `SpeechPlatform`, so tests can use a pretend voice.
  */
-import { MAX_RATE, MIN_RATE, rateFor, rateForChars, speechChunks, type SpeechChunk } from '../core/speech';
+import { MAX_RATE, MIN_RATE, rateFor, speechChunks, type SpeechChunk } from '../core/speech';
 import { buildReading } from './reading';
 
 /* ---------------- the platform ---------------- */
@@ -62,19 +62,39 @@ export function browserSpeech(): SpeechPlatform | null {
 
 /* ---------------- voices ---------------- */
 
+/** Apple's novelty voices (bells, bubbles, a robot…): fun, but not for reading questions. */
+const NOVELTY = /^(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Deranged|Good News|Hysterical|Jester|Organ|Pipe Organ|Princess|Superstar|Trinoids|Whisper|Wobble|Zarvox)\b/i;
+/** Apple's oldest voices, which sound robotic: still offered, after the others. */
+const ROBOTIC = /^(Agnes|Bruce|Eddy|Flo|Fred|Grandma|Grandpa|Junior|Kathy|Ralph|Reed|Rocko|Sandy|Shelley|Vicki|Victoria)\b/i;
+
+/** How good a voice sounds, when its id says (Apple's voices: "com.apple.voice.premium.en-US.Ava"). */
+function quality(v: VoiceLike): 'Premium' | 'Enhanced' | 'Compact' | null {
+  return /premium/i.test(v.voiceURI) ? 'Premium' : /enhanced/i.test(v.voiceURI) ? 'Enhanced' : /compact/i.test(v.voiceURI) ? 'Compact' : null;
+}
+
 /**
  * The device's English voices, best first: natural-sounding ones (Edge's "Natural" voices, Apple's Premium and
  * Enhanced ones), then US English, then Chrome's Google voices (better than the older ones built into Windows and
- * Chromebooks), then voices on the device, then its default.
+ * Chromebooks), then voices on the device, then its default; Apple's oldest, robotic voices come last, and its
+ * novelty voices are left out.
  */
 export function englishVoices(voices: VoiceLike[]): VoiceLike[] {
   const score = (v: VoiceLike) =>
-    (/natural|neural|premium|enhanced|siri/i.test(v.name) ? 8 : 0) +
+    (/natural|neural|premium|enhanced|siri/i.test(`${v.name} ${v.voiceURI}`) ? 8 : 0) +
     (/^en[-_]US/i.test(v.lang) ? 4 : 0) +
     (/^Google\b/.test(v.name) ? 3 : 0) +
     (v.localService ? 1 : 0) +
-    (v.default ? 1 : 0);
-  return voices.filter((v) => /^en\b|^en[-_]/i.test(v.lang)).sort((a, b) => score(b) - score(a) || a.name.localeCompare(b.name));
+    (v.default ? 1 : 0) -
+    (ROBOTIC.test(v.name) || /eloquence/i.test(v.voiceURI) ? 10 : 0);
+  return voices
+    .filter((v) => /^en\b|^en[-_]/i.test(v.lang) && !NOVELTY.test(v.name))
+    .sort((a, b) => score(b) - score(a) || a.name.localeCompare(b.name));
+}
+
+/** A voice as the voice menu shows it, with its quality when its id says (an iPad can list "Samantha" twice). */
+export function voiceLabel(v: VoiceLike): string {
+  const q = quality(v);
+  return `${v.name} (${v.lang}${q && !v.name.includes(q) ? `, ${q}` : ''})`;
 }
 
 /**
@@ -348,7 +368,7 @@ export class QuestionSpeaker {
       // Not its time yet (allowing for the voice's start).
       if (at < chunk.startMs - this.startMs) return;
       // This device came in late (it joined, or the reading went on without it): skip what is long past. Once it
-      // is in step it never skips; it speeds up a little instead.
+      // is in step it never skips; it speeds up instead.
       if (!this.inStep && at > chunk.endMs + STALE_MS && this.next < this.chunks.length - 1) {
         this.next = this.chunkAt(at);
         return this.tick();
@@ -361,23 +381,16 @@ export class QuestionSpeaker {
   }
 
   /**
-   * A steady pace: the rate that says the rest of the question in its time on the timeline, nudged (at most 10%
-   * slower, or 20% faster; 40% when it is more than a second behind) to end this phrase on time. Sudden changes of
-   * speed between phrases sound odd; a little late is better than early, when a quick buzz would count as an
-   * interrupt.
+   * The rate that says this phrase in its own time on the timeline, so every device says each phrase at about the
+   * same moment, whatever its voice. A voice takes a moment to start a phrase, and the next can only be asked for
+   * once this one has finished: so the phrase ends half that moment early, and the next starts half of it late,
+   * which keeps every word within half a start of its place. The last phrase is said a little slower: ending a
+   * little late is better than early, when a quick buzz would count as an interrupt.
    */
   private rateOf(chunk: SpeechChunk, ms: number): number {
-    const behind = this.position() + this.startMs - chunk.startMs;
-    let chars = 0;
-    let time = 0;
-    for (let i = this.next; i < this.chunks.length; i++) {
-      chars += this.chunks[i]!.say.length;
-      time += this.chunks[i]!.endMs - this.chunks[i]!.startMs;
-    }
-    const steady = rateForChars(chars, time, this.charsPerSecond);
-    const needed = rateFor(chunk.say, ms, this.charsPerSecond);
-    const fastest = steady * (behind > 1000 ? 1.4 : 1.2);
-    return Math.min(MAX_RATE, Math.max(MIN_RATE, Math.min(fastest, Math.max(steady * 0.9, needed))));
+    const last = this.next === this.chunks.length - 1;
+    const room = last ? 0 : Math.min(this.startMs / 2, ms * 0.3);
+    return Math.min(MAX_RATE, Math.max(MIN_RATE, rateFor(chunk.say, ms - room, this.charsPerSecond) * (last ? 0.95 : 1)));
   }
 
   private say(chunk: SpeechChunk, rate: number): void {

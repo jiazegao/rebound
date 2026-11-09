@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildReading, readingDurationMs } from '../lib/reading';
-import { bracketKind, MAX_PHRASE_WORDS, MAX_RATE, MIN_RATE, rateFor, speechChunks, spokenText } from './speech';
+import { bracketKind, MAX_PHRASE_MS, MAX_RATE, MIN_PHRASE_MS, MIN_RATE, rateFor, speechChunks, spokenText } from './speech';
 
 const say = (stem: string, choices?: Record<'W' | 'X' | 'Y' | 'Z', string>) => speechChunks(buildReading({ stem, choices }), 180).map((c) => c.say);
 const sayAll = (stem: string) => say(stem).join(' ');
@@ -83,20 +83,25 @@ describe('what is said', () => {
 });
 
 describe('phrases', () => {
-  it('are whole sentences, so the voice keeps its natural rise and fall', () => {
+  it('end at punctuation once they last a moment, not at an initial', () => {
     expect(say('Bacteria in the species E. coli live in the gut. Which vitamin do they make there?')).toEqual([
       'Bacteria in the species E. coli live in the gut.',
       'Which vitamin do they make there?',
     ]);
+    // "Yes," alone is too short to be a phrase of its own: each phrase costs the voice a moment to start.
+    expect(say('Yes, the gut bacteria make it. Which vitamin is it?')).toEqual(['Yes, the gut bacteria make it.', 'Which vitamin is it?']);
   });
 
-  it('split a long sentence at a comma once it has a good number of words', () => {
-    const chunks = say(
-      'An aqueous solution in which the concentration of hydroxide ions is greater than that of hydrogen ions, at 25 degrees Celsius and one atmosphere of pressure, is called what?',
-    );
-    expect(chunks).toEqual([
-      'An aqueous solution in which the concentration of hydroxide ions is greater than that of hydrogen ions,',
-      'at 25 degrees Celsius and one atmosphere of pressure, is called what?',
+  it('split a long sentence at its commas, and within a long stretch with none', () => {
+    expect(
+      say(
+        'An aqueous solution in which the concentration of hydroxide ions is greater than that of hydrogen ions, at 25 degrees Celsius and one atmosphere of pressure, is called what?',
+      ),
+    ).toEqual([
+      'An aqueous solution in which the concentration',
+      'of hydroxide ions is greater than that of hydrogen ions,',
+      'at 25 degrees Celsius and one atmosphere of pressure,',
+      'is called what?',
     ]);
   });
 });
@@ -116,8 +121,9 @@ describe('phrases on the timeline', () => {
     }
   });
 
-  it('keeps phrases short and ends one at each answer choice', () => {
-    for (const c of chunks) expect(c.say.split(' ').length).toBeLessThanOrEqual(MAX_PHRASE_WORDS);
+  it('keeps phrases short, but long enough to be worth starting, and ends one at each answer choice', () => {
+    for (const c of chunks) expect(c.endMs - c.startMs).toBeLessThanOrEqual(MAX_PHRASE_MS + 600);
+    for (const c of chunks.slice(0, -5)) expect(c.endMs - c.startMs).toBeGreaterThanOrEqual(MIN_PHRASE_MS);
     expect(chunks.slice(-4).map((c) => c.say)).toEqual(['W, basic', 'X, acidic', 'Y, neutral', 'Z, in equilibrium']);
     // The pause before each choice is part of the timeline, so a choice starts after a gap.
     const w = chunks[chunks.length - 4]!;

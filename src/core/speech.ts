@@ -161,7 +161,7 @@ function pauseAfter(text: string, end: number, say: string): { pause: boolean; s
   const last = end >= text.length;
   // "E. coli": a single capital before a period is an initial, not the end of a sentence.
   const initial = mark === '.' && /(^|\s)[A-Z]\.$/.test(say);
-  return { pause: mark !== undefined || last, stop: (mark !== undefined && /[.?!\n]/.test(mark) && !initial) || last, lineEnd: after === '\n' || last };
+  return { pause: (mark !== undefined && !initial) || last, stop: (mark !== undefined && /[.?!\n]/.test(mark) && !initial) || last, lineEnd: after === '\n' || last };
 }
 
 const MATHY = /[\d=+×÷^√∛π<>≤≥|²³¹⁰⁴⁵⁶⁷⁸⁹⁻⁺ˣ₀-₉θ∆Δ−–/·*()]|[^\x00-\x7F]/u;
@@ -297,12 +297,13 @@ export interface SpeechChunk {
 }
 
 /**
- * A phrase is a sentence, so the voice keeps its natural rise and fall: it ends at the end of a sentence or a line
- * (each answer choice is its own phrase); a long sentence also ends at a comma once it has this many words, and
- * always by this many.
+ * Each phrase starts at its own place on the timeline, so short phrases keep devices in step; but a voice takes a
+ * moment to start each one, so a phrase ends at punctuation only once it lasts this long on the timeline (about four
+ * words at 200 words a minute)...
  */
-export const COMMA_PHRASE_WORDS = 14;
-export const MAX_PHRASE_WORDS = 25;
+export const MIN_PHRASE_MS = 1200;
+/** ...and at the latest after this long, even within a sentence. Each answer choice is its own phrase too. */
+export const MAX_PHRASE_MS = 4000;
 
 /**
  * The reading as phrases to say, each with its start and end on the reading's timeline (the time the reveal would
@@ -324,12 +325,32 @@ export function speechChunks(reading: Reading, wpm: number): SpeechChunk[] {
   };
   for (const piece of speechPieces(reading.text)) {
     group.push(piece);
-    const words = group.reduce((n, p) => n + (p.say ? p.say.split(' ').length : 0), 0);
-    if (piece.lineEnd || piece.stop || words >= MAX_PHRASE_WORDS || (piece.pause && words >= COMMA_PHRASE_WORDS)) flush();
+    const lasts = time(piece.end) - time(group[0]!.start);
+    if (piece.lineEnd || (piece.pause && lasts >= MIN_PHRASE_MS)) flush();
+    else if (lasts >= MAX_PHRASE_MS) {
+      // A long stretch with no punctuation: break it before a word that starts a new part ("than", "which", "of"),
+      // as a reader would take a breath, if there is one far enough in.
+      let at = group.length;
+      for (let i = group.length - 1; i > 0; i--) {
+        if (time(group[i]!.start) - time(group[0]!.start) < MIN_PHRASE_MS) break;
+        if (BREAK_BEFORE.test(group[i]!.say.split(' ')[0]!)) {
+          at = i;
+          break;
+        }
+      }
+      const rest = group.slice(at);
+      group = group.slice(0, at);
+      flush();
+      group = rest;
+    }
   }
   flush();
   return chunks;
 }
+
+/** Words a phrase can start with when a long stretch with no punctuation is broken up. */
+const BREAK_BEFORE =
+  /^(than|that|which|who|whom|whose|where|when|while|whereas|because|since|although|though|if|unless|until|of|in|on|at|for|with|without|by|from|into|onto|through|during|between|among|about|to|and|or|but|as|so|after|before)$/i;
 
 /* ---------------- how fast to say a phrase ---------------- */
 

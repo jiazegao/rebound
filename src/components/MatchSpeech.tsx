@@ -20,6 +20,7 @@ import {
   saveVoice,
   speakSample,
   unlockSpeech,
+  voiceLabel,
   type VoiceLike,
 } from '../lib/speech';
 import { Notice } from './ui';
@@ -277,7 +278,7 @@ export function SoundCheck({ speech }: { speech: MatchSpeech }) {
                     <select value={speech.voice?.voiceURI ?? ''} onChange={(e) => speech.setVoice(e.target.value)}>
                       {speech.voices.map((v) => (
                         <option key={v.voiceURI} value={v.voiceURI}>
-                          {v.name} ({v.lang})
+                          {voiceLabel(v)}
                         </option>
                       ))}
                     </select>
