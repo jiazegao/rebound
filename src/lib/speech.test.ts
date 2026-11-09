@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { speechChunks } from '../core/speech';
 import { buildReading, readingDurationMs } from './reading';
-import { chooseVoice, englishVoices, loadVoices, QuestionSpeaker, type SpeechPlatform, type UtteranceLike, type VoiceLike } from './speech';
+import { chooseVoice, englishVoices, loadVoices, QuestionSpeaker, voiceLabel, type SpeechPlatform, type UtteranceLike, type VoiceLike } from './speech';
 
 /**
  * A pretend voice: it starts `startMs` after it is asked to and says `charsPerSecond` characters a second at its
@@ -81,20 +81,47 @@ describe('reading a question aloud on the timeline', () => {
     expect(Math.abs(speaker.pace.charsPerSecond - charsPerSecond)).toBeLessThan(charsPerSecond * 0.3);
   });
 
-  it('keeps a steady pace from phrase to phrase, and starts at a pace it learned before', () => {
+  it('starts each phrase at its own place on the timeline, and starts at a pace it learned before', () => {
     const voice = fakeVoice({ charsPerSecond: 13, startMs: 100 });
     const learned: number[] = [];
     const speaker = new QuestionSpeaker(voice.platform, null, () => Date.now(), () => {}, () => {}, 13, (cps) => learned.push(cps));
     const startedAt = Date.now() + 300;
     speaker.follow({ text: TEXT, startedAt, wpm: WPM });
     vi.advanceTimersByTime(DURATION + 3000);
-    const rates = voice.said.map((s) => s.rate);
-    for (let i = 1; i < rates.length; i++) expect(rates[i]! / rates[i - 1]!).toBeGreaterThan(0.75);
-    for (let i = 1; i < rates.length; i++) expect(rates[i]! / rates[i - 1]!).toBeLessThan(1.35);
+    expect(voice.said.map((s) => s.text)).toEqual(CHUNKS.map((c) => c.say));
+    // Each phrase is heard when the timeline reaches it (once the voice's start is learned), and finished in time
+    // for the next one: each has its own speed.
+    voice.said.slice(1).forEach((s, i) => expect(Math.abs(s.start - (startedAt + CHUNKS[i + 1]!.startMs))).toBeLessThan(120));
+    voice.said.slice(0, -1).forEach((s, i) => expect(s.end).toBeLessThanOrEqual(startedAt + CHUNKS[i + 1]!.startMs + 20));
+    expect(new Set(voice.said.map((s) => s.rate.toFixed(2))).size).toBeGreaterThan(2);
     // Knowing the voice from the start, it is not early at the end (a quick buzz would count as an interrupt).
-    expect(voice.said[voice.said.length - 1]!.end).toBeGreaterThan(startedAt + DURATION - 250);
+    expect(voice.said[voice.said.length - 1]!.end).toBeGreaterThan(startedAt + DURATION - 100);
     expect(learned.length).toBeGreaterThan(0);
     expect(Math.abs(learned[learned.length - 1]! - 13)).toBeLessThan(1.5);
+  });
+
+  it('keeps devices with different voices in step: every phrase is said at about the same moment on both', () => {
+    // A slow voice that starts at once, and a fast one that takes a third of a second to start (a network voice).
+    const slow = fakeVoice({ charsPerSecond: 11, startMs: 60 });
+    const fast = fakeVoice({ charsPerSecond: 19, startMs: 350 });
+    const speakers = [slow, fast].map((v, i) => new QuestionSpeaker(v.platform, null, () => Date.now(), () => {}, () => {}, i === 0 ? 11 : 19));
+    // A first question teaches each speaker how long its voice takes to start.
+    for (const s of speakers) s.follow({ text: TEXT, startedAt: Date.now() + 500, wpm: WPM });
+    vi.advanceTimersByTime(DURATION + 3000);
+    const before = [slow.said.length, fast.said.length];
+    for (const s of speakers) s.stop();
+    const startedAt = Date.now() + 500;
+    for (const s of speakers) s.follow({ text: TEXT, startedAt, wpm: WPM });
+    vi.advanceTimersByTime(DURATION + 3000);
+    const a = slow.said.slice(before[0]);
+    const b = fast.said.slice(before[1]);
+    expect(a.map((x) => x.text)).toEqual(b.map((x) => x.text));
+    // A word partway through a phrase is heard between its start and end, so it is within the larger difference of
+    // the two: here half the difference between the voices' starts (290 ms), at most.
+    a.forEach((x, i) => {
+      expect(Math.abs(x.start - b[i]!.start)).toBeLessThan(180);
+      expect(Math.abs(x.end - b[i]!.end)).toBeLessThan(180);
+    });
   });
 
   it('stops at an interrupt and goes on from the start of the phrase it stopped in', () => {
@@ -198,6 +225,26 @@ describe('voices', () => {
     expect(chooseVoice(voices, 'Daniel')?.name).toBe('Daniel');
     expect(chooseVoice([v('Amelie', 'fr-FR', { default: true })], null)?.name).toBe('Amelie');
     expect(chooseVoice([], null)).toBeNull();
+  });
+
+  it('leaves out novelty voices, lists the oldest robotic ones last, and tells two voices of one name apart', () => {
+    const voices = [
+      v('Zarvox', 'en-US', { localService: true, voiceURI: 'com.apple.speech.synthesis.voice.Zarvox' }),
+      v('Good News', 'en-US', { localService: true }),
+      v('Kathy', 'en-US', { localService: true }),
+      v('Eddy', 'en-US', { localService: true, voiceURI: 'com.apple.eloquence.en-US.Eddy' }),
+      v('Samantha', 'en-US', { localService: true, default: true, voiceURI: 'com.apple.voice.compact.en-US.Samantha' }),
+      v('Samantha', 'en-US', { localService: true, voiceURI: 'com.apple.voice.enhanced.en-US.Samantha' }),
+      v('Ava (Premium)', 'en-US', { localService: true, voiceURI: 'com.apple.voice.premium.en-US.Ava' }),
+    ];
+    expect(englishVoices(voices).map(voiceLabel)).toEqual([
+      'Ava (Premium) (en-US)',
+      'Samantha (en-US, Enhanced)',
+      'Samantha (en-US, Compact)',
+      'Eddy (en-US)',
+      'Kathy (en-US)',
+    ]);
+    expect(chooseVoice(voices, null)?.name).toBe('Ava (Premium)');
   });
 
   it('waits for voices that load late, and gives up on a device with none', async () => {
