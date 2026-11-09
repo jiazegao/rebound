@@ -316,6 +316,16 @@ export function wsRequest(roomId: string, token: string, headers: Record<string,
   return exports.default.fetch(`${BASE}/api/rooms/${roomId}/ws?token=${encodeURIComponent(token)}`, { headers: { Upgrade: 'websocket', ...headers } });
 }
 
+/** Opens the link of a room that has closed (or never was): the socket opens only to close at once, saying why. */
+export async function closedOnArrival(roomId: string, token: string): Promise<{ code: number; reason: string }> {
+  const response = await wsRequest(roomId, token);
+  expect(response.status).toBe(101);
+  const ws = response.webSocket!;
+  const closed = new Promise<{ code: number; reason: string }>((resolve) => ws.addEventListener('close', (e) => resolve({ code: e.code, reason: e.reason })));
+  ws.accept();
+  return closed;
+}
+
 export async function connect(roomId: string, token: string, options: { pongDelay?: number } = {}): Promise<RoomClient> {
   const response = await wsRequest(roomId, token);
   expect(response.status).toBe(101);

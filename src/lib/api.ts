@@ -313,6 +313,9 @@ export const listRooms = async () => (await request<{ rooms: RoomListing[] }>('/
 export const createRoom = async (name: string, match?: unknown) =>
   (await request<{ roomId: string }>('/api/rooms', { method: 'POST', body: match ? { name, match } : { name } })).roomId;
 
+/** The host cancels a match that has not started: everyone waiting in it is told, and it leaves the list. */
+export const cancelRoom = (roomId: string) => request<{ ok: true }>(`/api/rooms/${enc(roomId)}`, { method: 'DELETE' });
+
 /** The room's WebSocket address (browsers cannot set headers on WebSockets, so the token goes in the query). */
 export function roomSocketUrl(roomId: string): string | null {
   const token = sessionToken();

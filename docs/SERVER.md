@@ -108,6 +108,7 @@ captain.
 | `GET /api/teams/:id/members/:userId/records?cursor=` | member | that teammate's visible collections, as for `/api/me/records` |
 | `GET /api/rooms` | user | → `{ rooms }`: the open rooms opened by members of the caller's team (query parameters are ignored) |
 | `POST /api/rooms` | user | `{ name, match? }` → 201 `{ roomId }` (the caller hosts it; with `match`, an online match: see Match rooms) |
+| `DELETE /api/rooms/:id` | user | → `{ ok: true }`: the host cancels a match that has not started (see Match rooms); a room already closed counts as cancelled |
 | `GET /api/rooms/:id/ws?token=` | user | WebSocket upgrade (see Rooms) |
 | `GET /api/speech/:key` | user | a recording in Rebound's voice for a match read aloud (`audio/mpeg`, cacheable for good); 404 when there is none |
 | `GET /api/ai` | user | → `{ enabled: false }`, or `{ enabled: true, model, dailyLimit, usedToday }` |
@@ -207,7 +208,9 @@ buzzed first, and carries each side's private channel. Room members are users: a
 are both their user id, and their name comes from their account (at each connection).
 
 Connect with `GET /api/rooms/:id/ws?token=<session token>`; the server checks the session before accepting the
-upgrade. Messages are JSON objects with a `type`. Server time is the room object's `Date.now()`.
+upgrade. A room that has closed (or never was) accepts the upgrade only to close the connection at once with code
+4004, since a browser cannot read why an upgrade was refused. Messages are JSON objects with a `type`. Server time is
+the room object's `Date.now()`.
 
 ### Server → client
 
@@ -224,8 +227,8 @@ upgrade. Messages are JSON objects with a `type`. Server time is the room object
 | `error` | `message` | a refused message (the connection stays open) |
 
 The room lists its host from the start (not connected until they join). The server closes a connection with code
-4001 when its session signs out or its account is deleted, and 4004 when the room has closed; clients should not
-reconnect after those.
+4001 when its session signs out or its account is deleted, 4004 when the room has closed, and 4005 when the host
+cancelled the match; clients should not reconnect after those.
 
 ### Client → server
 
@@ -261,12 +264,12 @@ reconnect after those.
 ### Match rooms (online matches with no reader)
 
 A room created with `match` has no reader: the server runs the game itself (`server/src/match.ts`). The host
-(the user who created it) plays like anyone else and also starts, pauses and ends it. Anyone signed in can play.
-`match` is `{ format: "teams"|"ffa", mode?: "text"|"speech", presetId, wpm, teamNames?, packet: { setId, setTitle,
-roundId, roundLabel, sourceUrl? }, pairs: { tossup, bonus? }[], tossupCount? }`, with each question's `id, subject, format, stem,
-choices?, answerLetter?, answer, accept, reject, answerRaw, figure` (at most 40 pairs; free-for-all games use
-toss-ups only). The server keeps the questions and sends a question's text only when its reading starts, and its
-answer only when it is over or a close call is being decided.
+(the user who created it) plays like anyone else and also starts, pauses and ends it, or cancels it before it starts.
+Anyone signed in can play. `match` is `{ format: "teams"|"ffa", mode?: "text"|"speech", presetId, wpm, teamNames?,
+packet: { setId, setTitle, roundId, roundLabel, sourceUrl? }, pairs: { tossup, bonus? }[], tossupCount? }`, with each
+question's `id, subject, format, stem, choices?, answerLetter?, answer, accept, reject, answerRaw, figure` (at most
+40 pairs; free-for-all games use toss-ups only). The server keeps the questions and sends a question's text only
+when its reading starts, and its answer only when it is over or a close call is being decided.
 
 - **teams**: two sides under the rules preset, through the shared rules engine: interrupts and re-reads,
   rebounds, the game clock and halftime. A side's captain (the one chosen in the lobby, or its first player) types
@@ -289,6 +292,9 @@ answer only when it is over or a close call is being decided.
   (or their first try failed; failed deliveries are retried from the room's alarm), so a device that refreshes its
   player's records then finds them.
 - **Pausing**: the host can pause before the next question; a match also pauses there when every player has left.
+- **Cancelling**: until it starts, the host can cancel the match (`DELETE /api/rooms/:id`). Everyone connected is
+  closed with code 4005, the room's storage is deleted at once, it leaves its team's list, and its link then closes
+  with 4004. Once started, a match is ended instead (`end`), and its scores so far stand.
 - **Read aloud** (`mode: "speech"`, at 100 to 300 words a minute; `"text"`, the default, takes 60 to 600): the
   question is said aloud on every device, and nothing of it shows until it is over. The words to say come from
   `src/core/speech.ts`: pronunciation guides are skipped, DOE's reading guides ("[y equals x squared]") are said in

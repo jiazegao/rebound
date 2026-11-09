@@ -18,7 +18,7 @@ import { DurableObject } from 'cloudflare:workers';
 import { gameOutcomes } from '../../src/core/games';
 import type { Outcome } from '../../src/core/review';
 import type { CoreSubject, Player } from '../../src/core/schema';
-import { HttpError, identityOf, toErrorResponse, type Identity } from './http';
+import { HttpError, identityOf, refusing, toErrorResponse, type Identity, type Result } from './http';
 import {
   matchQuestions,
   MatchDirector,
@@ -67,6 +67,12 @@ const TOUCH_EVERY_MS = 60 * 1000;
 
 const ROOM_CLOSED = 'This room has closed. Ask the host for a new link.';
 const SIGNED_OUT = 'Signed out.';
+const MATCH_CANCELLED = 'The host cancelled this match.';
+
+/** Close codes the site treats as final (src/lib/room.ts): it stops reconnecting and says why. */
+const CLOSE_SIGNED_OUT = 4001;
+const CLOSE_ROOM_CLOSED = 4004;
+const CLOSE_CANCELLED = 4005;
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS room (
@@ -196,6 +202,18 @@ function closeQuietly(ws: WebSocket, code: number, reason: string): void {
   }
 }
 
+/**
+ * A connection to a room that has closed (or never was): accepted only to close at once, saying why. A browser cannot
+ * read why an upgrade was refused, so it would keep trying.
+ */
+export function closedSocket(): Response {
+  const pair = new WebSocketPair();
+  const [client, server] = Object.values(pair) as [WebSocket, WebSocket];
+  server.accept();
+  server.close(CLOSE_ROOM_CLOSED, ROOM_CLOSED);
+  return new Response(null, { status: 101, webSocket: client });
+}
+
 const isLive = (ws: WebSocket) => ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING;
 
 /** Keeps the times of recent events within the last second; false if `perSecond` were already used. */
@@ -288,12 +306,29 @@ export class RoomServer extends DurableObject<Env> {
 
   /** A session signed out: close its connections. */
   async closeSession(sid: string): Promise<void> {
-    for (const ws of this.ctx.getWebSockets(sessionTag(sid))) closeQuietly(ws, 4001, SIGNED_OUT);
+    for (const ws of this.ctx.getWebSockets(sessionTag(sid))) closeQuietly(ws, CLOSE_SIGNED_OUT, SIGNED_OUT);
   }
 
   /** An account was deleted: close its connections. */
   async closeUser(userId: string): Promise<void> {
-    for (const ws of this.ctx.getWebSockets(userTag(userId))) closeQuietly(ws, 4001, SIGNED_OUT);
+    for (const ws of this.ctx.getWebSockets(userTag(userId))) closeQuietly(ws, CLOSE_SIGNED_OUT, SIGNED_OUT);
+  }
+
+  /**
+   * The host cancels a match that has not started: everyone in it is told, and the room closes for good (its team's
+   * list drops it, and its link no longer opens it). A room that has already closed is cancelled already.
+   */
+  async cancel(userId: string, now: number): Promise<Result> {
+    return refusing(async () => {
+      if (await this.closeIfIdle(now)) return {};
+      const director = this.director();
+      if (!director) throw new HttpError(409, 'Only a match waiting to start can be cancelled.');
+      if (this.room()!.host_id !== userId) throw new HttpError(403, 'Only the host can cancel this match.');
+      if (director.data.status !== 'lobby') throw new HttpError(409, 'This match has started: end it from its page instead (the scores so far stand).');
+      for (const ws of this.liveSockets()) closeQuietly(ws, CLOSE_CANCELLED, MATCH_CANCELLED);
+      await this.closeForGood(now);
+      return {};
+    });
   }
 
   /* ---------------- HTTP: the WebSocket connection, forwarded with the user's identity ---------------- */
@@ -313,7 +348,7 @@ export class RoomServer extends DurableObject<Env> {
     if (request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') {
       throw new HttpError(426, 'This address is for live room connections (WebSocket).');
     }
-    if (await this.closeIfIdle(now)) throw new HttpError(404, ROOM_CLOSED);
+    if (await this.closeIfIdle(now)) return closedSocket();
     if (this.liveSockets().length >= MAX_SOCKETS) throw new HttpError(429, 'This room is full.');
     const room = this.room()!;
 
@@ -364,7 +399,7 @@ export class RoomServer extends DurableObject<Env> {
   /* ---------------- socket events ---------------- */
 
   webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): void {
-    if (!this.ready) return closeQuietly(ws, 4004, ROOM_CLOSED);
+    if (!this.ready) return closeQuietly(ws, CLOSE_ROOM_CLOSED, ROOM_CLOSED);
     try {
       this.message(ws, message, Date.now());
     } catch (error) {
@@ -403,7 +438,7 @@ export class RoomServer extends DurableObject<Env> {
     const att = attachmentOf(ws);
     if (!att) return closeQuietly(ws, 1011, 'Lost track of this connection. Please reconnect.');
     const member = this.member(att.userId);
-    if (!member) return closeQuietly(ws, 4001, SIGNED_OUT);
+    if (!member) return closeQuietly(ws, CLOSE_SIGNED_OUT, SIGNED_OUT);
 
     // A collection window may have ended while the object was asleep or evicted; decide it first.
     this.settle(now, true);
@@ -728,12 +763,18 @@ export class RoomServer extends DurableObject<Env> {
     this.ctx.storage.setAlarm(at).catch((e: unknown) => console.error('setAlarm failed:', e));
   }
 
-  /** Closes the room for good once nobody has been connected for 6 hours: its storage is deleted. */
+  /** Closes the room for good once nobody has been connected for 6 hours. True if it is closed. */
   private async closeIfIdle(now: number): Promise<boolean> {
     if (!this.ready) return true;
     const room = this.room();
     if (!room) return true;
     if (now - room.last_active < ROOM_IDLE_MS || this.liveSockets().length > 0) return false;
+    await this.closeForGood(now);
+    return true;
+  }
+
+  /** Closes the room for good: its storage is deleted (connections still open are the caller's to close). */
+  private async closeForGood(now: number): Promise<void> {
     this.ready = false;
     this.cancelTimer();
     this.cancelMatchTimer();
@@ -741,7 +782,6 @@ export class RoomServer extends DurableObject<Env> {
     if (this.outbox.pending() > 0) await this.outbox.flush((d) => this.deliver(d), now, true);
     await this.ctx.storage.deleteAlarm();
     await this.ctx.storage.deleteAll();
-    return true;
   }
 
   /* ---------------- Rebound's voice for a match read aloud ---------------- */

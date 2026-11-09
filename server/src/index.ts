@@ -23,6 +23,7 @@ import {
 } from './http';
 import { parseMatchSetup } from './match';
 import { directoryObject, roomObject, teamObject, userObject, voiceObject } from './objects';
+import { closedSocket } from './room';
 import { TEAM_NOT_FOUND } from './team';
 import { asObject, cleanLine, emailAddress, NAME_RULE, roomName } from './validate';
 
@@ -35,7 +36,6 @@ export { VoiceCache } from './voice';
 
 const ORIGIN_REFUSED = 'This website is not allowed to use the Rebound server.';
 const SIGN_IN_AGAIN = 'Please sign in again.';
-const ROOM_CLOSED = 'This room has closed. Ask the host for a new link.';
 /** Sign-in bodies are small: a Google credential is a couple of kilobytes. */
 const AUTH_BODY_BYTES = 16 * 1024;
 
@@ -111,8 +111,12 @@ async function route(request: Request, env: Env): Promise<Response> {
     return new Response(audio, { headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'private, max-age=31536000, immutable' } });
   }
 
-  const room = /^\/api\/rooms\/([^/]+)\/ws$/.exec(path);
-  if (room) return connectRoom(request, env, url, room[1]!);
+  const room = /^\/api\/rooms\/([^/]+)(\/ws)?$/.exec(path);
+  if (room) {
+    if (room[2]) return connectRoom(request, env, url, room[1]!);
+    if (method !== 'DELETE') throw unsupported();
+    return cancelRoom(request, env, url, room[1]!);
+  }
 
   const team = /^\/api\/teams\/([^/]+)(\/.*)?$/.exec(path);
   if (team) {
@@ -278,11 +282,19 @@ async function createRoom(request: Request, env: Env, url: URL): Promise<Respons
   throw new HttpError(503, "The room couldn't be opened right now. Please try again.");
 }
 
+/** `DELETE /api/rooms/:id`: the host cancels a match that has not started; one already closed counts as cancelled. */
+async function cancelRoom(request: Request, env: Env, url: URL, roomId: string): Promise<Response> {
+  const identity = await authenticate(request, env, url);
+  if (!ID_PATTERN.test(roomId)) throw new HttpError(404, 'Not found.');
+  accepted(await roomObject(env, roomId).cancel(identity.userId, Date.now()));
+  return json({ ok: true });
+}
+
 /** `GET /api/rooms/:id/ws?token=`: the WebSocket, accepted by the room once the session checks out. */
 async function connectRoom(request: Request, env: Env, url: URL, roomId: string): Promise<Response> {
   if (request.method !== 'GET') throw unsupported();
   if (request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') throw new HttpError(426, 'This address is for live room connections (WebSocket).');
-  if (!ID_PATTERN.test(roomId)) throw new HttpError(404, ROOM_CLOSED);
+  if (!ID_PATTERN.test(roomId)) return closedSocket();
   const identity = await authenticate(request, env, url, roomId);
   return roomObject(env, roomId).fetch(new Request('https://rebound.internal/connect', { headers: { Upgrade: 'websocket', ...identityHeader(identity) } }));
 }

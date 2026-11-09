@@ -218,7 +218,7 @@ export function RemotePanel({
           <strong>{lastAnswer.from.name} answers:</strong> {lastAnswer.text}
         </div>
       )}
-      {(error || snapshot?.error) && <div style={{ color: 'var(--bad)' }}>{error ?? snapshot?.error}</div>}
+      {(error || snapshot?.error || snapshot?.ended) && <div style={{ color: 'var(--bad)' }}>{error ?? snapshot?.error ?? snapshot?.ended?.message}</div>}
     </section>
   );
 }

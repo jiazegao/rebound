@@ -3,7 +3,7 @@ import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { ROOMS_PER_DAY } from '../src/user';
 import { MAX_ROOMS } from '../src/team';
-import { call, connect, createRoom, join, makeTeam, type Json, RoomClient, SITE, signUp, sleep, teamWith, type TestTeam, type TestUser, wsRequest } from './helpers';
+import { call, closedOnArrival, connect, createRoom, join, makeTeam, type Json, RoomClient, SITE, signUp, sleep, teamWith, type TestTeam, type TestUser, wsRequest } from './helpers';
 
 const roomStub = (roomId: string) => env.ROOM.get(env.ROOM.idFromName(roomId));
 
@@ -82,9 +82,7 @@ describe('room list', () => {
       state.storage.sql.exec('UPDATE room SET last_active = ?', Date.now() - 6 * 60 * 60 * 1000 - 1000);
     });
     expect((await call('/api/rooms', { token: cora.token })).body.rooms).toEqual([]);
-    const res = await wsRequest(roomId, cora.token);
-    expect(res.status).toBe(404);
-    expect(((await res.json()) as Json).error).toBe('This room has closed. Ask the host for a new link.');
+    expect(await closedOnArrival(roomId, cora.token)).toEqual({ code: 4004, reason: 'This room has closed. Ask the host for a new link.' });
     const tables = await runInDurableObject(roomStub(roomId), (_i, state) => state.storage.sql.exec("SELECT name FROM sqlite_master WHERE type = 'table'").toArray());
     expect(tables.filter((t) => !String(t.name).startsWith('_cf'))).toEqual([]);
   });
@@ -128,8 +126,9 @@ describe('connecting', () => {
     const { roomId, cora } = await setup();
     expect((await wsRequest(roomId, '')).status).toBe(401);
     expect((await wsRequest(roomId, `${cora.id}.${'x'.repeat(43)}`)).status).toBe(401);
-    expect((await wsRequest('nosuchroom12', cora.token)).status).toBe(404);
-    expect((await wsRequest('abcdefghijklmnop', cora.token)).status).toBe(404);
+    // A link to no room (malformed, or a room that never was) closes at once with why.
+    expect((await closedOnArrival('nosuchroom12', cora.token)).code).toBe(4004);
+    expect((await closedOnArrival('abcdefghijklmnop', cora.token)).code).toBe(4004);
     expect((await wsRequest(roomId, cora.token, { Origin: 'https://evil.example' })).status).toBe(403);
     const plain = await call(`/api/rooms/${roomId}/ws?token=${cora.token}`);
     expect(plain.status).toBe(426);

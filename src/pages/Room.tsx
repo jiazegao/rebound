@@ -6,7 +6,8 @@ import { Notice, useTicker } from '../components/ui';
 import { roomSocketUrl } from '../lib/api';
 import { useSession } from '../lib/cloud';
 import { buildReading, revealedCount, splitRevealed } from '../lib/reading';
-import { RoomClient, useRoom, type RoomView, type Side } from '../lib/room';
+import { RoomClient, useRoom, type RoomEnd, type RoomView, type Side } from '../lib/room';
+import { href } from '../lib/router';
 import { MatchRoom } from './MatchRoom';
 
 /** The question as revealed so far on this screen (same pace on every device; stopped at `pausedAt`). */
@@ -123,6 +124,23 @@ export function TeamChannel({
   );
 }
 
+/** The room's connection ended for good: it closed, the host cancelled the match, or this device signed out. */
+function RoomEnded({ ended }: { ended: RoomEnd }) {
+  return (
+    <div className="container narrow">
+      <section className="card stack" role="status">
+        <h1 style={{ margin: 0 }}>{ended.title}</h1>
+        <p style={{ margin: 0 }}>{ended.message}</p>
+        <div className="row">
+          <a className="btn btn-primary" href={href('/online')}>
+            Back to Play online
+          </a>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export function RoomPage({ roomId }: { roomId: string }) {
   // Any signed-in player can be in a room (App asks everyone else to sign in first).
   const session = useSession();
@@ -153,6 +171,7 @@ export function RoomPage({ roomId }: { roomId: string }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [canBuzz, client, matchRoom]);
 
+  if (snapshot?.ended) return <RoomEnded ended={snapshot.ended} />;
   if (client && snapshot && matchRoom) return <MatchRoom client={client} snapshot={snapshot} roomId={roomId} />;
 
   const winnerName = buzz?.winner ? snapshot?.members.find((m) => m.memberId === buzz.winner!.memberId)?.name ?? 'Someone' : null;
