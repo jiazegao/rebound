@@ -7,7 +7,7 @@ import { env, exports } from 'cloudflare:workers';
 import { afterEach, describe, expect, it } from 'vitest';
 import { BASE, SITE } from './helpers';
 import { setTtsTestOverrides, silentMp3 } from '../src/tts';
-import { allMyRecords, call, connect, createRoom, eventually, getRecords, makeTeam, signUp, teamWith, type Json, type RoomClient, type TestUser } from './helpers';
+import { allMyRecords, call, closedOnArrival, connect, createRoom, eventually, getRecords, makeTeam, signUp, teamWith, type Json, type RoomClient, type TestUser } from './helpers';
 
 const roomStub = (roomId: string) => env.ROOM.get(env.ROOM.idFromName(roomId));
 
@@ -249,6 +249,57 @@ describe('online matches', () => {
     await host.next('members', (m) => memberIn(m, ana!.id)?.readsText === true);
     a.send({ type: 'voice', ok: 'maybe' });
     expect((await a.next('error')).message).toBe('Say whether this device can read aloud (ok: true or false).');
+  });
+
+  it('lets the host cancel a match before it starts: everyone in it is told, and it leaves the list and its link', async () => {
+    const { team, members: [ana] } = await teamWith('Cora Captain', 'Ana');
+    const cora = team.captain;
+    const roomId = await matchRoom(cora.token, { format: 'teams', presetId: 'doe-regional-2027' });
+    const host = await connect(roomId, cora.token);
+    const a = await connect(roomId, ana!.token);
+    await takeSide(a, 'B');
+    expect((await call('/api/rooms', { token: ana!.token })).body.rooms.map((r: Json) => r.roomId)).toEqual([roomId]);
+
+    const refused = await call(`/api/rooms/${roomId}`, { method: 'DELETE', token: ana!.token });
+    expect(refused.status).toBe(403);
+    expect(refused.body.error).toBe('Only the host can cancel this match.');
+    expect(a.closed).toBeNull();
+
+    expect((await call(`/api/rooms/${roomId}`, { method: 'DELETE', token: cora.token })).body).toEqual({ ok: true });
+    await a.waitClosed();
+    expect(a.closed).toEqual({ code: 4005, reason: 'The host cancelled this match.' });
+    await host.waitClosed();
+    expect(host.closed!.code).toBe(4005);
+    expect((await call('/api/rooms', { token: ana!.token })).body.rooms).toEqual([]);
+    const tables = await runInDurableObject(roomStub(roomId), (_i, state) => state.storage.sql.exec("SELECT name FROM sqlite_master WHERE type = 'table'").toArray());
+    expect(tables.filter((t) => !String(t.name).startsWith('_cf'))).toEqual([]);
+
+    // Its link now says it has closed.
+    expect(await closedOnArrival(roomId, ana!.token)).toEqual({ code: 4004, reason: 'This room has closed. Ask the host for a new link.' });
+    // Cancelling it again changes nothing.
+    expect((await call(`/api/rooms/${roomId}`, { method: 'DELETE', token: cora.token })).body).toEqual({ ok: true });
+  });
+
+  it('does not cancel a match that has started, or a reader room', async () => {
+    const cora = await signUp('Cora');
+    const roomId = await matchRoom(cora.token, { format: 'ffa' });
+    const host = await connect(roomId, cora.token);
+    await takeSide(host, 'A');
+    host.send({ type: 'start' });
+    await view(host, (v) => v.match.status === 'playing');
+    const started = await call(`/api/rooms/${roomId}`, { method: 'DELETE', token: cora.token });
+    expect(started.status).toBe(409);
+    expect(started.body.error).toBe('This match has started: end it from its page instead (the scores so far stand).');
+    expect(host.closed).toBeNull();
+
+    const readerRoom = await createRoom(cora.token, 'Reader practice');
+    const reader = await call(`/api/rooms/${readerRoom}`, { method: 'DELETE', token: cora.token });
+    expect(reader.status).toBe(409);
+    expect(reader.body.error).toBe('Only a match waiting to start can be cancelled.');
+    expect((await call('/api/rooms/not-a-room!', { method: 'DELETE', token: cora.token })).status).toBe(404);
+    expect((await call(`/api/rooms/${roomId}`, { method: 'DELETE' })).status).toBe(401);
+    expect((await call(`/api/rooms/${roomId}`, { method: 'PATCH', token: cora.token, body: {} })).status).toBe(405);
+    host.close();
   });
 
   it('keeps a match going when the object is evicted between steps', async () => {

@@ -113,9 +113,26 @@ export interface ChatLine {
   at: number;
 }
 
+/** Why the room's connection ended for good (this device stops reconnecting). */
+export interface RoomEnd {
+  title: string;
+  message: string;
+}
+
+/** The server's close codes that end the connection for good (server/src/room.ts). */
+const FINAL_CLOSES: Record<number, RoomEnd> = {
+  4001: { title: 'Signed out', message: 'You are signed out. Sign in again, then open the room link again.' },
+  4003: { title: 'Not in this room', message: 'You can no longer be in this room.' },
+  4004: { title: 'This game has closed', message: 'It has closed, or the link isn’t right. Ask the host for a new link.' },
+  4005: { title: 'Match cancelled', message: 'The host cancelled this match before it started.' },
+};
+
 export interface RoomSnapshot {
   connected: boolean;
+  /** A refusal or a connection problem, shown for a moment. */
   error: string | null;
+  /** Set once the connection has ended for good: the room closed, the host cancelled the match, or signed out. */
+  ended: RoomEnd | null;
   you: { memberId: string; name: string; playerId: string | null } | null;
   roomName: string;
   /** "match": the server runs the game (no reader). Null until the welcome arrives. */
@@ -133,7 +150,7 @@ const EMPTY_BUZZ: BuzzState = { open: false, sides: { A: false, B: false }, winn
 export class RoomClient {
   private ws: WebSocket | null = null;
   private listeners = new Set<() => void>();
-  private snap: RoomSnapshot = { connected: false, error: null, you: null, roomName: '', kind: null, hostId: null, members: [], view: null, buzz: EMPTY_BUZZ, chat: [], answers: [] };
+  private snap: RoomSnapshot = { connected: false, error: null, ended: null, you: null, roomName: '', kind: null, hostId: null, members: [], view: null, buzz: EMPTY_BUZZ, chat: [], answers: [] };
   private pingTimer: ReturnType<typeof setInterval> | undefined;
   private retry = 0;
   private closed = false;
@@ -194,14 +211,10 @@ export class RoomClient {
       this.set({ connected: false });
       if (this.closed) return;
       // The server's own reasons for closing: don't keep reconnecting.
-      const final: Record<number, string> = {
-        4001: 'You are signed out. Sign in again, then open the room link again.',
-        4003: 'You can no longer be in this room.',
-        4004: 'This room was closed.',
-      };
-      if (final[e.code]) {
+      const ended = FINAL_CLOSES[e.code];
+      if (ended) {
         this.closed = true;
-        this.set({ error: final[e.code] });
+        this.set({ ended, error: null });
         return;
       }
       // Reconnect with backoff (a school network can drop the connection now and then).
@@ -215,6 +228,12 @@ export class RoomClient {
     this.closed = true;
     clearInterval(this.pingTimer);
     this.ws?.close();
+  }
+
+  /** This device ended the room itself (the host cancelled the match): disconnect, and say why. */
+  endHere(ended: RoomEnd): void {
+    this.close();
+    this.set({ ended, error: null });
   }
 
   private send(msg: Record<string, unknown>): void {

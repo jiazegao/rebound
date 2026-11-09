@@ -658,6 +658,11 @@ textarea {
   --c: var(--physics);
 }
 
+/* Shown only on a phone, or everywhere but on a phone (with the max-width: 640px block below). */
+.narrow-only {
+  display: none;
+}
+
 .table-wrap {
   position: relative; /* keeps absolutely positioned screen-reader text inside the scroll box */
   overflow-x: auto;
@@ -1211,6 +1216,12 @@ a.hbar-label {
 }
 
 @media (max-width: 640px) {
+  .narrow-only {
+    display: block;
+  }
+  .wide-only {
+    display: none;
+  }
   .hbar-chart,
   .hbar-chart.fixed-labels {
     grid-template-columns: 1fr;

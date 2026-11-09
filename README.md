@@ -76,6 +76,7 @@ npm run preview    # serve dist/ at http://localhost:4173
 node e2e/smoke.cjs # browser walkthrough: a team of four accounts, each in its own browser (see below)
 node e2e/team-server.cjs # joining by invite link, teammates' data, remote rooms and online matches, with outsiders
 node e2e/speech.cjs # an online match read aloud: Rebound's voice (server started with --var DEV_TTS_FAKE:1), else device voices
+node e2e/cancel-match.cjs # the host cancels a match before it starts, from its lobby and from Open games
 node e2e/middle-school.cjs # a middle school team against the real library
 npx tsx scripts/checks/judge-self-check.ts   # grade every printed answer in the library against itself
 npx tsx scripts/checks/review-load.ts 30 0.6 # simulate 90 days of reviews for a 30-minute plan and a 60% player

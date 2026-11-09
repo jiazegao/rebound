@@ -4,7 +4,7 @@ import { currentPresets, DEFAULT_PRESET_ID } from '../core/rules/presets';
 import { LETTERS, type Question, type Round } from '../core/schema';
 import { dateTimeText } from '../lib/format';
 import { setGroups, setLabel, useAsync, useIndex, useSet, useTeamLevel } from '../lib/library';
-import { createRoom, listRooms, type RoomListing } from '../lib/api';
+import { cancelRoom, createRoom, listRooms, type RoomListing } from '../lib/api';
 import { useSession } from '../lib/cloud';
 import { packetRound, packetRounds } from '../lib/packets';
 import { href, navigate } from '../lib/router';
@@ -43,19 +43,44 @@ function matchPairs(round: Round) {
     .map((p) => (playable(p.bonus) ? { tossup: forMatch(p.tossup), bonus: forMatch(p.bonus) } : { tossup: forMatch(p.tossup) }));
 }
 
-/** Open games made by members of the player's team (anyone else's need their link). */
+/** Open games made by members of the player's team (anyone else's need their link). A host can cancel a match that has not started. */
 function RoomList() {
+  const session = useSession();
   const [refresh, setRefresh] = useState(0);
   const rooms = useAsync(`rooms-${refresh}`, listRooms);
+  // The list as last loaded, kept on screen while it reloads.
+  const [last, setLast] = useState<RoomListing[] | null>(null);
+  useEffect(() => {
+    if (rooms.data) setLast(rooms.data);
+  }, [rooms.data]);
+  const [cancelling, setCancelling] = useState<string | null>(null);
+  const [cancelled, setCancelled] = useState<ReadonlySet<string>>(new Set());
+  const [cancelError, setCancelError] = useState<string | null>(null);
   useEffect(() => {
     const t = setInterval(() => setRefresh((n) => n + 1), 15_000);
     return () => clearInterval(t);
   }, []);
+  const canCancel = (r: RoomListing) => r.kind === 'match' && r.match?.status === 'lobby' && r.host.userId === session.user?.id;
+  const cancel = async (r: RoomListing) => {
+    if (!confirm(`Cancel “${r.name}”? It closes for everyone in it, and its link stops working.`)) return;
+    setCancelling(r.roomId);
+    setCancelError(null);
+    try {
+      await cancelRoom(r.roomId);
+      setCancelled((c) => new Set(c).add(r.roomId));
+      setRefresh((n) => n + 1);
+    } catch (e) {
+      setCancelError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setCancelling(null);
+    }
+  };
   const describe = (r: RoomListing) =>
     r.kind === 'match' && r.match
       ? `${r.match.format === 'teams' ? 'Team vs team' : 'Everyone for themselves'}${r.match.mode === 'speech' ? ' · read aloud' : ''} · ${r.match.status === 'lobby' ? 'waiting to start' : r.match.status === 'playing' ? 'playing' : 'finished'}`
       : 'Reader room (a member reads)';
-  const open = (rooms.data ?? []).filter((r) => r.kind !== 'match' || r.match?.status !== 'finished');
+  const loaded = rooms.data ?? last;
+  const open = (loaded ?? []).filter((r) => !cancelled.has(r.roomId) && (r.kind !== 'match' || r.match?.status !== 'finished'));
   return (
     <section className="card stack" aria-labelledby="open-rooms">
       <div className="row spread">
@@ -66,9 +91,10 @@ function RoomList() {
           Refresh
         </button>
       </div>
-      {rooms.loading && !rooms.data && <Loading what="Looking for games" />}
+      {rooms.loading && !loaded && <Loading what="Looking for games" />}
       {rooms.error && <Notice kind="error">{rooms.error.message}</Notice>}
-      {rooms.data && open.length === 0 && <p className="small muted" style={{ margin: 0 }}>No games open right now. Start one below.</p>}
+      {cancelError && <Notice kind="error">{cancelError}</Notice>}
+      {loaded && open.length === 0 && <p className="small muted" style={{ margin: 0 }}>No games open right now. Start one below.</p>}
       {open.length > 0 && (
         <div className="table-wrap">
           <table>
@@ -76,8 +102,8 @@ function RoomList() {
               <tr>
                 <th>Game</th>
                 <th>Kind</th>
-                <th>Host</th>
-                <th>Here now</th>
+                <th className="wide-only">Host</th>
+                <th className="wide-only">Here now</th>
                 <th />
               </tr>
             </thead>
@@ -87,14 +113,25 @@ function RoomList() {
                   <td>
                     {r.name}
                     <div className="small muted">{dateTimeText(new Date(r.createdAt).toISOString())}</div>
+                    {/* On a phone the host and who is here go under the name, so the buttons fit. */}
+                    <div className="small muted narrow-only">
+                      {r.host.name} hosts · {r.players} here now
+                    </div>
                   </td>
                   <td className="small">{describe(r)}</td>
-                  <td className="small">{r.host.name}</td>
-                  <td className="small">{r.players}</td>
+                  <td className="small wide-only">{r.host.name}</td>
+                  <td className="small wide-only">{r.players}</td>
                   <td>
-                    <a className="btn btn-small btn-primary" href={href(`/room/${r.roomId}`)}>
-                      Join
-                    </a>
+                    <div className="row" style={{ gap: '0.35rem' }}>
+                      <a className="btn btn-small btn-primary" href={href(`/room/${r.roomId}`)}>
+                        Join
+                      </a>
+                      {canCancel(r) && (
+                        <button className="btn btn-small btn-ghost" disabled={cancelling === r.roomId} onClick={() => void cancel(r)}>
+                          {cancelling === r.roomId ? 'Cancelling…' : 'Cancel'}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

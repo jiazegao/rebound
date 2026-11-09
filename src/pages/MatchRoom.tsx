@@ -2,6 +2,7 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { SoundCheck, useMatchSpeech, type MatchSpeech } from '../components/MatchSpeech';
 import { RichText } from '../components/QuestionView';
 import { Notice, useTicker } from '../components/ui';
+import { cancelRoom } from '../lib/api';
 import { refreshNow, useSession } from '../lib/cloud';
 import { type RoomClient, type RoomMember, type RoomSnapshot, type Side } from '../lib/room';
 import { href } from '../lib/router';
@@ -374,6 +375,8 @@ function Lobby({ client, snapshot, isHost, roomId, speech }: { client: RoomClien
   const myId = snapshot.you?.memberId;
   const me = snapshot.members.find((m) => m.memberId === myId);
   const [copied, setCopied] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
   const bySide = (s: Side | null) => snapshot.members.filter((m) => m.side === s);
   const players = snapshot.members.filter((m) => m.side !== null);
   const ready = match.format === 'teams' ? bySide('A').length > 0 && bySide('B').length > 0 : players.length > 0;
@@ -386,6 +389,19 @@ function Lobby({ client, snapshot, isHost, roomId, speech }: { client: RoomClien
     client.chooseSide(s);
   };
   const readsText = (m: RoomMember) => speech && m.readsText && <span className="small muted"> (sees the text: no voice on their device)</span>;
+
+  const cancel = async () => {
+    if (!confirm('Cancel this match? It closes for everyone in it, and its link stops working.')) return;
+    setCancelling(true);
+    setCancelError(null);
+    try {
+      await cancelRoom(roomId);
+      client.endHere({ title: 'Match cancelled', message: 'You cancelled this match. Anyone who was waiting in it has been told.' });
+    } catch (e) {
+      setCancelError(e instanceof Error ? e.message : String(e));
+      setCancelling(false);
+    }
+  };
 
   const person = (m: RoomMember, s: Side) => (
     <li key={m.memberId}>
@@ -468,17 +484,25 @@ function Lobby({ client, snapshot, isHost, roomId, speech }: { client: RoomClien
       </div>
 
       {isHost ? (
-        <div className="row">
-          <button className="btn btn-primary btn-big" disabled={!ready || recording} onClick={() => client.start()}>
-            Start the match
-          </button>
-          {!ready && <span className="small muted">{match.format === 'teams' ? 'Each side needs at least one player.' : 'Someone needs to join the game.'}</span>}
-          {ready && recording && (
-            <span className="small muted">
-              Recording the questions ({match.voice!.done} of {match.voice!.total}); the match can start once they are ready.
-            </span>
-          )}
-        </div>
+        <>
+          <div className="row">
+            <button className="btn btn-primary btn-big" disabled={!ready || recording || cancelling} onClick={() => client.start()}>
+              Start the match
+            </button>
+            {!ready && <span className="small muted">{match.format === 'teams' ? 'Each side needs at least one player.' : 'Someone needs to join the game.'}</span>}
+            {ready && recording && (
+              <span className="small muted">
+                Recording the questions ({match.voice!.done} of {match.voice!.total}); the match can start once they are ready.
+              </span>
+            )}
+          </div>
+          {cancelError && <Notice kind="error">{cancelError}</Notice>}
+          <div className="row">
+            <button className="btn btn-small btn-ghost" disabled={cancelling} onClick={() => void cancel()}>
+              {cancelling ? 'Cancelling…' : 'Cancel the match'}
+            </button>
+          </div>
+        </>
       ) : (
         <p className="small muted">The host ({snapshot.members.find((m) => m.memberId === snapshot.hostId)?.name ?? 'the person who made the match'}) starts it.</p>
       )}
