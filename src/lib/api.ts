@@ -183,6 +183,21 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   return body as T;
 }
 
+/** A recording in Rebound's voice for a match read aloud (an MP3), by its key. */
+export async function fetchRecording(key: string): Promise<Blob> {
+  const base = serverUrl();
+  const token = sessionToken();
+  if (!base || !token) throw new ApiError('Sign in to hear the questions.', 401);
+  let res: Response;
+  try {
+    res = await fetch(`${base}/api/speech/${encodeURIComponent(key)}`, { headers: { authorization: `Bearer ${token}` } });
+  } catch {
+    throw new ApiError("Can't reach Rebound's server.", 0);
+  }
+  if (!res.ok) throw new ApiError(errorText(res.status, (await res.json().catch(() => ({}))) as Record<string, unknown>), res.status);
+  return res.blob();
+}
+
 const enc = encodeURIComponent;
 
 /* ---------------- sign-in ---------------- */

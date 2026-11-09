@@ -3,10 +3,16 @@
  *
  *   node e2e/speech.cjs                     # SERVER_URL / BASE_URL / SHOTS_DIR as for the other tests
  *
- * The host opens a team match read aloud from the Play online page. The player's device has a voice: a pretend one
- * that says nothing out loud but takes the time a voice would and records each phrase it is asked to say. The
- * player tries a sample in the lobby, then hears each question without seeing it, and sees it with its answer once
- * it is over. The host's device has no voice, so the host sees the text instead, and the player is told so.
+ * It tests whichever voice the server has:
+ *
+ * - Rebound's recorded voice, when the server runs with DEV_TTS_FAKE=1 (npx wrangler dev --var DEV_TTS_FAKE:1),
+ *   which records silent stand-ins instead of calling Google. The lobby waits for the recordings; then both
+ *   players' pages play each recording in step (a stand-in for the audio element's play() records what it is told),
+ *   and nothing of the question shows until it is over.
+ * - Otherwise the devices' own voices: the player's is a pretend one that says nothing out loud but takes the time a
+ *   voice would and records each phrase it is asked to say; the host's device has none, so the host sees the text
+ *   instead, and the player is told so.
+ *
  * Uses the small fixture question set, like the other tests.
  */
 const { chromium } = require('playwright');
@@ -45,6 +51,22 @@ function pretendVoice() {
   Object.defineProperty(window, 'speechSynthesis', { value: synth, configurable: true });
   Object.defineProperty(window, 'SpeechSynthesisUtterance', { value: Utterance, configurable: true, writable: true });
   window.__said = said;
+}
+
+/** Records what the page's audio elements are told to play (runs in the page). */
+function recordPlays() {
+  window.__played = [];
+  const play = HTMLMediaElement.prototype.play;
+  HTMLMediaElement.prototype.play = function () {
+    const entry = { src: String(this.src).slice(0, 5), at: this.currentTime, rate: this.playbackRate, ok: null };
+    window.__played.push(entry);
+    const p = play.call(this);
+    p.then(
+      () => (entry.ok = true),
+      (e) => (entry.ok = e.name),
+    );
+    return p;
+  };
 }
 
 /** A device with speech synthesis but no voices at all (runs in the page). */
@@ -92,6 +114,7 @@ async function main() {
     const open = async (account, voice) => {
       const ctx = await A.signedInContext(browser, account);
       await ctx.addInitScript(voice);
+      await ctx.addInitScript(recordPlays);
       const page = await ctx.newPage();
       A.watchErrors(page, account.name, errors);
       page.on('dialog', (d) => d.accept());
@@ -117,7 +140,76 @@ async function main() {
       roomId = (/#\/room\/([a-z2-7]{16})/.exec(host.url()) ?? [])[1] ?? '';
       if (!roomId) throw new Error(`the match did not open: ${host.url()}`);
       await host.getByRole('button', { name: 'Join Team A' }).click();
-      // The host's device has no voice: the lobby says the text will show instead.
+    });
+
+    const recorded = (await host.getByText('Rebound’s voice reads each question').count()) > 0;
+    console.log(`  (testing ${recorded ? 'Rebound’s recorded voice' : 'the devices’ own voices'})`);
+    if (recorded) await recordedVoice(host, player, roomId);
+    else await deviceVoices(host, player, roomId);
+  } finally {
+    // Close the pages first: a page whose account is gone would see its next request refused.
+    await browser.close();
+    const problems = await A.deleteAccounts(accounts);
+    if (problems.length) errors.push(`clean up: ${problems.join('; ')}`);
+  }
+  if (errors.length) {
+    console.log('\nBrowser errors:');
+    for (const e of errors) console.log(`  ${e}`);
+  }
+  if (failures || errors.length) process.exit(1);
+  console.log('\nAll checks passed.');
+
+  /** Rebound's recorded voice: recordings made in the lobby, played in step on every device. */
+  async function recordedVoice(host, player, roomId) {
+    const plays = (page) => page.evaluate(() => window.__played.filter((p) => p.src === 'blob:'));
+
+    await step('the lobby records the questions, then offers a sample and lets the host start', async () => {
+      await host.getByRole('button', { name: 'Play a sample' }).and(host.locator(':enabled')).waitFor({ timeout: 30000 });
+      await host.getByRole('button', { name: 'Start the match' }).and(host.locator(':enabled')).waitFor({ timeout: 10000 }).catch(() => {});
+      await player.goto(`${BASE}#/room/${roomId}`);
+      await player.getByRole('button', { name: 'Join Team B' }).click();
+      await player.getByRole('button', { name: 'Play a sample' }).click();
+      await player.waitForFunction(() => window.__played.some((p) => p.src === 'blob:' && p.ok === true), null, { timeout: 10000 });
+      if (await player.getByText('(sees the text').count()) throw new Error('with Rebound’s voice, nobody needs the text');
+      await shot(player, 'recorded-1-lobby');
+    });
+
+    await step('the toss-up’s recording plays on both devices at the match’s speed, with no text shown', async () => {
+      await host.getByRole('button', { name: 'Start the match' }).click();
+      for (const page of [player, host]) await page.getByText('Listening to the question…').waitFor({ timeout: 15000 });
+      await shot(player, 'recorded-2-listening');
+      for (let i = 0; i < 4; i++) {
+        for (const page of [player, host]) if (await page.getByText(/observable|most common term/).count()) throw new Error('the question shows while it is read');
+        await player.waitForTimeout(400);
+      }
+      for (const page of [player, host]) {
+        const played = (await plays(page)).filter((p) => p.ok === true);
+        // Wpm 300 against the voice's natural 160: the fastest playback, 1.6.
+        if (!played.some((p) => Math.abs(p.rate - 1.6) < 0.01)) throw new Error(`plays: ${JSON.stringify(played)}`);
+      }
+    });
+
+    await step('once it is over, the toss-up’s text shows with its answer, and the bonus is recorded too', async () => {
+      await player.getByText(/s left$/).waitFor({ timeout: 30000 });
+      await player.getByRole('button', { name: /Buzz/ }).click();
+      await player.getByLabel(/^Your answer/).fill('phenotype');
+      await player.keyboard.press('Enter');
+      await player.getByText(`Toss-up 1: ${TOSSUP}`).waitFor({ timeout: 10000 });
+      await player.getByText('ANSWER: PHENOTYPE').waitFor();
+      await player.getByLabel(/answer for the team/).waitFor({ timeout: 30000 });
+      if (await player.getByText(BONUS).count()) throw new Error('the bonus shows while it is read aloud');
+      await player.getByLabel(/answer for the team/).fill('bacteriophage');
+      await player.keyboard.press('Enter');
+      await player.getByText(BONUS).waitFor({ timeout: 10000 });
+      await shot(player, 'recorded-3-bonus-over');
+      await host.getByRole('button', { name: 'End the match' }).click(); // the confirm is accepted
+      await player.getByText('The match is over.').waitFor({ timeout: 10000 });
+    });
+  }
+
+  /** The devices' own voices: a pretend voice on the player's device, none on the host's. */
+  async function deviceVoices(host, player, roomId) {
+    await step('the host’s device has no voice: the lobby says the text will show instead', async () => {
       await host.getByText('This device has no voice for reading aloud').waitFor({ timeout: 10000 });
     });
 
@@ -172,18 +264,7 @@ async function main() {
       await host.getByRole('button', { name: 'End the match' }).click(); // the confirm is accepted
       await player.getByText('The match is over.').waitFor({ timeout: 10000 });
     });
-  } finally {
-    // Close the pages first: a page whose account is gone would see its next request refused.
-    await browser.close();
-    const problems = await A.deleteAccounts(accounts);
-    if (problems.length) errors.push(`clean up: ${problems.join('; ')}`);
   }
-  if (errors.length) {
-    console.log('\nBrowser errors:');
-    for (const e of errors) console.log(`  ${e}`);
-  }
-  if (failures || errors.length) process.exit(1);
-  console.log('\nAll checks passed.');
 }
 
 main().catch((err) => {

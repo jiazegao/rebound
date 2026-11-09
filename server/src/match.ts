@@ -20,7 +20,7 @@ import { judgeAnswer } from '../../src/core/judge/judge';
 import { applyEvent, currentWindow, replay, type EventInput, type MatchConfig, type MatchEvent, type MatchState, type TeamIdx } from '../../src/core/rules/engine';
 import { getPreset, PRESETS } from '../../src/core/rules/presets';
 import { LETTERS, SUBJECT_LABELS, type Letter, type Subject } from '../../src/core/schema';
-import { buildReading, readingDurationMs } from '../../src/lib/reading';
+import { buildReading, readingDurationMs, wpmFor } from '../../src/lib/reading';
 import { HttpError } from './http';
 import { asObject, cleanLine, MAX_ID_LENGTH } from './validate';
 
@@ -58,6 +58,15 @@ export const MAX_WPM = 600;
 /** Read aloud: the speeds a device's voice can keep to (from its slowest to its fastest pace). */
 export const MIN_SPEECH_WPM = 100;
 export const MAX_SPEECH_WPM = 300;
+/** Rebound's recorded voice speaks at about this many words a minute; the host's reading speed sets its playback. */
+export const NATURAL_WPM = 160;
+export const MIN_PLAYBACK_RATE = 0.75;
+export const MAX_PLAYBACK_RATE = 1.6;
+
+/** How fast recordings play for a reading speed of `wpm` (pitch is kept). */
+export function playbackRate(wpm: number): number {
+  return Math.round(Math.min(MAX_PLAYBACK_RATE, Math.max(MIN_PLAYBACK_RATE, wpm / NATURAL_WPM)) * 100) / 100;
+}
 export const MAX_MATCH_PAIRS = 40;
 
 export interface MatchQuestion {
@@ -140,8 +149,28 @@ export interface AnswerResult {
   t: number;
 }
 
+/** A question's recording in Rebound's voice (tts.ts, voice.ts): its key, and its length at normal speed in ms. */
+export interface Recording {
+  key: string;
+  ms: number;
+}
+
+/** Rebound's voice for a match read aloud: the questions are recorded in the lobby, then played on every device. */
+export interface MatchVoice {
+  /** 'preparing': the room is having the questions recorded; the match can start once it is 'ready'. */
+  state: 'preparing' | 'ready';
+  /** Each question's recording by question id; null when it could not be made (devices read that one themselves). */
+  items: Record<string, Recording | null>;
+  /** The line players can hear in the lobby. */
+  sample: Recording | null;
+  /** How fast the recordings play (the host's reading speed against the voice's natural pace). */
+  rate: number;
+}
+
 export interface MatchData {
   setup: MatchSetup;
+  /** A match read aloud with Rebound's voice (missing: each device reads with its own voice, or the text shows). */
+  voice?: MatchVoice;
   status: 'lobby' | 'playing' | 'finished';
   /** Pause before the next question (the host's call, or nobody connected). */
   paused: boolean;
@@ -183,7 +212,8 @@ export interface MatchView {
   label: string;
   subject?: string;
   text?: string;
-  reading?: { startedAt: number; wpm: number; pausedAt?: number };
+  /** `audio`: the question's recording and its playback speed, in a match read aloud with Rebound's voice. */
+  reading?: { startedAt: number; wpm: number; pausedAt?: number; audio?: { key: string; rate: number } };
   window?: { openedAt: number; seconds: number };
   teams: [string, string];
   scores: [number, number];
@@ -204,7 +234,15 @@ export interface MatchView {
     clock?: { remainingMs: number; runningSince: number | null };
     previous?: { label: string; answer: string; text?: string };
     gameId?: string;
+    /** Rebound's voice: how far the recordings are, the lobby's sample, and (once ready) every recording to fetch ahead. */
+    voice?: { state: MatchVoice['state']; done: number; total: number; rate: number; sample?: string; keys?: string[] };
   };
+}
+
+/** The questions a match reads: its toss-ups (a free-for-all's first `tossupCount`), and a team match's bonuses. */
+export function matchQuestions(setup: MatchSetup): MatchQuestion[] {
+  const pairs = setup.format === 'ffa' ? setup.pairs.slice(0, Math.min(setup.tossupCount, setup.pairs.length)) : setup.pairs;
+  return pairs.flatMap((p) => (p.bonus ? [p.tossup, p.bonus] : [p.tossup]));
 }
 
 /* ---------------- checking a new match ---------------- */
@@ -352,6 +390,10 @@ export class MatchDirector {
   start(players: MatchPlayer[], now: number): string | null {
     const d = this.data;
     if (d.status !== 'lobby') return 'The match has already started.';
+    if (d.voice?.state === 'preparing') {
+      const total = matchQuestions(d.setup).length;
+      return `The voice is still recording the questions (${Object.keys(d.voice.items).length} of ${total}). It takes a moment the first time a round is read.`;
+    }
     if (d.setup.format === 'teams') {
       if (!players.some((p) => p.side === 'A') || !players.some((p) => p.side === 'B')) return 'Each side needs at least one player.';
       // Each side's captain answers its bonuses: the chosen one, or the first to join.
@@ -844,7 +886,7 @@ export class MatchDirector {
     this.data.q = {
       pairIndex,
       part,
-      reading: { startedAt: startAt, durationMs: readingDurationMs(buildReading(question), this.data.setup.wpm), started: false, pausedAt: null, resumeAt: null },
+      reading: { startedAt: startAt, durationMs: this.readingMs(question), started: false, pausedAt: null, resumeAt: null },
       windowEndsAt: null,
       answering: null,
       review: null,
@@ -970,6 +1012,17 @@ export class MatchDirector {
       if (s?.clock) match.clock = { remainingMs: s.clock.remainingMs, runningSince: s.clock.runningSince };
     }
     if (d.gameId) match.gameId = d.gameId;
+    if (d.voice) {
+      const items = Object.values(d.voice.items);
+      match.voice = {
+        state: d.voice.state,
+        done: items.length,
+        total: matchQuestions(d.setup).length,
+        rate: d.voice.rate,
+        ...(d.voice.sample ? { sample: d.voice.sample.key } : {}),
+        ...(d.voice.state === 'ready' ? { keys: items.filter((r): r is Recording => r !== null).map((r) => r.key) } : {}),
+      };
+    }
     const view: MatchView = { phase: s?.phase ?? (d.status === 'playing' ? 'ffa' : d.status), label: '', teams: d.setup.teamNames, scores, match };
 
     if (d.status === 'lobby') {
@@ -991,7 +1044,14 @@ export class MatchDirector {
         view.text = buildReading(question).text;
         // A reading still going, or stopped for an interrupt, is revealed in step; otherwise the whole text shows.
         if (!over && (q.reading.pausedAt !== null || this.readingRunning())) {
-          view.reading = { startedAt: q.reading.startedAt, wpm: d.setup.wpm, ...(q.reading.pausedAt !== null ? { pausedAt: q.reading.pausedAt } : {}) };
+          const recording = this.recording(question);
+          view.reading = {
+            startedAt: q.reading.startedAt,
+            // With a recording, the text beside it (for a device that cannot play it) runs at the recording's pace.
+            wpm: recording ? wpmFor(buildReading(question), q.reading.durationMs) : d.setup.wpm,
+            ...(q.reading.pausedAt !== null ? { pausedAt: q.reading.pausedAt } : {}),
+            ...(recording ? { audio: { key: recording.key, rate: d.voice!.rate } } : {}),
+          };
         }
         if (question.figure) view.figure = { questionId: question.id };
       }
@@ -1026,6 +1086,18 @@ export class MatchDirector {
       view.status = q?.status ? `${q.status} ${final}` : final;
     }
     return view;
+  }
+
+  /** A question's recording, when the match has Rebound's voice and it could be made. */
+  private recording(question: MatchQuestion): Recording | null {
+    const v = this.data.voice;
+    return v?.state === 'ready' ? (v.items[question.id] ?? null) : null;
+  }
+
+  /** How long a question's reading takes: its recording at the match's playback speed, or the reading speed's time. */
+  private readingMs(question: MatchQuestion): number {
+    const recording = this.recording(question);
+    return recording ? Math.round(recording.ms / this.data.voice!.rate) : readingDurationMs(buildReading(question), this.data.setup.wpm);
   }
 
   /** Whether the reading is under way (begun, not yet finished). */

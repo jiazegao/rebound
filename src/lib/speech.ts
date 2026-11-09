@@ -8,7 +8,7 @@
  *
  * The browser's speech synthesis is reached through `SpeechPlatform`, so tests can use a pretend voice.
  */
-import { MAX_RATE, rateFor, speechChunks, type SpeechChunk } from '../core/speech';
+import { MAX_RATE, MIN_RATE, rateFor, rateForChars, speechChunks, type SpeechChunk } from '../core/speech';
 import { buildReading } from './reading';
 
 /* ---------------- the platform ---------------- */
@@ -62,9 +62,18 @@ export function browserSpeech(): SpeechPlatform | null {
 
 /* ---------------- voices ---------------- */
 
-/** The device's English voices, best first (US English, voices on the device, the device's default). */
+/**
+ * The device's English voices, best first: natural-sounding ones (Edge's "Natural" voices, Apple's Premium and
+ * Enhanced ones), then US English, then Chrome's Google voices (better than the older ones built into Windows and
+ * Chromebooks), then voices on the device, then its default.
+ */
 export function englishVoices(voices: VoiceLike[]): VoiceLike[] {
-  const score = (v: VoiceLike) => (/^en[-_]US/i.test(v.lang) ? 4 : 0) + (v.localService ? 2 : 0) + (v.default ? 1 : 0);
+  const score = (v: VoiceLike) =>
+    (/natural|neural|premium|enhanced|siri/i.test(v.name) ? 8 : 0) +
+    (/^en[-_]US/i.test(v.lang) ? 4 : 0) +
+    (/^Google\b/.test(v.name) ? 3 : 0) +
+    (v.localService ? 1 : 0) +
+    (v.default ? 1 : 0);
   return voices.filter((v) => /^en\b|^en[-_]/i.test(v.lang)).sort((a, b) => score(b) - score(a) || a.name.localeCompare(b.name));
 }
 
@@ -107,6 +116,28 @@ export function saveVoice(voiceURI: string): void {
     globalThis.localStorage?.setItem(VOICE_KEY, voiceURI);
   } catch {
     /* storage blocked: the choice lasts for this visit */
+  }
+}
+
+/** How fast a voice speaks on this device, as learned in earlier matches, so the next one starts in step. */
+const PACE_KEY = (voiceURI: string) => `rebound-voice-pace:${voiceURI}`;
+
+export function savedPace(voice: VoiceLike | null): number | null {
+  if (!voice) return null;
+  try {
+    const n = Number(globalThis.localStorage?.getItem(PACE_KEY(voice.voiceURI)));
+    return Number.isFinite(n) && n >= 5 && n <= 40 ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+export function savePace(voice: VoiceLike | null, charsPerSecond: number): void {
+  if (!voice) return;
+  try {
+    globalThis.localStorage?.setItem(PACE_KEY(voice.voiceURI), charsPerSecond.toFixed(2));
+  } catch {
+    /* storage blocked */
   }
 }
 
@@ -175,6 +206,8 @@ export class QuestionSpeaker {
   private blocked = false;
   /** Phrases in a row the voice failed to say. */
   private failures = 0;
+  /** This device has said part of this reading: it does not skip phrases from then on, it catches up. */
+  private inStep = false;
 
   constructor(
     private readonly platform: SpeechPlatform,
@@ -182,12 +215,21 @@ export class QuestionSpeaker {
     private readonly serverNow: () => number,
     /** The browser refused to speak (it waits for a tap or a click first). */
     private readonly onBlocked: () => void = () => {},
-    /** The voice failed twice in a row (a network voice a school filter blocks, say): show the text instead. */
+    /** The voice failed twice in a row (a network voice a school filter blocks, say). */
     private readonly onFailed: () => void = () => {},
-  ) {}
+    /** How fast this voice speaks, as learned before (characters a second at its normal rate). */
+    charsPerSecond: number | null = null,
+    /** Called with what has been learned about the voice's pace, to remember it for next time. */
+    private readonly onPace: (charsPerSecond: number) => void = () => {},
+  ) {
+    if (charsPerSecond) this.charsPerSecond = charsPerSecond;
+  }
 
-  setVoice(voice: VoiceLike | null): void {
+  /** Another voice (the player chose one, or the last one failed): what was learned starts over, unless known. */
+  setVoice(voice: VoiceLike | null, charsPerSecond: number | null = null): void {
     this.voice = voice;
+    this.charsPerSecond = charsPerSecond ?? DEFAULT_CHARS_PER_SECOND;
+    this.failures = 0;
   }
 
   /** What has been learned about this device's voice (for tests and the sound check). */
@@ -227,6 +269,7 @@ export class QuestionSpeaker {
       // Stopped for an interrupt: silence now; it goes on from the start of the phrase it stopped in.
       if (!wasPaused) this.silence();
       this.next = this.chunkAt(at);
+      this.inStep = false;
       return;
     }
     const current = this.chunkAt(at);
@@ -234,6 +277,7 @@ export class QuestionSpeaker {
       // The toss-up is read again from the start.
       this.silence();
       this.next = current;
+      this.inStep = false;
     }
     if (!this.timer) this.timer = setInterval(() => this.tick(), TICK_MS);
     this.tick();
@@ -259,6 +303,7 @@ export class QuestionSpeaker {
     this.timer = null;
     this.clock = null;
     this.ending = false;
+    this.inStep = false;
     this.next = 0;
   }
 
@@ -302,15 +347,37 @@ export class QuestionSpeaker {
     } else {
       // Not its time yet (allowing for the voice's start).
       if (at < chunk.startMs - this.startMs) return;
-      // Its time is long past, and the reading has moved on: skip it.
-      if (at > chunk.endMs + STALE_MS && this.next < this.chunks.length - 1) {
+      // This device came in late (it joined, or the reading went on without it): skip what is long past. Once it
+      // is in step it never skips; it speeds up a little instead.
+      if (!this.inStep && at > chunk.endMs + STALE_MS && this.next < this.chunks.length - 1) {
         this.next = this.chunkAt(at);
         return this.tick();
       }
       ms = chunk.endMs - Math.max(at + this.startMs, chunk.startMs);
     }
-    this.say(chunk, rateFor(chunk.say, ms, this.charsPerSecond));
+    this.inStep = true;
+    this.say(chunk, this.ending ? rateFor(chunk.say, ms, this.charsPerSecond) : this.rateOf(chunk, ms));
     this.next += 1;
+  }
+
+  /**
+   * A steady pace: the rate that says the rest of the question in its time on the timeline, nudged (at most 10%
+   * slower, or 20% faster; 40% when it is more than a second behind) to end this phrase on time. Sudden changes of
+   * speed between phrases sound odd; a little late is better than early, when a quick buzz would count as an
+   * interrupt.
+   */
+  private rateOf(chunk: SpeechChunk, ms: number): number {
+    const behind = this.position() + this.startMs - chunk.startMs;
+    let chars = 0;
+    let time = 0;
+    for (let i = this.next; i < this.chunks.length; i++) {
+      chars += this.chunks[i]!.say.length;
+      time += this.chunks[i]!.endMs - this.chunks[i]!.startMs;
+    }
+    const steady = rateForChars(chars, time, this.charsPerSecond);
+    const needed = rateFor(chunk.say, ms, this.charsPerSecond);
+    const fastest = steady * (behind > 1000 ? 1.4 : 1.2);
+    return Math.min(MAX_RATE, Math.max(MIN_RATE, Math.min(fastest, Math.max(steady * 0.9, needed))));
   }
 
   private say(chunk: SpeechChunk, rate: number): void {
@@ -330,7 +397,10 @@ export class QuestionSpeaker {
       this.failures = 0;
       const seconds = (this.platform.now() - started) / 1000;
       // How fast this voice speaks at its normal rate, from how long this phrase took at the rate it was given.
-      if (seconds > 0.2) this.charsPerSecond = learn(this.charsPerSecond, chunk.say.length / (seconds * rate), 5, 40);
+      if (seconds > 0.2) {
+        this.charsPerSecond = learn(this.charsPerSecond, chunk.say.length / (seconds * rate), 5, 40);
+        this.onPace(this.charsPerSecond);
+      }
       this.tick();
     };
     u.onerror = (event) => {
@@ -344,9 +414,12 @@ export class QuestionSpeaker {
         return;
       }
       if (event.error !== 'interrupted' && event.error !== 'canceled') {
+        // Say the phrase again; if it fails twice, wait (as when blocked) for another voice: `setVoice`, then
+        // `unblock`, says it with that one.
+        this.next = Math.max(0, this.next - 1);
         this.failures += 1;
         if (this.failures >= 2) {
-          this.stop();
+          this.blocked = true;
           this.onFailed();
           return;
         }

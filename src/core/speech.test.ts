@@ -82,6 +82,25 @@ describe('what is said', () => {
   });
 });
 
+describe('phrases', () => {
+  it('are whole sentences, so the voice keeps its natural rise and fall', () => {
+    expect(say('Bacteria in the species E. coli live in the gut. Which vitamin do they make there?')).toEqual([
+      'Bacteria in the species E. coli live in the gut.',
+      'Which vitamin do they make there?',
+    ]);
+  });
+
+  it('split a long sentence at a comma once it has a good number of words', () => {
+    const chunks = say(
+      'An aqueous solution in which the concentration of hydroxide ions is greater than that of hydrogen ions, at 25 degrees Celsius and one atmosphere of pressure, is called what?',
+    );
+    expect(chunks).toEqual([
+      'An aqueous solution in which the concentration of hydroxide ions is greater than that of hydrogen ions,',
+      'at 25 degrees Celsius and one atmosphere of pressure, is called what?',
+    ]);
+  });
+});
+
 describe('phrases on the timeline', () => {
   const stem =
     'An aqueous solution in which the concentration of OH⁻ ions is greater than that of H⁺ ions, at 25 degrees and one atmosphere of pressure, is called what?';

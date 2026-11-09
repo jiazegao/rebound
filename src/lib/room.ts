@@ -47,6 +47,11 @@ export interface MatchInfo {
   previous?: { label: string; answer: string; text?: string };
   /** Team matches: the game record's id, once finished. */
   gameId?: string;
+  /**
+   * A match read aloud with Rebound's voice: how far the recordings are ('preparing' until each question is
+   * recorded), the lobby's sample, and once ready every recording, to fetch ahead.
+   */
+  voice?: { state: 'preparing' | 'ready'; done: number; total: number; rate: number; sample?: string; keys?: string[] };
 }
 
 /** One judged answer in a free-for-all (the server also writes it to the player's account). */
@@ -78,8 +83,11 @@ export interface RoomView {
   subject?: string;
   /** The question, once the players may see it (text reveal, or after it was read aloud). */
   text?: string;
-  /** Text reveal: when the reading started (server time) and how fast it runs; `pausedAt` stops it there. */
-  reading?: { startedAt: number; wpm: number; pausedAt?: number };
+  /**
+   * Text reveal: when the reading started (server time) and how fast it runs; `pausedAt` stops it there. `audio`: in a
+   * match read aloud with Rebound's voice, the question's recording and how fast it plays.
+   */
+  reading?: { startedAt: number; wpm: number; pausedAt?: number; audio?: { key: string; rate: number } };
   /** An answer window: when it opened (server time) and how long it lasts. */
   window?: { openedAt: number; seconds: number };
   teams: [string, string];

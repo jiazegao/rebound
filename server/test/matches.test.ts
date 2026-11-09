@@ -3,8 +3,10 @@
  * their own WebSockets, real timers, and the results reaching each player's account (and the team's games).
  */
 import { evictDurableObject, runInDurableObject } from 'cloudflare:test';
-import { env } from 'cloudflare:workers';
-import { describe, expect, it } from 'vitest';
+import { env, exports } from 'cloudflare:workers';
+import { afterEach, describe, expect, it } from 'vitest';
+import { BASE, SITE } from './helpers';
+import { setTtsTestOverrides, silentMp3 } from '../src/tts';
 import { allMyRecords, call, connect, createRoom, eventually, getRecords, makeTeam, signUp, teamWith, type Json, type RoomClient, type TestUser } from './helpers';
 
 const roomStub = (roomId: string) => env.ROOM.get(env.ROOM.idFromName(roomId));
@@ -270,5 +272,119 @@ describe('online matches', () => {
     const reading = await view(a, (v) => !!v.text, 8000);
     expect(reading.text).toBe('What organelle makes ATP?');
     for (const c of [host, a]) c.close();
+  });
+});
+
+describe('Rebound’s recorded voice', () => {
+  afterEach(() => setTtsTestOverrides({}));
+
+  /** A stand-in for Google: each recording lasts 70 ms a character (a slow, easy-to-measure voice). */
+  function fakeGoogle(options: { status?: number; hold?: Promise<void> } = {}) {
+    const calls: string[] = [];
+    const fetcher = (async (_url: string, init: RequestInit) => {
+      const text = (JSON.parse(String(init.body)) as { input: { text: string } }).input.text;
+      calls.push(text);
+      await options.hold;
+      if (options.status) return new Response('refused', { status: options.status });
+      let binary = '';
+      for (const byte of silentMp3(text.length * 70)) binary += String.fromCharCode(byte);
+      return Response.json({ audioContent: btoa(binary) });
+    }) as unknown as typeof fetch;
+    return { fetcher, calls };
+  }
+  /** The match's voice as the client last heard of it (from its welcome, or a later view), once `ready` if asked. */
+  const voiceOf = async (client: RoomClient, ready = true) => {
+    const wanted = (v: Json) => v?.match?.voice && (!ready || v.match.voice.state === 'ready');
+    const welcome = client.welcome.room.state;
+    return (wanted(welcome) ? welcome : await view(client, wanted, 10_000)).match.voice;
+  };
+  /** A request to the Worker itself (as the helpers' `call` does), for a raw response. */
+  const workerFetch = (path: string, init: RequestInit = {}) => exports.default.fetch(`${BASE}${path}`, init);
+
+  it('records each question once in the lobby, serves the recordings to players, and times the reading by them', async () => {
+    const google = fakeGoogle();
+    setTtsTestOverrides({ apiKey: 'test-key', fetch: google.fetcher });
+    const { team, members: [ana] } = await teamWith('Cora Captain', 'Ana');
+    const cora = team.captain;
+    const roomId = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 160, tossupCount: 2 });
+    const host = await connect(roomId, cora.token);
+    const voice = await voiceOf(host);
+    // Two toss-ups, and the lobby's sample line.
+    expect(voice).toMatchObject({ state: 'ready', done: 2, total: 2, rate: 1 });
+    expect(voice.keys).toHaveLength(2);
+    expect(google.calls).toHaveLength(3);
+    expect(google.calls[0]).toBe('What organelle makes ATP?');
+
+    // Signed-in players fetch the recordings (MP3), which browsers may keep.
+    const res = await workerFetch(`/api/speech/${voice.keys[0]}`, { headers: { Authorization: `Bearer ${ana!.token}`, Origin: SITE } });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('audio/mpeg');
+    expect(res.headers.get('Cache-Control')).toContain('immutable');
+    expect(new Uint8Array(await res.arrayBuffer()).slice(0, 2)).toEqual(new Uint8Array([0xff, 0xfb]));
+    expect((await workerFetch(`/api/speech/${voice.keys[0]}`, { headers: { Origin: SITE } })).status).toBe(401);
+    expect((await workerFetch(`/api/speech/${'0'.repeat(40)}`, { headers: { Authorization: `Bearer ${ana!.token}`, Origin: SITE } })).status).toBe(404);
+
+    // The reading lasts as long as its recording (at the match's playback speed), and carries it.
+    const a = await connect(roomId, ana!.token);
+    await takeSide(a, 'A');
+    host.send({ type: 'start' });
+    const reading = await view(a, (v) => !!v.reading?.audio, 8000);
+    expect(reading.reading.audio).toEqual({ key: voice.keys[0], rate: 1 });
+    const ms = 'What organelle makes ATP?'.length * 70;
+    const roomData = await runInDurableObject(roomStub(roomId), (_i, state) => JSON.parse(state.storage.sql.exec<{ data: string }>('SELECT data FROM match').one().data));
+    expect(Math.abs(roomData.q.reading.durationMs - ms)).toBeLessThan(40);
+
+    // A second match with the same questions finds them recorded: Google is not asked again.
+    const again = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 200, tossupCount: 2 });
+    const host2 = await connect(again, cora.token);
+    expect((await voiceOf(host2)).rate).toBe(1.25);
+    expect(google.calls).toHaveLength(3);
+  });
+
+  it('holds the start until the questions are recorded', async () => {
+    let release = () => {};
+    const google = fakeGoogle({ hold: new Promise<void>((r) => (release = r)) });
+    setTtsTestOverrides({ apiKey: 'test-key', fetch: google.fetcher });
+    const cora = await signUp('Cora');
+    const roomId = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 160, tossupCount: 1, pairs: [{ tossup: { ...PAIRS[1]!.tossup, stem: 'A question only this test asks?' } }] });
+    const host = await connect(roomId, cora.token);
+    await takeSide(host, 'A');
+    expect((await voiceOf(host, false)).state).toBe('preparing');
+    host.send({ type: 'start' });
+    expect((await host.next('error')).message).toBe('The voice is still recording the questions (0 of 1). It takes a moment the first time a round is read.');
+    release();
+    await voiceOf(host);
+    host.send({ type: 'start' });
+    await view(host, (v) => v.label.startsWith('Toss-up 1'));
+  });
+
+  it('keeps within the monthly allowance, and gives back what a failed recording did not use', async () => {
+    const cora = await signUp('Cora');
+    const month = new Date().toISOString().slice(0, 7);
+    const registry = env.REGISTRY.get(env.REGISTRY.idFromName('global'));
+    const used = async (): Promise<number> => Number(await registry.ttsCharsUsed(month));
+    const start = await used();
+    // Over the allowance: nothing is sent; devices read with their own voices.
+    const thrifty = fakeGoogle();
+    setTtsTestOverrides({ apiKey: 'test-key', fetch: thrifty.fetcher, monthlyChars: start + 5 });
+    const roomId = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 160, tossupCount: 1, pairs: [{ tossup: { ...PAIRS[0]!.tossup, stem: 'Over the allowance?' } }] });
+    const host = await connect(roomId, cora.token);
+    expect(await voiceOf(host)).toMatchObject({ state: 'ready', done: 1, keys: [] });
+    expect(thrifty.calls).toEqual([]);
+    // Google fails: the characters are given back.
+    const failing = fakeGoogle({ status: 500 });
+    setTtsTestOverrides({ apiKey: 'test-key', fetch: failing.fetcher, monthlyChars: 1_000_000 });
+    const room2 = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 160, tossupCount: 1, pairs: [{ tossup: { ...PAIRS[0]!.tossup, stem: 'Google is down?' } }] });
+    const host2 = await connect(room2, cora.token);
+    expect(await voiceOf(host2)).toMatchObject({ state: 'ready', keys: [] });
+    expect(failing.calls.length).toBeGreaterThan(0);
+    expect(await used()).toBe(start);
+  });
+
+  it('is not used without a key: a match read aloud then has each device read with its own voice', async () => {
+    const cora = await signUp('Cora');
+    const roomId = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 160, tossupCount: 1 });
+    const host = await connect(roomId, cora.token);
+    expect(host.welcome.room.state.match.voice).toBeUndefined();
   });
 });

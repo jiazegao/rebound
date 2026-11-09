@@ -29,7 +29,8 @@ plan is enough for a school.
 | `UserServer` | user id | profile, sessions (hashed), the user's collections, rooms the user's sessions joined, AI usage and explanation cache |
 | `Team` | team id | settings, members (role and squad, plus a copy of each member's name, subjects and graduation year), the current join secret, team collections, the list of rooms its members opened, pending answer deliveries |
 | `RoomServer` | room id | one reader room or one online match: its members, sides, published state, buzzers, the match, pending result deliveries |
-| `Registry` | `"global"` | daily caps on new teams (open sign-up) |
+| `Registry` | `"global"` | daily caps on new teams (open sign-up), and the characters sent each month to record questions |
+| `VoiceCache` | `"voice-<first character of the key>"` (16 objects) | recordings in Rebound's voice for matches read aloud, by the hash of voice and words |
 
 The Worker checks every request's session with the caller's `UserServer`, then sends the request on, with the
 caller's identity, to the object that owns what it is about. Only the Worker builds requests to the objects, and it
@@ -108,6 +109,7 @@ captain.
 | `GET /api/rooms` | user | → `{ rooms }`: the open rooms opened by members of the caller's team (query parameters are ignored) |
 | `POST /api/rooms` | user | `{ name, match? }` → 201 `{ roomId }` (the caller hosts it; with `match`, an online match: see Match rooms) |
 | `GET /api/rooms/:id/ws?token=` | user | WebSocket upgrade (see Rooms) |
+| `GET /api/speech/:key` | user | a recording in Rebound's voice for a match read aloud (`audio/mpeg`, cacheable for good); 404 when there is none |
 | `GET /api/ai` | user | → `{ enabled: false }`, or `{ enabled: true, model, dailyLimit, usedToday }` |
 | `POST /api/ai/draft` | user | `{ passage, source, subject, kind?: "tossup"\|"bonus"\|"either", count?: 1–5 }` → `{ drafts, model, dailyLimit, usedToday }` |
 | `POST /api/ai/explain` | user | `{ stem, answer, choices?: { W, X, Y, Z }, subject? }` → `{ explanation, answerLooksWrong, model, cached, dailyLimit, usedToday }` |
@@ -287,15 +289,27 @@ answer only when it is over or a close call is being decided.
   (or their first try failed; failed deliveries are retried from the room's alarm), so a device that refreshes its
   player's records then finds them.
 - **Pausing**: the host can pause before the next question; a match also pauses there when every player has left.
-- **Read aloud** (`mode: "speech"`, at 100 to 300 words a minute; `"text"`, the default, takes 60 to 600): each
-  player's device says the question with its own voice (`src/lib/speech.ts`, with the words to say from
-  `src/core/speech.ts`), and shows nothing of it until it is over. The server's timeline is the same as for text:
-  the view carries the text and `reading` as usual, and each device starts each phrase of the question at its place
-  on that timeline and adjusts the voice's speed so that it ends with the reading. Pronunciation guides are skipped
-  and DOE's reading guides ("[y equals x squared]") are said in place of the math they describe. A toss-up answered
-  right goes straight to its bonus, so its text comes with its answer in `match.previous.text`. A device with no
-  voice says so (`voice`), shows the text revealed in step instead, and the member list marks that player
-  `readsText`.
+- **Read aloud** (`mode: "speech"`, at 100 to 300 words a minute; `"text"`, the default, takes 60 to 600): the
+  question is said aloud on every device, and nothing of it shows until it is over. The words to say come from
+  `src/core/speech.ts`: pronunciation guides are skipped, DOE's reading guides ("[y equals x squared]") are said in
+  place of the math they describe, and other symbols are said in words. A toss-up answered right goes straight to
+  its bonus, so its text comes with its answer in `match.previous.text`.
+  - **Rebound's voice** (when the Worker has `GOOGLE_TTS_API_KEY`; see server/README.md): when the match is made, the
+    room has each question recorded as one passage by Google Cloud Text-to-Speech (`tts.ts`), a few at a time, and
+    `match.voice` shows `{ state: "preparing", done, total, rate }`; `start` is refused until it is `"ready"`. A
+    recording is kept in `VoiceCache` under the hash of its voice and words, so a question is recorded once and
+    reused by every later match. The reading lasts as long as its recording at the match's playback speed
+    (`rate`: the reading speed over the voice's natural 160 words a minute, 0.75 to 1.6), and `reading.audio`
+    gives `{ key, rate }`. Every device fetches the recordings (`GET /api/speech/:key`; `match.voice.keys` once
+    ready, to fetch them all ahead) and plays each in step with the server's clock (`src/lib/recorded.ts`): from
+    the start of the reading, stopped for an interrupt, on from there or again for a re-read. `match.voice.sample`
+    is a sample line for the lobby. Characters sent to Google are counted per UTC month in `Registry` and capped
+    at `TTS_MONTHLY_CHARS` (default 900,000, under Google's free million for Chirp 3 HD voices); a question that
+    cannot be recorded (the cap, or Google failing) gets `null`, and devices read it themselves.
+  - **The devices' own voices** (without Rebound's voice, or for a question without a recording): each device
+    says the question with its own voice (`src/lib/speech.ts`), sentence by sentence, each starting at its place
+    on the reading's timeline at a steady pace that ends with the reading. A device with no voice that works says so
+    (`voice`), shows the text revealed in step instead, and the member list marks that player `readsText`.
 
 Extra messages in match rooms (`publish`, `open` and `close` are refused there; `answer` goes to the server, not
 to a reader):

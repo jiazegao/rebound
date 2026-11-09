@@ -19,10 +19,12 @@ src/match.ts      online matches with no reader: the match director, pure
 src/records.ts    records: change checks, revisions and pages (shared by users and teams)
 src/outbox.ts     deliveries between objects (a game's answers, a match's team game), retried from alarms
 src/ai.ts         optional AI help (Claude API)
-src/registry.ts   Registry Durable Object: daily caps on new teams
+src/tts.ts        optional Rebound's voice for matches read aloud: Google Text-to-Speech, MP3 lengths, test stand-ins
+src/voice.ts      VoiceCache Durable Objects: the recordings, each question recorded once
+src/registry.ts   Registry Durable Object: daily caps on new teams, characters recorded each month
 src/http.ts       JSON responses, plain-language errors, size-limited bodies, the caller's identity
 src/validate.ts   input checks; src/crypto.ts ids, secrets, hashes (Web Crypto only); src/objects.ts stubs
-test/*.test.ts    end-to-end tests run in workerd: sign-in, accounts and records, teams, rooms, matches, AI
+test/*.test.ts    end-to-end tests run in workerd: sign-in, accounts and records, teams, rooms, matches, voice, AI
 ```
 
 ## Run and test locally
@@ -117,6 +119,30 @@ npx wrangler secret put RESEND_API_KEY     # a Resend API key with permission to
 and in `wrangler.toml` `EMAIL_FROM = "Rebound <signin@your-domain.example>"`, an address on a domain verified with
 Resend. `EMAIL_DAILY_LIMIT` (default 90) keeps the total under Resend's free 100 emails a day; each address gets at
 most 3 links per 15 minutes and each network address 10 per hour. Redeploy after changing them.
+
+### Optional: Rebound's voice for matches read aloud
+
+Matches read aloud (docs/SERVER.md, "Read aloud") use each player's device voice until the Worker has a Google Cloud
+API key; then every player hears the same natural voice (Google's Chirp 3 HD), each question recorded once and kept.
+In the Google Cloud project that holds the sign-in client:
+
+1. **Billing** (Billing → Link a billing account). Google asks for a card even within the free allowance.
+2. **The API**: APIs & Services → Library → *Cloud Text-to-Speech API* → Enable.
+3. **A key**: APIs & Services → Credentials → Create credentials → API key; under *API restrictions*, allow only the
+   Cloud Text-to-Speech API.
+4. **A budget alert**: Billing → Budgets & alerts → Create budget, for example $5, with emails at 50% and 100%.
+5. **The secret**, in `server/`: `npx wrangler secret put GOOGLE_TTS_API_KEY` (or in the Cloudflare dashboard: Workers &
+   Pages → rebound-server → Settings → Variables and Secrets → Add → Secret). It applies at once; no redeploy.
+
+What it costs: each question is recorded once, so a match only sends questions never read before. A median round is
+about 7,800 characters and the whole DOE library about 4 million; Google gives 1 million characters a month free for
+Chirp 3 HD voices, then charges about $30 per million. `TTS_MONTHLY_CHARS` in `wrangler.toml` (default 900,000) stops
+recording new questions once a month's characters reach it; those questions are then read by the devices' own voices.
+`TTS_VOICE` picks the voice (Google's list of Chirp 3 HD voices names them, for example `en-US-Chirp3-HD-Kore`;
+recordings are kept per voice, so changing it records questions again). Only the public question text is sent.
+
+To test locally without Google, start the server with silent stand-in recordings: `npx wrangler dev --var
+DEV_TTS_FAKE:1` (never in `wrangler.toml`).
 
 ### Optional: AI help
 

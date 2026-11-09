@@ -9,8 +9,10 @@ declare namespace Cloudflare {
     ROOM: DurableObjectNamespace<import('./room').RoomServer>;
     /** One Durable Object (named "global"): email and Google account → user, email codes, sign-in limits. */
     DIRECTORY: DurableObjectNamespace<import('./directory').Directory>;
-    /** One Durable Object (named "global") that counts new teams per day, for open sign-up. */
+    /** One Durable Object (named "global") that counts new teams per day, for open sign-up, and characters recorded. */
     REGISTRY: DurableObjectNamespace<import('./registry').Registry>;
+    /** Recordings for matches read aloud, in sixteen objects named "voice-<first character of the key>". */
+    VOICE: DurableObjectNamespace<import('./voice').VoiceCache>;
     /** Comma-separated browser origins allowed to call the API. */
     ALLOWED_ORIGINS: string;
     /** The site's address; email sign-in links are `<SITE_URL>#/signin?code=...`. */
@@ -33,11 +35,19 @@ declare namespace Cloudflare {
     AI_CHECK_MODEL?: string;
     /** AI calls each user may make per day, counted in UTC days (default 50). */
     AI_DAILY_LIMIT?: string;
+    /** Matches read aloud: a Google Cloud API key for Text-to-Speech, set as a secret. Without it devices use their own voices. */
+    GOOGLE_TTS_API_KEY?: string;
+    /** The Google voice (default en-US-Chirp3-HD-Charon). */
+    TTS_VOICE?: string;
+    /** Characters sent to Google per UTC month at most (default 900,000). */
+    TTS_MONTHLY_CHARS?: string;
+    /** Development only ("1"): silent recordings instead of Google. */
+    DEV_TTS_FAKE?: string;
   }
 
   interface GlobalProps {
     mainModule: typeof import('./index');
-    durableNamespaces: 'Directory' | 'UserServer' | 'Team' | 'RoomServer' | 'Registry';
+    durableNamespaces: 'Directory' | 'UserServer' | 'Team' | 'RoomServer' | 'Registry' | 'VoiceCache';
   }
 }
 
