@@ -55,7 +55,8 @@ describe('the recorded voice', () => {
   it('says a whole question as one passage, each answer choice its own sentence, under a key for voice and words', async () => {
     expect(spokenFor({ stem: 'Which is a base?', choices: { W: 'NaOH', X: 'HCl', Y: 'H₂O', Z: 'CO₂' } })).toBe('Which is a base? W, NaOH. X, HCl. Y, H2O. Z, CO2.');
     const a = await audioKey('voice-1', 'Hello.');
-    expect(a).toMatch(/^[0-9a-f]{40}$/);
+    // Recordings are kept, and made elsewhere (scripts/voice), under these names: they must never change.
+    expect(a).toBe('51873d2ca5026182810a512ce20b8a298c1d62d3');
     expect(await audioKey('voice-2', 'Hello.')).not.toBe(a);
   });
 });

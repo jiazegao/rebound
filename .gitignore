@@ -12,3 +12,7 @@ private-data/
 
 # Python bytecode (scripts/visual)
 __pycache__/
+
+# Rebound's voice made with Kokoro (scripts/voice): recordings and the Python environment
+/voice/
+/.venv-voice/

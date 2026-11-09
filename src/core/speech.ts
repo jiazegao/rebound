@@ -9,7 +9,7 @@
  *   π "pi", √ "the square root of", 25 – 9 "25 minus 9", 125/343 "125 over 343", and so on.
  * - The question is said in short phrases, each with its place on the timeline, so every device stays in step.
  */
-import { msPerChar, type Reading } from '../lib/reading';
+import { buildReading, msPerChar, type Reading } from '../lib/reading';
 
 /* ---------------- brackets ---------------- */
 
@@ -281,6 +281,25 @@ export function spokenQuestion(text: string): string {
     out.push(p.lineEnd && !/[.?!]$/.test(p.say) ? `${p.say.replace(/[,;:]$/, '')}.` : p.say);
   }
   return out.join(' ');
+}
+
+/* ---------------- recordings of the questions ---------------- */
+
+/**
+ * What a recorded voice says for a question: the reading's text (its stem, then a line per answer choice) as one
+ * passage. The server records it (server/src/tts.ts), and so does scripts/voice for recordings made elsewhere.
+ */
+export function spokenFor(question: { stem: string; choices?: Record<'W' | 'X' | 'Y' | 'Z', string> }): string {
+  return spokenQuestion(buildReading(question).text);
+}
+
+/** A recording's name: the voice and the words, hashed (40 hex characters), so the same words in the same voice are one recording. */
+export async function audioKey(voice: string, spoken: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${voice}|${spoken}`));
+  return [...new Uint8Array(digest)]
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+    .slice(0, 40);
 }
 
 /* ---------------- phrases on the timeline ---------------- */
