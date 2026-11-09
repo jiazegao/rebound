@@ -19,8 +19,22 @@ import { gameOutcomes } from '../../src/core/games';
 import type { Outcome } from '../../src/core/review';
 import type { CoreSubject, Player } from '../../src/core/schema';
 import { HttpError, identityOf, toErrorResponse, type Identity } from './http';
-import { MatchDirector, newMatchData, type AnswerResult, type MatchData, type MatchPlayer, type MatchSetup, type OnlineGameRecord, type ReadingMode } from './match';
-import { hasTable, teamObject, userObject } from './objects';
+import {
+  matchQuestions,
+  MatchDirector,
+  newMatchData,
+  playbackRate,
+  type AnswerResult,
+  type MatchData,
+  type MatchPlayer,
+  type MatchSetup,
+  type MatchVoice,
+  type OnlineGameRecord,
+  type ReadingMode,
+  type Recording,
+} from './match';
+import { hasTable, teamObject, userObject, voiceObject } from './objects';
+import { audioKey, SAMPLE_TEXT, spokenFor, ttsSettings } from './tts';
 import { Outbox, OUTBOX_SCHEMA, type Delivery } from './outbox';
 import { MAX_JSON_DEPTH, nestsDeeperThan, utf8Bytes } from './validate';
 
@@ -44,6 +58,10 @@ const PUBLISHES_PER_SECOND = 10;
 const SERVER_PING_GAP_MS = 1000;
 /** The backup alarm fires this long after a collection window or a match step should have happened. */
 const ALARM_SLACK_MS = 500;
+/** Questions recorded at once for a match read aloud. */
+const VOICE_BATCH = 4;
+/** While a match's questions are being recorded, the alarm checks this often that the work is still going. */
+const VOICE_WATCHDOG_MS = 20_000;
 /** The room's last-active time is refreshed at most this often while messages arrive. */
 const TOUCH_EVERY_MS = 60 * 1000;
 
@@ -203,6 +221,8 @@ export class RoomServer extends DurableObject<Env> {
   private matchTimer: ReturnType<typeof setTimeout> | null = null;
   /** The alarm last set, so an unchanged one is not set again. */
   private alarmAt: number | null = null;
+  /** The questions of a match read aloud being recorded (one run at a time). */
+  private preparing: Promise<void> | null = null;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -222,6 +242,9 @@ export class RoomServer extends DurableObject<Env> {
   async create(input: { roomId: string; name: string; host: { userId: string; name: string; teamId: string | null }; setup: MatchSetup | null; now: number }): Promise<boolean> {
     if (this.ready || hasTable(this.sql, 'room')) return false;
     const { roomId, name, host, setup, now } = input;
+    const data = setup ? newMatchData(setup) : null;
+    // A match read aloud with Rebound's voice: its questions are recorded while the players gather.
+    if (data && setup!.mode === 'speech' && ttsSettings(this.env)) data.voice = { state: 'preparing', items: {}, sample: null, rate: playbackRate(setup!.wpm) };
     this.ctx.storage.transactionSync(() => {
       this.sql.exec(SCHEMA);
       this.sql.exec(
@@ -235,10 +258,12 @@ export class RoomServer extends DurableObject<Env> {
       );
       // The host is listed from the start, so the room can show who runs it before they connect.
       this.sql.exec('INSERT INTO members (user_id, name, team_id, side, captain, joined_at) VALUES (?, ?, ?, NULL, 0, ?)', host.userId, host.name, host.teamId, now);
-      if (setup) this.sql.exec('INSERT INTO match (one, data, due_at) VALUES (1, ?, NULL)', JSON.stringify(newMatchData(setup)));
+      if (data) this.sql.exec('INSERT INTO match (one, data, due_at) VALUES (1, ?, NULL)', JSON.stringify(data));
     });
     this.ready = true;
-    if (setup) this.publishView(new MatchDirector(newMatchData(setup)).view());
+    if (data) this.publishView(new MatchDirector(data).view());
+    // Not awaited: the room answers at once, and its alarm goes on with the work if the object is evicted meanwhile.
+    if (data?.voice) void this.prepareVoice();
     this.rescheduleAlarm();
     return true;
   }
@@ -367,6 +392,8 @@ export class RoomServer extends DurableObject<Env> {
     if (window && now >= window.endsAt) this.settle(now, false);
     const due = this.sql.exec<{ due_at: number | null }>('SELECT due_at FROM match').toArray()[0]?.due_at ?? null;
     if (due !== null && due <= now) this.runMatch(now);
+    // Recording a match's questions goes on if the object was evicted while it ran.
+    if (this.voicePreparing()) await this.prepareVoice();
     await this.flushOutbox();
     if (await this.closeIfIdle(Date.now())) return;
     this.rescheduleAlarm();
@@ -692,6 +719,7 @@ export class RoomServer extends DurableObject<Env> {
     if (due !== null) times.push(due + ALARM_SLACK_MS);
     const retry = this.outbox.nextAt();
     if (retry !== null) times.push(retry);
+    if (this.voicePreparing()) times.push(Date.now() + VOICE_WATCHDOG_MS);
     if (!this.liveSockets().some((ws) => ws !== gone)) times.push(room.last_active + ROOM_IDLE_MS);
     if (times.length === 0) return;
     const at = Math.min(...times);
@@ -713,6 +741,62 @@ export class RoomServer extends DurableObject<Env> {
     if (this.outbox.pending() > 0) await this.outbox.flush((d) => this.deliver(d), now, true);
     await this.ctx.storage.deleteAlarm();
     await this.ctx.storage.deleteAll();
+    return true;
+  }
+
+  /* ---------------- Rebound's voice for a match read aloud ---------------- */
+
+  private voicePreparing(): boolean {
+    return this.ready && this.director()?.data.voice?.state === 'preparing';
+  }
+
+  /** Records the match's questions (or finds them kept), a few at a time, then marks the voice ready. */
+  private prepareVoice(): Promise<void> {
+    if (!this.preparing) {
+      this.preparing = this.recordQuestions()
+        .catch((error: unknown) => console.error('Preparing the voice failed:', error instanceof Error ? error.message : String(error)))
+        .finally(() => {
+          this.preparing = null;
+          this.rescheduleAlarm();
+        });
+    }
+    return this.preparing;
+  }
+
+  private async recordQuestions(): Promise<void> {
+    const settings = ttsSettings(this.env);
+    const first = this.director();
+    if (!first?.data.voice || first.data.voice.state !== 'preparing') return;
+    const record = async (spoken: string): Promise<Recording | null> => {
+      if (!settings) return null;
+      const key = await audioKey(settings.voice, spoken);
+      const ms = await voiceObject(this.env, key)
+        .ensure(key, spoken)
+        .catch(() => null);
+      return ms === null ? null : { key, ms };
+    };
+    const todo = matchQuestions(first.data.setup).filter((q) => !(q.id in first.data.voice!.items));
+    for (let i = 0; i < todo.length; i += VOICE_BATCH) {
+      const batch = todo.slice(i, i + VOICE_BATCH);
+      const done = await Promise.all(batch.map(async (q) => [q.id, await record(spokenFor(q))] as const));
+      if (!this.saveVoice((v) => done.forEach(([id, r]) => (v.items[id] = r)))) return;
+    }
+    const sample = first.data.voice.sample ?? (await record(SAMPLE_TEXT));
+    this.saveVoice((v) => {
+      v.sample = sample;
+      v.state = 'ready';
+    });
+  }
+
+  /** Changes the match's voice and tells the room; false once the room or its preparing voice is gone. */
+  private saveVoice(change: (v: MatchVoice) => void): boolean {
+    if (!this.ready) return false;
+    const director = this.director();
+    const v = director?.data.voice;
+    if (!director || !v || v.state !== 'preparing') return false;
+    change(v);
+    this.sql.exec('UPDATE match SET data = ?', JSON.stringify(director.data));
+    this.publishView(director.view());
     return true;
   }
 

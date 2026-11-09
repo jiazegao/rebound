@@ -28,6 +28,11 @@ EMAIL_DAILY_LIMIT = "90"
 # set as a secret: npx wrangler secret put ANTHROPIC_API_KEY. See server/README.md for what it costs.
 # AI calls each user may make per UTC day.
 AI_DAILY_LIMIT = "50"
+# Matches read aloud: Rebound's own voice (Google Cloud Text-to-Speech) stays off until the API key is set as a
+# secret: npx wrangler secret put GOOGLE_TTS_API_KEY. Each question is recorded once and kept. See server/README.md.
+TTS_VOICE = "en-US-Chirp3-HD-Charon"
+# Characters sent to Google per UTC month at most (Google's free allowance for Chirp 3 HD voices is 1 million).
+TTS_MONTHLY_CHARS = "900000"
 # The model (default claude-opus-5-5) and the model for the blind answer check (default: the same).
 # AI_MODEL = "claude-opus-5-5"
 # AI_CHECK_MODEL = "claude-opus-5-5"
@@ -53,10 +58,16 @@ class_name = "RoomServer"
 name = "DIRECTORY"
 class_name = "Directory"
 
-# One object for the whole server that counts new teams per day (open sign-up limits; see src/registry.ts).
+# One object for the whole server that counts new teams per day (open sign-up limits; see src/registry.ts) and the
+# characters sent each month to record questions for matches read aloud.
 [[durable_objects.bindings]]
 name = "REGISTRY"
 class_name = "Registry"
+
+# Recordings for matches read aloud (src/voice.ts), in sixteen objects by the first character of each key.
+[[durable_objects.bindings]]
+name = "VOICE"
+class_name = "VoiceCache"
 
 # Each object keeps its data in its own SQLite database.
 [[migrations]]
@@ -73,3 +84,8 @@ new_sqlite_classes = ["Registry"]
 tag = "v3"
 new_sqlite_classes = ["Directory", "UserServer", "Team", "RoomServer"]
 deleted_classes = ["TeamServer"]
+
+# Matches read aloud: Rebound's recorded voice.
+[[migrations]]
+tag = "v4"
+new_sqlite_classes = ["VoiceCache"]

@@ -81,6 +81,22 @@ describe('reading a question aloud on the timeline', () => {
     expect(Math.abs(speaker.pace.charsPerSecond - charsPerSecond)).toBeLessThan(charsPerSecond * 0.3);
   });
 
+  it('keeps a steady pace from phrase to phrase, and starts at a pace it learned before', () => {
+    const voice = fakeVoice({ charsPerSecond: 13, startMs: 100 });
+    const learned: number[] = [];
+    const speaker = new QuestionSpeaker(voice.platform, null, () => Date.now(), () => {}, () => {}, 13, (cps) => learned.push(cps));
+    const startedAt = Date.now() + 300;
+    speaker.follow({ text: TEXT, startedAt, wpm: WPM });
+    vi.advanceTimersByTime(DURATION + 3000);
+    const rates = voice.said.map((s) => s.rate);
+    for (let i = 1; i < rates.length; i++) expect(rates[i]! / rates[i - 1]!).toBeGreaterThan(0.75);
+    for (let i = 1; i < rates.length; i++) expect(rates[i]! / rates[i - 1]!).toBeLessThan(1.35);
+    // Knowing the voice from the start, it is not early at the end (a quick buzz would count as an interrupt).
+    expect(voice.said[voice.said.length - 1]!.end).toBeGreaterThan(startedAt + DURATION - 250);
+    expect(learned.length).toBeGreaterThan(0);
+    expect(Math.abs(learned[learned.length - 1]! - 13)).toBeLessThan(1.5);
+  });
+
   it('stops at an interrupt and goes on from the start of the phrase it stopped in', () => {
     const voice = fakeVoice({ charsPerSecond: 15, startMs: 100 });
     const speaker = new QuestionSpeaker(voice.platform, null, () => Date.now());
@@ -142,8 +158,16 @@ describe('reading a question aloud on the timeline', () => {
     const failed = vi.fn();
     const speaker = new QuestionSpeaker(failing, null, () => Date.now(), () => {}, failed);
     speaker.follow({ text: TEXT, startedAt: Date.now(), wpm: WPM });
+    vi.advanceTimersByTime(2000);
+    expect(failed).toHaveBeenCalledTimes(1);
+    // Another voice that works takes over, from the phrase that failed.
+    const working = fakeVoice({ charsPerSecond: 15, startMs: 100 });
+    failing.speak = working.platform.speak;
+    speaker.setVoice(null);
+    speaker.unblock();
     vi.advanceTimersByTime(DURATION + 2000);
     expect(failed).toHaveBeenCalledTimes(1);
+    expect(working.said.map((x) => x.text)).toEqual(CHUNKS.map((c) => c.say));
   });
 
   it('is silent after stop', () => {
@@ -160,10 +184,17 @@ describe('reading a question aloud on the timeline', () => {
 describe('voices', () => {
   const v = (name: string, lang: string, extra: Partial<VoiceLike> = {}): VoiceLike => ({ name, lang, voiceURI: name, localService: false, default: false, ...extra });
 
-  it('puts US English and on-device voices first, and keeps a voice the player chose', () => {
-    const voices = [v('Amelie', 'fr-FR', { default: true }), v('Daniel', 'en-GB', { localService: true }), v('Google US English', 'en-US'), v('Samantha', 'en-US', { localService: true })];
-    expect(englishVoices(voices).map((x) => x.name)).toEqual(['Samantha', 'Google US English', 'Daniel']);
-    expect(chooseVoice(voices, null)?.name).toBe('Samantha');
+  it('puts natural-sounding voices first, then US English and Google voices, and keeps a voice the player chose', () => {
+    const voices = [
+      v('Amelie', 'fr-FR', { default: true }),
+      v('Daniel', 'en-GB', { localService: true }),
+      v('Google US English', 'en-US'),
+      v('Samantha', 'en-US', { localService: true }),
+      v('Microsoft Aria Online (Natural) - English (United States)', 'en-US'),
+      v('Ava (Premium)', 'en-US', { localService: true }),
+    ];
+    expect(englishVoices(voices).map((x) => x.name)).toEqual(['Ava (Premium)', 'Microsoft Aria Online (Natural) - English (United States)', 'Google US English', 'Samantha', 'Daniel']);
+    expect(chooseVoice(voices, null)?.name).toBe('Ava (Premium)');
     expect(chooseVoice(voices, 'Daniel')?.name).toBe('Daniel');
     expect(chooseVoice([v('Amelie', 'fr-FR', { default: true })], null)?.name).toBe('Amelie');
     expect(chooseVoice([], null)).toBeNull();

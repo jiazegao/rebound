@@ -22,7 +22,7 @@ import {
   type Identity,
 } from './http';
 import { parseMatchSetup } from './match';
-import { directoryObject, roomObject, teamObject, userObject } from './objects';
+import { directoryObject, roomObject, teamObject, userObject, voiceObject } from './objects';
 import { TEAM_NOT_FOUND } from './team';
 import { asObject, cleanLine, emailAddress, NAME_RULE, roomName } from './validate';
 
@@ -31,6 +31,7 @@ export { Registry } from './registry';
 export { RoomServer } from './room';
 export { Team } from './team';
 export { UserServer } from './user';
+export { VoiceCache } from './voice';
 
 const ORIGIN_REFUSED = 'This website is not allowed to use the Rebound server.';
 const SIGN_IN_AGAIN = 'Please sign in again.';
@@ -99,6 +100,16 @@ async function route(request: Request, env: Env): Promise<Response> {
   }
 
   if (USER_PATHS.test(path)) return forward(env, request, url, (id) => userObject(env, id.userId));
+
+  // A recording for a match read aloud (signed-in players only; recordings are made only for matches).
+  const speech = /^\/api\/speech\/([0-9a-f]{40})$/.exec(path);
+  if (speech) {
+    if (method !== 'GET') throw unsupported();
+    await authenticate(request, env, url);
+    const audio = await voiceObject(env, speech[1]!).read(speech[1]!);
+    if (!audio) throw new HttpError(404, "That recording isn't here.");
+    return new Response(audio, { headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'private, max-age=31536000, immutable' } });
+  }
 
   const room = /^\/api\/rooms\/([^/]+)\/ws$/.exec(path);
   if (room) return connectRoom(request, env, url, room[1]!);

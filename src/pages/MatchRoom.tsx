@@ -136,7 +136,7 @@ export function MatchRoom({ client, snapshot, roomId }: { client: RoomClient; sn
                 </p>
               ))}
             {view.figure && <RoomFigure questionId={view.figure.questionId} />}
-            {match.mode === 'speech' && speech.status === 'ready' && !view.answer ? (
+            {match.mode === 'speech' && speech.aloud ? (
               view.text && (
                 <p className="listening" aria-live="off">
                   <span aria-hidden="true">🔊 </span>Listening to the question…
@@ -145,8 +145,8 @@ export function MatchRoom({ client, snapshot, roomId }: { client: RoomClient; sn
             ) : (
               <RevealedText view={view} serverNow={serverNow} />
             )}
-            {match.mode === 'speech' && speech.status === 'none' && !view.answer && view.text && (
-              <p className="small muted">This device has no voice, so you see the question as text.</p>
+            {match.mode === 'speech' && !speech.aloud && !view.answer && view.text && (
+              <p className="small muted">This device can’t read this question aloud, so you see it as text.</p>
             )}
             {match.mode === 'speech' && speech.blocked && (
               <button className="btn btn-primary" onClick={speech.allow}>
@@ -377,6 +377,8 @@ function Lobby({ client, snapshot, isHost, roomId, speech }: { client: RoomClien
   const bySide = (s: Side | null) => snapshot.members.filter((m) => m.side === s);
   const players = snapshot.members.filter((m) => m.side !== null);
   const ready = match.format === 'teams' ? bySide('A').length > 0 && bySide('B').length > 0 : players.length > 0;
+  // Rebound's voice records the questions first (quick when they were recorded before).
+  const recording = match.voice?.state === 'preparing';
   const link = `${location.origin}${location.pathname}#/room/${roomId}`;
 
   const join = (s: Side | null) => {
@@ -467,10 +469,15 @@ function Lobby({ client, snapshot, isHost, roomId, speech }: { client: RoomClien
 
       {isHost ? (
         <div className="row">
-          <button className="btn btn-primary btn-big" disabled={!ready} onClick={() => client.start()}>
+          <button className="btn btn-primary btn-big" disabled={!ready || recording} onClick={() => client.start()}>
             Start the match
           </button>
           {!ready && <span className="small muted">{match.format === 'teams' ? 'Each side needs at least one player.' : 'Someone needs to join the game.'}</span>}
+          {ready && recording && (
+            <span className="small muted">
+              Recording the questions ({match.voice!.done} of {match.voice!.total}); the match can start once they are ready.
+            </span>
+          )}
         </div>
       ) : (
         <p className="small muted">The host ({snapshot.members.find((m) => m.memberId === snapshot.hostId)?.name ?? 'the person who made the match'}) starts it.</p>

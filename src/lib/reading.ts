@@ -55,6 +55,11 @@ export function readingDurationMs(reading: Reading, wpm: number): number {
   return reading.totalUnits * msPerChar(wpm);
 }
 
+/** The reading speed that takes `durationMs` over the whole reading (a recording's length, for the text beside it). */
+export function wpmFor(reading: Reading, durationMs: number): number {
+  return reading.totalUnits > 0 && durationMs > 0 ? (60_000 * reading.totalUnits) / (durationMs * CHARS_PER_WORD) : 200;
+}
+
 /** How many characters are visible `elapsedMs` after the reading started. */
 export function revealedCount(reading: Reading, elapsedMs: number, wpm: number): number {
   const units = Math.max(0, elapsedMs) / msPerChar(wpm);

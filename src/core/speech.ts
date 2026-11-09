@@ -147,8 +147,21 @@ interface Piece {
   say: string;
   /** The text pauses after it (punctuation, or the end of a line). */
   pause: boolean;
+  /** It ends a sentence (., ? or !, or the end of a line). */
+  stop: boolean;
   /** The last piece of a line: the next one starts a new phrase. */
   lineEnd: boolean;
+}
+
+/** The pause after a piece: punctuation just after it, or at the end of its own words ("organism?"). */
+function pauseAfter(text: string, end: number, say: string): { pause: boolean; stop: boolean; lineEnd: boolean } {
+  const after = text.slice(end).match(/^[^\S\n]*(\n|[,.;:?!])?/)?.[1];
+  const own = /([,.;:?!])["'’”)\]]*$/.exec(say)?.[1];
+  const mark = after ?? own;
+  const last = end >= text.length;
+  // "E. coli": a single capital before a period is an initial, not the end of a sentence.
+  const initial = mark === '.' && /(^|\s)[A-Z]\.$/.test(say);
+  return { pause: mark !== undefined || last, stop: (mark !== undefined && /[.?!\n]/.test(mark) && !initial) || last, lineEnd: after === '\n' || last };
 }
 
 const MATHY = /[\d=+×÷^√∛π<>≤≥|²³¹⁰⁴⁵⁶⁷⁸⁹⁻⁺ˣ₀-₉θ∆Δ−–/·*()]|[^\x00-\x7F]/u;
@@ -220,16 +233,14 @@ export function speechPieces(text: string): Piece[] {
 
   const pieces: Piece[] = [];
   const add = (start: number, end: number, say: string) => {
-    const after = text.slice(end).match(/^[^\S\n]*(\n|[,.;:?!])?/)?.[1];
-    const pause = after !== undefined || end >= text.length;
-    const lineEnd = after === '\n' || end >= text.length;
     // Punctuation on its own ("?" after a guide) belongs to the piece before it, on the same line.
     const last = pieces[pieces.length - 1];
     if (/^\p{P}+$/u.test(say) && last && !text.slice(last.end, start).includes('\n')) {
-      Object.assign(last, { end, say: `${last.say}${say}`, pause, lineEnd });
+      const joined = `${last.say}${say}`;
+      Object.assign(last, { end, say: joined, ...pauseAfter(text, end, joined) });
       return;
     }
-    pieces.push({ start, end, say, pause, lineEnd });
+    pieces.push({ start, end, say, ...pauseAfter(text, end, say) });
   };
   let at = 0;
   const words = (from: number, to: number) => {
@@ -248,14 +259,28 @@ export function speechPieces(text: string): Piece[] {
     else if (pieces.length) {
       // A skipped guide: the word before it keeps its pause, if the guide had one after it.
       const last = pieces[pieces.length - 1]!;
-      const tail = text.slice(r.end).match(/^[^\S\n]*(\n|[,.;:?!])?/)?.[1];
-      if (tail !== undefined) last.pause = true;
-      if (tail === '\n' || r.end >= text.length) last.lineEnd = true;
+      const skipped = pauseAfter(text, r.end, '');
+      if (skipped.pause) last.pause = true;
+      if (skipped.stop) last.stop = true;
+      if (skipped.lineEnd) last.lineEnd = true;
     }
     at = r.end;
   }
   words(at, text.length);
   return pieces.filter((p) => p.say.length > 0 || p.lineEnd);
+}
+
+/**
+ * The whole question as one passage for a recorded voice (docs/SERVER.md, "Read aloud"): its sentences in order,
+ * each answer choice its own short sentence ("W, basic.").
+ */
+export function spokenQuestion(text: string): string {
+  const out: string[] = [];
+  for (const p of speechPieces(text)) {
+    if (!p.say) continue;
+    out.push(p.lineEnd && !/[.?!]$/.test(p.say) ? `${p.say.replace(/[,;:]$/, '')}.` : p.say);
+  }
+  return out.join(' ');
 }
 
 /* ---------------- phrases on the timeline ---------------- */
@@ -271,14 +296,17 @@ export interface SpeechChunk {
   end: number;
 }
 
-/** A phrase ends at a pause once it has this many words, and always by this many. */
-export const MIN_PHRASE_WORDS = 3;
-export const MAX_PHRASE_WORDS = 10;
+/**
+ * A phrase is a sentence, so the voice keeps its natural rise and fall: it ends at the end of a sentence or a line
+ * (each answer choice is its own phrase); a long sentence also ends at a comma once it has this many words, and
+ * always by this many.
+ */
+export const COMMA_PHRASE_WORDS = 14;
+export const MAX_PHRASE_WORDS = 25;
 
 /**
  * The reading as phrases to say, each with its start and end on the reading's timeline (the time the reveal would
- * take to show those characters at `wpm`). A phrase ends at punctuation once it has a few words, at the end of a
- * line (each answer choice is its own phrase), or after at most 10 words.
+ * take to show those characters at `wpm`).
  */
 export function speechChunks(reading: Reading, wpm: number): SpeechChunk[] {
   const per = msPerChar(wpm);
@@ -297,7 +325,7 @@ export function speechChunks(reading: Reading, wpm: number): SpeechChunk[] {
   for (const piece of speechPieces(reading.text)) {
     group.push(piece);
     const words = group.reduce((n, p) => n + (p.say ? p.say.split(' ').length : 0), 0);
-    if (piece.lineEnd || words >= MAX_PHRASE_WORDS || (piece.pause && words >= MIN_PHRASE_WORDS)) flush();
+    if (piece.lineEnd || piece.stop || words >= MAX_PHRASE_WORDS || (piece.pause && words >= COMMA_PHRASE_WORDS)) flush();
   }
   flush();
   return chunks;
@@ -314,7 +342,11 @@ export const MAX_RATE = 2.2;
  * normal rate.
  */
 export function rateFor(say: string, ms: number, charsPerSecond: number): number {
+  return rateForChars(say.length, ms, charsPerSecond);
+}
+
+export function rateForChars(chars: number, ms: number, charsPerSecond: number): number {
   if (ms <= 0) return MAX_RATE;
-  const rate = say.length / (ms / 1000) / charsPerSecond;
+  const rate = chars / (ms / 1000) / charsPerSecond;
   return Math.min(MAX_RATE, Math.max(MIN_RATE, rate));
 }

@@ -207,8 +207,9 @@ function NewMatch() {
           letter, at the same pace for everyone
         </label>
         <label className="checkbox">
-          <input type="radio" name="mode" checked={mode === 'speech'} onChange={() => chooseMode('speech')} /> Read aloud: each player’s device reads the
-          question out loud, and nothing shows until it is over; then the question and its answer appear (players need their sound on)
+          <input type="radio" name="mode" checked={mode === 'speech'} onChange={() => chooseMode('speech')} /> Read aloud: the question is read out loud
+          on every player’s device at the same moment, and nothing shows until it is over; then the question and its answer appear (players need
+          their sound on)
         </label>
       </fieldset>
 

@@ -27,7 +27,30 @@ export class Registry extends DurableObject<Env> {
     ctx.storage.sql.exec(`
       CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS creations (day TEXT NOT NULL, address TEXT NOT NULL, count INTEGER NOT NULL, PRIMARY KEY (day, address));
+      CREATE TABLE IF NOT EXISTS tts_usage (month TEXT PRIMARY KEY, chars INTEGER NOT NULL);
     `);
+  }
+
+  /**
+   * Counts `chars` characters about to be sent to Google for recording in `month` ("YYYY-MM"), unless that would
+   * pass `cap`: the monthly limit that keeps the voice within its free allowance. True when counted.
+   */
+  async reserveTtsChars(month: string, chars: number, cap: number): Promise<boolean> {
+    const sql = this.ctx.storage.sql;
+    const used = sql.exec<{ chars: number }>('SELECT chars FROM tts_usage WHERE month = ?', month).toArray()[0]?.chars ?? 0;
+    if (used + chars > cap) return false;
+    sql.exec('INSERT INTO tts_usage (month, chars) VALUES (?, ?) ON CONFLICT(month) DO UPDATE SET chars = chars + excluded.chars', month, chars);
+    return true;
+  }
+
+  /** Gives back characters whose recording failed. */
+  async refundTtsChars(month: string, chars: number): Promise<void> {
+    this.ctx.storage.sql.exec('UPDATE tts_usage SET chars = MAX(0, chars - ?) WHERE month = ?', chars, month);
+  }
+
+  /** Characters sent for recording in `month` (for the maintainer's checks, and tests). */
+  async ttsCharsUsed(month: string): Promise<number> {
+    return this.ctx.storage.sql.exec<{ chars: number }>('SELECT chars FROM tts_usage WHERE month = ?', month).toArray()[0]?.chars ?? 0;
   }
 
   /**
