@@ -737,6 +737,16 @@ th.num {
   font-weight: 800;
   min-width: 1.6rem;
 }
+/* A match read aloud: what shows while the question is being read. */
+.listening {
+  margin: 0.75rem 0;
+  padding: 1.25rem 1rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--muted);
+  font-size: 1.1rem;
+  text-align: center;
+}
 .answer-box {
   border-left: 4px solid var(--good);
   background: color-mix(in srgb, var(--good) 10%, transparent);

@@ -134,6 +134,12 @@ export function ItStaffPage() {
           caches files from Rebound's own domain, never a player's data.
         </li>
         <li>
+          Online matches can be read aloud. Each device then uses its own text-to-speech voice through the browser (no recording, no microphone),
+          and Rebound picks a voice on the device itself when there is one. Some browsers' other voices (Chrome's "Google" voices, for instance)
+          are fetched from the browser maker's servers; if those are blocked, a student can choose another voice in the match's lobby, and a device
+          whose voice does not work shows the questions as text instead.
+        </li>
+        <li>
           Links to official DOE question PDFs and rulebooks point to <code>science.osti.gov</code>; allowing it lets students open the originals.
         </li>
       </ul>

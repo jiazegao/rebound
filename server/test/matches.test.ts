@@ -224,6 +224,31 @@ describe('online matches', () => {
     for (const c of [host, a, watcher]) c.close();
   });
 
+  it('reads aloud: the list and the view say so, and the room shows who reads the text instead', async () => {
+    const { team, members: [ana] } = await teamWith('Cora Captain', 'Ana');
+    const cora = team.captain;
+    const roomId = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 200 });
+    const listed = await call('/api/rooms', { token: ana!.token });
+    expect(listed.body.rooms[0]).toMatchObject({ roomId, match: { format: 'ffa', mode: 'speech', status: 'lobby' } });
+
+    const host = await connect(roomId, cora.token);
+    const a = await connect(roomId, ana!.token);
+    expect(host.welcome.room.state.match.mode).toBe('speech');
+    await takeSide(a, 'A');
+    // Ana's device has no voice: everyone sees that she reads the text.
+    a.send({ type: 'voice', ok: false });
+    const said = await host.next('members', (m) => memberIn(m, ana!.id)?.readsText === true);
+    expect(memberIn(said, cora.id).readsText).toBeUndefined();
+    // A second device of hers that can read aloud is enough to listen on.
+    const a2 = await connect(roomId, ana!.token);
+    a2.send({ type: 'voice', ok: true });
+    await host.next('members', (m) => memberIn(m, ana!.id) && memberIn(m, ana!.id).readsText === undefined);
+    a2.close();
+    await host.next('members', (m) => memberIn(m, ana!.id)?.readsText === true);
+    a.send({ type: 'voice', ok: 'maybe' });
+    expect((await a.next('error')).message).toBe('Say whether this device can read aloud (ok: true or false).');
+  });
+
   it('keeps a match going when the object is evicted between steps', async () => {
     const cora = await signUp('Cora');
     const ana = await signUp('Ana');

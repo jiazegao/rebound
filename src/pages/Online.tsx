@@ -53,7 +53,7 @@ function RoomList() {
   }, []);
   const describe = (r: RoomListing) =>
     r.kind === 'match' && r.match
-      ? `${r.match.format === 'teams' ? 'Team vs team' : 'Everyone for themselves'} · ${r.match.status === 'lobby' ? 'waiting to start' : r.match.status === 'playing' ? 'playing' : 'finished'}`
+      ? `${r.match.format === 'teams' ? 'Team vs team' : 'Everyone for themselves'}${r.match.mode === 'speech' ? ' · read aloud' : ''} · ${r.match.status === 'lobby' ? 'waiting to start' : r.match.status === 'playing' ? 'playing' : 'finished'}`
       : 'Reader room (a member reads)';
   const open = (rooms.data ?? []).filter((r) => r.kind !== 'match' || r.match?.status !== 'finished');
   return (
@@ -118,7 +118,14 @@ function NewMatch() {
   const [packetRoundId, setPacketRoundId] = useState<string>('');
   const [presetId, setPresetId] = useState(DEFAULT_PRESET_ID);
   const [teamNames, setTeamNames] = useState<[string, string]>(['Team A', 'Team B']);
+  const [mode, setMode] = useState<'text' | 'speech'>('text');
   const [wpm, setWpm] = useState(data.settings.readingWpm || 200);
+  // A voice keeps to 100 to 300 words a minute; text can go from 60 to 600.
+  const [lowest, highest] = mode === 'speech' ? [100, 300] : [60, 600];
+  const chooseMode = (next: 'text' | 'speech') => {
+    setMode(next);
+    if (next === 'speech') setWpm((w) => Math.max(100, Math.min(300, w)));
+  };
   const [count, setCount] = useState(20);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -162,6 +169,7 @@ function NewMatch() {
           const name = `${format === 'teams' ? `${teamNames[0]} vs ${teamNames[1]}` : 'Free-for-all'}: ${info.roundLabel}`;
           const roomId = await createRoom(name.slice(0, 60), {
             format,
+            mode,
             presetId,
             wpm,
             teamNames,
@@ -178,8 +186,8 @@ function NewMatch() {
     >
       <h2 style={{ margin: 0 }}>Start an online match</h2>
       <p className="small muted" style={{ margin: 0 }}>
-        No reader needed: the question appears on everyone’s screen at the same pace, you buzz and type your answer, and Rebound’s answer checker
-        judges it. Close calls go to the opponents. You host the match and play in it too.
+        No reader needed: the question appears on everyone’s screen at the same pace (or is read aloud on everyone’s device), you buzz and type
+        your answer, and Rebound’s answer checker judges it. Close calls go to the opponents. You host the match and play in it too.
       </p>
       <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
         <legend className="label">Format</legend>
@@ -190,6 +198,17 @@ function NewMatch() {
         <label className="checkbox">
           <input type="radio" name="format" checked={format === 'ffa'} onChange={() => setFormat('ffa')} /> Everyone for themselves (toss-ups only: +4 right, −4 for a
           wrong interrupt)
+        </label>
+      </fieldset>
+      <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
+        <legend className="label">How questions are read</legend>
+        <label className="checkbox">
+          <input type="radio" name="mode" checked={mode === 'text'} onChange={() => chooseMode('text')} /> On screen: each question appears letter by
+          letter, at the same pace for everyone
+        </label>
+        <label className="checkbox">
+          <input type="radio" name="mode" checked={mode === 'speech'} onChange={() => chooseMode('speech')} /> Read aloud: each player’s device reads the
+          question out loud, and nothing shows until it is over; then the question and its answer appear (players need their sound on)
         </label>
       </fieldset>
 
@@ -303,7 +322,8 @@ function NewMatch() {
         )}
         <div className="field">
           <label htmlFor="om-wpm">Reading speed (words a minute)</label>
-          <input id="om-wpm" type="number" min={60} max={600} step={10} value={wpm} onChange={(e) => setWpm(Math.max(60, Math.min(600, Number(e.target.value) || 200)))} />
+          <input id="om-wpm" type="number" min={lowest} max={highest} step={10} value={wpm} onChange={(e) => setWpm(Math.max(lowest, Math.min(highest, Number(e.target.value) || 200)))} />
+          {mode === 'speech' && <span className="small muted">100 to 300; about 180 sounds like a moderator.</span>}
         </div>
       </div>
 

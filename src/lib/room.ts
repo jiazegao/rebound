@@ -15,6 +15,8 @@ export interface RoomMember {
   side: Side | null;
   captain: boolean;
   connected: boolean;
+  /** A match read aloud: this member's device has no voice, so they see the text instead. */
+  readsText?: boolean;
 }
 
 export interface BuzzState {
@@ -26,6 +28,8 @@ export interface BuzzState {
 /** A match room's extra view (server/src/match.ts, MatchView): the server runs the game, with no reader. */
 export interface MatchInfo {
   format: 'teams' | 'ffa';
+  /** How players get the questions: on screen ("text"), or read aloud by each device ("speech"). */
+  mode?: 'text' | 'speech';
   status: 'lobby' | 'playing' | 'finished';
   /** The match waits before its next question (the host paused it, or everyone left). */
   paused: boolean;
@@ -39,7 +43,8 @@ export interface MatchInfo {
   /** Team matches: the game clock. */
   clock?: { remainingMs: number; runningSince: number | null };
   /** The toss-up's answer, shown while its bonus begins. */
-  previous?: { label: string; answer: string };
+  /** In a match read aloud, with the toss-up's text too (it never showed while it was read). */
+  previous?: { label: string; answer: string; text?: string };
   /** Team matches: the game record's id, once finished. */
   gameId?: string;
 }
@@ -277,6 +282,8 @@ export class RoomClient {
   // Players
   buzz = () => this.send({ type: 'buzz' });
   chooseSide = (side: Side | null) => this.send({ type: 'side', side });
+  /** Whether this device can read questions aloud (matches read aloud); the room shows who reads the text instead. */
+  voice = (ok: boolean) => this.send({ type: 'voice', ok });
   chat = (text: string) => this.send({ type: 'chat', text: text.slice(0, 500) });
   answer = (text: string) => this.send({ type: 'answer', text: text.slice(0, 200) });
   ruling = (accept: boolean) => this.send({ type: 'ruling', accept });

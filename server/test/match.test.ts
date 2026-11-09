@@ -260,6 +260,14 @@ describe('team matches', () => {
     expect(again.answer('m-ann', 'mitochondrion', end + 500, anyone)).toBeNull();
     expect(again.view().scores).toEqual([4, 0]);
   });
+  it('read aloud, a toss-up answered right shows its text with its answer while the bonus is on (it never showed)', () => {
+    const d = teamMatch({ mode: 'speech', wpm: 200 });
+    const end = readingEnd(d);
+    expect(d.buzz('m-ann', end + 500, end + 600)).toBeNull();
+    expect(d.answer('m-ann', 'Mitochondria', end + 1000, anyone)).toBeNull();
+    expect(d.view().label).toBe('Bonus 1');
+    expect(d.view().match.previous).toEqual({ label: 'Toss-up 1', answer: 'MITOCHONDRION (ACCEPT: MITOCHONDRIA)', text: 'What organelle makes most of the ATP in eukaryotic cells?' });
+  });
 });
 
 describe('free-for-all', () => {
@@ -355,5 +363,21 @@ describe('free-for-all', () => {
     expect(() => parseMatchSetup({ ...body, format: 'teams', presetId: 'nope' })).toThrow('Choose the rules');
     expect(() => parseMatchSetup({ ...body, pairs: [{ tossup: { ...PAIRS[0]!.tossup, subject: 'alchemy' } }] })).toThrow('unknown subject');
     expect(() => parseMatchSetup({ ...body, tossupCount: 9 })).toThrow('Choose 1 to 3 toss-ups.');
+  });
+
+  it('reads questions on screen unless the host chooses to have them read aloud, at a pace a voice can keep', () => {
+    const body = { format: 'ffa', wpm: 250, packet: setup().packet, pairs: PAIRS, tossupCount: 2 };
+    expect(parseMatchSetup(body).mode).toBe('text');
+    expect(parseMatchSetup({ ...body, mode: 'speech' }).mode).toBe('speech');
+    expect(() => parseMatchSetup({ ...body, mode: 'radio' })).toThrow('Choose how questions are read');
+    expect(() => parseMatchSetup({ ...body, mode: 'speech', wpm: 400 })).toThrow('Choose a reading speed of 100 to 300 words per minute to read aloud.');
+    expect(parseMatchSetup({ ...body, wpm: 400 }).wpm).toBe(400);
+    // The view says which, so players' devices know whether to show the text or say it.
+    const d = new MatchDirector(newMatchData(parseMatchSetup({ ...body, mode: 'speech' })));
+    expect(d.view().match.mode).toBe('speech');
+    // A match stored before speech mode reads on screen.
+    const old = newMatchData(parseMatchSetup(body));
+    delete old.setup.mode;
+    expect(new MatchDirector(old).view().match.mode).toBe('text');
   });
 });
