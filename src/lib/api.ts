@@ -288,7 +288,7 @@ export interface RoomListing {
   createdAt: number;
   /** "match": an online match the server runs (no reader). */
   kind?: 'reader' | 'match';
-  match?: { format: 'teams' | 'ffa'; status: 'lobby' | 'playing' | 'finished' };
+  match?: { format: 'teams' | 'ffa'; mode?: 'text' | 'speech'; status: 'lobby' | 'playing' | 'finished' };
 }
 
 /** The open rooms made by members of the caller's team. */

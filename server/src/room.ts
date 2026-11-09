@@ -19,7 +19,7 @@ import { gameOutcomes } from '../../src/core/games';
 import type { Outcome } from '../../src/core/review';
 import type { CoreSubject, Player } from '../../src/core/schema';
 import { HttpError, identityOf, toErrorResponse, type Identity } from './http';
-import { MatchDirector, newMatchData, type AnswerResult, type MatchData, type MatchPlayer, type MatchSetup, type OnlineGameRecord } from './match';
+import { MatchDirector, newMatchData, type AnswerResult, type MatchData, type MatchPlayer, type MatchSetup, type OnlineGameRecord, type ReadingMode } from './match';
 import { hasTable, teamObject, userObject } from './objects';
 import { Outbox, OUTBOX_SCHEMA, type Delivery } from './outbox';
 import { MAX_JSON_DEPTH, nestsDeeperThan, utf8Bytes } from './validate';
@@ -87,7 +87,7 @@ export interface RoomSummary {
   players: number;
   createdAt: number;
   kind: 'reader' | 'match';
-  match?: { format: MatchSetup['format']; status: MatchData['status'] };
+  match?: { format: MatchSetup['format']; mode: ReadingMode; status: MatchData['status'] };
 }
 
 interface Winner {
@@ -140,6 +140,8 @@ interface Attachment {
   /** Times of recent chat messages and publishes, for the rate limits. */
   chats: number[];
   publishes: number[];
+  /** Whether this device can read questions aloud (matches read aloud), once it has said. */
+  voice?: boolean;
 }
 
 /** Messages only the room's reader (host) may send. */
@@ -255,7 +257,7 @@ export class RoomServer extends DurableObject<Env> {
       players: director ? connected.size : [...connected].filter((id) => id !== room.host_id).length,
       createdAt: room.created_at,
       kind: director ? 'match' : 'reader',
-      ...(director ? { match: { format: director.data.setup.format, status: director.data.status } } : {}),
+      ...(director ? { match: { format: director.data.setup.format, mode: director.data.setup.mode ?? 'text', status: director.data.status } } : {}),
     };
   }
 
@@ -409,6 +411,8 @@ export class RoomServer extends DurableObject<Env> {
         return this.onPong(ws, att, msg, now);
       case 'side':
         return this.onSide(ws, att, room, msg);
+      case 'voice':
+        return this.onVoice(ws, att, msg);
       case 'buzz':
         return this.onBuzz(ws, att, room, now);
       case 'chat':
@@ -492,6 +496,18 @@ export class RoomServer extends DurableObject<Env> {
     if (current?.side === side) return;
     // Changing sides gives up the captaincy of the old side.
     this.sql.exec('UPDATE members SET side = ?, captain = 0 WHERE user_id = ?', side, att.userId);
+    this.broadcastMembers();
+  }
+
+  /**
+   * A device says whether it can read questions aloud. In a match read aloud, a player whose device cannot sees the
+   * text instead, and the others see that in the member list.
+   */
+  private onVoice(ws: WebSocket, att: Attachment, msg: Record<string, unknown>): void {
+    if (typeof msg.ok !== 'boolean') return refuse(ws, 'Say whether this device can read aloud (ok: true or false).');
+    if (att.voice === msg.ok) return;
+    att.voice = msg.ok;
+    ws.serializeAttachment(att);
     this.broadcastMembers();
   }
 
@@ -963,18 +979,31 @@ export class RoomServer extends DurableObject<Env> {
     return ids;
   }
 
-  private memberList(connected: Set<string>) {
+  /**
+   * Who is in the room. `readsText`: everyone connected for that member said their device cannot read aloud (one
+   * device that can is enough to listen on).
+   */
+  private memberList(connected: Set<string>, gone?: WebSocket) {
+    const voices = new Map<string, boolean[]>();
+    for (const ws of this.liveSockets()) {
+      const att = ws === gone ? null : attachmentOf(ws);
+      if (att && att.voice !== undefined) voices.set(att.userId, [...(voices.get(att.userId) ?? []), att.voice]);
+    }
     return this.sql
       .exec<MemberRow>('SELECT * FROM members ORDER BY joined_at, user_id')
       .toArray()
-      .map((r) => ({ memberId: r.user_id, name: r.name, playerId: r.user_id, side: r.side, captain: r.captain === 1, connected: connected.has(r.user_id) }));
+      .map((r) => {
+        const said = voices.get(r.user_id);
+        const readsText = !!said && said.length > 0 && !said.includes(true);
+        return { memberId: r.user_id, name: r.name, playerId: r.user_id, side: r.side, captain: r.captain === 1, connected: connected.has(r.user_id), ...(readsText ? { readsText: true } : {}) };
+      });
   }
 
   /** Sends the member list to the room. `gone` is a socket that is closing; `skip` already has the list. */
   private broadcastMembers(options: { gone?: WebSocket; skip?: WebSocket } = {}): void {
     const room = this.room();
     if (!room) return;
-    const text = JSON.stringify({ type: 'members', members: this.memberList(this.connectedIds(options.gone)), hostId: room.host_id });
+    const text = JSON.stringify({ type: 'members', members: this.memberList(this.connectedIds(options.gone), options.gone), hostId: room.host_id });
     for (const ws of this.liveSockets()) if (ws !== options.gone && ws !== options.skip) send(ws, text);
   }
 

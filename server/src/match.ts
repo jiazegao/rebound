@@ -26,6 +26,11 @@ import { asObject, cleanLine, MAX_ID_LENGTH } from './validate';
 
 export type Side = 'A' | 'B';
 export type MatchFormat = 'teams' | 'ffa';
+/**
+ * How players get each question: revealed on screen in step ("text"), or read aloud by each player's device with
+ * nothing shown until the question is over ("speech"). The server keeps the same timeline either way.
+ */
+export type ReadingMode = 'text' | 'speech';
 
 /** The question label shows this long before the reading starts. */
 export const LEAD_MS = 2000;
@@ -50,6 +55,9 @@ export const FFA_POINTS = { correct: 4, wrongInterrupt: -4 } as const;
 
 export const MIN_WPM = 60;
 export const MAX_WPM = 600;
+/** Read aloud: the speeds a device's voice can keep to (from its slowest to its fastest pace). */
+export const MIN_SPEECH_WPM = 100;
+export const MAX_SPEECH_WPM = 300;
 export const MAX_MATCH_PAIRS = 40;
 
 export interface MatchQuestion {
@@ -70,6 +78,8 @@ export interface MatchQuestion {
 
 export interface MatchSetup {
   format: MatchFormat;
+  /** Missing in matches made before speech mode: text. */
+  mode?: ReadingMode;
   /** Team matches: the rules preset. */
   presetId: string;
   /** Reading speed in words per minute. */
@@ -113,8 +123,8 @@ interface QuestionRun {
   buzzed: string[];
   overAt: number | null;
   status: string;
-  /** The previous part's answer, shown while the bonus begins. */
-  previous: { label: string; answer: string } | null;
+  /** The previous part's answer (and its text, for matches read aloud, where it never showed), while the bonus is on. */
+  previous: { label: string; answer: string; text?: string } | null;
 }
 
 /** One judged toss-up in a free-for-all (the room writes them to the players' accounts at the end). */
@@ -184,6 +194,7 @@ export interface MatchView {
   questionId?: string;
   match: {
     format: MatchFormat;
+    mode: ReadingMode;
     status: MatchData['status'];
     paused: boolean;
     progress?: { n: number; of: number };
@@ -191,7 +202,7 @@ export interface MatchView {
     review?: { memberId: string; name: string; response: string; deadline: number; deciders: Side | 'others' };
     standings?: Array<{ memberId: string; name: string; score: number; correct: number; negs: number }>;
     clock?: { remainingMs: number; runningSince: number | null };
-    previous?: { label: string; answer: string };
+    previous?: { label: string; answer: string; text?: string };
     gameId?: string;
   };
 }
@@ -253,8 +264,13 @@ export function parseMatchSetup(value: unknown): MatchSetup {
   if (!format) throw new HttpError(400, 'Choose a match format: teams or ffa.');
   const presetId = typeof o.presetId === 'string' && PRESETS.some((p) => p.id === o.presetId) ? o.presetId : null;
   if (format === 'teams' && !presetId) throw new HttpError(400, 'Choose the rules for the match.');
+  const mode = o.mode === undefined || o.mode === 'text' ? 'text' : o.mode === 'speech' ? 'speech' : null;
+  if (!mode) throw new HttpError(400, 'Choose how questions are read: text or speech.');
   const wpm = o.wpm;
-  if (typeof wpm !== 'number' || !Number.isFinite(wpm) || wpm < MIN_WPM || wpm > MAX_WPM) throw new HttpError(400, `Choose a reading speed of ${MIN_WPM} to ${MAX_WPM} words per minute.`);
+  const [lowest, highest] = mode === 'speech' ? [MIN_SPEECH_WPM, MAX_SPEECH_WPM] : [MIN_WPM, MAX_WPM];
+  if (typeof wpm !== 'number' || !Number.isFinite(wpm) || wpm < lowest || wpm > highest) {
+    throw new HttpError(400, `Choose a reading speed of ${lowest} to ${highest} words per minute${mode === 'speech' ? ' to read aloud' : ''}.`);
+  }
   const names = Array.isArray(o.teamNames) ? o.teamNames : ['Team A', 'Team B'];
   const teamNames = [cleanLine(names[0], 40) ?? 'Team A', cleanLine(names[1], 40) ?? 'Team B'] as [string, string];
   const p = asObject(o.packet, 'The round');
@@ -278,7 +294,7 @@ export function parseMatchSetup(value: unknown): MatchSetup {
   if (typeof count !== 'number' || !Number.isInteger(count) || count < 1 || count > pairs.length) {
     throw new HttpError(400, `Choose 1 to ${pairs.length} toss-ups.`);
   }
-  return { format, presetId: presetId ?? PRESETS[0]!.id, wpm: Math.round(wpm), teamNames, packet, pairs, tossupCount: count };
+  return { format, mode, presetId: presetId ?? PRESETS[0]!.id, wpm: Math.round(wpm), teamNames, packet, pairs, tossupCount: count };
 }
 
 export function newMatchData(setup: MatchSetup): MatchData {
@@ -670,7 +686,11 @@ export class MatchDirector {
           this.questionOver(t, status);
           return null;
         }
-        const previous = { label: `Toss-up ${q.pairIndex + 1}`, answer: pair.tossup.answerRaw };
+        const previous = {
+          label: `Toss-up ${q.pairIndex + 1}`,
+          answer: pair.tossup.answerRaw,
+          ...(this.data.setup.mode === 'speech' ? { text: buildReading(pair.tossup).text } : {}),
+        };
         this.beginRead(q.pairIndex, 'bonus', t + BONUS_LEAD_MS);
         this.data.q!.previous = previous;
         this.data.q!.status = `${status} A bonus for ${this.data.setup.teamNames[this.engine!.bonus!.team]}.`;
@@ -939,7 +959,7 @@ export class MatchDirector {
     const q = d.q;
     const question = this.currentQuestion();
     const scores: [number, number] = s ? [...s.scores] as [number, number] : [0, 0];
-    const match: MatchView['match'] = { format: d.setup.format, status: d.status, paused: d.paused };
+    const match: MatchView['match'] = { format: d.setup.format, mode: d.setup.mode ?? 'text', status: d.status, paused: d.paused };
     if (d.setup.format === 'ffa') {
       match.progress = { n: Math.min((d.ffa?.index ?? 0) + 1, this.ffaQuestionCount()), of: this.ffaQuestionCount() };
       match.standings = d.players

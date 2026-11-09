@@ -30,7 +30,7 @@ Rebound is an unofficial study tool, not affiliated with or endorsed by the U.S.
 | **Library → Team packets** | Scrimmages of questions nobody in the room has heard (balanced like a DOE round, at a chosen level of the difficulty ladder) for a format: a regional round, a Finals round, a Finals visual bonus round (a share of the bonuses replaced by visual bonuses in the same subject, spread through the round) or a tiebreaker drill; packets uploaded as PDF (parsed in the browser) or NSB-JSON, with a review screen and a difficulty level. Print (including a visual bonus worksheet for the players), download as Word (a moderator's copy or the players' copy, laid out like DOE's packets) or NSB-JSON, play in the Reader console or solo. Uploaded packets stay in the team's data. |
 | **Learn → Concept cards** | Concept cards written by the team (summary, key facts, traps, sources), reviewed by a second player, next to the library questions that test each concept; concept drills; unread cards join the daily plan. **Reading paths**: each subject's topics in prerequisite order, each with what NSB asks about, free readings (OpenStax textbooks, U.S. agency pages) and a five-question check from DOE questions on the topic. |
 | **Team stats** | Everyone on the team sees everyone's: the team's games plus each member's practice answers. Adds rebounds, net points per interrupt, small samples marked, and a week-by-week trend of practice games. |
-| **Practice → Play online** | Any signed-in players (teammates, or anyone with the link) play each other from their own devices with no reader: a team match under the NSB rules (toss-ups, bonuses the captain answers after the side confers, the game clock) or an everyone-for-themselves toss-up game. The team server reveals each question at the same pace on every screen, times the buzzers fairly, and judges typed answers with the answer checker; close calls go to the opponents to accept or reject. Every player's answers go to their own account (and their review queue); a team match whose players are all on the host's team also counts in that team's Stats. |
+| **Practice → Play online** | Any signed-in players (teammates, or anyone with the link) play each other from their own devices with no reader: a team match under the NSB rules (toss-ups, bonuses the captain answers after the side confers, the game clock) or an everyone-for-themselves toss-up game. The team server reveals each question at the same pace on every screen, or, read aloud, each player's device says it with its own voice, in step with everyone else's, and shows it only once it is over (a device with no voice shows the text instead; DOE's reading guides for math are said as written for moderators). It times the buzzers fairly and judges typed answers with the answer checker; close calls go to the opponents to accept or reject. Every player's answers go to their own account (and their review queue); a team match whose players are all on the host's team also counts in that team's Stats. |
 | **Accounts and remote rooms** | Everything lives on Rebound's server ([`docs/ACCOUNTS.md`](docs/ACCOUNTS.md), [`docs/SERVER.md`](docs/SERVER.md)), open to any school's team: each player's practice with their account, the team's games and shared work with the team. Changes go up within a moment, and teammates' changes show up within 30 seconds. The Reader console can open a remote room: players buzz from their own devices (server-timed, with latency correction), see the question read aloud or revealed in step, confer in a private team channel during bonuses, and their captain answers in an answer box. |
 | **Connection** | Practice needs a connection: nothing about a player is kept on the device. If a change cannot be saved, a banner says "Not connected: your last change was not saved" and Rebound keeps trying until it is. A service worker caches the site and the public question files so pages open quickly, and the site can be installed to a home screen. |
 | **Practice → Reader console** | Run an in-person practice game from one laptop: question in large type, answer for the reader, 5 s / 20 s answer clocks, game clock, two-tap scoring under the **2027 rules** (interrupts, blurts, rebounds, double interrupts, halves, tiebreakers), undo, keyboard shortcuts. Every toss-up is logged. Presets for regionals, virtual events and the Finals: 10-minute halves, and visual bonus rounds with 12-minute halves and 30-second visual bonuses whose figure can be projected full screen (remote players see it on their own screens). |
@@ -75,6 +75,7 @@ npm run build      # type-check and build the static site into dist/
 npm run preview    # serve dist/ at http://localhost:4173
 node e2e/smoke.cjs # browser walkthrough: a team of four accounts, each in its own browser (see below)
 node e2e/team-server.cjs # joining by invite link, teammates' data, remote rooms and online matches, with outsiders
+node e2e/speech.cjs # an online match read aloud: a pretend voice, and a device with none
 node e2e/middle-school.cjs # a middle school team against the real library
 npx tsx scripts/checks/judge-self-check.ts   # grade every printed answer in the library against itself
 npx tsx scripts/checks/review-load.ts 30 0.6 # simulate 90 days of reviews for a 30-minute plan and a 60% player
@@ -195,6 +196,7 @@ src/core/            framework-free logic, unit-tested
                      shapes), shared with the server
   games.ts           game records, practice answers and turning them into per-player outcomes, shared with the server
   merge.ts           merging two writes of a record (heard ledgers, review cards) and record fingerprints
+  speech.ts          reading a question aloud: words for symbols, reading guides, phrases on the reading's timeline
   levels.ts          the difficulty ladder: DOE round levels and the levels of uploaded packets
   rules/shootout.ts  the round robin shootout (+1 / −1 / 0) and who advances
   visual/            generated visual bonuses: templates, SVG building blocks, exact answers, the photo-set questions
@@ -204,9 +206,10 @@ src/core/            framework-free logic, unit-tested
 src/lib/             browser-side helpers: the in-memory store (store.ts), the server's API (api.ts), sign-in and account
                      actions (account.ts), loading, sending and refreshing data (cloud.ts, with the record mapping in
                      records.ts), teammates' practice for team pages (teammates.ts), library loading, learning glue,
-                     stats, router, sound, the service worker (offline.ts), the remote room client (room.ts), visual
-                     questions (visuals.ts: generated, photo set and team-made; visualPool.ts; images.ts), Word export
-                     (docx.ts, loaded only when someone downloads), AI help requests (ai.ts)
+                     stats, router, sound, the service worker (offline.ts), the remote room client (room.ts), reading
+                     aloud in online matches (speech.ts), visual questions (visuals.ts: generated, photo set and
+                     team-made; visualPool.ts; images.ts), Word export (docx.ts, loaded only when someone downloads),
+                     AI help requests (ai.ts)
 src/pages/           one file per page
 src/components/      shared UI pieces
 src/sw/              the service worker template (vite.config.ts fills in the file list at build time)
@@ -215,8 +218,8 @@ scripts/studio/      builds public/data/doe/fingerprints.json for the writing st
 scripts/rules/       the fall check for next season's rulebook (run by .github/workflows/rules-watch.yml)
 scripts/icons/       renders the app icons with Playwright
 scripts/visual/      builds the public-domain photo set for the Visual lab
-e2e/                 browser tests (the smoke test, the team-server test with several accounts, middle school), the
-                     accounts helper they share, and a small fixture question set
+e2e/                 browser tests (the smoke test, the team-server test with several accounts, matches read aloud,
+                     middle school), the accounts helper they share, and a small fixture question set
 server/              the server: Cloudflare Worker, Durable Objects for users, teams and rooms, sign-in, optional AI help,
                      tests (see server/README.md)
 docs/                PROPOSAL.md (the plan), ACCOUNTS.md (accounts, teams and the API), SERVER.md (rooms and matches),

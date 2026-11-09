@@ -196,7 +196,7 @@ has its link. It is listed for the creator's team, if any (`GET /api/rooms`: at 
 person may open 30 rooms per UTC day). A room closes 6 hours after everyone has left, and its data is deleted.
 
 `GET /api/rooms` answers `{ rooms: [{ roomId, name, host: { userId, name }, players, createdAt, kind:
-"reader"|"match", match?: { format, status } }] }`, newest first; `players` counts the people connected now, not
+"reader"|"match", match?: { format, mode, status } }] }`, newest first; `players` counts the people connected now, not
 counting a reader (in a match room the host plays too). Rooms of people who have left the team drop off the list.
 
 A reader room is a live game hosted by one user (the reader). The reader's browser runs the rules engine and the
@@ -214,7 +214,7 @@ upgrade. Messages are JSON objects with a `type`. Server time is the room object
 | `welcome` | `you: { memberId, name, playerId }`, `room: { roomId, name, kind, hostId, members, state, seq, buzz }`, `serverTime` | after connecting |
 | `pong` | `t` (echoed), `serverTime` | reply to `ping` |
 | `ping` | `t` (server time) | after `welcome` and after a client's ping (at most once a second); the client answers `{ type: "pong", t }` at once, which is how the server measures the round trip |
-| `members` | `members: { memberId, name, playerId, side: "A"\|"B"\|null, captain: boolean, connected: boolean }[]`, `hostId` | anyone joins, leaves or changes side |
+| `members` | `members: { memberId, name, playerId, side: "A"\|"B"\|null, captain: boolean, connected: boolean, readsText?: true }[]`, `hostId` | anyone joins, leaves, changes side or says whether their device reads aloud |
 | `state` | `state` (the reader's last published view, any JSON up to 64 KB), `seq` | the reader publishes |
 | `buzz` | `buzz: { open: boolean, sides: { A: boolean, B: boolean }, winner: null \| { memberId, playerId, side, pressedAt } }` | buzzers open, close or someone wins |
 | `chat` | `from: { memberId, name }`, `side`, `text`, `at` | a teammate writes in the team channel |
@@ -260,8 +260,8 @@ reconnect after those.
 
 A room created with `match` has no reader: the server runs the game itself (`server/src/match.ts`). The host
 (the user who created it) plays like anyone else and also starts, pauses and ends it. Anyone signed in can play.
-`match` is `{ format: "teams"|"ffa", presetId, wpm, teamNames?, packet: { setId, setTitle, roundId, roundLabel,
-sourceUrl? }, pairs: { tossup, bonus? }[], tossupCount? }`, with each question's `id, subject, format, stem,
+`match` is `{ format: "teams"|"ffa", mode?: "text"|"speech", presetId, wpm, teamNames?, packet: { setId, setTitle,
+roundId, roundLabel, sourceUrl? }, pairs: { tossup, bonus? }[], tossupCount? }`, with each question's `id, subject, format, stem,
 choices?, answerLetter?, answer, accept, reject, answerRaw, figure` (at most 40 pairs; free-for-all games use
 toss-ups only). The server keeps the questions and sends a question's text only when its reading starts, and its
 answer only when it is over or a close call is being decided.
@@ -287,6 +287,15 @@ answer only when it is over or a close call is being decided.
   (or their first try failed; failed deliveries are retried from the room's alarm), so a device that refreshes its
   player's records then finds them.
 - **Pausing**: the host can pause before the next question; a match also pauses there when every player has left.
+- **Read aloud** (`mode: "speech"`, at 100 to 300 words a minute; `"text"`, the default, takes 60 to 600): each
+  player's device says the question with its own voice (`src/lib/speech.ts`, with the words to say from
+  `src/core/speech.ts`), and shows nothing of it until it is over. The server's timeline is the same as for text:
+  the view carries the text and `reading` as usual, and each device starts each phrase of the question at its place
+  on that timeline and adjusts the voice's speed so that it ends with the reading. Pronunciation guides are skipped
+  and DOE's reading guides ("[y equals x squared]") are said in place of the math they describe. A toss-up answered
+  right goes straight to its bonus, so its text comes with its answer in `match.previous.text`. A device with no
+  voice says so (`voice`), shows the text revealed in step instead, and the member list marks that player
+  `readsText`.
 
 Extra messages in match rooms (`publish`, `open` and `close` are refused there; `answer` goes to the server, not
 to a reader):
@@ -296,7 +305,8 @@ to a reader):
 | client → server | `start`, `pause`, `resume`, `end` | – | the host (`resume` also starts the second half at halftime) |
 | client → server | `answer` | `text` (≤ 200 characters) | the player who won the buzz, or the bonus side's captain |
 | client → server | `ruling` | `accept: boolean` | an opponent, during a close call |
-| server → client | `state` | the match's view: `label`, `text`, `reading { startedAt, wpm, pausedAt? }`, `window`, `scores`, `status`, `answer`, `match { format, status, paused, answering, review, standings, clock, previous, gameId }` | whenever it changes |
+| client → server | `voice` | `ok: boolean` | each device in a match read aloud, once it knows whether it has a voice (again after reconnecting); a member is `readsText` when every connection of theirs said `false` |
+| server → client | `state` | the match's view: `label`, `text`, `reading { startedAt, wpm, pausedAt? }`, `window`, `scores`, `status`, `answer`, `match { format, mode, status, paused, answering, review, standings, clock, previous, gameId }` | whenever it changes |
 | server → client | `result` | `result: { memberId, playerId, questionId, subject, kind, correct, interrupt, latencyMs, t }` | each judged free-for-all answer (for display; the server records it) |
 | server → client | `match_over` | `format`, `game` (the team match's game record, or null), `heard` (question ids), `players` | once, at the end, after the answers were written |
 

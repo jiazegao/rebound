@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
+import { SoundCheck, useMatchSpeech, type MatchSpeech } from '../components/MatchSpeech';
+import { RichText } from '../components/QuestionView';
 import { Notice, useTicker } from '../components/ui';
 import { refreshNow, useSession } from '../lib/cloud';
 import { type RoomClient, type RoomMember, type RoomSnapshot, type Side } from '../lib/room';
@@ -32,6 +34,8 @@ export function MatchRoom({ client, snapshot, roomId }: { client: RoomClient; sn
   const serverNow = client.serverNow();
   const buzz = snapshot.buzz;
   const canBuzz = match?.status === 'playing' && buzz.open && !!side && buzz.sides[side] && !buzz.winner;
+  // A match read aloud: this device says each question (or, with no voice, shows it as text).
+  const speech = useMatchSpeech(match?.mode === 'speech', view ?? null, client, snapshot.connected);
 
   // The server writes every player's answers to their account (and a team match's game to the team). This device
   // only notes what its player heard, then fetches the answers, which become review cards.
@@ -78,6 +82,7 @@ export function MatchRoom({ client, snapshot, roomId }: { client: RoomClient; sn
   const iDecide = !!match.review && match.review.memberId !== myId && (match.review.deciders === 'others' ? !!side : side === match.review.deciders);
   const clockMs = match.clock ? (match.clock.runningSince !== null ? match.clock.remainingMs - (serverNow - match.clock.runningSince) : match.clock.remainingMs) : null;
   const sideLines = side ? snapshot.chat.filter((c) => c.side === side) : [];
+  const readsText = snapshot.members.filter((m) => m.side !== null && m.readsText);
 
   return (
     <div className="container narrow">
@@ -102,7 +107,7 @@ export function MatchRoom({ client, snapshot, roomId }: { client: RoomClient; sn
       {snapshot.error && <Notice kind="warn">{snapshot.error}</Notice>}
 
       {match.status === 'lobby' ? (
-        <Lobby client={client} snapshot={snapshot} isHost={isHost} roomId={roomId} />
+        <Lobby client={client} snapshot={snapshot} isHost={isHost} roomId={roomId} speech={match.mode === 'speech' ? speech : null} />
       ) : (
         <>
           <article className="question" aria-live="polite">
@@ -111,13 +116,43 @@ export function MatchRoom({ client, snapshot, roomId }: { client: RoomClient; sn
               {view.subject && <span className="muted">{view.subject}</span>}
               {match.paused && match.status === 'playing' && <span className="badge">Paused before the next question</span>}
             </div>
-            {match.previous && (
-              <p className="small muted" style={{ marginTop: 0 }}>
-                {match.previous.label}: {match.previous.answer}
-              </p>
-            )}
+            {match.previous &&
+              (match.previous.text ? (
+                <div className="small muted" style={{ marginBottom: '0.5rem' }}>
+                  <p style={{ margin: 0 }}>
+                    {match.previous.label}:{' '}
+                    {match.previous.text.split('\n').map((line, i) => (
+                      <Fragment key={i}>
+                        {i > 0 && <br />}
+                        <RichText text={line} />
+                      </Fragment>
+                    ))}
+                  </p>
+                  <p style={{ margin: 0 }}>ANSWER: {match.previous.answer}</p>
+                </div>
+              ) : (
+                <p className="small muted" style={{ marginTop: 0 }}>
+                  {match.previous.label}: {match.previous.answer}
+                </p>
+              ))}
             {view.figure && <RoomFigure questionId={view.figure.questionId} />}
-            <RevealedText view={view} serverNow={serverNow} />
+            {match.mode === 'speech' && speech.status === 'ready' && !view.answer ? (
+              view.text && (
+                <p className="listening" aria-live="off">
+                  <span aria-hidden="true">🔊 </span>Listening to the question…
+                </p>
+              )
+            ) : (
+              <RevealedText view={view} serverNow={serverNow} />
+            )}
+            {match.mode === 'speech' && speech.status === 'none' && !view.answer && view.text && (
+              <p className="small muted">This device has no voice, so you see the question as text.</p>
+            )}
+            {match.mode === 'speech' && speech.blocked && (
+              <button className="btn btn-primary" onClick={speech.allow}>
+                Turn on the voice
+              </button>
+            )}
             {view.status && <p className="status-line">{view.status}</p>}
             {view.answer && (
               <div className="answer-box">
@@ -169,8 +204,19 @@ export function MatchRoom({ client, snapshot, roomId }: { client: RoomClient; sn
               <p className="small muted">Confer in the team channel; {bonusCaptain?.name ?? 'your captain'} types the team's answer.</p>
             )}
 
+            {match.mode === 'speech' && readsText.length > 0 && match.status === 'playing' && (
+              <p className="small muted">Seeing the text instead (no voice on their device): {readsText.map((m) => m.name).join(', ')}.</p>
+            )}
             {match.status === 'playing' && (
-              <button className="btn btn-primary btn-big room-buzz" onClick={() => client.buzz()} disabled={!canBuzz} aria-disabled={!canBuzz}>
+              <button
+                className="btn btn-primary btn-big room-buzz"
+                onClick={() => {
+                  speech.prime();
+                  client.buzz();
+                }}
+                disabled={!canBuzz}
+                aria-disabled={!canBuzz}
+              >
                 Buzz <span className="kbd">Space</span>
               </button>
             )}
@@ -322,7 +368,7 @@ function Finished({ gameId, hasGame, forTeam, format }: { gameId?: string; hasGa
   );
 }
 
-function Lobby({ client, snapshot, isHost, roomId }: { client: RoomClient; snapshot: RoomSnapshot; isHost: boolean; roomId: string }) {
+function Lobby({ client, snapshot, isHost, roomId, speech }: { client: RoomClient; snapshot: RoomSnapshot; isHost: boolean; roomId: string; speech: MatchSpeech | null }) {
   const view = snapshot.view!;
   const match = view.match!;
   const myId = snapshot.you?.memberId;
@@ -333,11 +379,18 @@ function Lobby({ client, snapshot, isHost, roomId }: { client: RoomClient; snaps
   const ready = match.format === 'teams' ? bySide('A').length > 0 && bySide('B').length > 0 : players.length > 0;
   const link = `${location.origin}${location.pathname}#/room/${roomId}`;
 
+  const join = (s: Side | null) => {
+    speech?.prime();
+    client.chooseSide(s);
+  };
+  const readsText = (m: RoomMember) => speech && m.readsText && <span className="small muted"> (sees the text: no voice on their device)</span>;
+
   const person = (m: RoomMember, s: Side) => (
     <li key={m.memberId}>
       {m.name}
       {m.captain && <span className="badge" style={{ marginLeft: '0.35rem' }}>captain</span>}
       {!m.connected && <span className="small muted"> (away)</span>}
+      {readsText(m)}
       {isHost && match.format === 'teams' && !m.captain && (
         <button className="btn btn-small btn-ghost" style={{ marginLeft: '0.35rem' }} onClick={() => client.assign(m.memberId, s, true)}>
           Make captain
@@ -352,8 +405,8 @@ function Lobby({ client, snapshot, isHost, roomId }: { client: RoomClient; snaps
         <h2 style={{ margin: 0 }}>{view.label}</h2>
         <p className="small muted" style={{ margin: 0 }}>
           {match.format === 'teams'
-            ? 'Team vs team under the NSB rules, with no reader: the questions appear on everyone’s screen at the same pace, you buzz and type your answer, and the answer checker judges it. On bonuses the captain types the team’s answer after you confer. Close calls go to the other side to accept or reject.'
-            : 'Everyone for themselves, toss-ups only: +4 for a right answer, −4 for a wrong interrupt. One buzz each per toss-up. Close calls go to the other players to accept or reject.'}
+            ? `Team vs team under the NSB rules, with no reader: ${speech ? 'each question is read aloud on everyone’s device at the same pace' : 'the questions appear on everyone’s screen at the same pace'}, you buzz and type your answer, and the answer checker judges it. On bonuses the captain types the team’s answer after you confer. Close calls go to the other side to accept or reject.`
+            : `Everyone for themselves, toss-ups only${speech ? ', read aloud on everyone’s device' : ''}: +4 for a right answer, −4 for a wrong interrupt. One buzz each per toss-up. Close calls go to the other players to accept or reject.`}
         </p>
         <div className="row">
           <button
@@ -375,7 +428,7 @@ function Lobby({ client, snapshot, isHost, roomId }: { client: RoomClient; snaps
               <h3 style={{ margin: 0 }}>{view.teams[i]}</h3>
               <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>{bySide(s).map((m) => person(m, s))}</ul>
               {bySide(s).length === 0 && <p className="small muted" style={{ margin: 0 }}>Nobody yet.</p>}
-              <button className="btn" disabled={me?.side === s} onClick={() => client.chooseSide(s)}>
+              <button className="btn" disabled={me?.side === s} onClick={() => join(s)}>
                 {me?.side === s ? 'You are on this side' : `Join ${view.teams[i]}`}
               </button>
             </div>
@@ -389,16 +442,19 @@ function Lobby({ client, snapshot, isHost, roomId }: { client: RoomClient; snaps
               <li key={m.memberId}>
                 {m.name}
                 {!m.connected && <span className="small muted"> (away)</span>}
+                {readsText(m)}
               </li>
             ))}
           </ul>
           {me?.side ? null : (
-            <button className="btn btn-primary" onClick={() => client.chooseSide('A')}>
+            <button className="btn btn-primary" onClick={() => join('A')}>
               Join the game
             </button>
           )}
         </div>
       )}
+
+      {speech && <SoundCheck speech={speech} />}
 
       <div className="row">
         {me?.side && (
