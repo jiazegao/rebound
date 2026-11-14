@@ -6,6 +6,8 @@
  */
 import {
   JOIN_CODE_PATTERN,
+  roomKey,
+  sessionHash,
   type AuthConfig,
   type Change,
   type ChangesResponse,
@@ -252,6 +254,20 @@ export interface ProfileFields {
   settings?: UserSettings;
 }
 
+/** What `GET /api/sync` answers: the profile, the team, and both sets of records from their cursors. */
+export interface SyncResponse extends MeResponse {
+  mine: RecordsResponse;
+  /** The team as `GET /api/teams/:id` gives it, with a page of its records. Null with no team. */
+  teamData: (TeamResponse & { records: RecordsResponse }) | null;
+}
+
+/**
+ * Everything a page needs to load (cursors 0) or to catch up, in one request. `teamId` is the team the team cursor
+ * belongs to: for any other team the server starts from the beginning.
+ */
+export const sync = (userCursor: number, teamCursor: number, teamId: string | null) =>
+  request<SyncResponse>(`/api/sync?u=${userCursor}&t=${teamCursor}${teamId ? `&team=${enc(teamId)}` : ''}`, { timeoutMs: 120_000 });
+
 export const getMe = () => request<MeResponse>('/api/me');
 export const updateMe = (fields: ProfileFields) => request<{ user: UserProfile }>('/api/me', { method: 'PATCH', body: fields });
 export const deleteMe = () => request<{ ok: true }>('/api/me', { method: 'DELETE' });
@@ -329,12 +345,22 @@ export const createRoom = async (name: string, match?: unknown) =>
 /** The host cancels a match that has not started: everyone waiting in it is told, and it leaves the list. */
 export const cancelRoom = (roomId: string) => request<{ ok: true }>(`/api/rooms/${enc(roomId)}`, { method: 'DELETE' });
 
-/** The room's WebSocket address (browsers cannot set headers on WebSockets, so the token goes in the query). */
-export function roomSocketUrl(roomId: string): string | null {
+/**
+ * The room's WebSocket address. Browsers cannot set headers on WebSockets, and an address ends up in logs, so it
+ * carries no session token: it names the player and their session, with a key made from the token that opens this
+ * one room and nothing else (`roomKey` in src/core/accounts.ts). Null when signed out.
+ */
+export async function roomSocketUrl(roomId: string): Promise<string | null> {
   const token = sessionToken();
   const base = serverUrl();
   if (!token || !base) return null;
-  return `${base.replace(/^http/, 'ws')}/api/rooms/${enc(roomId)}/ws?token=${enc(token)}`;
+  const address = `${base.replace(/^http/, 'ws')}/api/rooms/${enc(roomId)}/ws`;
+  const [userId, secret] = token.split('.');
+  // Making the key needs Web Crypto, which browsers give only to secure pages (https, or localhost). A page served
+  // any other way (a development build opened over a local network) sends the token itself, as older versions did.
+  if (!userId || !secret || !globalThis.crypto?.subtle) return `${address}?token=${enc(token)}`;
+  const hash = await sessionHash(secret);
+  return `${address}?user=${enc(userId)}&session=${hash.slice(0, 16)}&key=${await roomKey(hash, roomId)}`;
 }
 
 /* ---------------- AI help ---------------- */

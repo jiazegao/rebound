@@ -1,14 +1,16 @@
 /**
  * The signed-in player's data, between this page and Rebound's server (docs/ACCOUNTS.md, "Site").
  *
- * - Signing in loads everything into the store: the profile (/api/me), the player's own records, and their team's
- *   settings, members and records. Nothing about the player is kept on the device but the session token.
+ * - Signing in loads everything into the store: the profile, the player's own records, and their team's settings,
+ *   members and records, in one request (/api/sync; long histories go on page by page).
  * - Pages change data only through store.update(). Shortly after a change, the records it touched go to the server:
  *   the player's own to /api/me/records, the team's to /api/teams/:id/records, and changed settings to their own
  *   endpoints. A failed send is retried; while the server cannot be reached, a banner says the last change was not
  *   saved, and sending goes on until it works. There is no offline mode: closing the page loses unsent changes.
- * - Every 30 seconds while the page is visible, the profile, the team and both sets of records are refreshed, so
- *   teammates' work and the player's other devices show up. New game and match answers become review cards then.
+ * - While the page is visible, what changed since the last look (the profile, the team, both sets of records) is
+ *   fetched in one request: every minute while the player is doing something, every five when they are not, and
+ *   when they come back to the page. Teammates' work and the player's other devices show up that way, and new game
+ *   and match answers become review cards then.
  *
  * Network work runs one task at a time (load, send, refresh), so a refresh never races a send.
  */
@@ -38,6 +40,7 @@ import {
   changeBatch,
   DELETED,
   isSentUserCollection,
+  recordFingerprint,
   recordKey,
   SENT_USER_COLLECTIONS,
   teamCollectionRecords,
@@ -243,7 +246,7 @@ function localField(d: AppData, field: Field, me: string): Map<string, { r: Loca
   const hit = localCache.get(field);
   if (hit && hit.ref === ref && hit.me === me) return hit.records;
   const list = isSentUserCollection(field) ? userCollectionRecords(d, field, me) : teamCollectionRecords(d, field);
-  const records = new Map(list.map((r) => [recordKey(r.c, r.id), { r, fp: fingerprint(r.body) }]));
+  const records = new Map(list.map((r) => [recordKey(r.c, r.id), { r, fp: recordFingerprint(r.c, r.body) }]));
   localCache.set(field, { ref, me, records });
   return records;
 }
@@ -292,7 +295,7 @@ export function pendingNow(): Pending | null {
 
 function rememberUserRecord(b: Books, r: RecordOut): void {
   if (!tracksUserRecord(r.c, r.id) || !usableRecord(r)) return;
-  b.known.set(recordKey(r.c, r.id), r.body === null ? DELETED : fingerprint(r.body));
+  b.known.set(recordKey(r.c, r.id), r.body === null ? DELETED : recordFingerprint(r.c, r.body));
   if (r.c === 'answers') {
     if (r.body === null) b.answerRevs.delete(r.id);
     else b.answerRevs.set(r.id, r.rev);
@@ -315,6 +318,18 @@ let loadRetryTimer: ReturnType<typeof setTimeout> | undefined;
 let failures = 0;
 let lastRefresh = 0;
 let refreshQueued = false;
+
+/**
+ * How often an open, visible page asks the server what changed: while the player is doing something, and once they
+ * have not touched the page for IDLE_AFTER_MS. Each look is one request; a page left open all afternoon should not
+ * cost the server hundreds of them.
+ */
+export const ACTIVE_REFRESH_MS = 60_000;
+export const IDLE_REFRESH_MS = 5 * 60_000;
+const IDLE_AFTER_MS = 5 * 60_000;
+const REFRESH_CHECK_MS = 10_000;
+/** Coming back to the page (or back online) asks at once, unless it asked this recently. */
+const WAKE_REFRESH_MS = 20_000;
 
 /** Quick retries first, then every 10 seconds for as long as it takes. */
 const RETRY_MS = [1_000, 3_000];
@@ -370,7 +385,7 @@ async function sendRecords(b: Books, scope: 'user' | 'team', changes: Change[], 
     try {
       const res = scope === 'user' ? await api.saveMyRecords(batch) : await api.saveTeamRecords(b.teamId!, batch);
       if (e !== epoch) return;
-      for (const ch of batch) b.known.set(recordKey(ch.c, ch.id), ch.body === null ? DELETED : fingerprint(ch.body));
+      for (const ch of batch) b.known.set(recordKey(ch.c, ch.id), ch.body === null ? DELETED : recordFingerprint(ch.c, ch.body));
       // A refused change keeps the local copy but is not sent again (until it changes); say why.
       for (const r of res.rejected ?? []) noteRefused(WHAT[r.c] ?? r.c, r.reason);
     } catch (err) {
@@ -378,7 +393,7 @@ async function sendRecords(b: Books, scope: 'user' | 'team', changes: Change[], 
       if (scope === 'team' && leftTeam(err)) throw new TeamGone();
       if (err instanceof api.ApiError && !err.retryable && err.status !== 401) {
         // Sending again would not help (too large, not allowed): keep the local copy and say why.
-        for (const ch of batch) b.known.set(recordKey(ch.c, ch.id), ch.body === null ? DELETED : fingerprint(ch.body));
+        for (const ch of batch) b.known.set(recordKey(ch.c, ch.id), ch.body === null ? DELETED : recordFingerprint(ch.c, ch.body));
         noteRefused(batch.length === 1 ? (WHAT[batch[0].c] ?? batch[0].c) : `${batch.length} changes`, err.message);
         continue;
       }
@@ -480,7 +495,7 @@ function takeIncoming(b: Books, scope: 'user' | 'team', records: RecordOut[]): R
     const key = recordKey(r.c, r.id);
     const changedHere = r.c !== 'answers' && localFp(d, key, b.me) !== (b.known.get(key) ?? DELETED);
     if (scope === 'user') rememberUserRecord(b, r);
-    else b.known.set(key, r.body === null ? DELETED : fingerprint(r.body));
+    else b.known.set(key, r.body === null ? DELETED : recordFingerprint(r.c, r.body));
     if (!changedHere) out.push(r);
   }
   return out;
@@ -502,7 +517,7 @@ function applyNewAnswers(b: Books): void {
 
 /** The profile from the server: the player's name and subjects, and their settings unless changed here. */
 function takeProfile(b: Books, user: UserProfile): void {
-  setSession({ user });
+  if (JSON.stringify(user) !== JSON.stringify(session.user)) setSession({ user });
   const serverSettings = appSettingsOf(user);
   const d = getData();
   const changedHere = fingerprint(userSettingsOf(d.settings)) !== b.settingsFp;
@@ -524,7 +539,7 @@ function takeProfile(b: Books, user: UserProfile): void {
 
 /** The team's settings and members from the server; the team's settings stay as they are if changed here. */
 function takeTeam(b: Books, t: TeamResponse): void {
-  setSession({ team: t });
+  if (JSON.stringify(t) !== JSON.stringify(session.team)) setSession({ team: t });
   const d = getData();
   const serverTeam = teamOf(t.team);
   const changedHere = !!d.team && fingerprint(teamSettingsOf(d.team)) !== b.teamFp;
@@ -541,6 +556,26 @@ function takeTeam(b: Books, t: TeamResponse): void {
   );
 }
 
+/**
+ * The rest of a set of records after its first page (which came with the sync), from the cursor that page was asked
+ * with.
+ */
+async function rest(first: RecordsResponse, fetchPage: (cursor: number) => Promise<RecordsResponse>, from: number): Promise<{ cursor: number; records: RecordOut[] }> {
+  const records = [...(first.records ?? [])];
+  const cursor = Math.max(from, first.cursor ?? from);
+  if (!first.more || cursor === from) return { cursor, records };
+  const more = await pullAll(fetchPage, cursor);
+  return { cursor: more.cursor, records: [...records, ...more.records] };
+}
+
+/**
+ * Whether a store's latest revision is behind the cursor this page holds: the store was reset, and what is here is
+ * a copy of data that no longer exists.
+ */
+const behind = (page: RecordsResponse, cursor: number): boolean => typeof page.head === 'number' && page.head < cursor;
+
+const LEFT_TEAM = 'You are no longer on that team (a coach or captain may have removed you, or deleted the team).';
+
 async function refreshOnce(): Promise<void> {
   refreshQueued = false;
   const b = books;
@@ -548,25 +583,29 @@ async function refreshOnce(): Promise<void> {
   if (!b || session.status !== 'ready' || !ownSession(b)) return;
   lastRefresh = Date.now();
   try {
-    const me = await api.getMe();
+    const res = await api.sync(b.userCursor, b.teamCursor, b.teamId);
     if (e !== epoch) return;
-    if (me.user.id !== b.me || (me.team?.id ?? null) !== b.teamId) {
+    if (res.user.id !== b.me || (res.team?.id ?? null) !== b.teamId || (b.teamId !== null && !res.teamData)) {
       // Joined, left or was removed from a team (here or on another device): load everything again.
-      await load(b.teamId && !me.team ? 'You are no longer on that team (a coach or captain may have removed you, or deleted the team).' : null);
+      await load(b.teamId && !res.team ? LEFT_TEAM : null);
       return;
     }
-    takeProfile(b, me.user);
-    const mine = await pullAll((c) => api.getMyRecords(c), b.userCursor);
+    if (behind(res.mine, b.userCursor) || (res.teamData && behind(res.teamData.records, b.teamCursor))) {
+      await load();
+      return;
+    }
+    takeProfile(b, res.user);
+    const teamId = b.teamId;
+    const [mine, theirs] = await Promise.all([
+      rest(res.mine, (c) => api.getMyRecords(c), b.userCursor),
+      res.teamData && teamId ? rest(res.teamData.records, (c) => api.getTeamRecords(teamId, c), b.teamCursor) : null,
+    ]);
     if (e !== epoch) return;
     const fromMe = takeIncoming(b, 'user', mine.records);
     b.userCursor = mine.cursor;
     if (fromMe.length) quietly(() => update((d) => applyUserRecords(d, b.me, fromMe, b.answers)));
-    if (b.teamId) {
-      const t = await api.getTeam(b.teamId);
-      if (e !== epoch) return;
-      takeTeam(b, t);
-      const theirs = await pullAll((c) => api.getTeamRecords(b.teamId!, c), b.teamCursor);
-      if (e !== epoch) return;
+    if (res.teamData && theirs) {
+      takeTeam(b, teamOnly(res.teamData));
       const fromTeam = takeIncoming(b, 'team', theirs.records);
       b.teamCursor = theirs.cursor;
       if (fromTeam.length) quietly(() => update((d) => applyTeamRecords(d, fromTeam)));
@@ -577,9 +616,15 @@ async function refreshOnce(): Promise<void> {
     if (left.user.length || left.team.length || left.settings || left.teamSettings) scheduleFlush(0);
   } catch (err) {
     if (e !== epoch) return;
-    if (b.teamId && leftTeam(err)) await load('You are no longer on that team (a coach or captain may have removed you, or deleted the team).');
+    if (b.teamId && leftTeam(err)) await load(LEFT_TEAM);
     // Otherwise (no connection): the next refresh tries again; unsaved changes have their own retries.
   }
+}
+
+/** The team from a sync, without the page of records that came with it. */
+function teamOnly(data: NonNullable<api.SyncResponse['teamData']>): TeamResponse {
+  const { records: _records, ...team } = data;
+  return team;
 }
 
 /* ---------------- loading ---------------- */
@@ -612,24 +657,25 @@ async function load(message: string | null = null): Promise<void> {
   if (!api.sessionToken()) return endSession(null);
   setSession({ status: 'loading', message });
   try {
-    const me = await api.getMe();
+    const first = await api.sync(0, 0, null);
     if (e !== epoch) return;
-    const mine = await pullAll((c) => api.getMyRecords(c));
+    const me = { user: first.user };
+    let team: TeamResponse | null = first.teamData ? teamOnly(first.teamData) : null;
+    const teamId = team?.team.id ?? null;
+    // The first pages came with the sync; a long history goes on page by page, the player's and the team's together.
+    const [mine, teamRecords] = await Promise.all([
+      rest(first.mine, (c) => api.getMyRecords(c), 0),
+      first.teamData && teamId
+        ? rest(first.teamData.records, (c) => api.getTeamRecords(teamId, c), 0).catch((err: unknown) => {
+            // Removed from the team a moment ago: carry on without it.
+            if (!leftTeam(err)) throw err;
+            return null;
+          })
+        : null,
+    ]);
     if (e !== epoch) return;
-    let team: TeamResponse | null = null;
-    let theirs: { cursor: number; records: RecordOut[] } = { cursor: 0, records: [] };
-    if (me.team) {
-      try {
-        team = await api.getTeam(me.team.id);
-        theirs = await pullAll((c) => api.getTeamRecords(me.team!.id, c));
-      } catch (err) {
-        // Removed from the team a moment ago: carry on without it.
-        if (!leftTeam(err)) throw err;
-        team = null;
-        theirs = { cursor: 0, records: [] };
-      }
-      if (e !== epoch) return;
-    }
+    if (teamRecords === null) team = null;
+    const theirs = teamRecords ?? { cursor: 0, records: [] as RecordOut[] };
     const b: Books = {
       me: me.user.id,
       teamId: team?.team.id ?? null,
@@ -649,7 +695,7 @@ async function load(message: string | null = null): Promise<void> {
     for (const r of mine.records) rememberUserRecord(b, r);
     if (team) {
       applyTeamRecords(d, theirs.records);
-      for (const r of theirs.records) if (tracksTeamRecord(r.c) && usableRecord(r)) b.known.set(recordKey(r.c, r.id), r.body === null ? DELETED : fingerprint(r.body));
+      for (const r of theirs.records) if (tracksTeamRecord(r.c) && usableRecord(r)) b.known.set(recordKey(r.c, r.id), r.body === null ? DELETED : recordFingerprint(r.c, r.body));
     }
     b.settingsFp = fingerprint(userSettingsOf(d.settings));
     b.teamFp = d.team ? fingerprint(teamSettingsOf(d.team)) : null;
@@ -748,12 +794,20 @@ export function startCloud(): void {
       if (session.status === 'failed') void queue(() => load());
       else if (session.status === 'ready') {
         if (connection.unsaved) scheduleFlush(0);
-        if (Date.now() - lastRefresh > 5_000) void refreshNow();
+        if (Date.now() - lastRefresh > WAKE_REFRESH_MS) void refreshNow();
       }
     };
+    // Whether the player is doing something: a page left open and untouched asks far less often.
+    let lastInput = Date.now();
+    const noteInput = () => {
+      lastInput = Date.now();
+    };
+    for (const type of ['pointerdown', 'keydown', 'wheel', 'touchstart']) window.addEventListener(type, noteInput, { passive: true, capture: true });
     setInterval(() => {
-      if (document.visibilityState === 'visible' && session.status === 'ready') void refreshNow();
-    }, 30_000);
+      if (document.visibilityState !== 'visible' || session.status !== 'ready') return;
+      const every = Date.now() - lastInput < IDLE_AFTER_MS ? ACTIVE_REFRESH_MS : IDLE_REFRESH_MS;
+      if (Date.now() - lastRefresh >= every) void refreshNow();
+    }, REFRESH_CHECK_MS);
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') wake();
     });

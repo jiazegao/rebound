@@ -44,11 +44,11 @@ function seed(cardsCursor?: number) {
     { userId: TM, role: 'member' },
   ]);
   server.writeUser(ME, 'attempts', 'a1', attempt('a1', ME, 'doe-hs-17-r02-t04'));
-  server.writeUser(ME, 'seen', 'ledger', { 'doe-hs-17-r02-t04': T - 60_000 });
+  server.writeUser(ME, 'seen', 'doe-hs-17-r02', { 'doe-hs-17-r02-t04': T - 60_000 });
   server.writeUser(ME, 'answers', 'game:g1:0', answer('doe-hs-17-r01-t02', false, T - 30_000));
   server.writeUser(ME, 'answers', 'game:g1:1', answer('doe-hs-17-r01-t05', true, T - 20_000));
   server.writeUser(TM, 'attempts', 'b1', attempt('b1', TM, 'doe-hs-17-r03-t01', true));
-  server.writeUser(TM, 'seen', 'ledger', { 'doe-hs-17-r03-t01': T - 50_000 });
+  server.writeUser(TM, 'seen', 'doe-hs-17-r03', { 'doe-hs-17-r03-t01': T - 50_000 });
   server.writeUser(TM, 'answers', 'game:g1:0', answer('doe-hs-17-r01-t02', true, T - 30_000, TM));
   server.writeUser(TM, 'cards', 'doe-hs-17-r03-t09', { secret: true });
   server.writeUser(TM, 'plans', 'today', { secret: true });
@@ -121,7 +121,8 @@ describe('loading an account', () => {
     await signIn(token);
     expect(m.store.getData().team).toBeNull();
     expect(m.store.getData().players).toEqual([{ id: ME, name: 'Ann', role: 'member', active: true }]);
-    expect(server.calls.map((c) => c.path)).toEqual(['/api/me', '/api/me/records']);
+    // One request loads it all.
+    expect(server.calls.map((c) => c.path)).toEqual(['/api/sync']);
   });
 
   it('leaves a record it cannot read alone: not in AppData, and never deleted', async () => {
@@ -136,13 +137,50 @@ describe('loading an account', () => {
     expect(server.userRecord(ME, 'cards', 'doe-hs-17-r01-t07')).toEqual({ fromANewerVersion: true });
   });
 
-  it('reads every page of records', async () => {
+  it('reads every page of records: the first with the sync, the rest page by page', async () => {
     seed(99);
-    server.pageSize = 2;
+    server.pageSize = 1;
     await signIn(meToken);
+    expect(m.store.getData().attempts).toHaveLength(1);
     expect(m.store.getData().answers).toHaveLength(2);
+    expect(Object.keys(m.store.getData().seen[ME])).toHaveLength(1);
+    expect(m.store.getData().games).toHaveLength(1);
     expect(m.store.getData().lineups).toHaveLength(1);
-    expect(server.calls.filter((c) => c.path === '/api/me/records').length).toBeGreaterThan(1);
+    expect(server.calls.filter((c) => c.path === '/api/sync')).toHaveLength(1);
+    expect(server.calls.filter((c) => c.path === '/api/me/records').length).toBe(3);
+    expect(server.calls.filter((c) => c.path === `/api/teams/${TEAM}/records`).length).toBe(1);
+    // A refresh starts where the load stopped: nothing comes twice.
+    server.calls = [];
+    await m.cloud.refreshNow();
+    expect(server.calls.map((c) => c.path)).toEqual(['/api/sync']);
+  });
+
+  it('loads a long history without slowing down with its length', async () => {
+    const token = server.addUser(ME, 'Ann');
+    server.pageSize = 2000;
+    for (let i = 0; i < 20_000; i++) server.writeUser(ME, 'attempts', `a${i}`, attempt(`a${i}`, ME, `doe-hs-${String(i % 17).padStart(2, '0')}-r${String(i % 15).padStart(2, '0')}-t${String(i % 25).padStart(2, '0')}`));
+    vi.useRealTimers();
+    const started = performance.now();
+    await signIn(token);
+    const took = performance.now() - started;
+    expect(m.store.getData().attempts).toHaveLength(20_000);
+    // Searching the list for each record took seconds here; keyed, it is a small fraction of one.
+    expect(took).toBeLessThan(1500);
+  });
+
+  it('starts over when the server no longer has what this page holds (its data was reset)', async () => {
+    seed(99);
+    await signIn(meToken);
+    expect(m.store.getData().attempts.map((a) => a.id)).toEqual(['a1']);
+    // The account's records start again from nothing: its latest revision is now behind this page's cursor.
+    const user = server.users.get(ME)!;
+    user.store = { rev: 0, records: new Map() };
+    server.writeUser(ME, 'attempts', 'fresh', attempt('fresh', ME, 'doe-hs-17-r09-t01'));
+    await m.cloud.refreshNow();
+    await m.cloud.settled();
+    expect(m.store.getData().attempts.map((a) => a.id)).toEqual(['fresh']);
+    // Nothing from the old copy was sent back as if it were new.
+    expect(server.sentChanges('/api/me/records')).toEqual([]);
   });
 });
 
@@ -199,9 +237,10 @@ describe('sending changes', () => {
 
     const mine = server.sentChanges('/api/me/records');
     const attemptId = store.getData().attempts.find((a) => a.questionId === 'doe-hs-17-r05-t01')!.id;
-    // The attempt and the heard ledger; the missed practice answer became a review card too.
-    expect(keys(mine)).toEqual([`attempts/${attemptId}`, 'cards/doe-hs-17-r05-t01', 'seen/ledger']);
-    expect(mine.find((c) => c.c === 'seen')!.body).toEqual({ 'doe-hs-17-r02-t04': T - 60_000, 'doe-hs-17-r05-t01': T });
+    // The attempt and the round's heard questions (that round's only, not everything the player has ever heard);
+    // the missed practice answer became a review card too.
+    expect(keys(mine)).toEqual([`attempts/${attemptId}`, 'cards/doe-hs-17-r05-t01', 'seen/doe-hs-17-r05']);
+    expect(mine.find((c) => c.c === 'seen')!.body).toEqual({ 'doe-hs-17-r05-t01': T });
     expect(JSON.stringify(mine)).not.toContain(TM);
     expect(keys(server.sentChanges(`/api/teams/${TEAM}/records`))).toEqual([`games/${gameId}`, `lineups/${lineupId}`]);
     // Nothing reached the teammate's account.
@@ -276,14 +315,48 @@ describe('changes from elsewhere', () => {
     expect(server.userRecord(ME, 'plans', 'today')).toMatchObject({ day: '2026-11-08' });
   });
 
-  it('merges heard ledgers on the server and brings the union back', async () => {
+  it("merges a round's heard questions on the server and brings the union back", async () => {
     seed(99);
     await signIn(meToken);
-    server.writeUser(ME, 'seen', 'ledger', { 'doe-hs-17-r02-t04': T - 60_000, 'doe-hs-17-r08-t08': T - 10 });
+    // Another device of the player's hears a question of round 7 and one of round 8 while this one hears another of round 7.
+    server.writeUser(ME, 'seen', 'doe-hs-17-r07', { 'doe-hs-17-r07-t01': T - 10 });
+    server.writeUser(ME, 'seen', 'doe-hs-17-r08', { 'doe-hs-17-r08-t08': T - 10 });
     m.store.markSeen([ME], ['doe-hs-17-r07-t07'], T);
     await sendNow();
     await m.cloud.refreshNow();
-    expect(Object.keys(m.store.getData().seen[ME]).sort()).toEqual(['doe-hs-17-r02-t04', 'doe-hs-17-r07-t07', 'doe-hs-17-r08-t08']);
+    expect(Object.keys(m.store.getData().seen[ME]).sort()).toEqual(['doe-hs-17-r02-t04', 'doe-hs-17-r07-t01', 'doe-hs-17-r07-t07', 'doe-hs-17-r08-t08']);
+    expect(server.userRecord(ME, 'seen', 'doe-hs-17-r07')).toEqual({ 'doe-hs-17-r07-t01': T - 10, 'doe-hs-17-r07-t07': T });
+    // Nothing is left to send, and the other rounds were never sent at all.
+    await sendNow();
+    expect(keys(server.sentChanges('/api/me/records'))).toEqual(['seen/doe-hs-17-r07']);
+    expect(m.cloud.pendingNow()).toMatchObject({ user: [], team: [] });
+  });
+
+  it('moves the heard questions out of the single record older versions kept, into one record a round', async () => {
+    seed(99);
+    // What an older version of the site left: everything the player has heard in one record.
+    server.writeUser(ME, 'seen', 'ledger', { 'doe-hs-17-r02-t04': T - 70_000, 'doe-hs-17-r02-b04': T - 65_000, 'doe-hs-16-r01-t01': T - 80_000, 'vis-circuit-123': T - 5 });
+    await signIn(meToken);
+    // Read at once, each question at the earliest time either record has.
+    expect(m.store.getData().seen[ME]).toEqual({ 'doe-hs-17-r02-t04': T - 70_000, 'doe-hs-17-r02-b04': T - 65_000, 'doe-hs-16-r01-t01': T - 80_000, 'vis-circuit-123': T - 5 });
+    await sendNow();
+    expect(keys(server.sentChanges('/api/me/records'))).toEqual(['seen/doe-hs-16-r01', 'seen/doe-hs-17-r02', 'seen/ledger', 'seen/vis-circuit']);
+    expect(server.userRecord(ME, 'seen', 'ledger')).toBeNull();
+    expect(server.userRecord(ME, 'seen', 'doe-hs-17-r02')).toEqual({ 'doe-hs-17-r02-t04': T - 70_000, 'doe-hs-17-r02-b04': T - 65_000 });
+    expect(server.userRecord(ME, 'seen', 'doe-hs-16-r01')).toEqual({ 'doe-hs-16-r01-t01': T - 80_000 });
+    // It settles: the refresh brings back what was just sent, and nothing more goes up.
+    server.calls = [];
+    await m.cloud.refreshNow();
+    await sendNow();
+    expect(server.calls.filter((c) => c.method !== 'GET')).toEqual([]);
+    expect(Object.keys(m.store.getData().seen[ME])).toHaveLength(4);
+    // An older version still open elsewhere writes its single record again: its questions are taken in, and it goes again.
+    server.writeUser(ME, 'seen', 'ledger', { 'doe-hs-17-r02-t09': T + 5 });
+    await m.cloud.refreshNow();
+    await sendNow();
+    expect(m.store.getData().seen[ME]['doe-hs-17-r02-t09']).toBe(T + 5);
+    expect(server.userRecord(ME, 'seen', 'ledger')).toBeNull();
+    expect(server.userRecord(ME, 'seen', 'doe-hs-17-r02')).toMatchObject({ 'doe-hs-17-r02-t09': T + 5, 'doe-hs-17-r02-t04': T - 70_000 });
   });
 
   it('refreshes the team and its members', async () => {

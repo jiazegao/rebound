@@ -154,6 +154,8 @@ export interface RecordsResponse {
   cursor: number;
   records: RecordOut[];
   more: boolean;
+  /** The store's latest revision. A cursor ahead of it belongs to a store that has since been reset. */
+  head?: number;
 }
 
 /** One change a device sends: the new body, or null to delete. */

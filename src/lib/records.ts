@@ -7,6 +7,7 @@
  * Each AppData field has the name of the collection it holds.
  */
 import { isTeamCollection, LEDGER_ID, PLAN_ID, TEAM_COLLECTIONS, type Change, type RecordOut, type TeamCollection } from '../core/accounts';
+import { fingerprint } from '../core/merge';
 import type { SoloAttempt } from '../core/games';
 import { cardId, normalizeCard, type Outcome, type ReviewCard } from '../core/review';
 import type { Completion } from '../core/schema';
@@ -35,9 +36,50 @@ export const isSentUserCollection = (c: string): c is SentUserCollection => (SEN
  * collections only their one id. Anything else (say, from a newer version of the site) is left alone, never deleted.
  */
 export function tracksUserRecord(c: string, id: string): boolean {
-  if (c === 'seen' || c === 'conceptReads') return id === LEDGER_ID;
+  if (c === 'conceptReads') return id === LEDGER_ID;
   if (c === 'plans') return id === PLAN_ID;
   return c === 'answers' || isSentUserCollection(c);
+}
+
+/* ---------------- the questions a player has heard ---------------- */
+
+/** Record ids are at most this long (the server's limit). */
+const MAX_ID_CHARS = 200;
+
+/**
+ * The `seen` record a heard question is kept in. The questions a player has heard are stored a round at a time
+ * (question ids end "-t01", "-b12"…, so a round's share everything before that), not in one record: hearing a
+ * question then sends a round's worth of ids, not the player's whole history. Older versions of the site kept one
+ * record, "ledger"; its questions are read too, and it is deleted once they are in the per-round records.
+ */
+export function heardGroup(questionId: string): string {
+  const cut = questionId.lastIndexOf('-');
+  const group = (cut > 0 ? questionId.slice(0, cut) : 'other').slice(0, MAX_ID_CHARS);
+  return group === LEDGER_ID ? 'other' : group;
+}
+
+/** A player's heard questions as the `seen` records that hold them, one for each round. */
+export function heardRecords(ledger: Record<string, number>): LocalRecord[] {
+  const groups = new Map<string, Record<string, number>>();
+  for (const [questionId, t] of Object.entries(ledger)) {
+    const id = heardGroup(questionId);
+    let body = groups.get(id);
+    if (!body) groups.set(id, (body = {}));
+    body[questionId] = t;
+  }
+  return [...groups].map(([id, body]) => ({ c: 'seen', id, body }));
+}
+
+/**
+ * A record's fingerprint (to tell which records changed). Ledgers are fingerprinted with their entries in order:
+ * the same questions and times are the same ledger whatever order they were written in, and the per-round records
+ * are put together again from the whole ledger, in its order.
+ */
+export function recordFingerprint(c: string, body: unknown): string {
+  if ((c === 'seen' || c === 'conceptReads') && obj(body)) {
+    return fingerprint(Object.keys(body).sort().map((key) => [key, body[key]]));
+  }
+  return fingerprint(body);
 }
 
 export const tracksTeamRecord = (c: string): boolean => isTeamCollection(c);
@@ -91,7 +133,7 @@ export function userCollectionRecords(d: AppData, c: SentUserCollection, me: str
     case 'attempts':
       return d.attempts.filter((a) => a.playerId === me).map((a) => ({ c, id: a.id, body: a }));
     case 'seen':
-      return d.seen[me] ? [{ c, id: LEDGER_ID, body: d.seen[me] }] : [];
+      return d.seen[me] ? heardRecords(d.seen[me]) : [];
     case 'conceptReads':
       return d.conceptReads[me] ? [{ c, id: LEDGER_ID, body: d.conceptReads[me] }] : [];
     case 'completions':
@@ -156,12 +198,17 @@ export function changeBatch(changes: Change[], maxCount: number, maxBytes: numbe
 
 const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 
-function upsert<T extends { id: string }>(list: T[], id: string, body: T | null): void {
-  const i = list.findIndex((x) => x.id === id);
-  if (body === null) {
-    if (i >= 0) list.splice(i, 1);
-  } else if (i >= 0) list[i] = body;
-  else list.push(body);
+/**
+ * A list's items by id, to put many records into it without searching the list for each one: a long history is
+ * tens of thousands of records, and a search for each made loading it slow down with its square.
+ */
+function byId<T extends { id: string }>(list: T[]): Map<string, T> {
+  return new Map(list.map((x) => [x.id, x]));
+}
+
+function setIn<T extends { id: string }>(items: Map<string, T>, id: string, body: T | null): void {
+  if (body === null) items.delete(id);
+  else items.set(id, body);
 }
 
 /**
@@ -171,11 +218,11 @@ function upsert<T extends { id: string }>(list: T[], id: string, body: T | null)
  */
 export function applyUserRecords(d: AppData, me: string, records: RecordOut[], answers: Map<string, Outcome>): void {
   let answersChanged = false;
-  const touched = new Set<string>();
+  let attempts: Map<string, SoloAttempt> | null = null;
+  let reports: Map<string, ProblemReport> | null = null;
   for (const r of records) {
     if (!tracksUserRecord(r.c, r.id) || !usableRecord(r)) continue;
     const body = isObject(r.body) ? r.body : null;
-    touched.add(r.c);
     switch (r.c) {
       case 'answers':
         if (body) answers.set(r.id, { ...(body as unknown as Outcome), playerId: me });
@@ -183,9 +230,19 @@ export function applyUserRecords(d: AppData, me: string, records: RecordOut[], a
         answersChanged = true;
         break;
       case 'attempts':
-        upsert(d.attempts, r.id, body ? ({ ...body, id: r.id, playerId: me } as unknown as SoloAttempt) : null);
+        setIn((attempts ??= byId(d.attempts)), r.id, body ? ({ ...body, id: r.id, playerId: me } as unknown as SoloAttempt) : null);
         break;
-      case 'seen':
+      case 'seen': {
+        // Each record holds some of the questions the player has heard (a round's, or everything in the one record
+        // older versions kept): together they are the ledger, each question at the earliest time it was heard. A
+        // deleted record takes nothing away: its questions are in the others (the old record goes that way).
+        if (!body) break;
+        const ledger = (d.seen[me] ??= {});
+        for (const [questionId, t] of Object.entries(body as Record<string, number>)) {
+          ledger[questionId] = ledger[questionId] === undefined ? t : Math.min(ledger[questionId], t);
+        }
+        break;
+      }
       case 'conceptReads':
         if (body) d[r.c][me] = body as Record<string, number>;
         else delete d[r.c][me];
@@ -195,7 +252,7 @@ export function applyUserRecords(d: AppData, me: string, records: RecordOut[], a
         else delete d.completions[`${r.id}:${me}`];
         break;
       case 'reports':
-        upsert(d.reports, r.id, body ? ({ ...body, id: r.id } as unknown as ProblemReport) : null);
+        setIn((reports ??= byId(d.reports)), r.id, body ? ({ ...body, id: r.id } as unknown as ProblemReport) : null);
         break;
       case 'cards':
         if (body) d.cards[cardId(me, r.id)] = { ...normalizeCard(body as unknown as ReviewCard), id: cardId(me, r.id), playerId: me, questionId: r.id };
@@ -209,26 +266,27 @@ export function applyUserRecords(d: AppData, me: string, records: RecordOut[], a
   }
   // Only collections that received records are touched, so the others keep their identity (see store.update).
   if (answersChanged) d.answers = [...answers.values()].sort((a, b) => a.t - b.t);
-  if (touched.has('attempts')) d.attempts.sort((a, b) => a.t - b.t);
-  if (touched.has('reports')) d.reports.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+  if (attempts) d.attempts = [...attempts.values()].sort((a, b) => a.t - b.t);
+  if (reports) d.reports = [...reports.values()].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
 }
 
 /** Put team records from the server into AppData (`body: null` deletes), newest first as the pages expect. */
 export function applyTeamRecords(d: AppData, records: RecordOut[]): void {
-  const touched = new Set<TeamCollection>();
+  const lists = new Map<Exclude<TeamCollection, 'conceptCards'>, Map<string, { id: string }>>();
   for (const r of records) {
     if (!isTeamCollection(r.c) || !usableRecord(r)) continue;
-    touched.add(r.c);
     const body = isObject(r.body) ? { ...r.body, id: r.id } : null;
     if (r.c === 'conceptCards') {
       if (body) d.conceptCards[r.id] = body as unknown as AppData['conceptCards'][string];
       else delete d.conceptCards[r.id];
-    } else upsert(d[r.c] as Array<{ id: string }>, r.id, body as { id: string } | null);
+      continue;
+    }
+    let items = lists.get(r.c);
+    if (!items) lists.set(r.c, (items = byId(d[r.c] as Array<{ id: string }>)));
+    setIn(items, r.id, body as { id: string } | null);
   }
   const by = (field: 'createdAt' | 'updatedAt') => (a: object, b: object) =>
     String((b as Record<string, unknown>)[field] ?? '').localeCompare(String((a as Record<string, unknown>)[field] ?? ''));
-  for (const c of touched) {
-    if (c === 'conceptCards') continue;
-    (d[c] as object[]).sort(by(c === 'lineups' ? 'updatedAt' : 'createdAt'));
-  }
+  const data = d as unknown as Record<string, object[]>;
+  for (const [c, items] of lists) data[c] = [...items.values()].sort(by(c === 'lineups' ? 'updatedAt' : 'createdAt'));
 }

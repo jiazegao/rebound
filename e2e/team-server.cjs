@@ -188,15 +188,15 @@ async function main() {
       await members(player).getByRole('heading', { name: 'Members (2)' }).waitFor();
       await members(player).getByRole('cell', { name: 'Cara', exact: true }).waitFor();
       await members(player).getByRole('cell', { name: 'Ben (you)', exact: true }).waitFor();
-      // The captain's Team page stayed open: the site refreshes the team every 30 seconds.
+      // The captain's Team page stayed open: the site asks the server what changed about every minute.
       try {
-        await members(captain).getByRole('cell', { name: 'Ben', exact: true }).waitFor({ timeout: 40000 });
+        await members(captain).getByRole('cell', { name: 'Ben', exact: true }).waitFor({ timeout: 80000 });
       } catch {
         await captain.reload();
         await members(captain).getByRole('cell', { name: 'Ben', exact: true }).waitFor({ timeout: 15000 });
-        throw new Error("the captain's member list did not show the player within 40 s without a reload (it did after a reload)");
+        throw new Error("the captain's member list did not show the player within 80 s without a reload (it did after a reload)");
       }
-      note(`the captain's member list showed the player ${secondsSince(joined)} s after he joined, without a reload (the 30-second refresh)`);
+      note(`the captain's member list showed the player ${secondsSince(joined)} s after he joined, without a reload (the refresh, about every minute)`);
       await members(captain).getByRole('heading', { name: 'Members (2)' }).waitFor();
       await shot(captain, 'team-2-members');
     });
@@ -236,10 +236,22 @@ async function main() {
       await allSaved(player);
       const attempts = present(await allRecords('/api/me/records', ben)).filter((r) => r.c === 'attempts');
       if (attempts.length !== 8) throw new Error(`expected the player's 8 practice answers on the server, found ${attempts.length}`);
+      // A team page fetches teammates' practice when it opens, unless it was fetched in the last ten seconds (then
+      // with the page's next refresh): the captain opens Team stats, and looks again if she was that quick.
       await captain.goto(`${BASE}#/stats`);
       const solo = statsRow(captain, 'Ben').locator('td').last();
       const opened = Date.now();
-      await until("the player's solo practice (8 / 8) in the captain's team stats", async () => (await textOf(solo)) === '8 / 8', 45000);
+      await until(
+        "the player's solo practice (8 / 8) in the captain's team stats",
+        async () => {
+          if ((await textOf(solo)) === '8 / 8') return true;
+          await sleep(4000);
+          await captain.goto(`${BASE}#/team`);
+          await captain.goto(`${BASE}#/stats`);
+          return false;
+        },
+        45000,
+      );
       note(`the captain's team stats showed it ${secondsSince(opened)} s after the page opened`);
       await shot(captain, 'team-3-stats');
     });
@@ -255,10 +267,11 @@ async function main() {
       await captain.getByText('0 of 1 done').waitFor();
       await allSaved(captain);
       const assigned = Date.now();
-      // The player's page has been open all along: Today shows the team's new assignment after the 30-second refresh.
+      // The player's page has been open all along: Today shows the team's new assignment after its next refresh
+      // (about every minute).
       await player.goto(`${BASE}#/today`);
       const item = player.locator('.plan-item', { hasText: 'Biology warm-up' });
-      await item.getByText('Assigned by Cara').waitFor({ timeout: 40000 });
+      await item.getByText('Assigned by Cara').waitFor({ timeout: 80000 });
       note(`the player's Today showed the assignment ${secondsSince(assigned)} s after it was made, without a reload`);
       await item.getByRole('link', { name: 'Start' }).click();
       await player.getByRole('button', { name: /Buzz/ }).waitFor();
@@ -277,9 +290,18 @@ async function main() {
       if (await player.locator('.plan-item', { hasText: 'Biology warm-up' }).count()) throw new Error('the finished assignment is still on Today');
       await allSaved(player);
       const done = Date.now();
-      // The completion is the player's own record; the captain's Assignments page reads teammates' every 30 seconds.
-      await captain.getByText('1 of 1 done').waitFor({ timeout: 40000 });
-      note(`the captain's Assignments page showed it done ${secondsSince(done)} s later, without a reload`);
+      // The completion is the player's own record. A team page fetches teammates' practice when it opens (and, while
+      // it stays open, that of teammates seen on the site since): the captain comes back to her Assignments page.
+      await captain.goto(`${BASE}#/team`);
+      await captain.goto(`${BASE}#/assignments`);
+      await until("the captain's Assignments page to show the assignment done", async () => {
+        if (await captain.getByText('1 of 1 done').count()) return true;
+        await captain.goto(`${BASE}#/team`);
+        await captain.goto(`${BASE}#/assignments`);
+        await sleep(3000);
+        return false;
+      }, 45000);
+      note(`the captain's Assignments page showed it done ${secondsSince(done)} s later, when she came back to it`);
     });
 
     await step("the player's review cards and daily plan stay private: a teammate reads only the visible collections", async () => {
@@ -555,12 +577,12 @@ async function main() {
       const hisRoom = (await call('/api/rooms', { token: ben.token, body: { name: 'Ben practices' } })).roomId;
       if (!(await listed(cara)).includes(hisRoom)) throw new Error('a room the player opened is not listed for his team');
       // The captain's Team page (which also loads teammates' practice) stays open while he moves. He moves just after
-      // it has fetched the team and his practice (it does so every 30 seconds), so its next refresh is the one that
+      // it has fetched the team and his practice (it asks about every minute), so its next refresh is the one that
       // drops him. (Someone who leaves during a refresh is asked for once more: the page takes the server's 404 in
       // stride, but the browser logs it.)
       await captain.goto(`${BASE}#/team`);
       await members(captain).getByRole('cell', { name: 'Ben', exact: true }).waitFor({ timeout: 15000 });
-      await captain.waitForResponse((r) => r.url() === `${SERVER}/api/teams/${teamId}` && r.request().method() === 'GET', { timeout: 40000 });
+      await captain.waitForResponse((r) => r.url().startsWith(`${SERVER}/api/sync`) && r.request().method() === 'GET', { timeout: 80000 });
       await captain.waitForResponse((r) => r.url().startsWith(`${SERVER}/api/teams/${teamId}/members/${ben.user.id}/records`), { timeout: 5000 }).catch(() => {});
       await player.goto(`${BASE}#/join/${rival.joinCode}`);
       await player.getByText('You can be on one team at a time, so joining leaves it.').waitFor({ timeout: 15000 });
@@ -578,7 +600,7 @@ async function main() {
       const old = await call(`/api/teams/${teamId}`, { token: cara.token });
       if (old.members.some((m) => m.userId === ben.user.id)) throw new Error('the old team still lists the player');
       if ((await listed(cara)).includes(hisRoom)) throw new Error('the room he opened is still listed for the team he left');
-      await members(captain).getByRole('heading', { name: 'Members (1)' }).waitFor({ timeout: 40000 });
+      await members(captain).getByRole('heading', { name: 'Members (1)' }).waitFor({ timeout: 80000 });
       if (await members(captain).getByRole('cell', { name: 'Ben', exact: true }).count()) throw new Error("the old team's Team page still lists the player");
       note(`the captain's open Team page dropped him ${secondsSince(moved)} s after he moved, without a reload`);
       // His new team sees his practice in its stats, and his game answers on his progress page.

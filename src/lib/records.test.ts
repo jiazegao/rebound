@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { RecordOut } from '../core/accounts';
 import type { Outcome, ReviewCard } from '../core/review';
-import { applyTeamRecords, applyUserRecords, changeBatch, recordKey, teamRecords, tracksUserRecord, userRecords } from './records';
+import { applyTeamRecords, applyUserRecords, changeBatch, heardGroup, heardRecords, recordFingerprint, recordKey, teamRecords, tracksUserRecord, userRecords } from './records';
 import { emptyData, type AppData } from './store';
 
 const card = (playerId: string, questionId: string): ReviewCard =>
@@ -67,7 +67,8 @@ function sample(): AppData {
 describe('the records behind AppData', () => {
   it("produces only the signed-in player's own user records, and never their server-written answers", () => {
     const keys = [...userRecords(sample(), 'me').keys()].sort();
-    expect(keys).toEqual(['attempts/a1', 'cards/q1', 'completions/as1', 'reports/r1', 'seen/ledger']);
+    // (The sample's one heard question, "q1", has no round in its id: such questions share a record.)
+    expect(keys).toEqual(['attempts/a1', 'cards/q1', 'completions/as1', 'reports/r1', 'seen/other']);
     // Bodies are the AppData objects themselves.
     expect(userRecords(sample(), 'me').get('cards/q1')!.body).toMatchObject({ playerId: 'me', questionId: 'q1' });
   });
@@ -77,8 +78,11 @@ describe('the records behind AppData', () => {
   });
 
   it('tracks the collections a device knows, and only the one id of single-record collections', () => {
+    // Heard questions are kept a round at a time; the one record older versions kept is read too.
     expect(tracksUserRecord('seen', 'ledger')).toBe(true);
-    expect(tracksUserRecord('seen', 'other')).toBe(false);
+    expect(tracksUserRecord('seen', 'doe-hs-17-r02')).toBe(true);
+    expect(tracksUserRecord('conceptReads', 'ledger')).toBe(true);
+    expect(tracksUserRecord('conceptReads', 'other')).toBe(false);
     expect(tracksUserRecord('plans', 'today')).toBe(true);
     expect(tracksUserRecord('plans', '2026-11-08')).toBe(false);
     expect(tracksUserRecord('answers', 'game:g1:0')).toBe(true);
@@ -127,7 +131,67 @@ describe('the records behind AppData', () => {
     expect(d.answers).toHaveLength(2);
     expect(d.attempts).toEqual([]);
     expect(d.cards).toEqual({});
-    expect(d.seen).toEqual({});
+    // A deleted heard record takes nothing away: the old single record is deleted once its questions are in the
+    // per-round ones.
+    expect(d.seen).toEqual({ me: { q1: 5 } });
+  });
+
+  it('keeps the questions a player has heard a round at a time', () => {
+    expect(heardGroup('doe-hs-17-r02-t04')).toBe('doe-hs-17-r02');
+    expect(heardGroup('doe-ms-finals-r01-b12')).toBe('doe-ms-finals-r01');
+    expect(heardGroup('vis-circuit-8842')).toBe('vis-circuit');
+    expect(heardGroup('nodash')).toBe('other');
+    // Never the name of the single record older versions kept, and never longer than the server takes.
+    expect(heardGroup('ledger-1')).toBe('other');
+    expect(heardGroup(`${'x'.repeat(300)}-t01`)).toHaveLength(200);
+
+    const ledger = { 'doe-hs-17-r02-t04': 4, 'doe-hs-17-r03-t01': 9, 'doe-hs-17-r02-b04': 5 };
+    expect(heardRecords(ledger)).toEqual([
+      { c: 'seen', id: 'doe-hs-17-r02', body: { 'doe-hs-17-r02-t04': 4, 'doe-hs-17-r02-b04': 5 } },
+      { c: 'seen', id: 'doe-hs-17-r03', body: { 'doe-hs-17-r03-t01': 9 } },
+    ]);
+
+    // Records from the server (per round, and the old single one) merge into one ledger, earliest time first heard.
+    const d = emptyData();
+    applyUserRecords(
+      d,
+      'me',
+      [
+        { c: 'seen', id: 'ledger', body: { 'doe-hs-17-r02-t04': 8, 'doe-hs-16-r01-t01': 2 }, rev: 1 },
+        { c: 'seen', id: 'doe-hs-17-r02', body: { 'doe-hs-17-r02-t04': 4, 'doe-hs-17-r02-b04': 5 }, rev: 2 },
+        { c: 'seen', id: 'doe-hs-17-r03', body: { 'doe-hs-17-r03-t01': 9 }, rev: 3 },
+      ],
+      new Map(),
+    );
+    expect(d.seen.me).toEqual({ 'doe-hs-17-r02-t04': 4, 'doe-hs-16-r01-t01': 2, 'doe-hs-17-r02-b04': 5, 'doe-hs-17-r03-t01': 9 });
+    expect([...userRecords(d, 'me').keys()].sort()).toEqual(['seen/doe-hs-16-r01', 'seen/doe-hs-17-r02', 'seen/doe-hs-17-r03']);
+  });
+
+  it('fingerprints a ledger by what it holds, not the order it was written in', () => {
+    expect(recordFingerprint('seen', { a: 1, b: 2 })).toBe(recordFingerprint('seen', { b: 2, a: 1 }));
+    expect(recordFingerprint('seen', { a: 1, b: 2 })).not.toBe(recordFingerprint('seen', { a: 1, b: 3 }));
+    expect(recordFingerprint('conceptReads', { a: 1, b: 2 })).toBe(recordFingerprint('conceptReads', { b: 2, a: 1 }));
+    // Other records are fingerprinted as they are.
+    expect(recordFingerprint('cards', { a: 1, b: 2 })).not.toBe(recordFingerprint('cards', { b: 2, a: 1 }));
+  });
+
+  it('puts ten thousand records into a list without searching it for each', () => {
+    const d = emptyData();
+    const incoming: RecordOut[] = Array.from({ length: 10_000 }, (_, i) => ({
+      c: 'attempts',
+      id: `a${i}`,
+      body: { id: `a${i}`, playerId: 'me', questionId: `doe-hs-01-r01-t${i}`, subject: 'biology', kind: 'tossup', correct: true, interrupt: false, latencyMs: 1, overridden: false, t: 10_000 - i },
+      rev: i + 1,
+    }));
+    const started = performance.now();
+    applyUserRecords(d, 'me', incoming, new Map());
+    // An update and a deletion among them find their record at once.
+    applyUserRecords(d, 'me', [{ ...incoming[5]!, body: { ...(incoming[5]!.body as object), correct: false } }, { c: 'attempts', id: 'a6', body: null, rev: 10_002 }], new Map());
+    expect(performance.now() - started).toBeLessThan(400);
+    expect(d.attempts).toHaveLength(9_999);
+    expect(d.attempts.find((a) => a.id === 'a5')!.correct).toBe(false);
+    // Oldest first, as the pages expect.
+    expect(d.attempts[0]!.id).toBe('a9999');
   });
 
   it('puts team records into AppData, newest first, and deletes', () => {

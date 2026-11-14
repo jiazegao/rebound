@@ -5,6 +5,7 @@
  * every screen. Any signed-in player can be in a room; a member's `memberId` and `playerId` are both their user id.
  */
 import { useEffect, useState, useSyncExternalStore } from 'react';
+import { roomSocketUrl } from './api';
 
 export type Side = 'A' | 'B';
 
@@ -147,11 +148,25 @@ export interface RoomSnapshot {
 
 const EMPTY_BUZZ: BuzzState = { open: false, sides: { A: false, B: false }, winner: null };
 
+/**
+ * How often a device pings the room. Pings keep this device's clock in step with the server's (for the text reveal)
+ * and let the server measure the connection (to time buzzes fairly), which matters while a question is live. In
+ * between (a lobby, a pause, a finished game left open) a slow ping keeps the connection alive, and lets the server
+ * rest instead of answering every device every few seconds. A new connection pings a few times quickly first.
+ */
+export const LIVE_PING_MS = 3_000;
+export const IDLE_PING_MS = 20_000;
+const WARMUP_PINGS = 3;
+const WARMUP_PING_MS = 1_200;
+
 export class RoomClient {
   private ws: WebSocket | null = null;
   private listeners = new Set<() => void>();
   private snap: RoomSnapshot = { connected: false, error: null, ended: null, you: null, roomName: '', kind: null, hostId: null, members: [], view: null, buzz: EMPTY_BUZZ, chat: [], answers: [] };
   private pingTimer: ReturnType<typeof setInterval> | undefined;
+  private lastPing = 0;
+  /** Pings sent on this connection. */
+  private pings = 0;
   private retry = 0;
   private closed = false;
   /** Best clock offset (server − local) from the ping with the shortest round trip among recent ones. */
@@ -162,8 +177,8 @@ export class RoomClient {
   onResult: ((r: MatchResult) => void) | null = null;
   onMatchOver: ((m: MatchOver) => void) | null = null;
 
-  /** `url` comes from api.roomSocketUrl. */
-  constructor(private readonly url: string) {}
+  /** `address` gives the room's WebSocket address for each connection (api.roomSocketUrl), or null when signed out. */
+  constructor(private readonly address: () => Promise<string | null>) {}
 
   get snapshot(): RoomSnapshot {
     return this.snap;
@@ -188,14 +203,25 @@ export class RoomClient {
 
   connect(): void {
     this.closed = false;
-    const ws = new WebSocket(this.url);
+    void this.dial();
+  }
+
+  private async dial(): Promise<void> {
+    const url = await this.address().catch(() => null);
+    if (this.closed) return;
+    if (!url) {
+      this.set({ error: 'Sign in to join this room.' });
+      return;
+    }
+    const ws = new WebSocket(url);
     this.ws = ws;
     ws.onopen = () => {
       this.retry = 0;
       this.set({ connected: true, error: null });
+      this.pings = 0;
       this.ping();
       clearInterval(this.pingTimer);
-      this.pingTimer = setInterval(() => this.ping(), 3_000);
+      this.pingTimer = setInterval(() => this.keepInStep(), 1_000);
     };
     ws.onmessage = (e) => {
       let msg: Record<string, unknown>;
@@ -241,7 +267,22 @@ export class RoomClient {
   }
 
   private ping(): void {
-    this.send({ type: 'ping', t: Date.now() });
+    this.lastPing = Date.now();
+    this.pings += 1;
+    this.send({ type: 'ping', t: this.lastPing });
+  }
+
+  /** Whether a question is live: being read, open for buzzing or answering, or a match under way. */
+  private live(): boolean {
+    const view = this.snap.view;
+    if (view?.match) return view.match.status === 'playing' && !view.match.paused;
+    return this.snap.buzz.open || !!view?.reading || !!view?.window;
+  }
+
+  /** Pings when the next one is due (checked every second, so a question going live is noticed at once). */
+  private keepInStep(): void {
+    const every = this.pings < WARMUP_PINGS ? WARMUP_PING_MS : this.live() ? LIVE_PING_MS : IDLE_PING_MS;
+    if (Date.now() - this.lastPing >= every) this.ping();
   }
 
   private handle(msg: Record<string, unknown>): void {
@@ -327,19 +368,22 @@ export class RoomClient {
   handover = (memberId: string) => this.send({ type: 'handover', memberId });
 }
 
-/** Connect to a room while the component is mounted. Pass null to stay disconnected. */
-export function useRoom(url: string | null): { client: RoomClient | null; snapshot: RoomSnapshot | null } {
+/**
+ * Connect to a room as the signed-in player while the component is mounted. Pass a null room or player to stay
+ * disconnected; another player signing in on this device connects afresh.
+ */
+export function useRoom(roomId: string | null, userId: string | null): { client: RoomClient | null; snapshot: RoomSnapshot | null } {
   const [client, setClient] = useState<RoomClient | null>(null);
   useEffect(() => {
-    if (!url) return;
-    const c = new RoomClient(url);
+    if (!roomId || !userId) return;
+    const c = new RoomClient(() => roomSocketUrl(roomId));
     c.connect();
     setClient(c);
     return () => {
       c.close();
       setClient(null);
     };
-  }, [url]);
+  }, [roomId, userId]);
   const snapshot = useSyncExternalStore(
     (l) => (client ? client.subscribe(l) : () => undefined),
     () => (client ? client.snapshot : null),

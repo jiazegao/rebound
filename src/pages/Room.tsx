@@ -3,7 +3,7 @@ import { FigureView } from '../components/Figure';
 import { RichText } from '../components/QuestionView';
 import { loadQuestions, useAsync } from '../lib/library';
 import { Notice, useTicker } from '../components/ui';
-import { roomSocketUrl } from '../lib/api';
+
 import { useSession } from '../lib/cloud';
 import { buildReading, revealedCount, splitRevealed } from '../lib/reading';
 import { RoomClient, useRoom, type RoomEnd, type RoomView, type Side } from '../lib/room';
@@ -144,8 +144,7 @@ function RoomEnded({ ended }: { ended: RoomEnd }) {
 export function RoomPage({ roomId }: { roomId: string }) {
   // Any signed-in player can be in a room (App asks everyone else to sign in first).
   const session = useSession();
-  const url = session.user ? roomSocketUrl(roomId) : null;
-  const { client, snapshot } = useRoom(url);
+  const { client, snapshot } = useRoom(roomId, session.user?.id ?? null);
   const view = snapshot?.view ?? null;
   const ticking = !!view && (!!view.reading || !!view.window);
   const now = useTicker(ticking, 50);
