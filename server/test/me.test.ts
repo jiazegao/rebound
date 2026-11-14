@@ -1,6 +1,7 @@
 /** The signed-in user's own profile and records: merges, server-only answers, paging, export and deletion. */
 import { describe, expect, it } from 'vitest';
 import { MAX_RECORD_BYTES, RECORDS_PAGE_SIZE } from '../../src/core/accounts';
+import { READ_PAGE_SIZE } from '../src/records';
 import { allMyRecords, call, getRecords, googleToken, join, makeTeam, putRecords, signUp } from './helpers';
 
 const ME = '/api/me/records';
@@ -64,6 +65,7 @@ describe('records', () => {
     expect(page).toEqual({
       cursor: 3,
       more: false,
+      head: 3,
       records: [
         { c: 'attempts', id: 'a1', body: attempt, rev: 1 },
         { c: 'seen', id: 'ledger', body: { q1: 100 }, rev: 2 },
@@ -75,7 +77,30 @@ describe('records', () => {
 
     expect(await putRecords(ME, user.token, [{ c: 'reports', id: 'r1', body: null }, { c: 'reports', id: 'never', body: null }])).toEqual({ cursor: 4, rejected: [] });
     expect((await getRecords(ME, user.token, 3)).records).toEqual([{ c: 'reports', id: 'r1', body: null, rev: 4 }]);
-    expect(await getRecords(ME, user.token, 4)).toEqual({ cursor: 4, records: [], more: false });
+    expect(await getRecords(ME, user.token, 4)).toEqual({ cursor: 4, records: [], more: false, head: 4 });
+    // A cursor ahead of the store (a device that kept a copy of data since reset) sees that from `head`.
+    expect(await getRecords(ME, user.token, 99)).toEqual({ cursor: 99, records: [], more: false, head: 4 });
+  });
+
+  it('keeps the questions a player has heard a round at a time, and merges each', async () => {
+    const user = await signUp('Ren');
+    await putRecords(ME, user.token, [
+      { c: 'seen', id: 'doe-hs-17-r01', body: { 'doe-hs-17-r01-t01': 100, 'doe-hs-17-r01-b01': 110 } },
+      { c: 'seen', id: 'doe-hs-17-r02', body: { 'doe-hs-17-r02-t01': 200 } },
+      // The single record older versions of the site wrote is still taken.
+      { c: 'seen', id: 'ledger', body: { 'doe-hs-01-r01-t01': 5 } },
+    ]);
+    // Another device heard the first round too, one question earlier and one more.
+    const result = await putRecords(ME, user.token, [{ c: 'seen', id: 'doe-hs-17-r01', body: { 'doe-hs-17-r01-t01': 90, 'doe-hs-17-r01-t02': 120 } }]);
+    expect(result.rejected).toEqual([]);
+    const records = await allMyRecords(user.token);
+    const body = (id: string) => records.find((r) => r.c === 'seen' && r.id === id)?.body;
+    expect(body('doe-hs-17-r01')).toEqual({ 'doe-hs-17-r01-t01': 90, 'doe-hs-17-r01-b01': 110, 'doe-hs-17-r01-t02': 120 });
+    expect(body('doe-hs-17-r02')).toEqual({ 'doe-hs-17-r02-t01': 200 });
+    expect(body('ledger')).toEqual({ 'doe-hs-01-r01-t01': 5 });
+    // Deleting the old single record (the site does, once its questions are in the per-round records) leaves a tombstone.
+    await putRecords(ME, user.token, [{ c: 'seen', id: 'ledger', body: null }]);
+    expect((await allMyRecords(user.token)).find((r) => r.c === 'seen' && r.id === 'ledger')?.body).toBeNull();
   });
 
   it('merges ledgers and review cards, and never changes an answer once written', async () => {
@@ -106,7 +131,7 @@ describe('records', () => {
     const result = await putRecords(ME, user.token, [
       { c: 'answers', id: 'game:g1:0:t:1', body: { key: 'game:g1:0:t:1', playerId: user.id, correct: true } },
       { c: 'games', id: 'g1', body: {} },
-      { c: 'seen', id: 'other', body: {} },
+      { c: 'conceptReads', id: 'other', body: {} },
       { c: 'plans', id: 'tomorrow', body: { playerId: user.id } },
       { c: 'attempts', id: 'a-x', body: { playerId: 'someoneelse12345', correct: true } },
       { c: 'attempts', id: 'a-y', body: ['not', 'an', 'object'] },
@@ -118,7 +143,7 @@ describe('records', () => {
     expect(result.rejected).toEqual([
       { c: 'answers', id: 'game:g1:0:t:1', reason: 'Game answers are recorded by the server.' },
       { c: 'games', id: 'g1', reason: "This kind of data isn't kept with your account." },
-      { c: 'seen', id: 'other', reason: 'This record\'s id must be "ledger".' },
+      { c: 'conceptReads', id: 'other', reason: 'This record\'s id must be "ledger".' },
       { c: 'plans', id: 'tomorrow', reason: 'This record\'s id must be "today".' },
       { c: 'attempts', id: 'a-x', reason: 'This record belongs to another player.' },
       { c: 'attempts', id: 'a-y', reason: 'A record must be a JSON object.' },
@@ -140,18 +165,21 @@ describe('records', () => {
 
   it('pages with a cursor and `more`', async () => {
     const user = await signUp('Uma');
-    const total = RECORDS_PAGE_SIZE + 20;
+    const total = READ_PAGE_SIZE + 20;
     const ids = Array.from({ length: total }, (_, i) => `a${String(i).padStart(4, '0')}`);
-    await putRecords(ME, user.token, ids.slice(0, RECORDS_PAGE_SIZE).map((id) => ({ c: 'attempts', id, body: { n: id } })));
-    const last = await putRecords(ME, user.token, ids.slice(RECORDS_PAGE_SIZE).map((id) => ({ c: 'attempts', id, body: { n: id } })));
+    let last: { cursor: number } = { cursor: 0 };
+    for (let i = 0; i < total; i += RECORDS_PAGE_SIZE) {
+      last = await putRecords(ME, user.token, ids.slice(i, i + RECORDS_PAGE_SIZE).map((id) => ({ c: 'attempts', id, body: { n: id } })));
+    }
     expect(last.cursor).toBe(total);
 
     const first = await getRecords(ME, user.token, 0);
-    expect(first.records).toHaveLength(RECORDS_PAGE_SIZE);
+    expect(first.records).toHaveLength(READ_PAGE_SIZE);
     expect(first.more).toBe(true);
-    expect(first.cursor).toBe(RECORDS_PAGE_SIZE);
+    expect(first.cursor).toBe(READ_PAGE_SIZE);
+    expect(first.head).toBe(total);
     const second = await getRecords(ME, user.token, first.cursor);
-    expect(second.records.map((r: { id: string }) => r.id)).toEqual(ids.slice(RECORDS_PAGE_SIZE));
+    expect(second.records.map((r: { id: string }) => r.id)).toEqual(ids.slice(READ_PAGE_SIZE));
     expect(second.more).toBe(false);
     expect(second.cursor).toBe(total);
   });

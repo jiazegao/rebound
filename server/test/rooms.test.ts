@@ -1,9 +1,10 @@
 import { evictDurableObject, runInDurableObject } from 'cloudflare:test';
-import { env } from 'cloudflare:workers';
+import { env, exports } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
+import { roomKey, sessionHash } from '../../src/core/accounts';
 import { ROOMS_PER_DAY } from '../src/user';
 import { MAX_ROOMS } from '../src/team';
-import { call, closedOnArrival, connect, createRoom, join, makeTeam, type Json, RoomClient, SITE, signUp, sleep, teamWith, type TestTeam, type TestUser, wsRequest } from './helpers';
+import { BASE, call, closedOnArrival, connect, createRoom, join, makeTeam, type Json, RoomClient, SITE, signUp, sleep, teamWith, type TestTeam, type TestUser, wsRequest } from './helpers';
 
 const roomStub = (roomId: string) => env.ROOM.get(env.ROOM.idFromName(roomId));
 
@@ -139,6 +140,35 @@ describe('connecting', () => {
     expect(fromSite.status).toBe(101);
     fromSite.webSocket!.accept();
     fromSite.webSocket!.close();
+  });
+
+  it('opens with a key for that one room, with no session token in the address', async () => {
+    const { roomId, cora, ana } = await setup();
+    const hash = await sessionHash(cora.token.split('.')[1]!);
+    const address = (room: string, key: string, session = hash.slice(0, 16), user = cora.id) => `${BASE}/api/rooms/${room}/ws?user=${user}&session=${session}&key=${key}`;
+    const open = (url: string) => exports.default.fetch(url, { headers: { Upgrade: 'websocket', Origin: SITE } });
+
+    const response = await open(address(roomId, await roomKey(hash, roomId)));
+    expect(response.status).toBe(101);
+    const client = new RoomClient(response.webSocket!);
+    expect((await client.next('welcome')).you.memberId).toBe(cora.id);
+    client.close();
+
+    // A key opens only its own room, for its own session and user.
+    const other = await createRoom(cora.token, 'Another room');
+    expect((await open(address(other, await roomKey(hash, roomId)))).status).toBe(401);
+    expect((await open(address(roomId, await roomKey(hash, roomId), '0'.repeat(16)))).status).toBe(401);
+    expect((await open(address(roomId, await roomKey(hash, roomId), hash.slice(0, 16), ana.id))).status).toBe(401);
+    expect((await open(address(roomId, 'x'.repeat(43)))).status).toBe(401);
+    expect((await open(address(roomId, 'short'))).status).toBe(401);
+    // A key made from the token's hash by someone who only knows the session's short name is no key.
+    expect((await open(address(roomId, await roomKey(hash.slice(0, 16), roomId)))).status).toBe(401);
+    // The key signs nothing else in.
+    expect((await call(`/api/me?user=${cora.id}&session=${hash.slice(0, 16)}&key=${await roomKey(hash, roomId)}`)).status).toBe(401);
+
+    // Signing out ends the session, and its keys with it.
+    expect((await call('/api/auth/signout', { token: cora.token, body: {} })).status).toBe(200);
+    expect((await open(address(roomId, await roomKey(hash, roomId)))).status).toBe(401);
   });
 
   it('welcomes each connection and tells the room who joins and leaves', async () => {

@@ -171,9 +171,9 @@ export async function readJson(request: Request, maxBytes = MAX_BODY_BYTES): Pro
   }
 }
 
-/** The `cursor` query parameter of a records request: a whole number, 0 when absent. */
-export function cursorParam(url: URL): number {
-  const raw = url.searchParams.get('cursor');
+/** The `cursor` query parameter of a records request (or the one called `name`): a whole number, 0 when absent. */
+export function cursorParam(url: URL, name = 'cursor'): number {
+  const raw = url.searchParams.get(name);
   if (raw === null || raw === '') return 0;
   const cursor = Number(raw);
   if (!/^[0-9]+$/.test(raw) || !Number.isSafeInteger(cursor)) throw new HttpError(400, 'The cursor must be a whole number, 0 or more.');

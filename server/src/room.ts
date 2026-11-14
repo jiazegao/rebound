@@ -168,6 +168,8 @@ interface Attachment {
   voice?: boolean;
 }
 
+/** Keep-alive messages: they measure the connection and change nothing in the room. */
+const KEEP_ALIVE = new Set(['ping', 'pong']);
 /** Messages only the room's reader (host) may send. */
 const READER_ONLY = new Set(['publish', 'open', 'close', 'assign', 'handover']);
 /** In a match room the server itself publishes and runs the buzzers. */
@@ -440,12 +442,6 @@ export class RoomServer extends DurableObject<Env> {
     const member = this.member(att.userId);
     if (!member) return closeQuietly(ws, CLOSE_SIGNED_OUT, SIGNED_OUT);
 
-    // A collection window may have ended while the object was asleep or evicted; decide it first.
-    this.settle(now, true);
-    const isMatch = this.isMatch();
-    // Likewise anything a match had due (a reading that ended, a deadline that passed).
-    if (isMatch) this.runMatch(now);
-
     if (typeof raw !== 'string') return refuse(ws, 'Send messages as JSON text.');
     if (raw.length > MAX_MESSAGE_CHARS) return refuse(ws, 'That message is too large.');
     let msg: Record<string, unknown>;
@@ -456,6 +452,14 @@ export class RoomServer extends DurableObject<Env> {
     } catch {
       return refuse(ws, "That message isn't valid JSON.");
     }
+
+    // A collection window may have ended while the object was asleep or evicted; decide it first.
+    this.settle(now, true);
+    const isMatch = this.isMatch();
+    // Likewise anything a match had due (a reading that ended, a deadline that passed). Every device pings every
+    // few seconds, and a ping changes nothing, so it only runs the match when a step is overdue.
+    if (isMatch && (!KEEP_ALIVE.has(String(msg.type)) || this.matchOverdue(now))) this.runMatch(now);
+
     const room = this.room()!;
     // Keep a busy room's clock fresh (at most once a minute), so a long game is never mistaken for an idle room
     // if every connection drops at once, as on a server restart.
@@ -851,6 +855,12 @@ export class RoomServer extends DurableObject<Env> {
     return row ? new MatchDirector(JSON.parse(row.data) as MatchData) : null;
   }
 
+  /** Whether the match has a step (a reading's end, a deadline) that should already have run. */
+  private matchOverdue(now: number): boolean {
+    const due = this.sql.exec<{ due_at: number | null }>('SELECT due_at FROM match').toArray()[0]?.due_at ?? null;
+    return due !== null && due <= now;
+  }
+
   /**
    * Applies whatever the match has due by `now`, then stores it and tells the room. Waits while a buzz is being
    * decided: `settle` runs the match with the winner, so nothing that happened after the press comes first.
@@ -916,8 +926,12 @@ export class RoomServer extends DurableObject<Env> {
       over = JSON.stringify({ type: 'match_over', format: d.setup.format, game, heard: director.heardQuestionIds(), players: d.players });
     }
 
+    // Stored only when something changed: most calls (a message that leaves the match as it was) change nothing,
+    // and rewriting the whole match for each of them would be thousands of needless writes an hour.
     const due = director.nextDue();
-    this.sql.exec('UPDATE match SET data = ?, due_at = ?', JSON.stringify(d), due);
+    const text = JSON.stringify(d);
+    const stored = this.sql.exec<{ data: string; due_at: number | null }>('SELECT data, due_at FROM match').toArray()[0];
+    if (!stored || stored.data !== text || stored.due_at !== due) this.sql.exec('UPDATE match SET data = ?, due_at = ?', text, due);
     this.publishView(director.view());
     if (over) {
       // Devices fetch their player's answers when they hear the match is over, so the answers are sent first.

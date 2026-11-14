@@ -11,8 +11,15 @@ import { HttpError } from './http';
 import { asObject, MAX_ID_LENGTH, MAX_JSON_DEPTH, nestsDeeperThan, sameJson, utf8Bytes } from './validate';
 
 /**
+ * Records in one page of a records response. (A request still sends at most RECORDS_PAGE_SIZE changes.) A player
+ * with a long history has tens of thousands of small records, and each page is one more round trip when their
+ * account loads.
+ */
+export const READ_PAGE_SIZE = 2000;
+
+/**
  * A page also ends early once it holds about this many bytes of records (always at least one record), so a page
- * of 500 large packets cannot become a response of hundreds of megabytes. `more` is then true.
+ * of large packets cannot become a response of hundreds of megabytes. `more` is then true.
  */
 export const PAGE_BYTES = 4 * 1024 * 1024;
 
@@ -110,8 +117,10 @@ export class Records {
   }
 
   /**
-   * Records with a revision above `cursor`, oldest first, as the JSON text of `{ cursor, records, more }` (stored
-   * bodies are spliced in without parsing them again). `only` limits the collections; `by` adds who wrote each.
+   * Records with a revision above `cursor`, oldest first, as the JSON text of `{ cursor, records, more, head }`
+   * (stored bodies are spliced in without parsing them again). `only` limits the collections; `by` adds who wrote
+   * each. `head` is the store's latest revision: a device whose cursor is ahead of it holds a copy of a store that
+   * no longer exists (its data was reset), and loads everything again.
    */
   page(cursor: number, options: { only?: ReadonlySet<string>; by?: boolean } = {}): string {
     const only = options.only ? [...options.only] : null;
@@ -120,7 +129,7 @@ export class Records {
       `SELECT c, id, body, rev, "by" AS "by" FROM records WHERE rev > ?${filter} ORDER BY rev LIMIT ?`,
       cursor,
       ...(only ?? []),
-      RECORDS_PAGE_SIZE + 1,
+      READ_PAGE_SIZE + 1,
     );
     const parts: string[] = [];
     let next = cursor;
@@ -129,7 +138,7 @@ export class Records {
     for (const row of rows) {
       const by = options.by && row.by !== null ? `,"by":${JSON.stringify(row.by)}` : '';
       const part = `{"c":${JSON.stringify(row.c)},"id":${JSON.stringify(row.id)},"body":${row.body ?? 'null'},"rev":${row.rev}${by}}`;
-      if (parts.length === RECORDS_PAGE_SIZE || (parts.length > 0 && size + part.length > PAGE_BYTES)) {
+      if (parts.length === READ_PAGE_SIZE || (parts.length > 0 && size + part.length > PAGE_BYTES)) {
         more = true;
         break;
       }
@@ -137,7 +146,7 @@ export class Records {
       size += part.length;
       next = row.rev;
     }
-    return `{"cursor":${next},"records":[${parts.join(',')}],"more":${more}}`;
+    return `{"cursor":${next},"records":[${parts.join(',')}],"more":${more},"head":${this.rev()}}`;
   }
 
   /** Every record that is not deleted, as JSON text of `{ [collection]: { [id]: body } }` (for exports). */

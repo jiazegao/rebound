@@ -15,6 +15,7 @@ import {
   LEDGER_ID,
   mergeUserRecord,
   PLAN_ID,
+  roomKey,
   SERVER_WRITTEN,
   TEAM_VISIBLE,
   type MemberRole,
@@ -42,7 +43,7 @@ import {
   usedToday,
   type AiSettings,
 } from './ai';
-import { newId, newSecret, sha256Hex } from './crypto';
+import { newId, newSecret, sameSecret, sha256Hex } from './crypto';
 import { accepted, cursorParam, dispatch, HttpError, identityOf, json, jsonText, readJson, refusing, toErrorResponse, type Identity, type Result, type Routes } from './http';
 import { directoryObject, getMeta, hasTable, registryObject, roomObject, setMeta, teamObject } from './objects';
 import { parseChanges, Records, RECORDS_SCHEMA, shapeProblem, TOO_LARGE, tooLarge, type Rejection } from './records';
@@ -89,6 +90,15 @@ export type TeamSummary = { id: string; name: string; level: Level; role: Member
 export type AuthResult = { ok: true; identity: Omit<Identity, 'address'> } | { ok: false; error: string };
 
 export type SignInResult = { ok: true; token: string; user: UserProfile } | { ok: false; needsSignup: true };
+
+/**
+ * The user's half of `GET /api/sync`, in one call: the session checked, the profile, the team the account points at
+ * (and the summary of it kept here), the copy of the user's details that team keeps, and a page of the user's
+ * records as JSON text.
+ */
+export type SyncMine =
+  | { ok: true; identity: Omit<Identity, 'address'>; user: UserProfile; teamId: string | null; team: TeamSummary | null; copy: MemberCopy; page: string }
+  | { ok: false; error: string };
 
 /** Fields a leader may change in another member's profile (PATCH /api/teams/:id/members/:userId). */
 export interface ProfileFields {
@@ -174,6 +184,19 @@ export class UserServer extends DurableObject<Env> {
   }
 
   /**
+   * The user behind a room's WebSocket, from the key their device made for that room (`roomKey`): the session it
+   * names must be one of theirs, and the key the one that session's hash gives. Then as `authenticate`.
+   */
+  async authenticateRoomKey(sid: string, roomId: string, key: string, now: number): Promise<AuthResult> {
+    if (!this.profile()) return { ok: false, error: SESSION_ENDED };
+    const sessions = this.sql.exec<{ token_hash: string }>('SELECT token_hash FROM sessions WHERE substr(token_hash, 1, 16) = ?', sid).toArray();
+    for (const { token_hash } of sessions) {
+      if (await sameSecret(key, await roomKey(token_hash, roomId))) return this.authenticate(token_hash, now, roomId);
+    }
+    return { ok: false, error: SESSION_ENDED };
+  }
+
+  /**
    * A new session for a person the Directory identified. Without an account here yet, `signup` (their name; they
    * confirmed they are 13 or older) makes it; without either, the person must sign up first.
    */
@@ -201,6 +224,26 @@ export class UserServer extends DurableObject<Env> {
       MAX_SESSIONS,
     );
     return { ok: true, token: `${profile.id}.${secret}`, user: profile };
+  }
+
+  /**
+   * `GET /api/sync`: checks the session and answers with everything the user's object holds for it (the Worker asks
+   * the team for the rest). One call instead of a session check and a request for each part.
+   */
+  async syncMine(tokenHash: string, now: number, cursor: number): Promise<SyncMine> {
+    const auth = await this.authenticate(tokenHash, now);
+    if (!auth.ok) return auth;
+    const profile = this.profile()!;
+    const teamId = this.teamId();
+    return { ok: true, identity: auth.identity, user: profile, teamId, team: teamId === null ? null : this.cachedTeam(), copy: copyOf(profile), page: this.records.page(cursor) };
+  }
+
+  /**
+   * After a sync asked the team: its summary as it is now (its name, level or the user's role changed), or null
+   * when the user is no longer on it. Ignored if the user has moved on to another team meanwhile.
+   */
+  async noteTeam(teamId: string, summary: TeamSummary | null): Promise<void> {
+    if (this.ready && this.teamId() === teamId) this.setTeam(summary ? teamId : null, summary);
   }
 
   /* ---------------- RPC: from teams and rooms ---------------- */
@@ -430,7 +473,10 @@ export class UserServer extends DurableObject<Env> {
   private problemWith(c: string, id: string, body: unknown, userId: string): string | null {
     if (!isUserCollection(c)) return "This kind of data isn't kept with your account.";
     if (SERVER_WRITTEN.has(c)) return 'Game answers are recorded by the server.';
-    if ((c === 'seen' || c === 'conceptReads') && id !== LEDGER_ID) return `This record's id must be "${LEDGER_ID}".`;
+    // What a player has read is one ledger. The questions they have heard are kept a round at a time (one record
+    // each, named by the site), so an answer sends a small record, not the player's whole history; the single
+    // "ledger" record older versions of the site wrote is still taken.
+    if (c === 'conceptReads' && id !== LEDGER_ID) return `This record's id must be "${LEDGER_ID}".`;
     if (c === 'plans' && id !== PLAN_ID) return `This record's id must be "${PLAN_ID}".`;
     // Teammates see these records; one must not be able to put words in another player's mouth.
     const playerId = body !== null ? (body as Record<string, unknown>).playerId : undefined;
@@ -650,9 +696,12 @@ export class UserServer extends DurableObject<Env> {
     return text ? (JSON.parse(text) as TeamSummary) : null;
   }
 
+  /** Written only when it changes: every refresh of an open page checks the team, and almost always finds it the same. */
   private setTeam(teamId: string | null, summary: TeamSummary | null): void {
-    setMeta(this.sql, 'teamId', teamId ?? '');
-    setMeta(this.sql, 'team', summary ? JSON.stringify(summary) : '');
+    const id = teamId ?? '';
+    const text = summary ? JSON.stringify(summary) : '';
+    if (getMeta(this.sql, 'teamId') !== id) setMeta(this.sql, 'teamId', id);
+    if (getMeta(this.sql, 'team') !== text) setMeta(this.sql, 'team', text);
   }
 
   /** After any wait: the account may have been deleted meanwhile. */

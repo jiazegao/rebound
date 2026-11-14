@@ -5,16 +5,18 @@
  * and email links (auth.ts), with the Directory (directory.ts) mapping them to users.
  */
 
-import { ID_PATTERN, MAX_NAME_CHARS, SESSION_TOKEN_PATTERN } from '../../src/core/accounts';
+import { ID_PATTERN, MAX_NAME_CHARS, ROOM_KEY_PATTERN, SESSION_ID_PATTERN, SESSION_TOKEN_PATTERN } from '../../src/core/accounts';
 import { emailEnabled, emailSettings, sendSignInEmail, verifyGoogleToken } from './auth';
 import { newId, SECRET_PATTERN, sha256Hex } from './crypto';
 import type { Resolution } from './directory';
 import {
   accepted,
+  cursorParam,
   errorResponse,
   HttpError,
   identityHeader,
   json,
+  jsonText,
   MAX_BODY_BYTES,
   readBody,
   readJson,
@@ -102,6 +104,9 @@ async function route(request: Request, env: Env): Promise<Response> {
       if (method === 'GET') return speechStatus(request, env, url);
       if (method === 'POST') return recordForPractice(request, env, url);
       throw unsupported();
+    case '/api/sync':
+      if (method !== 'GET') throw unsupported();
+      return sync(request, env, url);
   }
 
   if (USER_PATHS.test(path)) return forward(env, request, url, (id) => userObject(env, id.userId));
@@ -139,18 +144,54 @@ async function route(request: Request, env: Env): Promise<Response> {
 /* ---------------- sessions ---------------- */
 
 /**
- * The signed-in caller: `Authorization: Bearer <userId>.<secret>`, or for the room WebSocket only `?token=`
- * (browsers cannot set headers on WebSockets). The user's object checks the secret's hash; `visitRoom` records the
- * room being joined, so signing out can close that connection.
+ * The session token a request carries: `Authorization: Bearer <userId>.<secret>`, or for the room WebSocket only
+ * `?token=`, from versions of the site that put the token in the address (browsers cannot set headers on
+ * WebSockets; the site now sends a key for that one room instead, see `roomCaller`).
  */
-async function authenticate(request: Request, env: Env, url: URL, visitRoom: string | null = null): Promise<Identity> {
+function sessionTokenOf(request: Request, url: URL, forRoom: boolean): { userId: string; secret: string } {
   const header = request.headers.get('Authorization');
-  const token = header !== null ? (/^Bearer\s+(\S+)$/i.exec(header.trim())?.[1] ?? null) : visitRoom !== null ? url.searchParams.get('token') : null;
+  const token = header !== null ? (/^Bearer\s+(\S+)$/i.exec(header.trim())?.[1] ?? null) : forRoom ? url.searchParams.get('token') : null;
   if (!token || !SESSION_TOKEN_PATTERN.test(token)) throw new HttpError(401, SIGN_IN_AGAIN);
   const [userId, secret] = token.split('.') as [string, string];
+  return { userId, secret };
+}
+
+/**
+ * The signed-in caller. The user's object checks the secret's hash; `visitRoom` records the room being joined, so
+ * signing out can close that connection.
+ */
+async function authenticate(request: Request, env: Env, url: URL, visitRoom: string | null = null): Promise<Identity> {
+  const { userId, secret } = sessionTokenOf(request, url, visitRoom !== null);
   const result = await userObject(env, userId).authenticate(await sha256Hex(secret), Date.now(), visitRoom);
   if (!result.ok) throw new HttpError(401, result.error);
   return { ...result.identity, address: request.headers.get('CF-Connecting-IP') };
+}
+
+/**
+ * `GET /api/sync?u=<cursor>&t=<cursor>&team=<teamId>`: everything a page needs to load or to catch up, in one
+ * request: the profile, the team the user is on, their own records after `u`, and that team with its records after
+ * `t` (from the start when `team` is not the team they are on now). Two objects are asked, the user's (which also
+ * checks the session) and the team's; neither writes anything when nothing changed.
+ * → `{ user, team, mine: { cursor, records, more, head }, teamData: { team, members, you, joinCode?, records } | null }`
+ */
+async function sync(request: Request, env: Env, url: URL): Promise<Response> {
+  const { userId, secret } = sessionTokenOf(request, url, false);
+  const userCursor = cursorParam(url, 'u');
+  const teamCursor = cursorParam(url, 't');
+  const now = Date.now();
+  const mine = await userObject(env, userId).syncMine(await sha256Hex(secret), now, userCursor);
+  if (!mine.ok) throw new HttpError(401, mine.error);
+  let summary = mine.team;
+  let teamData = 'null';
+  if (mine.teamId !== null) {
+    const team = await teamObject(env, mine.teamId).syncTeam(mine.identity.userId, mine.copy, url.searchParams.get('team') === mine.teamId ? teamCursor : 0, now);
+    const fresh = team.ok ? team.summary : null;
+    // The account keeps a summary of its team: told only when it changed, or when the user is no longer on it.
+    if (JSON.stringify(fresh) !== JSON.stringify(summary)) await userObject(env, userId).noteTeam(mine.teamId, fresh);
+    summary = fresh;
+    if (team.ok) teamData = team.text;
+  }
+  return jsonText(`{"user":${JSON.stringify(mine.user)},"team":${JSON.stringify(summary)},"mine":${mine.page},"teamData":${teamData}}`);
 }
 
 /**
@@ -326,12 +367,30 @@ async function cancelRoom(request: Request, env: Env, url: URL, roomId: string):
   return json({ ok: true });
 }
 
-/** `GET /api/rooms/:id/ws?token=`: the WebSocket, accepted by the room once the session checks out. */
+/**
+ * The signed-in caller of a room's WebSocket. Browsers cannot set headers on a WebSocket, and an address ends up in
+ * logs, so the address carries no session token: `?user=&session=&key=` name the user, their session (the start of
+ * its hash, which is not secret) and a key for this one room, which only someone holding the session's token can
+ * make (`roomKey` in src/core/accounts.ts) and which opens nothing else. Versions of the site that send `?token=`
+ * are still taken.
+ */
+async function roomCaller(request: Request, env: Env, url: URL, roomId: string): Promise<Identity> {
+  const key = url.searchParams.get('key');
+  if (key === null) return authenticate(request, env, url, roomId);
+  const userId = url.searchParams.get('user') ?? '';
+  const sid = url.searchParams.get('session') ?? '';
+  if (!ID_PATTERN.test(userId) || !SESSION_ID_PATTERN.test(sid) || !ROOM_KEY_PATTERN.test(key)) throw new HttpError(401, SIGN_IN_AGAIN);
+  const result = await userObject(env, userId).authenticateRoomKey(sid, roomId, key, Date.now());
+  if (!result.ok) throw new HttpError(401, result.error);
+  return { ...result.identity, address: request.headers.get('CF-Connecting-IP') };
+}
+
+/** `GET /api/rooms/:id/ws?user=&session=&key=`: the WebSocket, accepted by the room once the session checks out. */
 async function connectRoom(request: Request, env: Env, url: URL, roomId: string): Promise<Response> {
   if (request.method !== 'GET') throw unsupported();
   if (request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') throw new HttpError(426, 'This address is for live room connections (WebSocket).');
   if (!ID_PATTERN.test(roomId)) return closedSocket();
-  const identity = await authenticate(request, env, url, roomId);
+  const identity = await roomCaller(request, env, url, roomId);
   return roomObject(env, roomId).fetch(new Request('https://rebound.internal/connect', { headers: { Upgrade: 'websocket', ...identityHeader(identity) } }));
 }
 

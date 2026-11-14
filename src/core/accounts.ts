@@ -15,6 +15,34 @@ export const SESSION_TOKEN_PATTERN = /^[a-z2-7]{16}\.[A-Za-z0-9_-]{43}$/;
 /** Join codes: "<teamId>.<secret>". */
 export const JOIN_CODE_PATTERN = /^[a-z2-7]{16}\.[a-z2-7]{12}$/;
 
+/* ---------------- a room's key ---------------- */
+
+/** A session's short name: the first 16 characters of its hash. It names the session and is not secret. */
+export const SESSION_ID_PATTERN = /^[0-9a-f]{16}$/;
+/** A room key: 32 bytes in base64url. */
+export const ROOM_KEY_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+
+/** What the server keeps of a session: the SHA-256 of its token's secret, in hex. */
+export async function sessionHash(secret: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(secret));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * The key that opens one room's live connection for one session: an HMAC of the room's id under the session's
+ * hash. A WebSocket's address is the only place a browser can put a credential, and addresses end up in logs, so
+ * the address carries this instead of the session token: it opens that one room and nothing else, and says nothing
+ * about the token. The device makes it from its token; the server from the hash it keeps.
+ */
+export async function roomKey(hash: string, roomId: string): Promise<string> {
+  const text = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', text.encode(hash), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const mac = new Uint8Array(await crypto.subtle.sign('HMAC', key, text.encode(`rebound-room:${roomId}`)));
+  let binary = '';
+  for (const byte of mac) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
 export const MAX_NAME_CHARS = 40;
 export const MAX_TEAM_NAME_CHARS = 80;
 /** Records per page in a records response; changes per request. */
