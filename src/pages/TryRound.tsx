@@ -3,7 +3,7 @@ import { AiExplain } from '../components/AiExplain';
 import { PlayBar, RevealingText, usePlayMode } from '../components/play';
 import { saveReading, savedReading, SoloSoundCheck, useSoloSpeech, type ReadingChoice, type ReadingPlan, type SoloSpeech } from '../components/SoloSpeech';
 import { AnswerBox, Choices, Concepts, QuestionMeta, RichText } from '../components/QuestionView';
-import { Countdown, LoadError, Loading, Notice, PageHeader, useTicker } from '../components/ui';
+import { Countdown, Intro, LoadError, Loading, Notice, PageHeader, useTicker } from '../components/ui';
 import { Verdict } from '../components/Verdict';
 import { pickDrill, pickMixed, setIdOf, type DrillPick } from '../core/drill';
 import { judgeAnswer, type JudgeResult } from '../core/judge/judge';
@@ -151,6 +151,52 @@ function conceptName(id: string): string | null {
   return topic?.concepts.find((c) => c.id === id)?.name ?? null;
 }
 
+/**
+ * What a signed-in player last chose here (the kind of practice, and a drill's subject, topic, length and level),
+ * remembered on the device so Start at the top of the page begins the same kind of practice again. A particular set
+ * and round are not remembered: the player has heard that round now. Signed out, nothing is kept on the device.
+ */
+const SETUP_KEY = 'rebound-solo-setup';
+
+function rememberedSetup(): Partial<Settings> {
+  try {
+    const saved = JSON.parse(globalThis.localStorage?.getItem(SETUP_KEY) ?? 'null') as Partial<Settings> | null;
+    if (!saved || typeof saved !== 'object') return {};
+    const out: Partial<Settings> = {};
+    if (saved.mode === 'round' || saved.mode === 'subject' || saved.mode === 'mixed') out.mode = saved.mode;
+    if (typeof saved.subject === 'string' && (CORE_SUBJECTS as string[]).includes(saved.subject)) out.subject = saved.subject;
+    if (typeof saved.topic === 'string' && (saved.topic === '' || topicById(saved.topic)?.subject === out.subject)) out.topic = saved.topic;
+    if (typeof saved.cross === 'boolean') out.cross = saved.cross;
+    if (typeof saved.count === 'number' && Number.isInteger(saved.count) && saved.count > 0 && saved.count <= 40) out.count = saved.count;
+    if (saved.level === '' || saved.level === 'early' || saved.level === 'late' || saved.level === 'invitational' || saved.level === 'nationals') out.level = saved.level;
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+function rememberSetup(s: Settings): void {
+  try {
+    globalThis.localStorage?.setItem(SETUP_KEY, JSON.stringify({ mode: s.mode, subject: s.subject, topic: s.topic, cross: s.cross, count: s.count, level: s.level }));
+  } catch {
+    /* storage blocked: Start uses the usual settings next time */
+  }
+}
+
+/** What Start will begin, in a line: "A whole round from a recent set · on screen · 200 words a minute". */
+function summaryOf(s: Settings, set: QuestionSet | null, packetTitle: string | null, aloud: boolean): string {
+  const what = packetTitle
+    ? packetTitle
+    : s.mode === 'round'
+      ? s.setId && set
+        ? `A round of ${set.title}`
+        : 'A whole round from a recent set'
+      : s.mode === 'mixed'
+        ? `${s.count} mixed toss-ups`
+        : `${s.count} ${SUBJECT_LABELS[s.subject]} questions${s.concept ? `: ${conceptName(s.concept) ?? 'a concept'}` : s.topic ? `: ${topicById(s.topic)?.name ?? 'a topic'}` : ''}`;
+  return `${what} · ${aloud ? 'read aloud' : 'on screen'} · ${s.wpm} words a minute`;
+}
+
 function Setup({
   onStart,
   initial,
@@ -183,6 +229,8 @@ function Setup({
     wpm: data.settings.readingWpm,
     answerTimer: data.settings.answerTimer,
     level: '',
+    // Opened plainly (not from a plan item or a link that says what to practice): what the player chose last time.
+    ...(data.settings.soloPlayerId && Object.keys(initial).length === 0 ? rememberedSetup() : {}),
     ...initial,
   });
   const uploadLevels = useMemo(() => new Set(teamCatalog(data.packets).levels.values()), [data.packets]);
@@ -242,6 +290,8 @@ function Setup({
       if (items.length === 0) throw new Error('No questions match these settings. Try another topic or subject.');
       if (speech) settings = { ...settings, wpm: Math.min(MAX_SPEECH_WPM, settings.wpm) };
       updateSettings({ readingWpm: settings.wpm, answerTimer: settings.answerTimer });
+      // A round the player set up themselves is what Start offers next time (not one a plan item or a link began).
+      if (playerId && !autoStart && !s.packet && !s.concept) rememberSetup(s);
       onStart(items, settings);
     } catch (err) {
       setError(err instanceof Error ? err : new Error(String(err)));
@@ -264,12 +314,17 @@ function Setup({
   return (
     <div className="container narrow">
       <PageHeader title={playerId ? 'Solo practice' : 'Try a round'}>
-        <p>
-          Questions appear letter by letter, at the pace a moderator reads them, or are read aloud. Press <span className="kbd">Space</span> to
-          buzz, type your answer, and press <span className="kbd">Enter</span>. You get {TOSSUP_WINDOW_S} seconds after the reading to buzz and{' '}
-          {BONUS_WINDOW_S} seconds on bonuses. After you buzz, start typing within {ANSWER_START_S} seconds and finish within {ANSWER_TOTAL_S},
-          since NSB only allows a short natural pause before answering.
-        </p>
+        <Intro
+          more={
+            <p>
+              Questions appear letter by letter, at the pace a moderator reads them, or are read aloud. You get {TOSSUP_WINDOW_S} seconds after
+              the reading to buzz and {BONUS_WINDOW_S} seconds on bonuses. After you buzz, start typing within {ANSWER_START_S} seconds and finish
+              within {ANSWER_TOTAL_S}, since NSB only allows a short natural pause before answering.
+            </p>
+          }
+        >
+          Buzz with <span className="kbd">Space</span> (or tap Buzz), type your answer, and press <span className="kbd">Enter</span>.
+        </Intro>
         <p className="small">
           Also: <a href={href('/visual')}>Visual lab</a> (Finals visual bonuses) · <a href={href('/tiebreakers')}>Tiebreakers</a> (5 toss-up
           tiebreakers and shootouts)
@@ -280,12 +335,28 @@ function Setup({
       {error && <LoadError error={error} />}
       {index.data && (
         <div className="card stack">
+          {/* Start comes first, with what it will begin; the choices are below for when they need changing. */}
+          <div className="row start-row">
+            <button
+              className="btn btn-primary btn-big"
+              onClick={() => {
+                // Read aloud: let the page speak and play from this click on (Safari on iPads and iPhones).
+                speech?.prime();
+                void start();
+              }}
+              disabled={busy || (fromLibrary && !catalog.data)}
+            >
+              {busy ? 'Loading…' : 'Start'}
+            </button>
+            <span className="small muted">{summaryOf(s, set, s.packet ? (data.packets.find((p) => p.id === s.packet)?.title ?? 'A team packet') : null, !!speech)}</span>
+          </div>
           {!playerId && (
             <p className="small muted" style={{ margin: 0 }}>
               Just trying it: nothing is saved. <a href={signInHref()}>Sign in</a> and Rebound skips questions you have heard, puts misses in your review
               queue, and counts your answers in your progress.
             </p>
           )}
+          <h2 className="options-title">Options</h2>
           <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
             <legend className="label">Practice</legend>
             <label className="checkbox">
@@ -467,19 +538,6 @@ function Setup({
             <input type="checkbox" checked={s.answerTimer} onChange={(e) => setS({ ...s, answerTimer: e.target.checked })} />
             Time my answers: start typing within {ANSWER_START_S} seconds of buzzing and finish within {ANSWER_TOTAL_S}
           </label>
-          <div>
-            <button
-              className="btn btn-primary btn-big"
-              onClick={() => {
-                // Read aloud: let the page speak and play from this click on (Safari on iPads and iPhones).
-                speech?.prime();
-                void start();
-              }}
-              disabled={busy || (fromLibrary && !catalog.data)}
-            >
-              {busy ? 'Loading…' : 'Start'}
-            </button>
-          </div>
         </div>
       )}
     </div>

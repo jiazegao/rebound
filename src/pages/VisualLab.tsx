@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RevealingText } from '../components/play';
 import { FigureView } from '../components/Figure';
 import { AnswerBox, Choices, QuestionMeta, RichText } from '../components/QuestionView';
-import { Countdown, Notice, PageHeader, SubjectTag, useTicker } from '../components/ui';
+import { Countdown, Intro, Notice, PageHeader, SubjectTag, useTicker } from '../components/ui';
 import { Verdict } from '../components/Verdict';
 import { judgeAnswer, type JudgeResult } from '../core/judge/judge';
 import { FINALS_VISUAL_BONUS } from '../core/rules/presets';
@@ -778,11 +778,17 @@ export function VisualLabPage({ query }: { query: URLSearchParams }) {
         <a href={href('/try')}>Practice</a> /
       </p>
       <PageHeader title="Visual lab">
-        <p>
-          At the Finals, some double elimination rounds use visual bonuses: a figure on a monitor or a worksheet, and{' '}
-          {FINALS_VISUAL_BONUS.sec} seconds (the warning at {FINALS_VISUAL_BONUS.warningAtSec}) for the captain to begin the answer. DOE publishes no
-          samples, so practice here with figures Rebound draws, public-domain photos, and your team's own.
-        </p>
+        <Intro
+          more={
+            <p>
+              At the Finals, some double elimination rounds use visual bonuses: a figure on a monitor or a worksheet, and{' '}
+              {FINALS_VISUAL_BONUS.sec} seconds (the warning at {FINALS_VISUAL_BONUS.warningAtSec}) for the captain to begin the answer. DOE
+              publishes no samples.
+            </p>
+          }
+        >
+          Practice the Finals' visual bonuses with figures Rebound draws, public-domain photos, and your team's own.
+        </Intro>
       </PageHeader>
 
       <div className="grid-2" style={{ alignItems: 'start' }}>

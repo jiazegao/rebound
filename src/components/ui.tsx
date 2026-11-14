@@ -1,12 +1,48 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { SUBJECT_LABELS, type Subject } from '../core/schema';
 
+/** The site's name in the browser's tab, after the page's own. */
+const SITE_TITLE = 'Rebound';
+/** The tab's title on the home page (index.html has the same). */
+export const HOME_TITLE = 'Rebound · Science Bowl practice';
+
+/**
+ * Names the page in the browser's tab, history and bookmarks ("Team stats · Rebound"). Pages with a PageHeader get
+ * it from their heading; a page without one calls this itself.
+ */
+export function usePageTitle(title: string | null): void {
+  useEffect(() => {
+    if (title === null || typeof document === 'undefined') return;
+    document.title = title === HOME_TITLE ? title : `${title} · ${SITE_TITLE}`;
+  }, [title]);
+}
+
 export function PageHeader({ title, children }: { title: string; children?: ReactNode }) {
+  usePageTitle(title);
   return (
     <header className="page-header">
       <h1>{title}</h1>
       {children}
     </header>
+  );
+}
+
+/**
+ * A page's opening words: one line that says what the page is for, with the longer explanation behind a "How this
+ * works" toggle. Someone who opens the page every day should not have to scroll past a paragraph each time, least
+ * of all on a phone.
+ */
+export function Intro({ children, more, label = 'How this works' }: { children: ReactNode; more?: ReactNode; label?: string }) {
+  return (
+    <div className="intro">
+      <p>{children}</p>
+      {more && (
+        <details className="small">
+          <summary>{label}</summary>
+          <div className="intro-more">{more}</div>
+        </details>
+      )}
+    </div>
   );
 }
 
@@ -74,7 +110,7 @@ export function Stat({ label, value, hint }: { label: string; value: ReactNode; 
   return (
     <div className="card">
       <div className="muted small">{label}</div>
-      <div style={{ fontSize: '1.6rem', fontWeight: 800 }}>{value}</div>
+      <div className="stat-value">{value}</div>
       {hint && <div className="muted small">{hint}</div>}
     </div>
   );

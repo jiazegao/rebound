@@ -3,7 +3,7 @@ import { FigureView } from '../components/Figure';
 import { PlayBar, RevealingText, usePlayMode } from '../components/play';
 import { RichText } from '../components/QuestionView';
 import { loadQuestions, useAsync } from '../lib/library';
-import { Notice, useTicker } from '../components/ui';
+import { Notice, usePageTitle, useTicker } from '../components/ui';
 
 import { useSession } from '../lib/cloud';
 import { buildReading, revealedCount } from '../lib/reading';
@@ -144,6 +144,7 @@ export function RoomPage({ roomId }: { roomId: string }) {
   const buzz = snapshot?.buzz;
   const canBuzz = !!buzz && buzz.open && !!side && buzz.sides[side] && !buzz.winner;
   const matchRoom = snapshot?.kind === 'match';
+  usePageTitle(snapshot?.roomName || (matchRoom ? 'Online match' : 'Remote room'));
 
   // Space buzzes (unless typing in the team channel). A match room has its own screen, which does this itself.
   useEffect(() => {

@@ -365,6 +365,10 @@ p {
 .account-menu > summary::-webkit-details-marker {
   display: none;
 }
+/* On a phone the account shows as the name's first letter (see the phone rules below). */
+.account-initial {
+  display: none;
+}
 .account-menu[open] > summary {
   margin-bottom: 0;
   background: var(--surface-2);
@@ -443,6 +447,35 @@ p {
   display: grid;
   gap: 1rem;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+}
+/* A figure with its label (ui.tsx, Stat). */
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+/* A setup card: Start first, with what it will begin beside it; then the choices. */
+.start-row {
+  align-items: center;
+  gap: 0.75rem;
+}
+.options-title {
+  margin: 0.25rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  font-size: 1rem;
+}
+/* A page's opening line, with the longer explanation behind "How this works" (ui.tsx, Intro). */
+.intro > p {
+  margin: 0;
+}
+.intro > details {
+  margin-top: 0.35rem;
+}
+.intro-more {
+  max-width: 75ch;
+}
+.intro-more > p {
+  margin: 0.4rem 0 0;
 }
 .muted {
   color: var(--muted);
@@ -1287,13 +1320,67 @@ a.hbar-label {
   .player-grid {
     grid-template-columns: 1fr;
   }
+  /* A row of figures stays a row on a phone (three across; four make two rows of two), not one a row. */
+  .grid.stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  .grid.stats.four {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .grid.stats .card {
+    padding: 0.55rem 0.65rem;
+  }
+  .grid.stats .stat-value {
+    font-size: 1.3rem;
+  }
+  /*
+   * On a phone the header is one row, and stays one: the mark, the bar, and the account as an initial. (It follows
+   * the page down the screen, so three rows of it, the name, the bar and the account, took a sixth of the screen.)
+   * A bar too wide for a narrow phone scrolls sideways.
+   */
+  .app-header-inner {
+    flex-wrap: nowrap;
+    gap: 0.3rem;
+    padding: 0.3rem 12px;
+  }
+  .brand-name,
+  .brand-team {
+    display: none;
+  }
   .nav a,
   .nav-menu-button {
-    padding: 0.35rem 0.5rem;
-    font-size: 0.95rem;
+    padding: 0.55rem 0.3rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+  .nav-menu-button {
+    gap: 0.15rem;
   }
   .nav {
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-wrap: nowrap;
     gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar {
+    display: none;
+  }
+  .account-name {
+    display: none;
+  }
+  .account-initial {
+    display: inline;
+  }
+  .account-menu > summary {
+    display: grid;
+    place-items: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    padding: 0;
+    border-radius: 50%;
   }
   .score .points {
     font-size: 1.7rem;
@@ -1303,27 +1390,27 @@ a.hbar-label {
   }
   .header-end {
     margin-left: 0;
-    width: 100%;
-    justify-content: flex-start;
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-wrap: nowrap;
+    gap: 0.3rem;
+    justify-content: space-between;
   }
   /* On a phone a menu from the bar opens as a panel across the screen, just under the header. */
   .nav-menu {
     position: static;
   }
   .nav-menu-panel {
-    left: 16px;
-    right: 16px;
+    left: 12px;
+    right: 12px;
     top: calc(100% - 0.25rem);
     width: auto;
     max-width: none;
   }
-  .nav {
-    width: 100%;
-  }
-  /* The account menu wraps to the left edge on phones: open its panel rightwards. */
-  .account-menu-panel {
-    right: auto;
-    left: 0;
+  /* The pages in a menu keep their full size (the bar's own items are small to fit one row). */
+  .nav .nav-menu-panel a {
+    font-size: 0.95rem;
+    white-space: normal;
   }
 }
 

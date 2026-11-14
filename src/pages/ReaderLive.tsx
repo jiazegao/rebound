@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AnswerBox, Choices, ImportNotes, QuestionMeta, RichText } from '../components/QuestionView';
-import { Countdown, LoadError, Loading, Notice, useTicker } from '../components/ui';
+import { Countdown, LoadError, Loading, Notice, usePageTitle, useTicker } from '../components/ui';
 import { FigureView } from '../components/Figure';
 import { RemotePanel } from '../components/RemotePanel';
 import {
@@ -633,6 +633,7 @@ export function ReaderLive({ gameId }: { gameId: string }) {
   const data = useData();
   const game = data.games.find((g) => g.id === gameId);
   const round = useAsync(game ? `${game.packet.setId}|${game.packet.roundId}` : null, () => loadGameRound(game!.packet));
+  usePageTitle(game ? `${game.teams[0].name} vs ${game.teams[1].name}` : 'Reader console');
   if (!game) {
     return (
       <div className="container narrow">

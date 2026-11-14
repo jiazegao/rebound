@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { fileSlug } from '../components/Downloads';
 import { QuestionView } from '../components/QuestionView';
-import { Loading, Notice, PageHeader, SubjectTag } from '../components/ui';
+import { Intro, Loading, Notice, PageHeader, SubjectTag } from '../components/ui';
 import { UPLOAD_LEVEL_LABEL } from '../core/levels';
 import { toQuestionsDoc } from '../core/nsbjson';
 import {
@@ -722,10 +722,16 @@ function WriteList() {
         <a href={href('/team')}>Team</a> /
       </p>
       <PageHeader title="Write">
-        <p>
-          Strong teams write their own questions from their study materials. Write in DOE's format with automatic checks; the subject owner (or a
-          captain or coach) reviews each one; approved questions become team packets.
-        </p>
+        <Intro
+          more={
+            <p>
+              Strong teams write their own questions from their study materials. Checks run as you write, and the subject owner (or a captain or
+              coach) reviews each question.
+            </p>
+          }
+        >
+          Write your own questions in DOE's format; approved ones become team packets.
+        </Intro>
       </PageHeader>
       <div className="row" style={{ marginBottom: '1rem' }}>
         <a className="btn btn-primary" href={href('/write/new')}>

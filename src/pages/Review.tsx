@@ -416,7 +416,7 @@ export function ReviewAtAGlance() {
         </p>
       ) : (
         <>
-          <div className="grid" style={{ marginTop: '0.75rem' }}>
+          <div className="grid stats" style={{ marginTop: '0.75rem' }}>
             <Stat label="Due today" value={summary.dueToday} />
             <Stat label="Reviewed today" value={summary.reviewedToday} />
             <Stat label="In your queue" value={summary.total} />
@@ -554,7 +554,7 @@ export function ReviewPage({ query }: { query: URLSearchParams }) {
 
       {player && summary && stage !== 'loading' && (
         <>
-          <div className="grid" style={{ marginTop: '1rem' }}>
+          <div className="grid stats" style={{ marginTop: '1rem' }}>
             <Stat label="Due today" value={summary.dueToday} hint={summary.dueToday === 0 && summary.nextDue ? `Next: ${untilText(summary.nextDue, now)}` : undefined} />
             <Stat label="Reviewed today" value={summary.reviewedToday} />
             <Stat

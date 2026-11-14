@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { LoadError, Loading, Notice, PageHeader, SubjectTag } from '../components/ui';
+import { Intro, LoadError, Loading, Notice, PageHeader, SubjectTag } from '../components/ui';
 import { CURRENT_PRESET_IDS, currentPresets, DEFAULT_PRESET_ID, PRESETS } from '../core/rules/presets';
 import { CORE_SUBJECTS } from '../core/schema';
 import { dateTimeText } from '../lib/format';
@@ -126,13 +126,16 @@ export function ReaderSetup({ query }: { query: URLSearchParams }) {
   return (
     <div className="container">
       <PageHeader title="Reader console">
-        <p>
-          Set up a practice game. The reader runs it from this device; the game is saved to the team, and when it ends each player's answers go to
-          their own account (misses reach their review queue).
-        </p>
-        <p>
-          No reader? <a href={href('/online')}>Play online</a>: teammates play each other from their own devices, and Rebound reads and judges.
-        </p>
+        <Intro
+          more={
+            <p>
+              The game is saved to the team, and when it ends each player's answers go to their own account (misses reach their review queue).
+            </p>
+          }
+        >
+          Set up a practice game that a reader runs from this device. No reader? <a href={href('/online')}>Play online</a>: teammates play each
+          other from their own devices, and Rebound reads and judges.
+        </Intro>
       </PageHeader>
 
       {unfinished.length > 0 && (

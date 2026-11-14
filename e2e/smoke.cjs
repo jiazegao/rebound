@@ -708,7 +708,7 @@ async function main() {
 
     await step('Write: Ann writes a question, Ben (the physics owner) approves it in his own browser, and it becomes a team packet', async () => {
       await ann.goto(`${BASE}#/write`);
-      await see('Strong teams write their own questions');
+      await see('approved ones become team packets');
       await ann.getByRole('link', { name: 'New question' }).click();
       await ann.locator('#wq-subject').selectOption('physics');
       await ann.locator('#wq-stem').fill('In meters per second squared, what is the acceleration due to gravity near Earth’s surface, to two significant figures?');

@@ -107,7 +107,12 @@ function AccountMenu({ name }: { name: string }) {
   };
   return (
     <details className="account-menu">
-      <summary aria-label={`Account: ${name}`}>{name}</summary>
+      <summary aria-label={`Account: ${name}`}>
+        <span className="account-name">{name}</span>
+        <span className="account-initial" aria-hidden="true">
+          {(name.trim()[0] ?? '?').toUpperCase()}
+        </span>
+      </summary>
       <div className="account-menu-panel">
         <a href={href('/account')}>Account</a>
         <button type="button" className="btn btn-small" disabled={busy} onClick={() => void out()}>
@@ -303,7 +308,7 @@ export function App() {
         <div className="app-header-inner">
           <a className="brand" href={href(signedIn ? '/today' : '/')}>
             <span className="brand-mark" aria-hidden="true">R</span>
-            Rebound
+            <span className="brand-name">Rebound</span>
             {data.team && (
               <span className="brand-team muted small" title={data.team.name}>
                 · {data.team.name}

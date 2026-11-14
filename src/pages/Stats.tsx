@@ -1,4 +1,4 @@
-import { Notice, PageHeader } from '../components/ui';
+import { Intro, Notice, PageHeader } from '../components/ui';
 import { CORE_SUBJECTS, SUBJECT_LABELS } from '../core/schema';
 import { downloadFile, percent, toCsv } from '../lib/format';
 import { href } from '../lib/router';
@@ -67,10 +67,16 @@ export function StatsPage() {
         <a href={href('/team')}>Team</a> /
       </p>
       <PageHeader title="Team stats">
-        <p>
-          From {finished} finished game{finished === 1 ? '' : 's'} (Reader console games and online team matches), plus each player's solo practice.
-          Numbers based on a handful of questions move a lot; look for trends over several practices.
-        </p>
+        <Intro
+          more={
+            <p>
+              Games are Reader console games and online team matches. Numbers based on a handful of questions move a lot; look for trends over
+              several practices.
+            </p>
+          }
+        >
+          From {finished} finished game{finished === 1 ? '' : 's'}, plus each player's solo practice.
+        </Intro>
         {loading && <p className="small muted">Loading teammates' practice…</p>}
         {error && <p className="small" style={{ color: 'var(--bad)' }}>Some teammates' practice could not be loaded: {error}</p>}
         <button className="btn" onClick={exportCsv} disabled={lines.length === 0}>

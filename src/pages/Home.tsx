@@ -1,8 +1,10 @@
 import { CURRENT_SEASON } from '../core/rules/presets';
+import { HOME_TITLE, usePageTitle } from '../components/ui';
 import { useSession } from '../lib/cloud';
 import { href } from '../lib/router';
 
 export function Home() {
+  usePageTitle(HOME_TITLE);
   const session = useSession();
   const signedIn = session.status !== 'signed-out';
   return (

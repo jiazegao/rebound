@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { LoadError, Loading, PageHeader } from '../components/ui';
+import { Intro, LoadError, Loading, PageHeader } from '../components/ui';
 import { useTip } from '../components/VizTip';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type Catalog, type CoreSubject } from '../core/schema';
 import { topicsForSubject } from '../core/taxonomy';
@@ -103,10 +103,16 @@ export function TopicsPage() {
         <a href={href('/library')}>Library</a> /
       </p>
       <PageHeader title="Topics">
-        <p>
-          How often each topic comes up across the DOE sample sets, toss-ups and bonuses together, so you can see what to learn first. Topics come
-          from keyword rules, so a few questions sit in a neighboring topic. Select a topic to drill it.
-        </p>
+        <Intro
+          more={
+            <p>
+              Toss-ups and bonuses are counted together, so you can see what to learn first. Topics come from keyword rules, so a few questions sit
+              in a neighboring topic.
+            </p>
+          }
+        >
+          How often each topic comes up across the DOE sample sets. Select a topic to drill it.
+        </Intro>
       </PageHeader>
       {catalog.loading && <Loading what="Loading the topic list" />}
       {catalog.error && <LoadError error={catalog.error} />}
