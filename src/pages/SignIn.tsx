@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Loading, Notice, PageHeader } from '../components/ui';
 import { MAX_NAME_CHARS } from '../core/accounts';
 import { finishEmailSignIn, loadAuthConfig, signInWithGoogle, startEmailSignIn, type SignInResult, type Signup } from '../lib/account';
-import { normalizeServerUrl, SERVER_URL, serverUrl, setServerUrl } from '../lib/api';
+import { keepsCopy, normalizeServerUrl, SERVER_URL, serverUrl, setKeepsCopy, setServerUrl } from '../lib/api';
 import { useSession } from '../lib/cloud';
 import { useAsync } from '../lib/library';
 import { href, navigate } from '../lib/router';
@@ -235,6 +235,32 @@ function safeNext(next: string | null): string | null {
   return next && next.startsWith('/') && !next.startsWith('//') && !next.startsWith('/signin') ? next : null;
 }
 
+/**
+ * Rebound keeps a copy of a signed-in player's practice on the device, so it opens at once. On a computer other
+ * people use, the player can say not to (the Account page has the same switch once signed in).
+ */
+function SharedComputer() {
+  const [shared, setShared] = useState(() => !keepsCopy());
+  return (
+    <div>
+      <label className="checkbox">
+        <input
+          type="checkbox"
+          checked={shared}
+          onChange={(e) => {
+            setShared(e.target.checked);
+            setKeepsCopy(!e.target.checked);
+          }}
+        />{' '}
+        This is a shared computer
+      </label>
+      <p className="small muted" style={{ margin: '0.15rem 0 0' }}>
+        Rebound keeps a copy of your practice on your device so it opens at once; signing out deletes it. On a shared computer it keeps none.
+      </p>
+    </div>
+  );
+}
+
 export function SignInPage({ query }: { query: URLSearchParams }) {
   const session = useSession();
   const code = query.get('code');
@@ -321,6 +347,7 @@ export function SignInPage({ query }: { query: URLSearchParams }) {
             )}
             {email && <EmailSignIn next={next} busy={busy} />}
             {config.data && !google && !email && <Notice>Signing in is turned off on this server right now. Try again later.</Notice>}
+            {(google || email) && <SharedComputer />}
             {busy && <Loading what="Signing you in" />}
           </div>
         )

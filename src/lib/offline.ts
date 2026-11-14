@@ -1,6 +1,7 @@
 /**
  * The service worker (src/sw/sw-template.js) keeps the app itself and the public question files cached, so pages
- * open quickly. A player's practice is never kept on the device: it needs a connection to Rebound's server.
+ * open quickly. It keeps nothing about a player: their practice is on Rebound's server, with a copy in the browser's
+ * own storage while they are signed in (lib/deviceCopy.ts), which the service worker never touches.
  */
 
 /** Register the service worker in the published site (not in the dev server, where it would cache stale code). */

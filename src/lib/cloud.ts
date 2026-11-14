@@ -6,7 +6,11 @@
  * - Pages change data only through store.update(). Shortly after a change, the records it touched go to the server:
  *   the player's own to /api/me/records, the team's to /api/teams/:id/records, and changed settings to their own
  *   endpoints. A failed send is retried; while the server cannot be reached, a banner says the last change was not
- *   saved, and sending goes on until it works. There is no offline mode: closing the page loses unsent changes.
+ *   saved, and sending goes on until it works.
+ * - Unless the player chose otherwise, a copy of all this is kept on the device (deviceCopy.ts): the next visit opens
+ *   from it at once and asks the server only for what changed since, and a change that was not sent before the page
+ *   closed goes then. Without the copy (a shared computer), nothing about the player is kept on the device but the
+ *   session token, each visit loads everything, and closing the page loses unsent changes.
  * - While the page is visible, what changed since the last look (the profile, the team, both sets of records) is
  *   fetched in one request: every minute while the player is doing something, every five when they are not, and
  *   when they come back to the page. Teammates' work and the player's other devices show up that way, and new game
@@ -51,6 +55,7 @@ import {
   type LocalRecord,
   type SentUserCollection,
 } from './records';
+import { deleteDeviceCopy, indexedDbCopy, COPY_VERSION, SOLO_SETUP_KEY, type CopyRow, type CopyState, type CopyStore } from './deviceCopy';
 import { applyAnswers, emptyData, getData, replaceData, subscribeStore, update, type AppData, type AppSettings } from './store';
 
 /* ---------------- what pages see ---------------- */
@@ -218,6 +223,191 @@ interface Books {
 }
 
 let books: Books | null = null;
+
+/* ---------------- the copy on the device ---------------- */
+
+/** Records whose row in the device's copy is out of date: what is here, or what the server has, changed. */
+const stale = new Set<string>();
+
+/** What the server has of each record. Every change is noted for the device's copy. */
+class Known extends Map<string, string> {
+  set(key: string, fp: string): this {
+    if (this.get(key) !== fp) stale.add(key);
+    return super.set(key, fp);
+  }
+}
+
+/** Where the copy is kept: the browser's IndexedDB, or what a test puts in its place. */
+let copyFactory: () => CopyStore | null = indexedDbCopy;
+/** The copy, when this session keeps one (and the browser can). */
+let copy: CopyStore | null = null;
+/**
+ * Whether this tab writes the copy. With several tabs open only one does (the first, then whichever is left), so
+ * the copy is always one tab's whole view and never a mix of two.
+ */
+let copyWriter = true;
+/** Copy writes run one after another, in the order they were asked for. */
+let copyWrites: Promise<void> = Promise.resolve();
+let copyTimer: ReturnType<typeof setTimeout> | undefined;
+/** The records that were waiting to be sent when last looked at (their rows change when they are sent, or change back). */
+let lastWaiting = new Set<string>();
+/** A copy this old is not trusted: the account loads from the server and the copy starts again. */
+const MAX_COPY_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+const COPY_DELAY_MS = 250;
+
+/** For tests: keep the copy somewhere else (null: where the browser keeps it). */
+export function useCopyStore(factory: (() => CopyStore | null) | null): void {
+  copyFactory = factory ?? indexedDbCopy;
+}
+
+function openCopy(): void {
+  if (!api.keepsCopy()) copy = null;
+  else copy ??= copyFactory();
+}
+
+/** A write to the copy failed (the device is out of room, or storage was switched off): go on without it. */
+function dropCopy(store: CopyStore): void {
+  if (copy === store) copy = null;
+  void store.wipe().catch(() => undefined);
+}
+
+function copyState(b: Books): CopyState | null {
+  if (!session.user) return null;
+  const d = getData();
+  return {
+    v: COPY_VERSION,
+    me: b.me,
+    teamId: b.teamId,
+    userCursor: b.userCursor,
+    teamCursor: b.teamCursor,
+    user: session.user,
+    team: session.team,
+    settings: d.settings,
+    localTeam: d.team,
+    settingsFp: b.settingsFp,
+    teamFp: b.teamFp,
+    savedAt: Date.now(),
+  };
+}
+
+/** A record's row for the copy: what is here and what the server has, or null when neither has it. */
+function copyRow(d: AppData, b: Books, key: string): CopyRow | null {
+  const c = key.slice(0, key.indexOf('/'));
+  const id = key.slice(c.length + 1);
+  const known = b.known.get(key) ?? DELETED;
+  if (c === 'answers') {
+    const body = b.answers.get(id);
+    return body ? { k: key, c, id, has: true, body, known, rev: b.answerRevs.get(id) } : null;
+  }
+  const local = isField(c) ? localField(d, c, b.me).get(key) : undefined;
+  if (!local && known === DELETED) return null;
+  return { k: key, c, id, has: !!local, body: local ? local.r.body : null, known };
+}
+
+/** Write the whole copy again (after loading everything from the server, or when this tab takes over the writing). */
+function copyEverything(b: Books): void {
+  const store = copy;
+  const state = copyState(b);
+  if (!store || !copyWriter || !state) return;
+  clearTimeout(copyTimer);
+  stale.clear();
+  const d = getData();
+  const keys = new Set<string>(b.known.keys());
+  const fields: Field[] = [...SENT_USER_COLLECTIONS, ...(b.teamId ? TEAM_COLLECTIONS : [])];
+  for (const field of fields) for (const key of localField(d, field, b.me).keys()) keys.add(key);
+  for (const id of b.answers.keys()) keys.add(recordKey('answers', id));
+  const rows: CopyRow[] = [];
+  for (const key of keys) {
+    const row = copyRow(d, b, key);
+    if (row) rows.push(row);
+  }
+  copyWrites = copyWrites.then(() => store.replace(state, rows)).catch(() => dropCopy(store));
+}
+
+/** Write the rows that changed, shortly (several changes in a row go together). */
+function copySoon(): void {
+  if (!copy || !copyWriter || !books) return;
+  clearTimeout(copyTimer);
+  copyTimer = setTimeout(copyChanges, COPY_DELAY_MS);
+}
+
+function copyChanges(): void {
+  clearTimeout(copyTimer);
+  const b = books;
+  const store = copy;
+  if (!b || !store || !copyWriter || session.status !== 'ready') return;
+  const state = copyState(b);
+  if (!state) return;
+  const d = getData();
+  const put: CopyRow[] = [];
+  const remove: string[] = [];
+  for (const key of stale) {
+    const row = copyRow(d, b, key);
+    if (row) put.push(row);
+    else remove.push(key);
+  }
+  stale.clear();
+  copyWrites = copyWrites.then(() => store.patch(state, put, remove)).catch(() => dropCopy(store));
+}
+
+/** The records waiting to be sent (and those that were, last time) have rows to write: note them. */
+function noteWaiting(p: Pending): void {
+  if (!copy) return;
+  const waiting = new Set<string>();
+  for (const ch of p.user) waiting.add(recordKey(ch.c, ch.id));
+  for (const ch of p.team) waiting.add(recordKey(ch.c, ch.id));
+  for (const key of waiting) stale.add(key);
+  for (const key of lastWaiting) stale.add(key);
+  lastWaiting = waiting;
+  copySoon();
+}
+
+/** Signed out (or another account now): nothing of the player's stays on the device. */
+function forgetDevice(): void {
+  clearTimeout(copyTimer);
+  stale.clear();
+  lastWaiting = new Set();
+  const store = copy;
+  copy = null;
+  copyWrites = copyWrites.then(() => (store ? store.wipe() : deleteDeviceCopy())).catch(() => undefined);
+  try {
+    globalThis.localStorage?.removeItem(SOLO_SETUP_KEY);
+  } catch {
+    /* storage blocked: there is nothing kept to remove */
+  }
+}
+
+/** Whether this session keeps a copy of the account on this device. */
+export function keepsDeviceCopy(): boolean {
+  return api.keepsCopy();
+}
+
+/** Start or stop keeping a copy of the account on this device (the Account page's switch). Stopping deletes it. */
+export async function setDeviceCopy(keep: boolean): Promise<void> {
+  api.setKeepsCopy(keep);
+  if (keep) {
+    openCopy();
+    if (books && session.status === 'ready') copyEverything(books);
+  } else {
+    clearTimeout(copyTimer);
+    stale.clear();
+    const store = copy;
+    copy = null;
+    copyWrites = copyWrites.then(() => (store ? store.wipe() : deleteDeviceCopy())).catch(() => undefined);
+  }
+  await copyWrites;
+  emit();
+}
+
+/** Resolves once every write to the device's copy asked for so far is done. For tests. */
+export async function copySettled(): Promise<void> {
+  if (copyTimer !== undefined) copyChanges();
+  for (;;) {
+    const tail = copyWrites;
+    await tail;
+    if (tail === copyWrites) return;
+  }
+}
 
 /** Whether the session on this device is still this player's (another tab may have signed in as someone else). */
 const ownSession = (b: Books): boolean => api.sessionToken()?.startsWith(`${b.me}.`) ?? false;
@@ -410,6 +600,8 @@ async function flushOnce(): Promise<void> {
   try {
     for (let round = 0; round < 20; round++) {
       const p = pendingChanges(getData(), b);
+      // What is waiting to go is written to the device's copy first: if the page closes now, it goes next time.
+      noteWaiting(p);
       if (!p.user.length && !p.team.length && !p.settings && !p.teamSettings) break;
       if (p.user.length) await sendRecords(b, 'user', p.user, e);
       if (e !== epoch) return;
@@ -450,6 +642,7 @@ async function flushOnce(): Promise<void> {
     if (e !== epoch) return;
     failures = 0;
     const left = pendingChanges(getData(), b);
+    noteWaiting(left);
     setConnection({ failing: false, error: null, unsaved: left.user.length + left.team.length > 0 || !!left.settings || !!left.teamSettings });
   } catch (err) {
     if (e !== epoch) return;
@@ -611,6 +804,8 @@ async function refreshOnce(): Promise<void> {
       if (fromTeam.length) quietly(() => update((d) => applyTeamRecords(d, fromTeam)));
     }
     applyNewAnswers(b);
+    // What arrived (and how far the cursors have moved) goes into the device's copy.
+    copySoon();
     // The server answered: anything still waiting goes now.
     const left = pendingChanges(getData(), b);
     if (left.user.length || left.team.length || left.settings || left.teamSettings) scheduleFlush(0);
@@ -681,7 +876,7 @@ async function load(message: string | null = null): Promise<void> {
       teamId: team?.team.id ?? null,
       userCursor: mine.cursor,
       teamCursor: theirs.cursor,
-      known: new Map(),
+      known: new Known(),
       answers: new Map(),
       answerRevs: new Map(),
       settingsFp: '',
@@ -704,6 +899,10 @@ async function load(message: string | null = null): Promise<void> {
     quietly(() => replaceData(d));
     setSession({ status: 'ready', user: me.user, team, message });
     setConnection({ unsaved: false, failing: false, error: null });
+    // Everything came from the server: the device's copy starts again from it.
+    openCopy();
+    lastWaiting = new Set();
+    copyEverything(b);
     applyNewAnswers(b);
     scheduleFlush(0);
   } catch (err) {
@@ -719,6 +918,76 @@ async function load(message: string | null = null): Promise<void> {
   }
 }
 
+/**
+ * Open from the copy on the device, if this session has one: the player's practice is on screen at once, and the
+ * server is then asked only for what changed since. False when there is no usable copy (the account then loads
+ * from the server as on a first visit).
+ */
+async function restore(): Promise<boolean> {
+  const token = api.sessionToken();
+  openCopy();
+  const store = copy;
+  if (!token || !store) return false;
+  let saved: Awaited<ReturnType<CopyStore['read']>>;
+  try {
+    saved = await store.read();
+  } catch {
+    dropCopy(store);
+    return false;
+  }
+  const state = saved.state;
+  // Someone else's copy, one from another version of the site, or one too old to trust: it goes.
+  if (!state || state.v !== COPY_VERSION || !token.startsWith(`${state.me}.`) || Date.now() - state.savedAt > MAX_COPY_AGE_MS) {
+    if (state || saved.rows.length) await store.wipe().catch(() => undefined);
+    return false;
+  }
+  if (api.sessionToken() !== token) return false;
+  epoch += 1;
+  clearTimers();
+  localCache.clear();
+  failures = 0;
+  const b: Books = {
+    me: state.me,
+    teamId: state.teamId,
+    userCursor: state.userCursor,
+    teamCursor: state.teamCursor,
+    known: new Known(),
+    answers: new Map(),
+    answerRevs: new Map(),
+    settingsFp: state.settingsFp,
+    teamFp: state.teamFp,
+  };
+  const d = emptyData();
+  d.settings = { ...state.settings, soloPlayerId: state.me };
+  d.players = playersOf(state.user, state.team);
+  d.team = state.teamId ? state.localTeam : null;
+  const mine: RecordOut[] = [];
+  const theirs: RecordOut[] = [];
+  for (const row of saved.rows) {
+    b.known.set(row.k, row.known);
+    if (row.c === 'answers' && typeof row.rev === 'number') b.answerRevs.set(row.id, row.rev);
+    if (!row.has) continue;
+    if ((TEAM_COLLECTIONS as readonly string[]).includes(row.c)) theirs.push({ c: row.c, id: row.id, body: row.body, rev: row.rev ?? 0 });
+    else mine.push({ c: row.c, id: row.id, body: row.body, rev: row.rev ?? 0 });
+  }
+  applyUserRecords(d, b.me, mine, b.answers);
+  if (b.teamId) applyTeamRecords(d, theirs);
+  // The rows are as the copy has them: nothing to write until something changes.
+  stale.clear();
+  lastWaiting = new Set();
+  books = b;
+  // Not refreshed yet: the look at the server below is the first.
+  lastRefresh = 0;
+  quietly(() => replaceData(d));
+  setSession({ status: 'ready', user: state.user, team: state.team, message: null });
+  const waiting = pendingChanges(d, b);
+  setConnection({ unsaved: waiting.user.length + waiting.team.length > 0 || !!waiting.settings || !!waiting.teamSettings, failing: false, error: null });
+  applyNewAnswers(b);
+  scheduleFlush(0);
+  void refreshNow();
+  return true;
+}
+
 /* ---------------- starting, signing in and out ---------------- */
 
 /** Forget the player's data on this page (signed out here, in another tab, or by the server). */
@@ -731,6 +1000,7 @@ export function endSession(message: string | null): void {
   quietly(() => replaceData(emptyData()));
   setSession({ status: 'signed-out', user: null, team: null, message });
   setConnection({ unsaved: false, failing: false, error: null, refused: [] });
+  forgetDevice();
 }
 
 /** After signing in: keep the session and load the account. */
@@ -769,12 +1039,18 @@ export async function flushNow(): Promise<boolean> {
 
 /** Put a fresh copy of the team (after a coach changes members or the invite link) into the session. */
 export function takeTeamResponse(t: TeamResponse): void {
-  if (books && books.teamId === t.team.id) takeTeam(books, t);
+  if (books && books.teamId === t.team.id) {
+    takeTeam(books, t);
+    copySoon();
+  }
 }
 
 /** Put a fresh copy of the profile (after the player changes their name or subjects) into the session. */
 export function takeUserProfile(user: UserProfile): void {
-  if (books && books.me === user.id) takeProfile(books, user);
+  if (books && books.me === user.id) {
+    takeProfile(books, user);
+    copySoon();
+  }
 }
 
 let started = false;
@@ -808,9 +1084,18 @@ export function startCloud(): void {
       const every = Date.now() - lastInput < IDLE_AFTER_MS ? ACTIVE_REFRESH_MS : IDLE_REFRESH_MS;
       if (Date.now() - lastRefresh >= every) void refreshNow();
     }, REFRESH_CHECK_MS);
+    // Leaving the page (another tab, the phone's home screen, closing it): what was just changed goes into the
+    // device's copy now, not after the usual short wait, so it is there if the page never comes back.
+    const leaving = () => {
+      if (!books || session.status !== 'ready' || !copy) return;
+      noteWaiting(pendingChanges(getData(), books));
+      copyChanges();
+    };
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') wake();
+      else leaving();
     });
+    window.addEventListener('pagehide', leaving);
     window.addEventListener('online', wake);
     // Signing in or out in another tab (an email link opens in a new one) carries over to this one.
     window.addEventListener('storage', (event) => {
@@ -825,9 +1110,26 @@ export function startCloud(): void {
       event.returnValue = '';
     });
   }
+  // With several tabs open, one writes the device's copy: the first, then whichever is left when it closes.
+  const locks = typeof navigator === 'undefined' ? undefined : navigator.locks;
+  if (locks?.request) {
+    copyWriter = false;
+    void locks
+      .request('rebound-device-copy', () => {
+        copyWriter = true;
+        if (books && session.status === 'ready') copyEverything(books);
+        return new Promise<never>(() => undefined);
+      })
+      .catch(() => {
+        copyWriter = true;
+      });
+  }
   if (api.sessionToken()) {
     // Pages for signed-in players show "Loading your account" from the first render, not a sign-in prompt.
     setSession({ status: 'loading' });
-    void queue(() => load());
+    // From the copy on the device when there is one (then only what changed is fetched); from the server otherwise.
+    void queue(async () => {
+      if (!(await restore())) await load();
+    });
   } else setSession({ status: 'signed-out' });
 }

@@ -19,6 +19,7 @@ import { buildReading, lettersPerMinute, readingDurationMs, revealedCount, wpmFo
 import { href } from '../lib/router';
 import { signInHref } from '../components/Gates';
 import { addAttempt, completeAssignment, completePlanItem, getData, markSeen, updateSettings, useData } from '../lib/store';
+import { SOLO_SETUP_KEY } from '../lib/deviceCopy';
 import { packetRound } from '../lib/packets';
 
 const TOSSUP_WINDOW_S = 5;
@@ -156,7 +157,7 @@ function conceptName(id: string): string | null {
  * remembered on the device so Start at the top of the page begins the same kind of practice again. A particular set
  * and round are not remembered: the player has heard that round now. Signed out, nothing is kept on the device.
  */
-const SETUP_KEY = 'rebound-solo-setup';
+const SETUP_KEY = SOLO_SETUP_KEY;
 
 function rememberedSetup(): Partial<Settings> {
   try {

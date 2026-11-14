@@ -61,8 +61,10 @@ export function CoachesPage() {
           lineups, assignments, packets, written questions, concept cards and visual questions.
         </li>
         <li>
-          All of it is kept on Rebound's server, which runs on Cloudflare, not on the device: a laptop or phone keeps only a sign-in token. So
-          practice needs an internet connection, and a shared laptop shows nothing of anyone's once they sign out.
+          All of it is kept on Rebound's server, which runs on Cloudflare. A laptop or phone keeps a sign-in token and, so the site opens at
+          once, a copy of that player's own practice and their team's shared work. Signing out deletes the copy, so a shared laptop shows nothing
+          of anyone's once they sign out; players on a shared computer can also tick "This is a shared computer" when they sign in, and it then
+          keeps no copy at all. Saving practice needs an internet connection.
         </li>
         <li>
           Teammates see each other's stats: game results, accuracy and practice activity. A player's review queue and daily plan stay private.
@@ -114,7 +116,9 @@ export function ItStaffPage() {
             ''
           )}
           : HTTPS requests for accounts and practice, and a secure WebSocket (<code>wss://</code>) during remote rooms and online matches. Allow that
-          host, including WebSocket upgrades. Practice needs this connection: nothing about a player is kept on the device.
+          host, including WebSocket upgrades. Saving practice needs this connection. A signed-in browser also keeps a copy of the player's
+          practice (in the browser's own storage for this site, IndexedDB) so pages open at once; signing out deletes it, and "This is a shared
+          computer" on the sign-in page keeps none.
         </li>
         <li>
           Sign-in uses Google: the sign-in page (and only that page) loads Google's sign-in script from <code>accounts.google.com</code> and opens
@@ -182,9 +186,10 @@ export function AboutPage() {
       <p>
         <strong>What is kept.</strong> Your account holds your email address, the name you choose, when you confirmed you are 13 or older, your
         subjects, graduation year and settings, and your practice: answers, review queue, daily plan, which questions you have heard and what you
-        have read, finished assignments and problem reports. It is kept on Rebound's server (on Cloudflare), not on your device; your device keeps
-        only a sign-in token, which lasts until you sign out or for 180 days of not using it. Your team keeps its own games, lineups, packets and
-        other shared work, and a copy of each member's name and subjects.
+        have read, finished assignments and problem reports. It is kept on Rebound's server (on Cloudflare). Your device keeps a sign-in token,
+        which lasts until you sign out or for 180 days of not using it, and a copy of your practice and your team's shared work, so the site
+        opens at once; signing out deletes the copy, and you can turn it off on the Account page (or with "This is a shared computer" when you
+        sign in). Your team keeps its own games, lineups, packets and other shared work, and a copy of each member's name and subjects.
       </p>
       <p>
         <strong>Who sees it.</strong> Your teammates see your stats (game results, accuracy and practice activity), and you see theirs. Your review

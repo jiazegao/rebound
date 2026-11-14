@@ -37,6 +37,8 @@ interface Saved {
   token?: string;
   /** Only for builds without a server address. */
   server?: string;
+  /** False when the player chose to keep no copy of their account on this device (a shared computer). */
+  copy?: false;
 }
 
 function readSaved(): Saved {
@@ -46,6 +48,7 @@ function readSaved(): Saved {
     return {
       ...(typeof parsed.token === 'string' ? { token: parsed.token } : {}),
       ...(typeof parsed.server === 'string' ? { server: parsed.server } : {}),
+      ...(parsed.copy === false ? { copy: false as const } : {}),
     };
   } catch {
     return {};
@@ -58,7 +61,8 @@ let saved: Saved = readSaved();
 function writeSaved(next: Saved): void {
   saved = next;
   try {
-    if (next.token || next.server) globalThis.localStorage?.setItem(SESSION_KEY, JSON.stringify(next));
+    // (A "shared computer" choice made before signing in is kept too: an emailed sign-in link opens in another tab.)
+    if (next.token || next.server || next.copy === false) globalThis.localStorage?.setItem(SESSION_KEY, JSON.stringify(next));
     else globalThis.localStorage?.removeItem(SESSION_KEY);
   } catch {
     /* storage blocked: the session lasts until the tab closes */
@@ -94,7 +98,21 @@ export function sessionToken(): string | null {
 }
 
 export function setSessionToken(token: string | null): void {
-  writeSaved({ ...(saved.server ? { server: saved.server } : {}), ...(token ? { token } : {}) });
+  // The choice about a copy on the device belongs to the session: signing out forgets it with the token.
+  writeSaved({ ...(saved.server ? { server: saved.server } : {}), ...(token ? { token, ...(saved.copy === false ? { copy: false as const } : {}) } : {}) });
+}
+
+/**
+ * Whether this session keeps a copy of the account on the device (lib/deviceCopy.ts). It does unless the player
+ * said otherwise: with the "shared computer" box when signing in, or on the Account page.
+ */
+export function keepsCopy(): boolean {
+  return saved.copy !== false;
+}
+
+export function setKeepsCopy(keep: boolean): void {
+  const { copy: _copy, ...rest } = saved;
+  writeSaved(keep ? rest : { ...rest, copy: false });
 }
 
 const sessionEndedListeners = new Set<() => void>();
