@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { SoundCheck, useMatchSpeech, type MatchSpeech } from '../components/MatchSpeech';
+import { PlayBar, usePlayMode } from '../components/play';
 import { RichText } from '../components/QuestionView';
 import { Notice, useTicker } from '../components/ui';
 import { cancelRoom } from '../lib/api';
@@ -59,6 +60,9 @@ export function MatchRoom({ client, snapshot, roomId }: { client: RoomClient; sn
     return () => clearTimeout(t);
   }, [snapshot.error, client]);
 
+  // While the match is played, a phone's screen is the game's (the header and footer step aside).
+  usePlayMode(match?.status === 'playing');
+
   // Space buzzes, unless typing.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -90,6 +94,12 @@ export function MatchRoom({ client, snapshot, roomId }: { client: RoomClient; sn
       <div className="row spread" style={{ marginBottom: '0.5rem' }}>
         <span className="small muted">
           {snapshot.roomName || 'Online match'} · {format === 'teams' ? 'team vs team' : 'everyone for themselves'} · {snapshot.connected ? 'connected' : 'connecting…'}
+          {match.status === 'playing' && (
+            <>
+              {' · '}
+              <a href={href('/online')}>Leave</a>
+            </>
+          )}
         </span>
         {format === 'teams' ? (
           <span className="row small" style={{ gap: '1rem' }}>
@@ -164,6 +174,24 @@ export function MatchRoom({ client, snapshot, roomId }: { client: RoomClient; sn
           </article>
 
           <div className="stack" style={{ marginTop: '1rem' }}>
+            {/* The Buzz button comes first and keeps its place: the question above has its full height from the
+                first letter, and everything that comes and goes (clocks, who is answering, a close call) is below
+                it. On a phone it is pinned to the bottom of the screen; while this player types, it steps aside. */}
+            {match.status === 'playing' && !answeringTossup && !answeringBonus && (
+              <PlayBar>
+                <button
+                  className="btn btn-primary btn-big room-buzz"
+                  onClick={() => {
+                    speech.prime();
+                    client.buzz();
+                  }}
+                  disabled={!canBuzz}
+                  aria-disabled={!canBuzz}
+                >
+                  Buzz <span className="kbd">Space</span>
+                </button>
+              </PlayBar>
+            )}
             {view.window && !match.answering && (
               <p className="small">{view.window.seconds - (serverNow - view.window.openedAt) / 1000 > 0 ? `${seconds(view.window.seconds * 1000 - (serverNow - view.window.openedAt))} left` : 'Time'}</p>
             )}
@@ -207,19 +235,6 @@ export function MatchRoom({ client, snapshot, roomId }: { client: RoomClient; sn
 
             {match.mode === 'speech' && readsText.length > 0 && match.status === 'playing' && (
               <p className="small muted">Seeing the text instead (no voice on their device): {readsText.map((m) => m.name).join(', ')}.</p>
-            )}
-            {match.status === 'playing' && (
-              <button
-                className="btn btn-primary btn-big room-buzz"
-                onClick={() => {
-                  speech.prime();
-                  client.buzz();
-                }}
-                disabled={!canBuzz}
-                aria-disabled={!canBuzz}
-              >
-                Buzz <span className="kbd">Space</span>
-              </button>
             )}
             {!side && match.status === 'playing' && <p className="small muted">You are watching this match.</p>}
 
@@ -317,7 +332,8 @@ function Standings({ standings, myId }: { standings: NonNullable<import('../lib/
               <th>Player</th>
               <th>Points</th>
               <th>Right</th>
-              <th>Wrong interrupts</th>
+              {/* Free to wrap: on a phone the four columns then fit without scrolling sideways. */}
+              <th style={{ whiteSpace: 'normal' }}>Wrong interrupts</th>
             </tr>
           </thead>
           <tbody>
@@ -388,6 +404,15 @@ function Lobby({ client, snapshot, isHost, roomId, speech }: { client: RoomClien
     speech?.prime();
     client.chooseSide(s);
   };
+
+  // A free-for-all has one way to play, so opening its link joins the game; the player can step back to watching.
+  // (A match read aloud keeps its Join button: that tap is what lets a browser play sound. A team match has to ask
+  // which side.)
+  const [watching, setWatching] = useState(false);
+  const joinsByItself = match.format === 'ffa' && !speech && snapshot.connected && !!me && me.side === null && !watching;
+  useEffect(() => {
+    if (joinsByItself) client.chooseSide('A');
+  }, [joinsByItself, client]);
   const readsText = (m: RoomMember) => speech && m.readsText && <span className="small muted"> (sees the text: no voice on their device)</span>;
 
   const cancel = async () => {
@@ -464,8 +489,14 @@ function Lobby({ client, snapshot, isHost, roomId, speech }: { client: RoomClien
               </li>
             ))}
           </ul>
-          {me?.side ? null : (
-            <button className="btn btn-primary" onClick={() => join('A')}>
+          {me?.side || joinsByItself ? null : (
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setWatching(false);
+                join('A');
+              }}
+            >
               Join the game
             </button>
           )}
@@ -476,7 +507,13 @@ function Lobby({ client, snapshot, isHost, roomId, speech }: { client: RoomClien
 
       <div className="row">
         {me?.side && (
-          <button className="btn btn-ghost" onClick={() => client.chooseSide(null)}>
+          <button
+            className="btn btn-ghost"
+            onClick={() => {
+              setWatching(true);
+              client.chooseSide(null);
+            }}
+          >
             Just watch
           </button>
         )}

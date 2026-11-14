@@ -1,5 +1,6 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AiExplain } from '../components/AiExplain';
+import { PlayBar, RevealingText, usePlayMode } from '../components/play';
 import { saveReading, savedReading, SoloSoundCheck, useSoloSpeech, type ReadingChoice, type ReadingPlan, type SoloSpeech } from '../components/SoloSpeech';
 import { AnswerBox, Choices, Concepts, QuestionMeta, RichText } from '../components/QuestionView';
 import { Countdown, LoadError, Loading, Notice, PageHeader, useTicker } from '../components/ui';
@@ -14,7 +15,7 @@ import { heardLedger, usePlayerModel } from '../lib/learning';
 import { catalogById, loadCatalog, loadConceptIndex, loadQuestions, loadSetById, setGroups, setLabel, useCatalog, useIndex, useTeamLevel } from '../lib/library';
 import { topicById } from '../core/taxonomy';
 import { MAX_SPEECH_WPM } from '../core/speech';
-import { buildReading, lettersPerMinute, readingDurationMs, revealedCount, splitRevealed, wpmFor, type Reading } from '../lib/reading';
+import { buildReading, lettersPerMinute, readingDurationMs, revealedCount, wpmFor, type Reading } from '../lib/reading';
 import { href } from '../lib/router';
 import { signInHref } from '../components/Gates';
 import { addAttempt, completeAssignment, completePlanItem, getData, markSeen, updateSettings, useData } from '../lib/store';
@@ -58,23 +59,6 @@ interface Tally {
 }
 
 const emptyTally = (): Tally => ({ tossupsHeard: 0, tossupsCorrect: 0, interrupts: 0, interruptsWrong: 0, bonusesHeard: 0, bonusesCorrect: 0, points: 0, missed: [] });
-
-/** The question as read so far: finished words at full strength, the word still appearing fainter. */
-function Revealed({ reading, count }: { reading: Reading; count: number }) {
-  const { done, current } = splitRevealed(reading, count);
-  const lines = done.split('\n');
-  return (
-    <p className="stem" aria-live="off">
-      {lines.map((line, i) => (
-        <Fragment key={i}>
-          {i > 0 && <br />}
-          <RichText text={line} />
-          {i === lines.length - 1 && current && <span className="reading-current">{current}</span>}
-        </Fragment>
-      ))}
-    </p>
-  );
-}
 
 const UNGRADABLE = ['answer-missing', 'choices-missing'];
 
@@ -546,11 +530,14 @@ function Play({
   /** Read aloud (null: questions appear letter by letter). */
   speech: SoloSpeech | null;
   onDone: (t: Tally) => void;
-  onQuit: () => void;
+  /** Stopped early, with the tally so far. */
+  onQuit: (t: Tally) => void;
 }) {
   const data = useData();
   const playerId = data.settings.soloPlayerId;
   const aloud = !!speech;
+  // A round is on: on a phone the screen is the game's.
+  usePlayMode(true);
   const [index, setIndex] = useState(0);
   const [step, setStep] = useState<Step>(() => firstStep(items[0], aloud));
   // Read aloud, but this question shows as text (the device has no voice, and there is no recording).
@@ -830,7 +817,7 @@ function Play({
         </span>
         <span className="row small">
           <strong>{tally.points} points</strong>
-          <button className="btn btn-small btn-ghost" onClick={onQuit}>
+          <button className="btn btn-small btn-ghost" onClick={() => onQuit(tally)}>
             Stop
           </button>
         </span>
@@ -849,7 +836,7 @@ function Play({
           ) : hidden || step.kind === 'preparing' ? (
             <Listening step={step} />
           ) : (
-            <Revealed reading={tossupReading} count={shownTossup} />
+            <RevealingText reading={tossupReading} count={shownTossup} />
           )}
         </article>
       ) : (
@@ -866,7 +853,7 @@ function Play({
             ) : hidden || step.kind === 'preparing' ? (
               <Listening step={step} />
             ) : (
-              bonusReading && <Revealed reading={bonusReading} count={shownBonus} />
+              bonusReading && <RevealingText reading={bonusReading} count={shownBonus} />
             )}
           </article>
         )
@@ -881,19 +868,16 @@ function Play({
             </button>
           </Notice>
         )}
-        {step.kind === 'tossup_reading' && (
-          <button className="btn btn-primary btn-big" onClick={buzz}>
-            Buzz <span className="kbd">Space</span>
-          </button>
-        )}
-        {step.kind === 'tossup_open' && (
-          <>
-            <Countdown openedAt={step.openedAt} seconds={TOSSUP_WINDOW_S} now={now} label="Time to buzz" />
+        {/* The Buzz button keeps its place from the first letter to the last second: the question's height is
+            reserved, and the clock that starts when the reading ends appears below the button, not above it. */}
+        {(step.kind === 'tossup_reading' || step.kind === 'tossup_open') && (
+          <PlayBar>
             <button className="btn btn-primary btn-big" onClick={buzz}>
               Buzz <span className="kbd">Space</span>
             </button>
-          </>
+          </PlayBar>
         )}
+        {step.kind === 'tossup_open' && <Countdown openedAt={step.openedAt} seconds={TOSSUP_WINDOW_S} now={now} label="Time to buzz" />}
         {(step.kind === 'tossup_answering' || step.kind === 'bonus_reading' || step.kind === 'bonus_open') && (
           <form
             onSubmit={(e) => {
@@ -957,9 +941,11 @@ function Play({
           </>
         )}
         {canContinue && (
-          <button className="btn btn-primary btn-big" onClick={next}>
-            {goesToBonus ? 'Bonus' : index + 1 >= items.length ? 'Finish' : items[index + 1].bonusOnly ? 'Next bonus' : 'Next toss-up'} <span className="kbd">Space</span>
-          </button>
+          <PlayBar>
+            <button className="btn btn-primary btn-big" onClick={next}>
+              {goesToBonus ? 'Bonus' : index + 1 >= items.length ? 'Finish' : items[index + 1].bonusOnly ? 'Next bonus' : 'Next toss-up'} <span className="kbd">Space</span>
+            </button>
+          </PlayBar>
         )}
       </div>
     </div>
@@ -1088,7 +1074,13 @@ export function TryRound({ query }: { query: URLSearchParams }) {
           if (playerId && planItem && planDay) completePlanItem(playerId, planDay, planItem);
           if (playerId && assignment) completeAssignment(assignment, playerId);
         }}
-        onQuit={() => setStage('setup')}
+        onQuit={(t) => {
+          // Stopping early still shows what was played: the points, and the misses to look over. (Nothing played:
+          // back to the settings.) A plan item or an assignment is only ticked off by a finished round.
+          if (t.tossupsHeard + t.bonusesHeard === 0) return setStage('setup');
+          setTally(t);
+          setStage('done');
+        }}
       />
     );
   }

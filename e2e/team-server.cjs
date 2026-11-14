@@ -540,9 +540,13 @@ async function main() {
       await captain.locator('#om-count').fill('1');
       await captain.locator('#om-wpm').fill('600');
       await captain.getByRole('button', { name: 'Open the match' }).click();
-      await captain.getByRole('button', { name: 'Join the game' }).click();
+      // A free-for-all has one way to play: opening it (or its link) joins the game, with "Just watch" as the way out.
+      await captain.getByText('Players (1)').waitFor({ timeout: 10000 });
       const roomId = roomIdOf(captain.url());
       await player.goto(`${BASE}#/room/${roomId}`);
+      await captain.getByText('Players (2)').waitFor({ timeout: 10000 });
+      await player.getByRole('button', { name: 'Just watch' }).click();
+      await captain.getByText('Players (1)').waitFor({ timeout: 10000 });
       await player.getByRole('button', { name: 'Join the game' }).click();
       await captain.getByText('Players (2)').waitFor({ timeout: 10000 });
       await captain.getByRole('button', { name: 'Start the match' }).click();

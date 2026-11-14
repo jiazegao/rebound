@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AiExplain } from '../components/AiExplain';
+import { PlayBar, usePlayMode } from '../components/play';
 import { AnswerBox, Choices, Concepts, ImportNotes, QuestionMeta, RichText } from '../components/QuestionView';
 import { Countdown, LoadError, Loading, Notice, PageHeader, Stat, useTicker } from '../components/ui';
 import { Verdict } from '../components/Verdict';
@@ -205,6 +206,8 @@ function ReviewItem({
   });
 
   const elapsed = phase.kind === 'result' ? 0 : now - phase.shownAt;
+  // A review is on: on a phone the screen is the question's.
+  usePlayMode(true);
 
   return (
     <div className="container narrow">
@@ -229,14 +232,14 @@ function ReviewItem({
       <div className="stack" style={{ marginTop: '1rem' }}>
         {phase.kind === 'question' && <ReviewClock timing={timing} elapsed={elapsed} kind={q.kind} />}
         {phase.kind === 'question' && q.kind === 'tossup' && (
-          <div className="row">
+          <PlayBar>
             <button className="btn btn-primary btn-big" onClick={buzz}>
               Buzz <span className="kbd">Space</span>
             </button>
             <button className="btn btn-ghost" onClick={giveUp}>
               I don't know <span className="kbd">Esc</span>
             </button>
-          </div>
+          </PlayBar>
         )}
         {(phase.kind === 'answering' || (phase.kind === 'question' && q.kind === 'bonus')) && (
           <form
@@ -301,9 +304,11 @@ function ReviewItem({
               </p>
             )}
             {event && (
-              <button className="btn btn-primary btn-big" onClick={next}>
-                {position >= total ? 'Finish' : 'Next'} <span className="kbd">Space</span>
-              </button>
+              <PlayBar>
+                <button className="btn btn-primary btn-big" onClick={next}>
+                  {position >= total ? 'Finish' : 'Next'} <span className="kbd">Space</span>
+                </button>
+              </PlayBar>
             )}
           </>
         )}

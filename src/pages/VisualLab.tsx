@@ -1,4 +1,5 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { RevealingText } from '../components/play';
 import { FigureView } from '../components/Figure';
 import { AnswerBox, Choices, QuestionMeta, RichText } from '../components/QuestionView';
 import { Countdown, Notice, PageHeader, SubjectTag, useTicker } from '../components/ui';
@@ -12,7 +13,7 @@ import { newSeed } from '../core/visual/rng';
 import { newId } from '../lib/format';
 import { pictureFromFile } from '../lib/images';
 import { useAsync } from '../lib/library';
-import { buildReading, readingDurationMs, revealedCount, splitRevealed } from '../lib/reading';
+import { buildReading, readingDurationMs, revealedCount } from '../lib/reading';
 import { href } from '../lib/router';
 import { beep, unlockAudio } from '../lib/sound';
 import { addAttempt, completePlanItem, deleteVisual, markSeen, saveVisual, useData } from '../lib/store';
@@ -256,8 +257,8 @@ function VisualPractice({ questions, timed, onExit, onFinish, fromPlan }: { ques
     );
   }
 
-  const revealed = step.kind === 'reading' && reading ? splitRevealed(reading, revealedCount(reading, now - step.startedAt, wpm)) : null;
-  const lines = revealed ? revealed.done.split('\n') : [];
+  // While it is read, the text not read yet keeps its place (invisible), so the card does not grow line by line.
+  const shown = step.kind === 'reading' && reading ? revealedCount(reading, now - step.startedAt, wpm) : null;
   return (
     <div className="container narrow">
       <div className="row spread small muted" style={{ marginBottom: '0.5rem' }}>
@@ -271,16 +272,8 @@ function VisualPractice({ questions, timed, onExit, onFinish, fromPlan }: { ques
       <article className="question">
         <QuestionMeta q={q} />
         <FigureView q={q} large />
-        {revealed ? (
-          <p className="stem" aria-live="off">
-            {lines.map((line, i) => (
-              <Fragment key={i}>
-                {i > 0 && <br />}
-                <RichText text={line} />
-                {i === lines.length - 1 && revealed.current && <span className="reading-current">{revealed.current}</span>}
-              </Fragment>
-            ))}
-          </p>
+        {shown !== null && reading ? (
+          <RevealingText reading={reading} count={shown} />
         ) : (
           <>
             <p className="stem">
