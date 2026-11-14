@@ -6,7 +6,7 @@ import { createRoom } from '../lib/api';
 import { useSession } from '../lib/cloud';
 import { buildReading, readingDurationMs } from '../lib/reading';
 import { useRoom, type RoomView } from '../lib/room';
-import { trustedFigure } from '../lib/visuals';
+import { trustedFigure, useGeneratorReady } from '../lib/visuals';
 import { setGameRoom, useData, type GameRecord } from '../lib/store';
 
 /**
@@ -30,6 +30,8 @@ export function RemotePanel({
 }) {
   const data = useData();
   const session = useSession();
+  // Figures are drawn by generators that load on first use: ask again once they are here.
+  useGeneratorReady();
   const [mode, setMode] = useState<'voice' | 'text'>('voice');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -196,6 +196,40 @@ p {
   z-index: 10;
 }
 
+/* A page whose code is still arriving: a thin bar under the header, only once it has taken a moment. */
+.route-pending {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 30;
+  background: var(--accent);
+  transform-origin: left;
+  opacity: 0;
+  animation: route-pending 1.2s ease-in-out 0.3s infinite;
+}
+@keyframes route-pending {
+  0% {
+    opacity: 1;
+    transform: scaleX(0.1);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(0.7);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-pending {
+    animation: none;
+    opacity: 1;
+  }
+}
+
 /* ---------- header and footer ---------- */
 .app-header {
   background: var(--surface);

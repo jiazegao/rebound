@@ -27,7 +27,10 @@ const cache = new Map<string, Teammate>();
 let state = { version: 0, loading: false, error: null as string | null };
 const listeners = new Set<() => void>();
 let inFlight: Promise<void> | null = null;
-let sessionKey = '';
+/** Who is signed in, on which team: what is loaded belongs to that pair. */
+const sessionKeyOf = (s: ReturnType<typeof getSession>): string => `${s.user?.id ?? ''}:${s.team?.team.id ?? ''}`;
+// This module loads with the first team page, which can be long after sign-in: start from the session as it is.
+let sessionKey = sessionKeyOf(getSession());
 
 function setState(fields: Partial<typeof state>) {
   state = { ...state, ...fields };
@@ -36,8 +39,7 @@ function setState(fields: Partial<typeof state>) {
 
 /** Signed out, or on another team now: forget what was loaded. */
 subscribeSession(() => {
-  const s = getSession();
-  const key = `${s.user?.id ?? ''}:${s.team?.team.id ?? ''}`;
+  const key = sessionKeyOf(getSession());
   if (key === sessionKey) return;
   sessionKey = key;
   cache.clear();
@@ -66,7 +68,7 @@ async function loadOne(teamId: string, userId: string): Promise<boolean> {
     if (done) break;
   }
   // The session may have moved on while this was loading.
-  if (`${getSession().user?.id ?? ''}:${getSession().team?.team.id ?? ''}` !== sessionKey || getSession().team?.team.id !== teamId) return false;
+  if (sessionKeyOf(getSession()) !== sessionKey || getSession().team?.team.id !== teamId) return false;
   if (records.length === 0) {
     cache.set(key, { ...before, cursor, loadedAt: Date.now() });
     return false;

@@ -8,10 +8,55 @@
  * Inline SVG is only ever produced by the site's own generators: a figure is never taken from saved or
  * team records as markup. Pictures come from the site's photo folder or are data: URLs of ordinary images.
  */
+import { useSyncExternalStore } from 'react';
 import type { Figure, Question, QuestionSet, Round, TeamVisual } from '../core/schema';
-import { parseGeneratedId, questionForGeneratedId } from '../core/visual';
 import { parsePhotoQuestionId, photoQuestion, type PhotoSet } from '../core/visual/photos';
 import { getData } from './store';
+
+/* ---------------- the figure generators, loaded on first use ---------------- */
+
+type Generator = typeof import('../core/visual');
+
+/**
+ * The generators that draw figures (src/core/visual: a sixth of the site's code) load when the first generated
+ * visual question is met, not with every page: most practice never shows one.
+ */
+let generator: Generator | null = null;
+let loadingGenerator: Promise<Generator> | null = null;
+const generatorListeners = new Set<() => void>();
+
+export function loadGenerator(): Promise<Generator> {
+  loadingGenerator ??= import('../core/visual').then(
+    (loaded) => {
+      generator = loaded;
+      for (const listener of generatorListeners) listener();
+      return loaded;
+    },
+    (error: unknown) => {
+      loadingGenerator = null;
+      throw error;
+    },
+  );
+  return loadingGenerator;
+}
+
+function subscribeGenerator(listener: () => void): () => void {
+  generatorListeners.add(listener);
+  return () => generatorListeners.delete(listener);
+}
+
+/**
+ * Whether the generators are loaded; a component that draws figures (or asks whether a question has one) calls
+ * this so it draws again once they are. They are loaded already whenever a generated question reached the page
+ * through loadVisualQuestions, which is how every one does.
+ */
+export function useGeneratorReady(): boolean {
+  return useSyncExternalStore(
+    subscribeGenerator,
+    () => generator !== null,
+    () => false,
+  );
+}
 
 export type VisualSource = 'generated' | 'photo' | 'team';
 
@@ -39,7 +84,13 @@ export function trustedFigure(q: Pick<Question, 'id' | 'figure'>): Figure | null
   const fig = q.figure;
   if (!fig) return null;
   if (fig.kind === 'svg') {
-    const rebuilt = parseGeneratedId(q.id) ? questionForGeneratedId(q.id)?.figure : undefined;
+    if (visualSourceOf(q.id) !== 'generated') return null;
+    if (!generator) {
+      // Not loaded yet: nothing is drawn now, and useGeneratorReady draws the caller again when they are.
+      void loadGenerator().catch(() => undefined);
+      return null;
+    }
+    const rebuilt = generator.parseGeneratedId(q.id) ? generator.questionForGeneratedId(q.id)?.figure : undefined;
     return rebuilt?.kind === 'svg' ? rebuilt : null;
   }
   return isSafeImageSrc(fig.src) ? fig : null;
@@ -69,11 +120,12 @@ export function teamVisualQuestion(v: TeamVisual): Question {
 export async function loadVisualQuestions(ids: string[]): Promise<Map<string, Question>> {
   const out = new Map<string, Question>();
   const photos = ids.some((id) => visualSourceOf(id) === 'photo') ? await loadPhotoSet() : EMPTY_PHOTOS;
+  const drawn = ids.some((id) => visualSourceOf(id) === 'generated') ? await loadGenerator() : null;
   const team = new Map(getData().visuals.map((v) => [v.id, v]));
   for (const id of ids) {
     const source = visualSourceOf(id);
     let q: Question | null = null;
-    if (source === 'generated') q = questionForGeneratedId(id);
+    if (source === 'generated') q = drawn ? drawn.questionForGeneratedId(id) : null;
     else if (source === 'photo') {
       const p = parsePhotoQuestionId(id);
       q = p ? photoQuestion(photos, p.photoId, p.seed) : null;

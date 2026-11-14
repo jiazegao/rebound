@@ -1,38 +1,46 @@
-import { useState, type ReactNode } from 'react';
+import { Suspense, useState, type ReactNode } from 'react';
 import { AccountFailed, AccountLoading, SignInNeeded, TeamNeeded } from './components/Gates';
+import { lazyPage, PageBoundary } from './components/lazyPage';
 import { Notice } from './components/ui';
 import { signOut } from './lib/account';
 import { clearSessionMessage, dismissRefused, flushNow, getConnection, reloadAccount, useConnection, useSession } from './lib/cloud';
 import { href, navigate, useRoute } from './lib/router';
 import { useData } from './lib/store';
 import { Home } from './pages/Home';
-import { RulesPage } from './pages/Rules';
-import { CoachesPage, ItStaffPage, AboutPage } from './pages/Info';
-import { TodayPage } from './pages/Today';
-import { ReviewPage } from './pages/Review';
-import { ProgressPage } from './pages/Progress';
-import { TopicsPage } from './pages/Topics';
-import { LineupsPage } from './pages/Lineups';
-import { PacketsPage, PacketView } from './pages/Packets';
-import { ConceptPage, LearnPage } from './pages/Learn';
-import { ReadingPathsPage } from './pages/ReadingPaths';
-import { AssignmentsPage } from './pages/Assignments';
-import { RoomPage } from './pages/Room';
-import { JoinPage } from './pages/Join';
-import { TeamPage } from './pages/Team';
-import { LibraryPage } from './pages/Library';
-import { ReaderSetup } from './pages/ReaderSetup';
-import { ReaderLive } from './pages/ReaderLive';
-import { GameSummary } from './pages/GameSummary';
-import { TryRound } from './pages/TryRound';
-import { StatsPage } from './pages/Stats';
-import { AccountPage } from './pages/Account';
-import { SignInPage } from './pages/SignIn';
-import { VisualLabPage } from './pages/VisualLab';
-import { ShootoutConsole, TiebreakersPage } from './pages/Tiebreakers';
-import { WritePage } from './pages/Write';
-import { OnlinePage } from './pages/Online';
 import { NavMenu, type NavMenuLink } from './components/NavMenu';
+
+// Every page but the home page loads when it is first opened (and is then kept by the service worker).
+const RulesPage = lazyPage(() => import('./pages/Rules'), 'RulesPage');
+const CoachesPage = lazyPage(() => import('./pages/Info'), 'CoachesPage');
+const ItStaffPage = lazyPage(() => import('./pages/Info'), 'ItStaffPage');
+const AboutPage = lazyPage(() => import('./pages/Info'), 'AboutPage');
+const TodayPage = lazyPage(() => import('./pages/Today'), 'TodayPage');
+const ReviewPage = lazyPage(() => import('./pages/Review'), 'ReviewPage');
+const ProgressPage = lazyPage(() => import('./pages/Progress'), 'ProgressPage');
+const TopicsPage = lazyPage(() => import('./pages/Topics'), 'TopicsPage');
+const LineupsPage = lazyPage(() => import('./pages/Lineups'), 'LineupsPage');
+const PacketsPage = lazyPage(() => import('./pages/Packets'), 'PacketsPage');
+const PacketView = lazyPage(() => import('./pages/Packets'), 'PacketView');
+const ConceptPage = lazyPage(() => import('./pages/Learn'), 'ConceptPage');
+const LearnPage = lazyPage(() => import('./pages/Learn'), 'LearnPage');
+const ReadingPathsPage = lazyPage(() => import('./pages/ReadingPaths'), 'ReadingPathsPage');
+const AssignmentsPage = lazyPage(() => import('./pages/Assignments'), 'AssignmentsPage');
+const RoomPage = lazyPage(() => import('./pages/Room'), 'RoomPage');
+const JoinPage = lazyPage(() => import('./pages/Join'), 'JoinPage');
+const TeamPage = lazyPage(() => import('./pages/Team'), 'TeamPage');
+const LibraryPage = lazyPage(() => import('./pages/Library'), 'LibraryPage');
+const ReaderSetup = lazyPage(() => import('./pages/ReaderSetup'), 'ReaderSetup');
+const ReaderLive = lazyPage(() => import('./pages/ReaderLive'), 'ReaderLive');
+const GameSummary = lazyPage(() => import('./pages/GameSummary'), 'GameSummary');
+const TryRound = lazyPage(() => import('./pages/TryRound'), 'TryRound');
+const StatsPage = lazyPage(() => import('./pages/Stats'), 'StatsPage');
+const AccountPage = lazyPage(() => import('./pages/Account'), 'AccountPage');
+const SignInPage = lazyPage(() => import('./pages/SignIn'), 'SignInPage');
+const VisualLabPage = lazyPage(() => import('./pages/VisualLab'), 'VisualLabPage');
+const ShootoutConsole = lazyPage(() => import('./pages/Tiebreakers'), 'ShootoutConsole');
+const TiebreakersPage = lazyPage(() => import('./pages/Tiebreakers'), 'TiebreakersPage');
+const WritePage = lazyPage(() => import('./pages/Write'), 'WritePage');
+const OnlinePage = lazyPage(() => import('./pages/Online'), 'OnlinePage');
 
 /** An item in the bar: a page, or a menu of pages. */
 type NavItem = NavMenuLink | { label: string; items: NavMenuLink[] };
@@ -344,8 +352,20 @@ export function App() {
         </div>
       )}
       <Banners />
-      <main id="main" tabIndex={-1} style={{ outline: 'none' }}>
-        {page}
+      {/* A page still on its way after a moment (a slow connection) says so in a thin bar; a quick one shows nothing. */}
+      {route.pending && <div className="route-pending no-print" role="status" aria-label="Loading the page" />}
+      <main id="main" tabIndex={-1} style={{ outline: 'none' }} aria-busy={route.pending || undefined}>
+        <Suspense
+          fallback={
+            <div className="container narrow">
+              <p className="muted" role="status">
+                Loading…
+              </p>
+            </div>
+          }
+        >
+          <PageBoundary key={first ?? 'home'}>{page}</PageBoundary>
+        </Suspense>
       </main>
       <footer className="app-footer no-print">
         <nav aria-label="Footer">

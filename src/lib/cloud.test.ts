@@ -426,6 +426,23 @@ describe("teammates' practice", () => {
     expect(server.calls.filter((c) => c.method !== 'GET')).toEqual([]);
   });
 
+  it('loads teammates when the team pages (and this module) load long after sign-in', async () => {
+    // Team pages load on demand, so their code can arrive when the session is already running.
+    vi.resetModules();
+    const api = await import('./api');
+    const cloud = await import('./cloud');
+    const store = await import('./store');
+    api.setServerUrl('https://rebound.test');
+    cloud.startCloud();
+    seed(99);
+    await cloud.beginSession(meToken);
+    await cloud.settled();
+    const teammates = await import('./teammates');
+    await teammates.loadTeammates();
+    const view = teammates.teamDataFrom(store.getData(), TEAM, [ME, TM]);
+    expect(view.attempts.map((a) => `${a.playerId}:${a.id}`).sort()).toEqual([`${ME}:a1`, `${TM}:b1`]);
+  });
+
   it('a teammate who has just left is no error: their practice drops out, and the team is fetched again', async () => {
     seed(99);
     await signIn(meToken);

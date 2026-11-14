@@ -20,7 +20,7 @@ import { getPreset, visualBonusTiming } from '../core/rules/presets';
 import type { Question, Round } from '../core/schema';
 import { clockText } from '../lib/format';
 import { useAsync } from '../lib/library';
-import { trustedFigure } from '../lib/visuals';
+import { trustedFigure, useGeneratorReady } from '../lib/visuals';
 import { loadGameRound } from '../lib/packets';
 import { href } from '../lib/router';
 import { beep, unlockAudio } from '../lib/sound';
@@ -117,6 +117,8 @@ function Lineups({ state, game, names, allowEdit, dispatch }: { state: MatchStat
 }
 
 function ReaderGame({ game, round }: { game: GameRecord; round: Round }) {
+  // Figures are drawn by generators that load on first use: ask again once they are here.
+  useGeneratorReady();
   const data = useData();
   const [toast, setToast] = useState<string | null>(null);
   const [hideAnswer, setHideAnswer] = useState(false);

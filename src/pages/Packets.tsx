@@ -15,7 +15,7 @@ import { deletePacket, savePacket, useData } from '../lib/store';
 import { useTeamData } from '../lib/teammates';
 import { parseJson, parsePdf, uploadSet, UPLOAD_LICENSE, type ParsedRound } from '../lib/upload';
 import { makeVisualPicker } from '../lib/visualPool';
-import { loadPhotoSet, trustedFigure } from '../lib/visuals';
+import { loadPhotoSet, trustedFigure, useGeneratorReady } from '../lib/visuals';
 
 const SIZES = [10, 15, 20, 25, 30];
 
@@ -435,6 +435,8 @@ export function PacketsPage() {
 
 export function PacketView({ id, print }: { id: string; print: boolean }) {
   const data = useData();
+  // Figures are drawn by generators that load on first use: ask again once they are here.
+  useGeneratorReady();
   const packet = data.packets.find((p) => p.id === id);
   const [roundId, setRoundId] = useState<string | null>(null);
   const rounds = packet ? packetRounds(packet) : [];

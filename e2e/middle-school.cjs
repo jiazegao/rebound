@@ -79,6 +79,8 @@ const { BASE } = A;
     check(all.includes('concepts-ms.json') && !all.includes('concepts.json'), `Learn uses concepts-ms.json (${[...new Set(all)].filter((f) => f.startsWith('concepts')).join(', ')})`);
 
     await page.goto(`${BASE}#/tiebreakers`);
+    // Pages load when first opened: wait for this one.
+    await page.getByText('Rule 10-2').first().waitFor({ timeout: 10000 }).catch(() => {});
     check((await page.getByText('Rule 10-2').count()) > 0, 'Tiebreakers page notes the middle school Finals rule');
 
     await page.goto(`${BASE}#/library/doe-ms-finals`);

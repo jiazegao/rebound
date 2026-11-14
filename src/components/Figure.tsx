@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import type { Question } from '../core/schema';
-import { trustedFigure } from '../lib/visuals';
+import { trustedFigure, useGeneratorReady } from '../lib/visuals';
 
 /**
  * A visual question's figure, with a full-screen button for projecting and the Finals note that figures
@@ -9,6 +9,8 @@ import { trustedFigure } from '../lib/visuals';
  */
 export function FigureView({ q, large = false, note = true }: { q: Pick<Question, 'id' | 'figure'>; large?: boolean; note?: boolean }) {
   const box = useRef<HTMLElement>(null);
+  // Drawn figures come from generators that load on first use: draw again once they are here.
+  useGeneratorReady();
   const fig = trustedFigure(q);
   if (!fig) return null;
   const fullscreen = () => {
