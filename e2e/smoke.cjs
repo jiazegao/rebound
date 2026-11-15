@@ -708,7 +708,7 @@ async function main() {
 
     await step('Write: Ann writes a question, Ben (the physics owner) approves it in his own browser, and it becomes a team packet', async () => {
       await ann.goto(`${BASE}#/write`);
-      await see('Strong teams write their own questions');
+      await see('approved ones become team packets');
       await ann.getByRole('link', { name: 'New question' }).click();
       await ann.locator('#wq-subject').selectOption('physics');
       await ann.locator('#wq-stem').fill('In meters per second squared, what is the acceleration due to gravity near Earth’s surface, to two significant figures?');
@@ -973,8 +973,12 @@ async function main() {
     for (const p of Object.values(pages)) await p.context().close();
   }
 
-  await step('offline: the app and question files seen before open with no connection; an account needs one', async () => {
-    // A signed-in player's device: the service worker keeps the site and public question files, never their practice.
+  /** Whether the browser holds Rebound's copy of an account (its IndexedDB database). */
+  const hasCopy = (p) => p.evaluate(async () => (indexedDB.databases ? (await indexedDB.databases()).some((d) => d.name === 'rebound-account') : null));
+
+  await step("offline: the app, the question files and the player's own practice open with no connection, and a change made then is sent later", async () => {
+    // A signed-in player's device: the service worker keeps the site and the public question files, and the site
+    // keeps a copy of the player's account (docs/ACCOUNTS.md, "A copy on the device").
     let player = made.find((a) => a.name === 'Ann');
     if (!player) made.push((player = await A.signUp('Oli')));
     const ctx = await A.signedInContext(browser, player, { serviceWorkers: 'allow' });
@@ -990,15 +994,87 @@ async function main() {
     await p.goto(`${BASE}#/today`);
     await p.getByRole('heading', { name: /^Your plan/ }).waitFor({ timeout: 15_000 });
     await A.allSaved(p);
+    const items = await p.locator('.plan-item').count();
+    await p.waitForTimeout(600); // the copy is written shortly after the last change
+    if ((await hasCopy(p)) === false) throw new Error('a signed-in device should hold a copy of the account');
+
+    // With no connection the plan is there at once, from the copy.
     await ctx.setOffline(true);
     await p.reload();
-    await p.getByRole('heading', { name: 'Today', exact: true }).waitFor({ timeout: 8000 });
-    await p.getByText('Not connected.').first().waitFor({ timeout: 8000 });
-    if ((await p.getByRole('heading', { name: /^Your plan/ }).count()) || (await p.locator('.plan-item').count())) throw new Error('with no connection, the plan should not show (nothing about a player is kept on the device)');
+    await p.getByRole('heading', { name: /^Your plan/ }).waitFor({ timeout: 8000 });
+    if ((await p.locator('.plan-item').count()) !== items) throw new Error('with no connection, the plan should show as it was (from the copy on the device)');
+    // A change made now cannot be saved: the site says so, and keeps it.
+    const chosen = (m) => p.locator(`button[aria-pressed="true"]`, { hasText: `${m} min` });
+    const minutes = (await chosen('45').count()) ? '15' : '45';
+    await p.getByRole('button', { name: `${minutes} min`, exact: true }).click();
+    await chosen(minutes).waitFor();
+    await p.getByText('Not connected: your last change was not saved.').waitFor({ timeout: 20_000 });
+    // Closed and opened again, still without a connection: the change is still there.
+    await p.reload();
+    await chosen(minutes).waitFor({ timeout: 8000 });
     await p.goto(`${BASE}#/library/doe-hs-17/doe-hs-17-r01`);
     await p.locator('.question-kind').first().waitFor({ timeout: 8000 });
     if (SHOTS) await p.screenshot({ path: path.join(SHOTS, '16-offline-library.png') });
+    // The connection comes back, and the change reaches the server.
+    await ctx.setOffline(false);
+    await p.goto(`${BASE}#/today`);
+    await chosen(minutes).waitFor({ timeout: 8000 });
+    await A.allSaved(p, 40_000);
+    const me = await A.call('/api/me', { token: player.token });
+    if (String(me.user.settings.dailyMinutes) !== minutes) throw new Error(`the change made with no connection did not reach the server (dailyMinutes is ${me.user.settings.dailyMinutes})`);
     await ctx.close();
+  });
+
+  await step('signing out deletes the copy; a shared computer keeps none, and needs a connection', async () => {
+    // A second session of a new account, so signing it out in the browser leaves the first for the clean-up.
+    const oli = await A.signUp('Oli');
+    made.push(oli);
+    const session = await A.signUp('Oli', { email: oli.email });
+    const ctx = await A.signedInContext(browser, session, { serviceWorkers: 'allow' });
+    const p = await ctx.newPage();
+    p.on('pageerror', (e) => errors.push(`copy pageerror: ${e.message}`));
+    p.on('dialog', (d) => d.accept());
+    await p.goto(`${BASE}#/account`);
+    await p.getByRole('heading', { name: 'This device' }).waitFor({ timeout: 15_000 });
+    await p.waitForTimeout(800);
+    if ((await hasCopy(p)) === false) throw new Error('a signed-in device should hold a copy of the account');
+    // The switch on the Account page deletes it and brings it back.
+    const keep = p.getByRole('checkbox', { name: 'Keep a copy of my practice on this device' });
+    await keep.uncheck();
+    await p.waitForFunction(async () => !(await indexedDB.databases()).some((d) => d.name === 'rebound-account'), null, { timeout: 8000 });
+    await keep.check();
+    await p.waitForFunction(async () => (await indexedDB.databases()).some((d) => d.name === 'rebound-account'), null, { timeout: 8000 });
+    await p.locator('section', { hasText: 'Signs out on this device' }).getByRole('button', { name: 'Sign out' }).click();
+    await p.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Sign in' }).waitFor({ timeout: 15_000 });
+    const left = await p.evaluate(async () => ({ keys: Object.keys(localStorage), databases: indexedDB.databases ? (await indexedDB.databases()).map((d) => d.name) : [] }));
+    if (left.databases.includes('rebound-account')) throw new Error('signing out left the copy of the account on the device');
+    if (left.keys.some((k) => k !== A.SESSION_KEY)) throw new Error(`signing out left ${left.keys.join(', ')} in localStorage`);
+    await ctx.close();
+
+    // "This is a shared computer": no copy is made, so with no connection the account does not open.
+    const origin = new URL(BASE).origin;
+    const shared = await browser.newContext({
+      viewport: VIEWPORT,
+      serviceWorkers: 'allow',
+      storageState: { cookies: [], origins: [{ origin, localStorage: [{ name: A.SESSION_KEY, value: JSON.stringify({ token: oli.token, server: SERVER, copy: false }) }] }] },
+    });
+    const q = await shared.newPage();
+    q.on('pageerror', (e) => errors.push(`shared pageerror: ${e.message}`));
+    await q.goto(BASE);
+    await q.evaluate(() => navigator.serviceWorker.ready.then(() => true));
+    await q.reload();
+    await q.waitForFunction(() => navigator.serviceWorker.controller !== null);
+    await q.goto(`${BASE}#/today`);
+    await q.getByRole('heading', { name: /^Your plan/ }).waitFor({ timeout: 15_000 });
+    await A.allSaved(q);
+    await q.waitForTimeout(800);
+    if (await hasCopy(q)) throw new Error('a shared computer should hold no copy of the account');
+    await shared.setOffline(true);
+    await q.reload();
+    await q.getByRole('heading', { name: 'Today', exact: true }).waitFor({ timeout: 8000 });
+    await q.getByText('Not connected.').first().waitFor({ timeout: 8000 });
+    if ((await q.getByRole('heading', { name: /^Your plan/ }).count()) || (await q.locator('.plan-item').count())) throw new Error('with no copy and no connection, the plan should not show');
+    await shared.close();
   });
 
   await step('clean up: the accounts this run made are deleted', async () => {

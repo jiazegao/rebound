@@ -2,9 +2,11 @@
 
 Design for replacing Rebound's local-first data and PIN sign-in with accounts. Decisions (November 2026):
 
-- **Everything lives in the cloud.** Nothing about a player is stored on the device: no IndexedDB, no backup
-  files to restore, no offline practice. The site keeps only a session token. Public question files are still
-  cached by the service worker for speed.
+- **Everything lives in the cloud.** The server holds every player's data and is the one place it is kept for
+  good: no backup files to restore, nothing to carry from device to device. A signed-in device keeps the session
+  token and, unless the player says otherwise, a copy of their account for speed ("A copy on the device", below;
+  added later in November 2026: at first the device kept nothing, and every visit loaded everything). Signing out
+  deletes the copy. Public question files are cached by the service worker.
 - **Accounts.** Everyone signs in with Google or with a one-time email link (no passwords). Sign-up requires
   confirming the person is 13 or older (COPPA; personal Google accounts also start at 13).
 - **Practice belongs to the player.** Answers, review cards, plans, the "seen" ledger and stats belong to the
@@ -60,7 +62,7 @@ User collections (in the user's storage; written only by the user, plus the serv
 |---|---|---|---|
 | `attempts` | attempt id | `SoloAttempt` (a practice answer) | yes |
 | `answers` | `game:<gameId>:<pair>:<t\|dead\|b>:<time>` (a Reader console game or a team match: the question's place in the packet, a toss-up, a dead toss-up or a bonus, and when it was judged) or `match:<roomId>:<questionId>` (a free-for-all) | `Outcome` (src/core/review.ts) from a team game or an online match, written by the server | yes |
-| `seen` | `ledger` | `{ [questionId]: ms }` (merged as a union) | yes |
+| `seen` | one for each round (`doe-hs-17-r02`…) | `{ [questionId]: ms }` (merged as a union); the single `ledger` record of older versions is read and then deleted | yes |
 | `conceptReads` | `ledger` | `{ [conceptId or "reading:<topic>"]: ms }` (merged as a union) | yes |
 | `completions` | `<assignmentId>` | `Completion` | yes |
 | `reports` | report id | `ProblemReport` | yes |
@@ -128,7 +130,8 @@ captain.
 | `GET /api/me` | user | → `{ user, team: { id, name, level, role } \| null }` |
 | `PATCH /api/me` | user | `{ name?, primarySubject?, secondarySubject?, gradYear?, settings? }` → `{ user }` |
 | `DELETE /api/me` | user | leaves the team, deletes everything → `{ ok: true }` |
-| `GET /api/me/records?cursor=` | user | → `{ cursor, records: [{ c, id, body, rev }], more }` |
+| `GET /api/sync?u=&t=&team=` | user | → `{ user, team, mine, teamData }`: the profile, the team and a page of each set of records, in one request |
+| `GET /api/me/records?cursor=` | user | → `{ cursor, records: [{ c, id, body, rev }], more, head }` |
 | `POST /api/me/records` | user | `{ changes: [{ c, id, body \| null }] }` → `{ cursor, rejected }` |
 | `GET /api/me/export` | user | → everything, as one JSON file |
 | `POST /api/teams` | user | `{ name, level, leaveCurrent? }` → 201 `{ team, joinCode }` (the caller becomes captain) |
@@ -164,14 +167,31 @@ per user.
 
 ## Site
 
-- **Store.** `AppData` stays the in-memory shape the pages use, filled from the server at sign-in (`/api/me`,
-  `/api/me/records`, and the team's settings, members and records). Nothing is written to IndexedDB.
-  `update(fn)` diffs the records it changed and sends them at once (user collections to `/api/me/records`, team
-  collections to the team). If the server cannot be reached, the site shows "Not connected: your last change was
-  not saved", keeps the unsent changes in memory and keeps trying (after 1 and 3 seconds, then every 10, and at
-  once when the browser is back online); closing the tab before they are sent asks first, and loses them. Pages
-  that need the account show "Not connected" until it has loaded. Team records and settings are refreshed every 30
-  seconds while the page is visible.
+- **Store.** `AppData` stays the in-memory shape the pages use, filled from the server at sign-in with one request
+  (`GET /api/sync`: the profile, the team, and the first page of each set of records; a long history goes on page
+  by page, 2,000 records at a time, the player's and the team's side by side). `update(fn)` diffs the records it
+  changed and sends them at once (user collections to `/api/me/records`, team collections to the team). If the
+  server cannot be reached, the site shows "Not connected: your last change was not saved", keeps the unsent changes
+  and keeps trying (after 1 and 3 seconds, then every 10, and at once when the browser is back online); closing the
+  tab before they are sent asks first. While the page is visible, what changed is fetched again with the same
+  request, from the cursors: every minute while the player is doing something, every five when they are not, and
+  when they come back to the page.
+- **A copy on the device** (`src/lib/deviceCopy.ts`, in the browser's IndexedDB). It mirrors what the site holds in
+  memory: one row for each record (what is here, and the fingerprint of what the server has), and one entry with
+  the cursors, the profile, the team and the settings. The next visit opens from it at once and then asks the
+  server only for what changed since; whatever differs from the server's side is found again from the rows, so a
+  change that was not sent before the page closed is sent then, and the site opens with no connection. Rules:
+  - it is the player's choice: "This is a shared computer" on the sign-in page and a switch on the Account page
+    keep no copy, and then nothing about the player is on the device but the session token, each visit loads
+    everything, and closing the page loses unsent changes;
+  - signing out (here, in another tab, or by the server ending the session) deletes the database, so a signed-out
+    device holds nothing;
+  - a copy belonging to another account, written by another version of the layout, or not touched for 30 days is
+    deleted and the account loads from the server; so does a copy whose cursor is ahead of the server's latest
+    revision (the data was reset);
+  - with several tabs open, one tab writes it (a Web Lock), so it is always one tab's whole view;
+  - if it cannot be written (no room, storage switched off), the site goes on without it.
+  Pages that need the account show "Not connected" when there is neither a connection nor a copy.
 - `players` = the team's members (or just the signed-in user, with no team); `settings.soloPlayerId` = the user.
   Teammates' visible collections load when a page needs them (Stats, Lineups, Team, scrimmage builder,
   Assignments).
@@ -179,5 +199,5 @@ per user.
   join, members and roles, invite link, leave; no roster to edit); Today, Review and Progress are the signed-in
   player's; Data becomes Account (download my data, delete my account). Public pages (Home, Try a round, Library,
   Rules) work without signing in and save nothing.
-- **Removed.** IndexedDB storage, backup restore, PIN sign-in and team sharing, adding roster players, offline
-  practice and "Save all questions for offline use".
+- **Removed.** Device-only storage (practice that existed nowhere else), backup restore, PIN sign-in and team
+  sharing, adding roster players, and "Save all questions for offline use".

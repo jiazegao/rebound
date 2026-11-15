@@ -4,7 +4,7 @@ import { MAX_NAME_CHARS } from '../core/accounts';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type CoreSubject } from '../core/schema';
 import { deleteAccount, downloadMyData, signOut, updateProfile } from '../lib/account';
 import { SERVER_URL, serverUrl } from '../lib/api';
-import { flushNow, getConnection, useSession } from '../lib/cloud';
+import { flushNow, getConnection, keepsDeviceCopy, setDeviceCopy, useSession } from '../lib/cloud';
 import { dateText, dateTimeText } from '../lib/format';
 import { navigate } from '../lib/router';
 import { setReportStatus, updateSettings, useData } from '../lib/store';
@@ -128,11 +128,11 @@ function Reports() {
 export function AccountPage() {
   const data = useData();
   const { user, team } = useSession();
-  const [busy, setBusy] = useState<'download' | 'delete' | 'signout' | null>(null);
+  const [busy, setBusy] = useState<'download' | 'delete' | 'signout' | 'copy' | null>(null);
   const [error, setError] = useState<string | null>(null);
   if (!user) return null;
 
-  const act = async (what: 'download' | 'delete' | 'signout', fn: () => Promise<void>) => {
+  const act = async (what: 'download' | 'delete' | 'signout' | 'copy', fn: () => Promise<void>) => {
     setBusy(what);
     setError(null);
     try {
@@ -148,7 +148,7 @@ export function AccountPage() {
     <div className="container narrow">
       <PageHeader title="Account">
         <p>
-          Everything you practice is saved to your account on Rebound's server, not on this device, so it follows you to any device you sign in on.
+          Everything you practice is saved to your account on Rebound's server, so it follows you to any device you sign in on.
           {team ? ` You are on ${team.team.name}; your teammates see your stats, but not your review queue or daily plan.` : ''}
         </p>
       </PageHeader>
@@ -170,6 +170,29 @@ export function AccountPage() {
         </section>
 
         <Reports />
+
+        <section className="card stack" aria-labelledby="device-heading">
+          <h2 id="device-heading" style={{ margin: 0 }}>
+            This device
+          </h2>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={keepsDeviceCopy()}
+              disabled={busy !== null}
+              onChange={(e) => {
+                const keep = e.target.checked;
+                void act('copy', () => setDeviceCopy(keep));
+              }}
+            />{' '}
+            Keep a copy of my practice on this device
+          </label>
+          <p className="small muted" style={{ margin: 0 }}>
+            With a copy, Rebound opens at once and then fetches only what changed, and an answer given without a connection is sent the next time you
+            open it. Signing out deletes the copy. Turn this off on a computer other people use: Rebound then loads your practice from its server
+            each time, and keeps nothing here but your sign-in.
+          </p>
+        </section>
 
         <section className="card stack" aria-labelledby="data-heading">
           <h2 id="data-heading" style={{ margin: 0 }}>
@@ -194,7 +217,7 @@ export function AccountPage() {
           <h2 id="signout-heading" style={{ margin: 0 }}>
             Sign out
           </h2>
-          <p style={{ margin: 0 }}>Signs out on this device. Your practice stays in your account.</p>
+          <p style={{ margin: 0 }}>Signs out on this device and deletes its copy of your practice. Your practice stays in your account.</p>
           <div>
             <button
               className="btn"

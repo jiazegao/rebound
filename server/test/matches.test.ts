@@ -324,6 +324,31 @@ describe('online matches', () => {
     expect(reading.text).toBe('What organelle makes ATP?');
     for (const c of [host, a]) c.close();
   });
+
+  it('writes nothing for the pings every device sends, in the lobby or while a question is read', async () => {
+    const changes = () => runInDurableObject(roomStub(roomId), (_i, state) => state.storage.sql.exec<{ n: number }>('SELECT total_changes() AS n').one().n);
+    const cora = await signUp('Cora');
+    const ana = await signUp('Ana');
+    const roomId = await matchRoom(cora.token, { format: 'ffa', wpm: 60 });
+    const host = await connect(roomId, cora.token);
+    const a = await connect(roomId, ana.token);
+    await takeSide(host, 'A');
+    await takeSide(a, 'A');
+    await host.roundTrip();
+
+    let before = await changes();
+    for (let i = 0; i < 4; i++) await Promise.all([host.roundTrip(), a.roundTrip()]);
+    expect(await changes()).toBe(before);
+
+    host.send({ type: 'start' });
+    await view(a, (v) => v.label === 'Toss-up 1 of 2' && !!v.text);
+    await host.roundTrip();
+    before = await changes();
+    for (let i = 0; i < 4; i++) await Promise.all([host.roundTrip(), a.roundTrip()]);
+    // Still the same reading: the pings ran no step of the match and stored nothing.
+    expect(await changes()).toBe(before);
+    for (const c of [host, a]) c.close();
+  });
 });
 
 describe('Rebound’s recorded voice', () => {

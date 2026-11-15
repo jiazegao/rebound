@@ -1,7 +1,12 @@
 /*
  * Rebound service worker. The build (vite.config.ts) fills in VERSION and PRECACHE.
  *
- * - The app itself (HTML, script, styles, icons) is cached at install, so pages open quickly.
+ * - The app itself (HTML, scripts, styles, icons) is cached at install, so pages open quickly. Each page of the site
+ *   is its own script, loaded when the page is first opened; all of them are kept here from the first visit. Files
+ *   under assets/ carry a hash of their contents in their names, so the copy the browser has just downloaded for
+ *   the page is used, not fetched a second time.
+ * - The version before this one is kept too: a tab still running it finds its pages' scripts there (the host only
+ *   has the newest version's files).
  * - Pages: network first, so a new version shows up on the next visit; the cached copy when the network is slow.
  * - Public question files: kept in their own cache. Set files are served from the cache when present and
  *   refreshed in the background; the index and catalog are fetched fresh when the network allows.
@@ -17,7 +22,9 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(SHELL)
-      .then((cache) => cache.addAll(PRECACHE.map((path) => new Request(new URL(path, self.registration.scope), { cache: 'reload' }))))
+      .then((cache) =>
+        cache.addAll(PRECACHE.map((path) => new Request(new URL(path, self.registration.scope), { cache: path.startsWith('assets/') ? 'default' : 'reload' }))),
+      )
       .then(() => self.skipWaiting()),
   );
 });
@@ -26,7 +33,8 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('rebound-shell-') && k !== SHELL).map((k) => caches.delete(k))))
+      // Cache names come oldest first: every shell but this one and the one before it goes.
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('rebound-shell-') && k !== SHELL).slice(0, -1).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
@@ -63,7 +71,8 @@ async function page(request) {
 
 async function cacheFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
+  // This version's cache, then any other (a tab running the version before finds its scripts in that one's).
+  const cached = (await cache.match(request)) || (await caches.match(request));
   if (cached) return cached;
   const response = await fetch(request);
   if (response.ok) await cache.put(request, response.clone());

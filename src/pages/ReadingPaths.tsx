@@ -1,5 +1,5 @@
 import { signInHref } from '../components/Gates';
-import { LoadError, Notice, PageHeader, SubjectTag } from '../components/ui';
+import { Intro, LoadError, Notice, PageHeader, SubjectTag } from '../components/ui';
 import { READING_PATHS, type ReadingPath } from '../core/readingPaths';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type CoreSubject } from '../core/schema';
 import { topicById } from '../core/taxonomy';
@@ -28,10 +28,16 @@ function PathList() {
         <a href={href('/learn')}>Learn</a> /
       </p>
       <PageHeader title="Reading paths">
-        <p>
-          For each subject, the topics in the order to learn them. Each step says what NSB asks about, links to a free textbook section or agency
-          page, and ends with a short check drawn from real DOE questions on that topic.
-        </p>
+        <Intro
+          more={
+            <p>
+              Each step says what NSB asks about, links to a free textbook section or agency page, and ends with a short check drawn from real DOE
+              questions on that topic.
+            </p>
+          }
+        >
+          For each subject, the topics in the order to learn them, with free readings.
+        </Intro>
       </PageHeader>
       {!player && (
         <Notice>

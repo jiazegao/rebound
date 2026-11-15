@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Notice, PageHeader, SubjectTag } from '../components/ui';
+import { Intro, Notice, PageHeader, SubjectTag } from '../components/ui';
 import { useTip } from '../components/VizTip';
 import { bestAlternate, estimateLineup, OPPONENTS, ROUND_TOSSUPS, BONUS_POINTS, TOSSUP_POINTS, suggestLineups, type LineupEstimate, type PlayerProfile } from '../core/lineup';
 import { daysUntil } from '../core/review';
@@ -152,11 +152,16 @@ export function LineupsPage() {
         <a href={href('/team')}>Team</a> /
       </p>
       <PageHeader title="Lineups">
-        <p>
-          Pick four starters and see roughly how many points they would score in a regional round, subject by subject. The estimate uses each
-          player's results (difficulty-adjusted, from games and solo practice) and buzz speed. It ignores rebounds, interrupts and the clock, so use
-          it to compare lineups, not to predict scores.
-        </p>
+        <Intro
+          more={
+            <p>
+              The estimate goes subject by subject, from each player's results (difficulty-adjusted, from games and solo practice) and buzz speed.
+              It ignores rebounds, interrupts and the clock, so use it to compare lineups, not to predict scores.
+            </p>
+          }
+        >
+          Pick four starters and see roughly how many points they would score in a regional round.
+        </Intro>
         {loading && <p className="small muted">Loading teammates' practice…</p>}
       </PageHeader>
 

@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { EventInput, MatchState } from '../core/rules/engine';
 import { currentWindow } from '../core/rules/engine';
 import { SUBJECT_LABELS, type Round } from '../core/schema';
-import { createRoom, roomSocketUrl } from '../lib/api';
+import { createRoom } from '../lib/api';
 import { useSession } from '../lib/cloud';
 import { buildReading, readingDurationMs } from '../lib/reading';
 import { useRoom, type RoomView } from '../lib/room';
-import { trustedFigure } from '../lib/visuals';
+import { trustedFigure, useGeneratorReady } from '../lib/visuals';
 import { setGameRoom, useData, type GameRecord } from '../lib/store';
 
 /**
@@ -30,12 +30,13 @@ export function RemotePanel({
 }) {
   const data = useData();
   const session = useSession();
+  // Figures are drawn by generators that load on first use: ask again once they are here.
+  useGeneratorReady();
   const [mode, setMode] = useState<'voice' | 'text'>('voice');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const url = session.user && game.roomId ? roomSocketUrl(game.roomId) : null;
-  const { client, snapshot } = useRoom(url);
+  const { client, snapshot } = useRoom(game.roomId ?? null, session.user?.id ?? null);
   const wpm = data.settings.readingWpm;
 
   const pair = state.pairIndex >= 0 ? round.pairs[state.pairIndex] : undefined;

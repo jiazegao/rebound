@@ -3,13 +3,17 @@ import {
   ID_PATTERN,
   JOIN_CODE_PATTERN,
   LEADER_ONLY,
+  ROOM_KEY_PATTERN,
   SERVER_WRITTEN,
+  SESSION_ID_PATTERN,
   SESSION_TOKEN_PATTERN,
   TEAM_COLLECTIONS,
   TEAM_VISIBLE,
   USER_COLLECTIONS,
   canWriteTeam,
   isLeader,
+  roomKey,
+  sessionHash,
   isTeamCollection,
   isUserCollection,
   mergeUserRecord,
@@ -84,5 +88,21 @@ describe('merging two writes of one player record', () => {
     expect(mergeUserRecord('plans', undefined, { items: [] })).toEqual({ items: [] });
     expect(mergeUserRecord('plans', { items: [1] }, { items: [2] })).toEqual({ items: [2] });
     expect(mergeUserRecord('completions', { at: 1 }, { at: 2 })).toEqual({ at: 2 });
+  });
+});
+
+describe('a room key', () => {
+  it('is made from the session hash and the room, the same way on the site and the server', async () => {
+    // Pinned against Node's own SHA-256 and HMAC: the site and the server must make the same key, and a site
+    // kept in a browser's cache must go on making keys the server takes.
+    const hash = await sessionHash('s'.repeat(43));
+    expect(hash).toBe('d64b93c9f1b60eb338e5cb415d6a36bd920edd0e9b36f7ea5c730d0e10ff147f');
+    const key = await roomKey(hash, 'abcdefghijklmnop');
+    expect(key).toBe('1ayChsThC_YVl9z8FMTdmhUimIYEcURLWTwS0-FXgIo');
+    expect(key).toMatch(ROOM_KEY_PATTERN);
+    expect(hash.slice(0, 16)).toMatch(SESSION_ID_PATTERN);
+    // Another room, or another session, gives another key.
+    expect(await roomKey(hash, 'abcdefghijklmnoq')).not.toBe(key);
+    expect(await roomKey(await sessionHash('t'.repeat(43)), 'abcdefghijklmnop')).not.toBe(key);
   });
 });

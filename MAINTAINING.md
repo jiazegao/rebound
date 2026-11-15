@@ -109,10 +109,14 @@ October 1 as a reminder if DOE's site refuses automated requests. The issue carr
 
 ## Watching the server
 
-- Live errors: `npx wrangler tail` in `server/` (with the Cloudflare token). Request logs are off on purpose
-  (WebSocket URLs carry session tokens; see server/README.md).
+- Live errors: `npx wrangler tail` in `server/` (with the Cloudflare token). Kept logs are off; server/README.md
+  ("Logs") says how to turn them on now that room addresses carry no session token.
 - Usage: Cloudflare dashboard → Workers & Pages → rebound-server → Metrics. The Workers Free plan allows
-  100,000 requests a day.
+  100,000 requests a day, and its Durable Objects 100,000 requests and 100,000 rows written a day; past any of
+  them the server refuses that kind of work until midnight UTC. What uses them: an open page asks what changed
+  once a minute while the player is active and every five minutes when they are not (one request, two objects,
+  nothing written when nothing changed); a team page fetches each teammate's practice when it opens; a match
+  writes only when it changes (a device's keep-alive pings write nothing).
 - Sign-up limits: 20 new accounts per network address per day (`server/src/directory.ts`), and 10 new teams per
   network address and 300 in all per day (`server/src/registry.ts`). A whole school signs up from one network
   address, so a big club can hit the account limit on its first day: they can finish the next day, or you can

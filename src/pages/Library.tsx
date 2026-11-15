@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { LoadError, Loading, Notice, PageHeader, SubjectTag } from '../components/ui';
+import { Intro, LoadError, Loading, Notice, PageHeader, SubjectTag } from '../components/ui';
 import { RoundDownloads } from '../components/Downloads';
 import { QuestionView } from '../components/QuestionView';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type Question, type QuestionSet, type SetSummary, type Subject } from '../core/schema';
@@ -40,15 +40,21 @@ function SetList() {
   return (
     <div className="container">
       <PageHeader title="Library">
-        <p>
-          Every DOE {LEVEL_NAME[level]} sample set, newest first. These are retired rounds that DOE publishes for practice; each round links to
-          its original PDF.{' '}
+        <Intro
+          label="About these sets"
+          more={
+            <p>
+              These are retired rounds that DOE publishes for practice; each round links to its original PDF. Browse by topic shows which topics come
+              up most often in each subject. Team packets: build a scrimmage nobody has heard (including Finals formats), or upload an
+              invitational's packet. The Visual lab has visual bonuses for the Finals.
+            </p>
+          }
+        >
+          Every DOE {LEVEL_NAME[level]} sample set, newest first.{' '}
           {other && (level === 'MS' ? 'High school sets are further down, for practicing up.' : 'Middle school sets are further down.')}
-        </p>
-        <p>
-          <a href={href('/library/topics')}>Browse by topic</a>: which topics come up most often in each subject. <a href={href('/packets')}>Team packets</a>:
-          build a scrimmage nobody has heard (including Finals formats), or upload an invitational's packet. <a href={href('/visual')}>Visual lab</a>:
-          visual bonuses for the Finals.
+        </Intro>
+        <p className="small">
+          <a href={href('/library/topics')}>Browse by topic</a> · <a href={href('/packets')}>Team packets</a> · <a href={href('/visual')}>Visual lab</a>
         </p>
       </PageHeader>
       {index.loading && <Loading what="Loading the library" />}

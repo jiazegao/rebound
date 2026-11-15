@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTip } from '../components/VizTip';
-import { Loading, Notice, PageHeader, Stat } from '../components/ui';
+import { Intro, Loading, Notice, PageHeader, Stat } from '../components/ui';
 import type { Observation, PlayerModel, SkillLine } from '../core/mastery';
 import { endOfPracticeDay } from '../core/review';
 import { CORE_SUBJECTS, SUBJECT_LABELS, type Player } from '../core/schema';
@@ -405,7 +405,7 @@ function ProgressView({ data, player, own }: { data: AppData; player: Player; ow
   if (!model) return null;
   return (
     <div className="stack" style={{ marginTop: '1rem' }}>
-      <div className="grid">
+      <div className="grid stats four">
         <Stat label="Questions answered" value={obs.length.toLocaleString()} hint="First answers in practice and games" />
         <Stat label="Right in the last 30 days" value={percent(recent.filter((o) => o.correct).length, recent.length)} hint={`${recent.length} answers`} />
         <Stat label="Median buzz on right answers" value={seconds(medianBuzz)} hint="After the reading ends" />
@@ -476,10 +476,16 @@ export function ProgressPage({ query }: { query?: URLSearchParams }) {
   return (
     <div className="container">
       <PageHeader title={teammate ? `${teammate.name}'s progress` : 'My progress'}>
-        <p>
-          How {teammate ? 'they are' : 'you are'} doing by subject and topic, from practice rounds, drills, Reader console games and online matches.
-          Reviews are tracked separately: they show memory of a question already seen.
-        </p>
+        <Intro
+          more={
+            <p>
+              From practice rounds, drills, Reader console games and online matches. Reviews are tracked separately: they show memory of a question
+              already seen.
+            </p>
+          }
+        >
+          How {teammate ? 'they are' : 'you are'} doing by subject and topic.
+        </Intro>
       </PageHeader>
       {asked && !teammate && asked !== current?.id && <Notice>That player is not on your team (any more).</Notice>}
       {teammate ? <TeammateProgress player={teammate} /> : current && <ProgressView data={data} player={current} own />}

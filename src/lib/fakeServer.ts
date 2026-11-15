@@ -40,7 +40,7 @@ function put(store: Store, c: string, id: string, body: unknown): void {
 function page(store: Store, cursor: number, size: number, only?: (r: RecordOut) => boolean) {
   const all = [...store.records.values()].filter((r) => r.rev > cursor && (!only || only(r))).sort((a, b) => a.rev - b.rev);
   const records = all.slice(0, size);
-  return { cursor: records.length ? records[records.length - 1].rev : cursor, records, more: all.length > size };
+  return { cursor: records.length ? records[records.length - 1].rev : cursor, records, more: all.length > size, head: store.rev };
 }
 
 export class FakeServer {
@@ -124,6 +124,21 @@ export class FakeServer {
     if (!user) return json(401, { error: 'You are signed out. Sign in again.' });
     const cursor = Number(url.searchParams.get('cursor') ?? 0);
     const parts = url.pathname.split('/').filter(Boolean); // api, me|teams, …
+
+    if (parts[1] === 'sync' && parts.length === 2 && method === 'GET') {
+      const team = user.teamId ? this.teams.get(user.teamId) : undefined;
+      const me = team?.members.find((m) => m.userId === userId);
+      const teamCursor = url.searchParams.get('team') === team?.info.id ? Number(url.searchParams.get('t') ?? 0) : 0;
+      return json(200, {
+        user: user.profile,
+        team: team && me ? { id: team.info.id, name: team.info.name, level: team.info.level, role: me.role } : null,
+        mine: page(user.store, Number(url.searchParams.get('u') ?? 0), this.pageSize),
+        teamData:
+          team && me
+            ? { team: team.info, members: team.members, you: { role: me.role }, ...(isLeader(me.role) ? { joinCode: team.joinCode } : {}), records: page(team.store, teamCursor, this.pageSize) }
+            : null,
+      });
+    }
 
     if (parts[1] === 'me') {
       if (parts.length === 2 && method === 'GET') {

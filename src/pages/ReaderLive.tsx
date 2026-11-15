@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AnswerBox, Choices, ImportNotes, QuestionMeta, RichText } from '../components/QuestionView';
-import { Countdown, LoadError, Loading, Notice, useTicker } from '../components/ui';
+import { Countdown, LoadError, Loading, Notice, usePageTitle, useTicker } from '../components/ui';
 import { FigureView } from '../components/Figure';
 import { RemotePanel } from '../components/RemotePanel';
 import {
@@ -20,7 +20,7 @@ import { getPreset, visualBonusTiming } from '../core/rules/presets';
 import type { Question, Round } from '../core/schema';
 import { clockText } from '../lib/format';
 import { useAsync } from '../lib/library';
-import { trustedFigure } from '../lib/visuals';
+import { trustedFigure, useGeneratorReady } from '../lib/visuals';
 import { loadGameRound } from '../lib/packets';
 import { href } from '../lib/router';
 import { beep, unlockAudio } from '../lib/sound';
@@ -117,6 +117,8 @@ function Lineups({ state, game, names, allowEdit, dispatch }: { state: MatchStat
 }
 
 function ReaderGame({ game, round }: { game: GameRecord; round: Round }) {
+  // Figures are drawn by generators that load on first use: ask again once they are here.
+  useGeneratorReady();
   const data = useData();
   const [toast, setToast] = useState<string | null>(null);
   const [hideAnswer, setHideAnswer] = useState(false);
@@ -633,6 +635,7 @@ export function ReaderLive({ gameId }: { gameId: string }) {
   const data = useData();
   const game = data.games.find((g) => g.id === gameId);
   const round = useAsync(game ? `${game.packet.setId}|${game.packet.roundId}` : null, () => loadGameRound(game!.packet));
+  usePageTitle(game ? `${game.teams[0].name} vs ${game.teams[1].name}` : 'Reader console');
   if (!game) {
     return (
       <div className="container narrow">

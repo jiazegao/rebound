@@ -94,7 +94,10 @@ async function main() {
     });
 
     await step('its link then says the game has closed, and Open games no longer lists it', async () => {
+      // Away to another page and back to the link (waiting for the other page: one that never showed would leave
+      // the room's page as it was, still saying the match was cancelled).
       await player.goto(`${BASE}#/today`);
+      await player.getByRole('heading', { name: 'Today', exact: true }).waitFor({ timeout: 15000 });
       await player.goto(`${BASE}#/room/${first}`);
       await player.getByRole('heading', { name: 'This game has closed' }).waitFor({ timeout: 10000 });
       await shot(player, 'cancel-3-closed-link');

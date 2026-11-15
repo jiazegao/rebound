@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { LoadError, Loading, Notice, PageHeader } from '../components/ui';
+import { Intro, LoadError, Loading, Notice, PageHeader } from '../components/ui';
 import { currentPresets, DEFAULT_PRESET_ID } from '../core/rules/presets';
 import { LETTERS, type Question, type Round } from '../core/schema';
 import { dateTimeText } from '../lib/format';
@@ -390,11 +390,16 @@ export function OnlinePage() {
   return (
     <div className="container">
       <PageHeader title="Play online">
-        <p>
-          Play from your own devices: teammates, or anyone with a Rebound account you send the link to. In an online match nobody needs to read:
-          Rebound reveals each question, times the buzzers fairly, and judges typed answers. Everyone's answers go to their own account. For a game
-          with a reader, open a <a href={href('/reader')}>Reader console</a> game and share its room.
-        </p>
+        <Intro
+          more={
+            <p>
+              Play with teammates, or anyone with a Rebound account you send the link to. Everyone's answers go to their own account. For a game
+              with a reader, open a <a href={href('/reader')}>Reader console</a> game and share its room.
+            </p>
+          }
+        >
+          Matches from your own devices, with no reader: Rebound reveals each question, times the buzzers fairly, and judges typed answers.
+        </Intro>
       </PageHeader>
       <div className="stack">
         {session.team ? (

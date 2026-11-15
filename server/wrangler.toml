@@ -4,10 +4,15 @@ name = "rebound-server"
 main = "src/index.ts"
 compatibility_date = "2026-10-01"
 
-# Session tokens travel in the WebSocket URL's query string (browsers cannot set headers on WebSockets),
-# so request logging stays off: it would keep those URLs. `npx wrangler tail` still shows live errors.
+# Kept logs are off; `npx wrangler tail` shows live errors. A room's WebSocket address no longer carries the session
+# token (the site sends a key for that one room), so logs can be turned on to see errors after the fact: set
+# enabled = true. With invocation_logs = false only what the server logs itself (errors, never a request) is kept,
+# not a line for every request. See server/README.md, "Logs", before turning it on.
 [observability]
 enabled = false
+
+[observability.logs]
+invocation_logs = false
 
 [vars]
 # Browser origins allowed to call the API (comma-separated, no trailing slashes). Others get no CORS headers,

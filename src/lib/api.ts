@@ -6,6 +6,8 @@
  */
 import {
   JOIN_CODE_PATTERN,
+  roomKey,
+  sessionHash,
   type AuthConfig,
   type Change,
   type ChangesResponse,
@@ -35,6 +37,8 @@ interface Saved {
   token?: string;
   /** Only for builds without a server address. */
   server?: string;
+  /** False when the player chose to keep no copy of their account on this device (a shared computer). */
+  copy?: false;
 }
 
 function readSaved(): Saved {
@@ -44,6 +48,7 @@ function readSaved(): Saved {
     return {
       ...(typeof parsed.token === 'string' ? { token: parsed.token } : {}),
       ...(typeof parsed.server === 'string' ? { server: parsed.server } : {}),
+      ...(parsed.copy === false ? { copy: false as const } : {}),
     };
   } catch {
     return {};
@@ -56,7 +61,8 @@ let saved: Saved = readSaved();
 function writeSaved(next: Saved): void {
   saved = next;
   try {
-    if (next.token || next.server) globalThis.localStorage?.setItem(SESSION_KEY, JSON.stringify(next));
+    // (A "shared computer" choice made before signing in is kept too: an emailed sign-in link opens in another tab.)
+    if (next.token || next.server || next.copy === false) globalThis.localStorage?.setItem(SESSION_KEY, JSON.stringify(next));
     else globalThis.localStorage?.removeItem(SESSION_KEY);
   } catch {
     /* storage blocked: the session lasts until the tab closes */
@@ -92,7 +98,21 @@ export function sessionToken(): string | null {
 }
 
 export function setSessionToken(token: string | null): void {
-  writeSaved({ ...(saved.server ? { server: saved.server } : {}), ...(token ? { token } : {}) });
+  // The choice about a copy on the device belongs to the session: signing out forgets it with the token.
+  writeSaved({ ...(saved.server ? { server: saved.server } : {}), ...(token ? { token, ...(saved.copy === false ? { copy: false as const } : {}) } : {}) });
+}
+
+/**
+ * Whether this session keeps a copy of the account on the device (lib/deviceCopy.ts). It does unless the player
+ * said otherwise: with the "shared computer" box when signing in, or on the Account page.
+ */
+export function keepsCopy(): boolean {
+  return saved.copy !== false;
+}
+
+export function setKeepsCopy(keep: boolean): void {
+  const { copy: _copy, ...rest } = saved;
+  writeSaved(keep ? rest : { ...rest, copy: false });
 }
 
 const sessionEndedListeners = new Set<() => void>();
@@ -252,6 +272,20 @@ export interface ProfileFields {
   settings?: UserSettings;
 }
 
+/** What `GET /api/sync` answers: the profile, the team, and both sets of records from their cursors. */
+export interface SyncResponse extends MeResponse {
+  mine: RecordsResponse;
+  /** The team as `GET /api/teams/:id` gives it, with a page of its records. Null with no team. */
+  teamData: (TeamResponse & { records: RecordsResponse }) | null;
+}
+
+/**
+ * Everything a page needs to load (cursors 0) or to catch up, in one request. `teamId` is the team the team cursor
+ * belongs to: for any other team the server starts from the beginning.
+ */
+export const sync = (userCursor: number, teamCursor: number, teamId: string | null) =>
+  request<SyncResponse>(`/api/sync?u=${userCursor}&t=${teamCursor}${teamId ? `&team=${enc(teamId)}` : ''}`, { timeoutMs: 120_000 });
+
 export const getMe = () => request<MeResponse>('/api/me');
 export const updateMe = (fields: ProfileFields) => request<{ user: UserProfile }>('/api/me', { method: 'PATCH', body: fields });
 export const deleteMe = () => request<{ ok: true }>('/api/me', { method: 'DELETE' });
@@ -329,12 +363,22 @@ export const createRoom = async (name: string, match?: unknown) =>
 /** The host cancels a match that has not started: everyone waiting in it is told, and it leaves the list. */
 export const cancelRoom = (roomId: string) => request<{ ok: true }>(`/api/rooms/${enc(roomId)}`, { method: 'DELETE' });
 
-/** The room's WebSocket address (browsers cannot set headers on WebSockets, so the token goes in the query). */
-export function roomSocketUrl(roomId: string): string | null {
+/**
+ * The room's WebSocket address. Browsers cannot set headers on WebSockets, and an address ends up in logs, so it
+ * carries no session token: it names the player and their session, with a key made from the token that opens this
+ * one room and nothing else (`roomKey` in src/core/accounts.ts). Null when signed out.
+ */
+export async function roomSocketUrl(roomId: string): Promise<string | null> {
   const token = sessionToken();
   const base = serverUrl();
   if (!token || !base) return null;
-  return `${base.replace(/^http/, 'ws')}/api/rooms/${enc(roomId)}/ws?token=${enc(token)}`;
+  const address = `${base.replace(/^http/, 'ws')}/api/rooms/${enc(roomId)}/ws`;
+  const [userId, secret] = token.split('.');
+  // Making the key needs Web Crypto, which browsers give only to secure pages (https, or localhost). A page served
+  // any other way (a development build opened over a local network) sends the token itself, as older versions did.
+  if (!userId || !secret || !globalThis.crypto?.subtle) return `${address}?token=${enc(token)}`;
+  const hash = await sessionHash(secret);
+  return `${address}?user=${enc(userId)}&session=${hash.slice(0, 16)}&key=${await roomKey(hash, roomId)}`;
 }
 
 /* ---------------- AI help ---------------- */

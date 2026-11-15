@@ -1,11 +1,12 @@
 import { Fragment, useEffect, useState } from 'react';
 import { FigureView } from '../components/Figure';
+import { PlayBar, RevealingText, usePlayMode } from '../components/play';
 import { RichText } from '../components/QuestionView';
 import { loadQuestions, useAsync } from '../lib/library';
-import { Notice, useTicker } from '../components/ui';
-import { roomSocketUrl } from '../lib/api';
+import { Notice, usePageTitle, useTicker } from '../components/ui';
+
 import { useSession } from '../lib/cloud';
-import { buildReading, revealedCount, splitRevealed } from '../lib/reading';
+import { buildReading, revealedCount } from '../lib/reading';
 import { RoomClient, useRoom, type RoomEnd, type RoomView, type Side } from '../lib/room';
 import { href } from '../lib/router';
 import { MatchRoom } from './MatchRoom';
@@ -25,21 +26,10 @@ export function RevealedText({ view, serverNow }: { view: RoomView; serverNow: n
       </p>
     );
   }
+  // The text not read yet keeps its place (invisible), so the Buzz button under the question never moves.
   const reading = buildReading({ stem: view.text });
   const elapsed = (view.reading.pausedAt ?? serverNow) - view.reading.startedAt;
-  const { done, current } = splitRevealed(reading, revealedCount(reading, elapsed, view.reading.wpm));
-  const lines = done.split('\n');
-  return (
-    <p className="stem" aria-live="off">
-      {lines.map((line, i) => (
-        <Fragment key={i}>
-          {i > 0 && <br />}
-          <RichText text={line} />
-          {i === lines.length - 1 && current && <span className="reading-current">{current}</span>}
-        </Fragment>
-      ))}
-    </p>
-  );
+  return <RevealingText reading={reading} count={revealedCount(reading, elapsed, view.reading.wpm)} />;
 }
 
 /** A visual bonus's figure, looked up on this device (generated, photo set, or the team's own visual questions). */
@@ -144,8 +134,7 @@ function RoomEnded({ ended }: { ended: RoomEnd }) {
 export function RoomPage({ roomId }: { roomId: string }) {
   // Any signed-in player can be in a room (App asks everyone else to sign in first).
   const session = useSession();
-  const url = session.user ? roomSocketUrl(roomId) : null;
-  const { client, snapshot } = useRoom(url);
+  const { client, snapshot } = useRoom(roomId, session.user?.id ?? null);
   const view = snapshot?.view ?? null;
   const ticking = !!view && (!!view.reading || !!view.window);
   const now = useTicker(ticking, 50);
@@ -155,6 +144,7 @@ export function RoomPage({ roomId }: { roomId: string }) {
   const buzz = snapshot?.buzz;
   const canBuzz = !!buzz && buzz.open && !!side && buzz.sides[side] && !buzz.winner;
   const matchRoom = snapshot?.kind === 'match';
+  usePageTitle(snapshot?.roomName || (matchRoom ? 'Online match' : 'Remote room'));
 
   // Space buzzes (unless typing in the team channel). A match room has its own screen, which does this itself.
   useEffect(() => {
@@ -171,6 +161,10 @@ export function RoomPage({ roomId }: { roomId: string }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [canBuzz, client, matchRoom]);
 
+  // While a reader's game is on and this player is on a side, a phone's screen is the game's. (A match room's own
+  // screen says when it is being played.)
+  usePlayMode(!matchRoom && !!view && !!side && !snapshot?.ended);
+
   if (snapshot?.ended) return <RoomEnded ended={snapshot.ended} />;
   if (client && snapshot && matchRoom) return <MatchRoom client={client} snapshot={snapshot} roomId={roomId} />;
 
@@ -184,6 +178,12 @@ export function RoomPage({ roomId }: { roomId: string }) {
       <div className="row spread" style={{ marginBottom: '0.5rem' }}>
         <span className="small muted">
           {snapshot?.roomName || 'Remote room'} · {snapshot?.connected ? 'connected' : 'connecting…'}
+          {view && side && (
+            <>
+              {' · '}
+              <a href={href('/online')}>Leave</a>
+            </>
+          )}
         </span>
         {view && (
           <span className="row small" style={{ gap: '1rem' }}>
@@ -236,11 +236,17 @@ export function RoomPage({ roomId }: { roomId: string }) {
       </article>
 
       <div className="stack" style={{ marginTop: '1rem' }}>
+        {/* The Buzz button comes first and keeps its place (what comes and goes is below it); on a phone it is pinned
+            to the bottom of the screen. It appears once the player is on a side. */}
+        {side && (
+          <PlayBar>
+            <button className="btn btn-primary btn-big room-buzz" onClick={() => client?.buzz()} disabled={!canBuzz} aria-disabled={!canBuzz}>
+              Buzz <span className="kbd">Space</span>
+            </button>
+          </PlayBar>
+        )}
         {windowLeft !== null && <p className="small">{windowLeft > 0 ? `${windowLeft.toFixed(1)} s left` : 'Time'}</p>}
         {winnerName && !view?.status?.includes('buzzed') && <p className="status-line">{winnerName} buzzed</p>}
-        <button className="btn btn-primary btn-big room-buzz" onClick={() => client?.buzz()} disabled={!canBuzz} aria-disabled={!canBuzz}>
-          Buzz <span className="kbd">Space</span>
-        </button>
         {side && client && <TeamChannel client={client} side={side} lines={sideLines} canAnswer={isCaptain && view?.bonusTeam === (side === 'A' ? 0 : 1)} />}
       </div>
     </div>

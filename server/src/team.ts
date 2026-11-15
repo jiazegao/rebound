@@ -73,6 +73,13 @@ export interface CreatedTeam {
   joinCode: string;
 }
 
+/**
+ * The team's half of `GET /api/sync`: the member's summary of the team, and the JSON text of the team as
+ * `GET /api/teams/:id` gives it with a page of the team's records added (`records`). Not ok when the user is not on
+ * this team (they were removed, or it was deleted).
+ */
+export type SyncTeam = { ok: true; summary: TeamSummary; text: string } | { ok: false };
+
 function memberOut(r: MemberRow): TeamMember {
   return {
     userId: r.user_id,
@@ -205,6 +212,40 @@ export class Team extends DurableObject<Env> {
     if (!this.ready) return null;
     const me = this.member(userId);
     if (!me) return null;
+    this.touchMember(me, copy, now);
+    const info = this.info();
+    return { id: info.id, name: info.name, level: info.level, role: me.role };
+  }
+
+  /**
+   * `GET /api/sync`: the team for one of its members, with the team's records after `cursor`, after taking the
+   * latest copy of the member's details.
+   */
+  async syncTeam(userId: string, copy: MemberCopy, cursor: number, now: number): Promise<SyncTeam> {
+    if (!this.ready) return { ok: false };
+    const me = this.member(userId);
+    if (!me) return { ok: false };
+    this.touchMember(me, copy, now);
+    const info = this.info();
+    const body = JSON.stringify(this.teamFor(userId));
+    return {
+      ok: true,
+      summary: { id: info.id, name: info.name, level: info.level, role: me.role },
+      text: `${body.slice(0, -1)},"records":${this.records.page(cursor, { by: true })}}`,
+    };
+  }
+
+  /**
+   * Keeps the team's copy of a member's details in step with their account, and their last-seen time (at most once
+   * a minute). Nothing is written when nothing changed: every open page asks again and again.
+   */
+  private touchMember(me: MemberRow, copy: MemberCopy, now: number): void {
+    const same =
+      me.name === copy.name &&
+      me.primary_subject === (copy.primarySubject ?? null) &&
+      me.secondary_subject === (copy.secondarySubject ?? null) &&
+      me.grad_year === (copy.gradYear ?? null);
+    if (same && now - me.last_seen < TOUCH_EVERY_MS) return;
     this.sql.exec(
       'UPDATE members SET name = ?, primary_subject = ?, secondary_subject = ?, grad_year = ?, last_seen = ? WHERE user_id = ?',
       copy.name,
@@ -212,10 +253,8 @@ export class Team extends DurableObject<Env> {
       copy.secondarySubject ?? null,
       copy.gradYear ?? null,
       now,
-      userId,
+      me.user_id,
     );
-    const info = this.info();
-    return { id: info.id, name: info.name, level: info.level, role: me.role };
   }
 
   /* ---------------- RPC: rooms and online matches ---------------- */
@@ -290,11 +329,16 @@ export class Team extends DurableObject<Env> {
   }
 
   private getTeam(caller: string): Response {
+    return json(this.teamFor(caller));
+  }
+
+  /** The team as one of its members sees it. */
+  private teamFor(caller: string): TeamResponse {
     const me = this.member(caller)!;
     const out: TeamResponse = { team: this.info(), members: this.members().map(memberOut), you: { role: me.role } };
     // Leaders can show the invite link again; the secret is kept for that (POST /join-code replaces it).
     if (isLeader(me.role)) out.joinCode = `${this.info().id}.${getMeta(this.sql, 'joinSecret')}`;
-    return json(out);
+    return out;
   }
 
   private async patchTeam(request: Request, caller: string): Promise<Response> {

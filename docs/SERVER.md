@@ -46,9 +46,14 @@ object, so random paths never wake one.
   (`UserProfile`), with `settings: { sound, readingWpm, answerTimer, dailyMinutes, cardsCursor? }`. One account per
   email address (lowercased).
 - A **session token** is `<userId>.<secret>`, the secret 32 random bytes in base64url. The user's object keeps only
-  the SHA-256 of the secret. Clients send `Authorization: Bearer <token>`, or `?token=` on the room WebSocket only
-  (browsers cannot set headers on WebSockets). Sessions unused for 180 days expire; a session's last use is written
-  at most once a minute. A user keeps at most 50 sessions (the least recently used end first).
+  the SHA-256 of the secret. Clients send `Authorization: Bearer <token>`. A room's WebSocket cannot (browsers do
+  not set headers on WebSockets) and its address would end up in logs, so it carries a **room key** instead:
+  `?user=<userId>&session=<first 16 characters of the session's hash>&key=<key>`, the key an HMAC-SHA-256 of
+  `rebound-room:<roomId>` under the session's hash, in base64url (`roomKey` in `src/core/accounts.ts`). Only a
+  device holding the token can make it, it opens that one room, and it says nothing about the token. `?token=` on the
+  room WebSocket is still taken, for versions of the site that sent it. Sessions unused for 180 days expire; a
+  session's last use is written at most once a minute. A user keeps at most 50 sessions (the least recently used
+  end first).
 - **Google.** The site shows Google's "Sign in with Google" button and sends the ID token it gets:
   `POST /api/auth/google { credential, over13?, name? }`. The server checks its RS256 signature against Google's
   published keys (`https://www.googleapis.com/oauth2/v3/certs`, cached as long as Google's `Cache-Control` says;
@@ -91,7 +96,8 @@ captain.
 | `GET /api/me` | user | → `{ user, team: { id, name, level, role } \| null }` |
 | `PATCH /api/me` | user | `{ name?, primarySubject?, secondarySubject?, gradYear?, settings? }` → `{ user }` |
 | `DELETE /api/me` | user | → `{ ok: true }` (leaves the team, then deletes the account and everything in it) |
-| `GET /api/me/records?cursor=` | user | → `{ cursor, records: [{ c, id, body, rev }], more }` |
+| `GET /api/sync?u=&t=&team=` | user | → `{ user, team, mine, teamData }`: everything a page needs to load or catch up, in one request (below) |
+| `GET /api/me/records?cursor=` | user | → `{ cursor, records: [{ c, id, body, rev }], more, head }` |
 | `POST /api/me/records` | user | `{ changes: [{ c, id, body \| null }] }` → `{ cursor, rejected }` |
 | `GET /api/me/export` | user | → the account as one JSON file (below) |
 | `POST /api/teams` | user | `{ name, level: "HS"\|"MS", leaveCurrent? }` → 201 `{ team, joinCode }` (the caller becomes captain) |
@@ -103,13 +109,13 @@ captain.
 | `DELETE /api/teams/:id/members/:userId` | leader (or the member themselves, which is leaving) | → `{ ok: true }` |
 | `POST /api/teams/:id/join-code` | leader | → `{ joinCode }` (a new secret; old links stop working) |
 | `DELETE /api/teams/:id` | leader | → `{ ok: true }` (deletes the team and its records) |
-| `GET /api/teams/:id/records?cursor=` | member | → `{ cursor, records: [{ c, id, body, rev, by }], more }` |
+| `GET /api/teams/:id/records?cursor=` | member | → `{ cursor, records: [{ c, id, body, rev, by }], more, head }` |
 | `POST /api/teams/:id/records` | member | `{ changes }` → `{ cursor, rejected }` |
 | `GET /api/teams/:id/members/:userId/records?cursor=` | member | that teammate's visible collections, as for `/api/me/records` |
 | `GET /api/rooms` | user | → `{ rooms }`: the open rooms opened by members of the caller's team (query parameters are ignored) |
 | `POST /api/rooms` | user | `{ name, match? }` → 201 `{ roomId }` (the caller hosts it; with `match`, an online match: see Match rooms) |
 | `DELETE /api/rooms/:id` | user | → `{ ok: true }`: the host cancels a match that has not started (see Match rooms); a room already closed counts as cancelled |
-| `GET /api/rooms/:id/ws?token=` | user | WebSocket upgrade (see Rooms) |
+| `GET /api/rooms/:id/ws?user=&session=&key=` | user | WebSocket upgrade, with a room key (see Rooms) |
 | `GET /api/speech` | user | → `{ enabled }`: whether Rebound's voice is set up (see Solo practice read aloud) |
 | `POST /api/speech` | user | `{ stem, choices? }` → `{ enabled, key, ms }`: a question's recording for solo practice, made the first time anyone asks for it; `key` is null when it cannot be made now (the device reads that question) |
 | `GET /api/speech/:key` | user | a recording in Rebound's voice for a match or solo practice read aloud (`audio/mpeg`, cacheable for good); 404 when there is none |
@@ -151,14 +157,15 @@ are not available.
 A user's collections and a team's collections are each a set of records `(collection, id) → body`, with the
 collections in `src/core/accounts.ts`:
 
-- user: `attempts`, `answers`, `seen` and `conceptReads` (id `ledger`), `completions`, `reports`, `cards`, `plans`
-  (id `today`). `answers` are written only by the server. Teammates may read all but `cards` and `plans`.
+- user: `attempts`, `answers`, `seen` (the questions heard, one record for each round, named by the site),
+  `conceptReads` (id `ledger`), `completions`, `reports`, `cards`, `plans` (id `today`). `answers` are written only
+  by the server. Teammates may read all but `cards` and `plans`.
 - team: `lineups` and `assignments` (leaders write), `games`, `packets`, `visuals`, `written`, `conceptCards`
   (members write).
 
 `POST .../records` with `{ changes }` (at most 500; more is a 413): each change is checked (a known collection the
 caller may write, an id of 1–200 characters, a JSON object body nested at most 100 deep and at most `MAX_RECORD_BYTES`
-of JSON; `seen` and `conceptReads` use the id `ledger` and `plans` the id `today`; a user's `attempts`, `cards`,
+of JSON; `conceptReads` uses the id `ledger` and `plans` the id `today`; a user's `attempts`, `cards`,
 `completions` and `plans` that name a `playerId` must name the user). Refused changes come back in `rejected` with a
 reason. A user's records merge with `mergeUserRecord` (ledgers as unions, review cards by history, answers and
 attempts never change once written; the rest last-writer-wins); team records are last-writer-wins. Storing what is
@@ -166,10 +173,25 @@ already there changes nothing; any other change takes the store's next revision 
 A delete (`body: null`) keeps a tombstone so other devices learn about it. The response's `cursor` is the store's
 highest revision after the changes.
 
-`GET .../records?cursor=` returns the records with a revision above `cursor`, oldest first, at most 500 (a page also
-ends early at about 4 MB), with `body: null` for deleted ones and `more: true` when more are waiting; `cursor` in the
-response is the last revision included (or the request's cursor when there are none). Team records also carry `by`,
-the user who wrote that version.
+`GET .../records?cursor=` returns the records with a revision above `cursor`, oldest first, at most 2,000 (a page
+also ends early at about 4 MB), with `body: null` for deleted ones and `more: true` when more are waiting; `cursor` in
+the response is the last revision included (or the request's cursor when there are none), and `head` is the store's
+latest revision (a device whose cursor is ahead of it holds a copy of data that has since been reset, and loads
+everything again). Team records also carry `by`, the user who wrote that version.
+
+**The questions a player has heard** (`seen`) are kept a round at a time: the site puts each question in the record
+named by its id without the last part (`doe-hs-17-r02-t04` in `doe-hs-17-r02`), so hearing a question sends a
+round's worth of ids, not the player's whole history. Each record merges as a union. Versions of the site before
+this kept one record, `ledger`; the site still reads it, moves its questions into the per-round records and deletes
+it.
+
+`GET /api/sync?u=<cursor>&t=<cursor>&team=<teamId>` is what the site loads and refreshes with: `user` (the profile),
+`team` (`{ id, name, level, role }` or null, as in `GET /api/me`), `mine` (a page of the user's records after `u`, as
+`GET /api/me/records` gives), and `teamData` (null with no team; otherwise what `GET /api/teams/:id` gives, plus
+`records`, a page of the team's records after `t`). The team cursor counts only when `team` names the team the user
+is on now; otherwise the team's records start from the beginning. Later pages come from the two records routes. The
+Worker asks two objects, the user's (which checks the session in the same call) and the team's; neither writes
+anything when nothing changed, so a page left open costs reads only.
 
 `GET /api/me/export` answers (as an attachment, `rebound-<name>.json`):
 `{ format: "rebound-account", version: 1, exportedAt, user, team: { id, name, level, role } | null,
@@ -209,8 +231,8 @@ clocks, exactly as in the in-person Reader console; the server relays the reader
 buzzed first, and carries each side's private channel. Room members are users: a member's `memberId` and `playerId`
 are both their user id, and their name comes from their account (at each connection).
 
-Connect with `GET /api/rooms/:id/ws?token=<session token>`; the server checks the session before accepting the
-upgrade. A room that has closed (or never was) accepts the upgrade only to close the connection at once with code
+Connect with `GET /api/rooms/:id/ws?user=&session=&key=` (a room key: see Accounts above); the server checks it
+before accepting the upgrade. A room that has closed (or never was) accepts the upgrade only to close the connection at once with code
 4004, since a browser cannot read why an upgrade was refused. Messages are JSON objects with a `type`. Server time is
 the room object's `Date.now()`.
 
@@ -236,7 +258,7 @@ cancelled the match; clients should not reconnect after those.
 
 | type | fields | who |
 |---|---|---|
-| `ping` | `t` (client clock) | anyone; clients ping every few seconds |
+| `ping` | `t` (client clock) | anyone; clients ping every 3 seconds while a question is live, and every 20 otherwise (a lobby, a pause, a finished game) |
 | `side` | `side: "A"\|"B"\|null` | a player choosing a side (the reader can override with `assign`) |
 | `buzz` | – | a player |
 | `chat` | `text` (≤ 500 characters, at most 5 a second) | a player; delivered only to the same side |
@@ -397,6 +419,7 @@ Team        meta(key, value)                                   -- teamId, name, 
 RoomServer  room(id, name, host_id, created_at, last_active, state, seq, buzz)
             members(user_id PRIMARY KEY, name, team_id, primary_subject, secondary_subject, side, captain, joined_at)
             match(one, data, due_at)                           -- an online match: its state and its next deadline
+                                                               --   (written only when it changed: a ping changes nothing)
             results(n, user_id, result)                        -- a free-for-all's judged answers
             outbox(id, kind, target, payload, tries, next_at)  -- answers and the team game still to deliver
 Registry    meta(key, value), creations(day, address, count)
