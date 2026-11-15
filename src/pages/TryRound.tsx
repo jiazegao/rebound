@@ -819,15 +819,19 @@ function Play({
   const canContinue = (step.kind === 'tossup_result' && (step.result === null || step.decided !== null)) || (step.kind === 'bonus_result' && (step.result === null || step.decided !== null));
   const goesToBonus = step.kind === 'tossup_result' && step.decided === true && !!bonus;
 
-  const next = () => {
-    if (!canContinue) return;
-    // Save the final decision once, when the player moves on (so overrides never double-count).
+  /** Save the final decision on the question on screen, once: when the player moves on or stops (so overrides never double-count). */
+  const saveDecision = () => {
     if (step.kind === 'tossup_result' && step.result && step.decided !== null) {
       record(tossup, step.decided, step.interrupt, step.latencyMs, step.result.verdict !== (step.decided ? 'correct' : 'incorrect'));
     }
     if (step.kind === 'bonus_result' && bonus && step.result && step.decided !== null) {
       record(bonus, step.decided, false, null, step.result.verdict !== (step.decided ? 'correct' : 'incorrect'));
     }
+  };
+
+  const next = () => {
+    if (!canContinue) return;
+    saveDecision();
     setResponse('');
     if (goesToBonus) {
       setStep(readingStep('bonus', aloud));
@@ -876,7 +880,14 @@ function Play({
         </span>
         <span className="row small">
           <strong>{tally.points} points</strong>
-          <button className="btn btn-small btn-ghost" onClick={() => onQuit(tally)}>
+          <button
+            className="btn btn-small btn-ghost"
+            onClick={() => {
+              // Stopping on an answer that has been judged keeps it: it counts in the summary, so it is saved too.
+              saveDecision();
+              onQuit(tally);
+            }}
+          >
             Stop
           </button>
         </span>

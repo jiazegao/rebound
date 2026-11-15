@@ -176,8 +176,9 @@ export function MatchRoom({ client, snapshot, roomId }: { client: RoomClient; sn
           <div className="stack" style={{ marginTop: '1rem' }}>
             {/* The Buzz button comes first and keeps its place: the question above has its full height from the
                 first letter, and everything that comes and goes (clocks, who is answering, a close call) is below
-                it. On a phone it is pinned to the bottom of the screen; while this player types, it steps aside. */}
-            {match.status === 'playing' && !answeringTossup && !answeringBonus && (
+                it. On a phone it is pinned to the bottom of the screen; while this player types, it steps aside.
+                Someone watching has no button. */}
+            {match.status === 'playing' && !!side && !answeringTossup && !answeringBonus && (
               <PlayBar>
                 <button
                   className="btn btn-primary btn-big room-buzz"

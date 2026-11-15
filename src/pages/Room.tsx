@@ -237,12 +237,14 @@ export function RoomPage({ roomId }: { roomId: string }) {
 
       <div className="stack" style={{ marginTop: '1rem' }}>
         {/* The Buzz button comes first and keeps its place (what comes and goes is below it); on a phone it is pinned
-            to the bottom of the screen. */}
-        <PlayBar>
-          <button className="btn btn-primary btn-big room-buzz" onClick={() => client?.buzz()} disabled={!canBuzz} aria-disabled={!canBuzz}>
-            Buzz <span className="kbd">Space</span>
-          </button>
-        </PlayBar>
+            to the bottom of the screen. It appears once the player is on a side. */}
+        {side && (
+          <PlayBar>
+            <button className="btn btn-primary btn-big room-buzz" onClick={() => client?.buzz()} disabled={!canBuzz} aria-disabled={!canBuzz}>
+              Buzz <span className="kbd">Space</span>
+            </button>
+          </PlayBar>
+        )}
         {windowLeft !== null && <p className="small">{windowLeft > 0 ? `${windowLeft.toFixed(1)} s left` : 'Time'}</p>}
         {winnerName && !view?.status?.includes('buzzed') && <p className="status-line">{winnerName} buzzed</p>}
         {side && client && <TeamChannel client={client} side={side} lines={sideLines} canAnswer={isCaptain && view?.bonusTeam === (side === 'A' ? 0 : 1)} />}

@@ -50,7 +50,9 @@ skips the few whose answers could not be read.
 Each player's practice (answers, review queue, daily plan, heard questions, reads, finished assignments, problem reports)
 is stored **with their account on Rebound's server**, and each team's shared work (games, lineups, assignments, packets,
 written questions, concept cards, visual questions) **with the team** ([`docs/ACCOUNTS.md`](docs/ACCOUNTS.md)). The
-browser keeps only the session token. Teammates see each other's stats; review queues and plans stay private. Any player
+browser keeps the session token and a copy of the player's account so the site opens at once; signing out deletes the
+copy, and a player on a shared computer can choose to keep none. Teammates see each other's stats; review queues and
+plans stay private. Any player
 can download everything in their account, or delete it, from the Account page.
 
 ## Run it locally
@@ -208,7 +210,8 @@ src/core/            framework-free logic, unit-tested
   readingPaths.ts    each subject's reading path: topics in prerequisite order, focus lines and free readings
 src/lib/             browser-side helpers: the in-memory store (store.ts), the server's API (api.ts), sign-in and account
                      actions (account.ts), loading, sending and refreshing data (cloud.ts, with the record mapping in
-                     records.ts), teammates' practice for team pages (teammates.ts), library loading, learning glue,
+                     records.ts and the copy kept on the device in deviceCopy.ts), teammates' practice for team pages
+                     (teammates.ts), library loading, learning glue,
                      stats, router, sound, the service worker (offline.ts), the remote room client (room.ts), reading
                      aloud in online matches (recorded.ts: Rebound's voice; speech.ts: device voices), visual questions
                      (visuals.ts: generated, photo set and team-made; visualPool.ts; images.ts), Word export (docx.ts,
@@ -242,8 +245,9 @@ Key design choices:
 - **Pages only talk to `src/lib/store.ts`.** `update()` is the one way to change data; `cloud.ts` watches the store, works
   out which records a change touched (`records.ts`) and sends the player's own to their account and the team's to the
   team. A teammate's practice is never sent: only the signed-in player's records are ever produced.
-- **Practice lives on the server.** Nothing about a player is kept on the device: the site loads everything at sign-in,
-  sends each change within a moment, refreshes every 30 seconds, and says plainly when a change could not be saved. The
+- **Practice lives on the server.** The site loads the account with one request, sends each change within a moment,
+  asks what changed about once a minute, and says plainly when a change could not be saved. A copy on the device
+  (`deviceCopy.ts`) lets the next visit open at once and fetch only what changed; signing out deletes it. The
   collections, what teammates may see, who may write what and how concurrent edits merge are defined once in
   `src/core/accounts.ts`, which the server imports too, so the two cannot disagree.
 - **Learning logic is pure.** Review scheduling, mastery, plans and drill choice are plain functions of the saved data, so

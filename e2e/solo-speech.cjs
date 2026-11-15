@@ -210,6 +210,18 @@ async function main() {
       await shot('solo-speech-4-interrupt');
     });
 
+    await step('Stop shows the summary so far, and keeps the answer just judged', async () => {
+      const attempts = async () => (await A.allRecords('/api/me/records', sol)).filter((r) => r.c === 'attempts' && r.body).length;
+      await A.allSaved(page);
+      const before = await attempts();
+      await page.getByRole('button', { name: 'Stop' }).click();
+      await page.getByRole('heading', { level: 1, name: /points$/ }).waitFor({ timeout: 5000 });
+      await page.getByRole('button', { name: 'Play again' }).waitFor({ timeout: 5000 });
+      await A.allSaved(page);
+      const after = await attempts();
+      if (after !== before + 1) throw new Error(`stopping on a judged answer should save it (${before} practice answers before, ${after} after)`);
+    });
+
     await step('the choice is remembered on this device', async () => {
       // Away to another page and back (waiting for it: a page that never showed would leave this one as it was).
       await page.goto(`${BASE}#/today`);

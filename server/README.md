@@ -182,9 +182,14 @@ limit is not an issue: waiting on the API is not CPU time.
 - **AI calls and privacy.** With AI help on, the passages people paste and the questions they ask about are sent
   to the Claude API, under the API key owner's agreement with Anthropic (its commercial terms and privacy policy
   say how API data is handled). Nothing else is sent, and the key never reaches the site.
-- **Logs.** WebSocket URLs carry the session token (browsers cannot set headers on WebSockets), so Workers Logs
-  stay off in `wrangler.toml`. Use `npx wrangler tail` to watch errors live. The server never logs secrets, tokens
-  or sign-in codes, and logs only the status of a failed Resend call.
+- **Logs.** Workers Logs are off in `wrangler.toml`; `npx wrangler tail` shows errors live. The server never logs
+  secrets, tokens or sign-in codes, and logs only the status of a failed Resend call. A room's WebSocket address no
+  longer carries the session token (the site sends a key for that one room; docs/SERVER.md), which is what kept
+  logs off. To keep errors after the fact, set `enabled = true` under `[observability]`: with
+  `invocation_logs = false` (already there) Cloudflare keeps what the server logs itself and not a line for every
+  request. Wait about a week after deploying this version first (a tab still running the older site sends
+  `?token=`), and say on the site's privacy page that error logs are kept (they can include the address of the
+  request that failed).
 - **Open sign-up.** Anyone 13 or older can make an account (20 new accounts per network address per day) and any
   school can make a team: the `Registry` (`src/registry.ts`) allows 10 new teams per network address and 300 in all
   per UTC day (429 with `Retry-After` past either). If a school hits the address limits (a whole district behind
