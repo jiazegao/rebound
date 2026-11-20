@@ -198,6 +198,8 @@ const WORDS: Array<[RegExp, string | ((...groups: string[]) => string)]> = [
   [/<(?!=)/gu, ' less than '],
   [/>/gu, ' greater than '],
   [/(?<=\d)\s?[–—](?=\d)/gu, ' to '],
+  // A plain hyphen between two numbers is a range ("5-10%", "2008-2017"), not three ("a 30-60-90 triangle").
+  [/(?<![\w.,-])(\d+(?:,\d{3})*(?:\.\d+)?)-(\d+(?:,\d{3})*(?:\.\d+)?)(?![\w-]|[.,]\d)/gu, '$1 to $2'],
   [/(^|[\s(=])[−–](?=[\d.a-zA-Z(√π])/gu, '$1negative '],
   [/[−–]/gu, ' minus '],
   [/\+/gu, ' plus '],
@@ -205,6 +207,8 @@ const WORDS: Array<[RegExp, string | ((...groups: string[]) => string)]> = [
   [/(?<![A-Za-z])([A-Za-z])(['’]?)\(([^()\s]{1,8})\)/gu, (_m: string, f: string, prime: string, x: string) => `${f}${prime ? ' prime' : ''} of ${x}`],
   // A function of a function, "f(g(x))": "f of g of x".
   [/(?<![A-Za-z])([fgh])\(([fgh] of [^()\s]{1,8})\)/gu, '$1 of $2'],
+  // A plain hyphen before a number at the start of a word is a minus sign: "-10", "(-8, 6)", "f of -1".
+  [/(^|[\s(=,:;])-(?=\.?\d)/gu, '$1negative '],
   // A factorial follows a number, a single letter or a bracket ("25!", "n!", "(n + 1)!"); "snow!" is an exclamation.
   [/(?<=[\d)]|(?<![A-Za-z])[A-Za-z])!/gu, ' factorial '],
   // An initial stuck to the word after it: "E.coli" is "E. coli".
@@ -266,6 +270,25 @@ function wordInContext(word: string, before: string, after: string): string | nu
   if (word === 'x' && NUMBER_END.test(b) && !CHOICE_LABEL.test(b) && NUMBER_START.test(a)) return 'times';
   // A minus sign said before a bracket on its own: "y = −(25 − x²)" is "y equals negative open parenthesis ...".
   if (/^[−–]$/.test(word) && after.startsWith('(')) return /(?:^|[\s(=])$/.test(before) ? 'negative' : 'minus';
+  // A plain hyphen standing alone: between two terms it is "minus" ("0.99 - 0.0099"); before a number it is a minus
+  // sign ("( - 8"); between a name and a number it joins them ("Uranium - 238", said "Uranium 238").
+  // Variables are lowercase letters: "U- 235" and "(S)- 2-bromobutane" are not subtractions.
+  const operandBefore = /(?:^|\s)(?:[\d.,]+|\(?[\d.]*[a-z]|[\d.]*[a-z]?\))$/.test(b);
+  const operandAfter = /^(?:[\d.(]|[a-z](?![A-Za-z]))/.test(a);
+  if (word === '-' && /^[\d.]/.test(a) && /\b[A-Z][a-z]{2,}$/.test(b)) return '';
+  // An answer choice that is two numbers is a range: "W) 0.1 - 0.4" is "0.1 to 0.4".
+  if (word === '-' && /(?:^|\n)[WXYZ]\)\s*[\d.,]+$/.test(b) && /^[\d.,]+\s*(?:\n|$)/.test(a)) return 'to';
+  if (word === '-' && operandBefore && operandAfter) return 'minus';
+  if (word === '-' && /(?:^|[(=,:;])$/.test(b) && /^[\d.]/.test(a)) return 'negative';
+  // A hyphen ending a term, with the next term after a space: "3- 2i" is "3 minus 2i"; between two numbers it is a
+  // range ("4500- 7000 feet").
+  const ending = /^(-?\(?(?:[\d.,]+|[\d.]*[a-z]|[\d.]*[a-z]?\)))-$/.exec(word);
+  if (ending && operandAfter) {
+    const range = /^\(?[\d.,]+$/.test(ending[1]!) && /^[\d.,]+(?![\w(])/.test(a);
+    return `${spokenText(ending[1]!)} ${range ? 'to' : 'minus'}`;
+  }
+  // A slash left between two names when a guide reads the first ("CRISPR[crisper]/Cas9"): the pair, without it.
+  if (/^\/[A-Za-z]/.test(word) && /[A-Za-z]{2,}$/.test(b)) return spokenText(word.slice(1));
   if (word.startsWith('/') && (NUMBER_END.test(b) || /(?<![A-Za-z])[A-Za-z]$/.test(b))) {
     const rest = word.slice(1);
     const next = rest || a;

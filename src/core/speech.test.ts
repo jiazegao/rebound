@@ -75,6 +75,9 @@ describe('symbols in words', () => {
     ['x/y and mg/Q', 'x over y and mg over Q'],
     ['a DC/DC converter, UV/Vis, the K/T boundary', 'a DC to DC converter, UV Vis, the K T boundary'],
     ['6.5°C/km and 150 km/s', '6.5 degrees Celsius per km and 150 km per s'],
+    ['equals -10', 'equals negative 10'],
+    ['f(-1) and (4,7,-2)', 'f of negative 1 and (4,7,negative 2)'],
+    ['about 5-10%, in 2008-2017, a 30-60-90 triangle', 'about 5 to 10%, in 2008 to 2017, a 30-60-90 triangle'],
     ['2)They', '2) They'],
     ['the capacitor(s)', 'the capacitors'],
     ['find dy/(dx)', 'find d y over d x'],
@@ -120,11 +123,26 @@ describe('what is said', () => {
     expect(sayAll('Solve 3(x + 1) ≥ 9, express f(x + 1), and find 2/(n + 6)')).toBe(
       'Solve 3 times open parenthesis x plus 1 close parenthesis greater than or equal to 9, express f of open parenthesis x plus 1 close parenthesis, and find 2 divided by open parenthesis n plus 6 close parenthesis',
     );
-    expect(sayAll('Multiply the following 5 numbers: (-2)(-5)(-4)')).toBe('Multiply the following 5 numbers: (-2) times (-5) times (-4)');
+    expect(sayAll('Multiply the following 5 numbers: (-2)(-5)(-4)')).toBe(
+      'Multiply the following 5 numbers: (negative 2) times (negative 5) times (negative 4)',
+    );
     // Points, chemical groups, states, values given in passing and spellings keep their brackets unsaid.
     expect(sayAll('the point (3, –5), Ca(OH)₂, NaOH_((aq)), air (n = 1.00), the name (K-A-T)')).toBe(
       'the point (3, negative 5), Ca(OH)2, NaOH aqueous, air (n equals 1.00), the name (K-A-T)',
     );
+  });
+
+  it('says a plain hyphen as a minus, a minus sign or a range, by the words around it', () => {
+    expect(sayAll('Simplify: 0.99 - 0.0099, and find a root of 3- 2i and 10- 10x, as Uranium - 238 decays')).toBe(
+      'Simplify: 0.99 minus 0.0099, and find a root of 3 minus 2i and 10 minus 10x, as Uranium 238 decays',
+    );
+    expect(say('In which range?', { W: '0.1 - 0.4', X: '0.4- 0.7', Y: '(S)- 2-bromobutane', Z: 'the U- 235' })).toEqual([
+      'In which range?',
+      'W, 0.1 to 0.4',
+      'X, 0.4 to 0.7',
+      'Y, (S)- 2-bromobutane',
+      'Z, the U- 235',
+    ]);
   });
 
   it('says an x after a choice letter as the variable', () => {
