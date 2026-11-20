@@ -14,11 +14,11 @@
  * question in the same voice always has the same name, so the server finds it; new words or another voice make a
  * new one. Questions with the same words share one recording.
  */
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { webcrypto } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import type { Question, QuestionSet } from '../../src/core/schema';
+import type { LibraryIndex, Question, QuestionSet } from '../../src/core/schema';
 import { audioKey, spokenFor } from '../../src/core/speech';
 import { buildReading } from '../../src/lib/reading';
 
@@ -60,8 +60,11 @@ function hardness(q: Question): number {
   return longWords + 2 * guides + Math.min(symbols, 10);
 }
 
-const files = readdirSync(LIBRARY)
-  .filter((f) => /^doe-(hs|ms)-\d+\.json$/.test(f) && (level === 'all' || f.startsWith(`doe-${level}-`)))
+// Every set the site offers (index.json lists them, the middle school sample rounds included), in order of file name.
+const index = JSON.parse(readFileSync(join(LIBRARY, 'index.json'), 'utf8')) as LibraryIndex;
+const files = index.sets
+  .filter((s) => level === 'all' || s.level.toLowerCase() === level)
+  .map((s) => s.file)
   .sort();
 const entries: Entry[] = [];
 for (const file of files) {

@@ -3,16 +3,20 @@
 Rebound's voice, made on your own computer with Kokoro (an open text-to-speech model): see scripts/voice/README.md.
 
   python scripts/voice/kokoro_voice.py generate [voice/jobs.jsonl] [--out voice/audio] [--limit N] [--shard 1/3]
-  python scripts/voice/kokoro_voice.py check    [voice/jobs.jsonl] [--out voice/audio] [--model small.en]
+  python scripts/voice/kokoro_voice.py check    [voice/jobs.jsonl] [--out voice/audio] [--model small.en] [--shard 1/3]
   python scripts/voice/kokoro_voice.py try      "Words to hear" [--voice kokoro:af_heart] [--play]
+  python scripts/voice/kokoro_voice.py words    [voice/jobs.jsonl] [--out voice/words] [--top 300]
 
 generate  Records each question listed by scripts/voice/export-library.ts as <name>.mp3 (mono, 24 kHz), skipping
           those already made, so it can be stopped and started again. For a list of up to 500 (a sample), it also
           writes listen.html, to hear each recording beside its text.
 check     Listens to the recordings with Whisper and lists those whose words differ from the text, or whose length is
-          odd for it, worst first: review.tsv, and review.html to hear them.
+          odd for it, worst first: review.tsv, and review.html to hear them. What it hears is kept (heard.jsonl), so it
+          can be stopped and started again, or run in parts at once.
 try       Says a line, prints the phonemes Kokoro reads, and saves it as voice/try.mp3: for fixing how a word is said
           (scripts/voice/pronunciations.tsv).
+words     Lists the words Kokoro has to guess (not in its dictionary), most used first, and says each one alone:
+          words.html to hear them, words.tsv for the whole list. Those are the likeliest to come out wrong.
 
 Needs Python 3.10 to 3.12, PyTorch, and scripts/voice/requirements.txt.
 """
@@ -21,6 +25,7 @@ from __future__ import annotations
 import argparse
 import csv
 import difflib
+import hashlib
 import html
 import json
 import os
@@ -82,23 +87,28 @@ def shard_of(spec: str | None) -> tuple[int, int]:
 # ---------------- how words are said ----------------
 
 
-def load_lexicon(path: Path | None) -> list[tuple[re.Pattern, str]]:
+def lexicon_lines(path: Path | None) -> list[tuple[str, str]]:
     """
-    pronunciations.tsv: a word, a tab, and how to say it, either as phonemes between slashes (/fˈinoʊtˌIp/, as `try`
+    pronunciations.tsv: a word, a tab, and how to say it, either as phonemes between slashes (/fˈinətˌIp/, as `try`
     prints them) or as a respelling (fee no type). Lines starting with # are notes. Only the recording changes: the
     words, and so the recording's name, stay as the server has them.
     """
     if not path or not path.exists():
         return []
-    entries = []
+    lines = []
     for line in path.read_text(encoding='utf-8').splitlines():
         if not line.strip() or line.lstrip().startswith('#'):
             continue
         word, _, say = line.partition('\t')
         word, say = word.strip(), say.strip()
         if word and say:
-            entries.append((re.compile(r'(?<![\w-])' + re.escape(word) + r'(?![\w-])', re.IGNORECASE), say))
-    return entries
+            lines.append((word, say))
+    return lines
+
+
+def load_lexicon(path: Path | None) -> list[tuple[re.Pattern, str]]:
+    """The fixes in pronunciations.tsv, each as the whole word to find (any capitalization) and how to say it."""
+    return [(re.compile(r'(?<![\w-])' + re.escape(word) + r'(?![\w-])', re.IGNORECASE), say) for word, say in lexicon_lines(path)]
 
 
 def for_kokoro(text: str, lexicon: list[tuple[re.Pattern, str]]) -> str:
@@ -108,8 +118,10 @@ def for_kokoro(text: str, lexicon: list[tuple[re.Pattern, str]]) -> str:
         if len(say) > 2 and say.startswith('/') and say.endswith('/'):
             text = pattern.sub(lambda m, say=say: f'[{m.group(0)}]({say})', text)
         else:
-            text = pattern.sub(say, text)
-    return text
+            text = pattern.sub(lambda m, say=say: say, text)
+    # Kokoro takes a single letter before a full stop for an initial ("angle G. Z, ...", "the U.S. W, ...") and runs on
+    # into the next answer choice without a pause; a space before the stop keeps it.
+    return re.sub(r'\b([A-Za-z])\. (?=[WXYZ], )', r'\1 . ', text)
 
 
 class Voice:
@@ -124,12 +136,43 @@ class Voice:
         self.speed = speed
         # The first letter of a voice is its language: a for American English, b for British.
         self.pipeline = KPipeline(lang_code=name[0], repo_id='hexgrad/Kokoro-82M', device=device)
+        self.check_install()
         self.device = str(self.pipeline.model.device)
         if self.device.startswith('cuda'):
             import torch
 
             self.device += f' ({torch.cuda.get_device_name()})'
         print(f'Kokoro voice {name} at speed {speed:g}, running on {self.device}.')
+
+    def check_install(self) -> None:
+        """
+        Stops on the two ways an install goes wrong without an error. Without espeak-ng, Kokoro leaves out every word
+        missing from its dictionary, and science is full of them. And Kokoro loads its weights leniently: one whose name
+        a newer transformers has changed would keep random values, and the voice would sound worse.
+        """
+        import torch
+        from huggingface_hub import hf_hub_download
+
+        if getattr(self.pipeline.g2p, 'fallback', None) is None:
+            sys.exit('espeak-ng did not load (see the warning above), so Kokoro would leave out every word it does not know.')
+        model = self.pipeline.model
+        path = hf_hub_download(repo_id=model.repo_id, filename=type(model).MODEL_NAMES[model.repo_id])
+        for part, weights in torch.load(path, map_location='cpu', weights_only=True).items():
+            module = getattr(model, part)
+            # As Kokoro loads them (the file's names start with "module."), but listing what is missing. The file leaves
+            # out the scale and shift of Kokoro's InstanceNorm layers on purpose: they start at 1 and 0, and change nothing.
+            missing = [
+                key
+                for key in module.load_state_dict({k.removeprefix('module.'): v for k, v in weights.items()}, strict=False).missing_keys
+                if not isinstance(module.get_submodule(key.rpartition('.')[0]), torch.nn.InstanceNorm1d)
+            ]
+            if missing:
+                cause = (
+                    'the installed transformers may be too new for Kokoro. Try  pip install "transformers<5"'
+                    if part == 'bert'  # the one part transformers builds
+                    else 'the installed PyTorch may be too new for Kokoro'
+                )
+                sys.exit(f"Kokoro's {part} did not load {len(missing)} of its weights (such as {missing[0]}): {cause}.")
 
     def say(self, text: str) -> tuple[np.ndarray, list[str]]:
         """The audio (24 kHz, float) and the phonemes Kokoro read, chunk by chunk."""
@@ -175,6 +218,19 @@ def write_file(path: Path, data: bytes) -> None:
     os.replace(part, path)
 
 
+def open_log(path: Path):
+    """Opens a list to add lines to, first ending a line left unfinished by a run stopped while writing it."""
+    unfinished = False
+    if path.exists() and path.stat().st_size:
+        with path.open('rb') as f:
+            f.seek(-1, os.SEEK_END)
+            unfinished = f.read(1) != b'\n'
+    log = path.open('a', encoding='utf-8')
+    if unfinished:
+        log.write('\n')
+    return log
+
+
 # ---------------- generate ----------------
 
 
@@ -213,7 +269,7 @@ def generate(args: argparse.Namespace) -> None:
         started = time.time()
         spoken = 0.0
         failed = 0
-        with manifest.open('a', encoding='utf-8') as log:
+        with open_log(manifest) as log:
             for n, job in enumerate(todo, 1):
                 try:
                     audio = tidy(voice.say(for_kokoro(job['text'], lexicon))[0])
@@ -303,9 +359,11 @@ def read_manifests(out: Path) -> dict[str, dict]:
     made: dict[str, dict] = {}
     for path in sorted(out.glob('manifest*.jsonl')):
         for line in path.read_text(encoding='utf-8').splitlines():
-            if line.strip():
+            try:
                 row = json.loads(line)
                 made[row['key']] = row
+            except (ValueError, KeyError):
+                continue  # an empty line, or the last one of a run that was stopped while writing it
     return made
 
 
@@ -333,6 +391,25 @@ def listener(model_name: str, device: str | None):
     return hear
 
 
+def stamp(path: Path) -> str:
+    """A recording's size and time, which change when it is made again (after fixing how a word is said)."""
+    info = path.stat()
+    return f'{info.st_size}:{info.st_mtime_ns}'
+
+
+def read_heard(out: Path) -> dict[tuple[str, str, str], str]:
+    """What Whisper heard in earlier runs (heard*.jsonl), by recording, model and stamp."""
+    heard: dict[tuple[str, str, str], str] = {}
+    for path in sorted(out.glob('heard*.jsonl')):
+        for line in path.read_text(encoding='utf-8').splitlines():
+            try:
+                row = json.loads(line)
+                heard[(row['key'], row['model'], row['stamp'])] = row['heard']
+            except (ValueError, KeyError):
+                continue  # an empty line, or the last one of a run that was stopped while writing it
+    return heard
+
+
 def check(args: argparse.Namespace, hear=None) -> None:
     meta, jobs = read_jobs(Path(args.jobs))
     out = Path(args.out)
@@ -342,25 +419,45 @@ def check(args: argparse.Namespace, hear=None) -> None:
         sys.exit(f'No recordings in {out} yet: run generate first.')
     paces = [made[j['key']]['chars'] / (made[j['key']]['ms'] / 1000) for j in present if j['key'] in made and made[j['key']]['ms'] > 0]
     usual = statistics.median(paces) if paces else 15.0
-    if hear is None and not args.no_listen:
-        hear = listener(args.model, args.device)
+    # What Whisper hears is kept as it goes (heard.jsonl), so check can be stopped and started again, and run in parts
+    # at once (--shard). A recording made again since is heard again.
+    stamps = {j['key']: stamp(out / f"{j['key']}.mp3") for j in present}
+    transcripts = {} if args.no_listen else read_heard(out)
+    said = lambda job: transcripts.get((job['key'], args.model, stamps[job['key']]))  # noqa: E731
+    if not args.no_listen:
+        part, parts = shard_of(args.shard)
+        mine = {j['key'] for i, j in enumerate(jobs) if i % parts == part}
+        todo = [j for j in present if j['key'] in mine and said(j) is None]
+        print(
+            f'Listening to {len(todo):,} of the {len(present):,} recordings with Whisper {args.model}'
+            + (f' (part {part + 1} of {parts})' if parts > 1 else '')
+            + f'; {len(present) - len(todo):,} heard before or left to other parts.'
+        )
+        if todo:
+            hear = hear or listener(args.model, args.device)
+            started = time.time()
+            with open_log(out / (f'heard-{part + 1}of{parts}.jsonl' if parts > 1 else 'heard.jsonl')) as log:
+                for n, job in enumerate(todo, 1):
+                    key = (job['key'], args.model, stamps[job['key']])
+                    transcripts[key] = hear(out / f"{job['key']}.mp3")
+                    log.write(json.dumps({'key': key[0], 'model': key[1], 'stamp': key[2], 'heard': transcripts[key]}) + '\n')
+                    log.flush()
+                    if n % 100 == 0 or n == len(todo):
+                        took = time.time() - started
+                        print(f'  listened to {n:,}/{len(todo):,}, about {clock(took / n * (len(todo) - n))} to go', flush=True)
     rows = []
-    started = time.time()
-    for n, job in enumerate(present, 1):
-        path = out / f"{job['key']}.mp3"
+    for job in present:
         ms = made.get(job['key'], {}).get('ms') or 0
         pace = len(job['text']) / (ms / 1000) if ms else usual
-        heard, similarity, missing, added = '', None, 0, 0
-        if hear is not None:
-            heard = hear(path)
-            similarity, missing, added = compare(job['text'], heard)
+        heard = said(job)
+        similarity, missing, added = compare(job['text'], heard) if heard is not None else (None, 0, 0)
         found = problems(similarity, missing, added, pace, usual)
         if found:
             badness = (1 - (similarity if similarity is not None else 1)) + 0.1 * missing + 0.05 * added + (0.3 if 'quick' in ' '.join(found) or 'slow' in ' '.join(found) else 0)
-            rows.append((badness, '; '.join(found), similarity, job, heard))
-        if hear is not None and (n % 100 == 0 or n == len(present)):
-            took = time.time() - started
-            print(f'  listened to {n:,}/{len(present):,}, {len(rows):,} to review, about {clock(took / n * (len(present) - n))} to go', flush=True)
+            rows.append((badness, '; '.join(found), similarity, job, heard or ''))
+    unheard = sum(1 for j in present if said(j) is None)
+    if unheard and not args.no_listen:
+        print(f'{unheard:,} recordings not heard yet (other parts still running?): their lengths are checked, and their words will be once check runs again.')
     rows.sort(key=lambda r: -r[0])
     with (out / 'review.tsv').open('w', encoding='utf-8', newline='') as f:
         table = csv.writer(f, delimiter='\t')
@@ -393,6 +490,78 @@ def try_line(args: argparse.Namespace) -> None:
         os.startfile(out)  # Windows: opens it in the default player
 
 
+# ---------------- words ----------------
+
+
+def guessed_words(args: argparse.Namespace) -> None:
+    """
+    The words Kokoro has to guess, most used first: those missing from its dictionary, which espeak-ng says by its
+    spelling rules. They are the likeliest to come out wrong, so listening to each one alone finds most of the words to
+    fix. A word fixed in pronunciations.tsv leaves the list.
+    """
+    from collections import Counter
+
+    meta, jobs = read_jobs(Path(args.jobs))
+    name, speed = parse_voice(meta['voice'])
+    lexicon = load_lexicon(Path(args.lexicon) if args.lexicon else DEFAULT_LEXICON)
+    voice = Voice(name, speed, args.device)
+    found: dict[str, dict] = {}
+    for n, job in enumerate(jobs, 1):
+        for token in voice.pipeline.g2p(for_kokoro(job['text'], lexicon))[1]:
+            if token._.rating != 2 or not token.phonemes:  # 2: espeak-ng's guess (4 and 3: Kokoro's dictionaries, 5: a fix)
+                continue
+            # A number or a letter with punctuation stuck to it ("8)", "x?") is guessed only for the punctuation.
+            text = token.text.strip('.,;:!?()[]{}"\'‘’“”')
+            if not text or re.fullmatch(r'[\d.,]+|\w', text):
+                continue
+            word = found.setdefault(text.lower().replace('’', "'"), {'count': 0, 'forms': Counter(), 'phonemes': Counter(), 'ids': []})
+            word['count'] += 1
+            word['forms'][text] += 1
+            word['phonemes'][token.phonemes] += 1
+            if len(word['ids']) < 3 and job['ids'][0] not in word['ids']:
+                word['ids'].append(job['ids'][0])
+        if n % 2000 == 0 or n == len(jobs):
+            print(f'  read {n:,}/{len(jobs):,} recordings: {len(found):,} words guessed', flush=True)
+    ranked = sorted(found.items(), key=lambda item: (-item[1]['count'], item[0]))
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    with (out / 'words.tsv').open('w', encoding='utf-8', newline='') as f:
+        table = csv.writer(f, delimiter='\t')
+        table.writerow(['word', 'times', 'phonemes', 'questions'])
+        for word, info in ranked:
+            table.writerow([info['forms'].most_common(1)[0][0], info['count'], info['phonemes'].most_common(1)[0][0], ' '.join(info['ids'])])
+    rows = []
+    # Math without letters ("-8", "(-2)(-5)") is heard in its question, not alone: Kokoro says nothing for some of it alone.
+    for word, info in [item for item in ranked if re.search(r'[^\W\d_]', item[0])][: args.top]:
+        said = info['forms'].most_common(1)[0][0]
+        file = re.sub(r'[^a-z0-9]+', '-', word).strip('-') + '-' + hashlib.sha1(word.encode('utf-8')).hexdigest()[:6] + '.mp3'
+        try:
+            write_file(out / file, mp3(tidy(voice.say(said)[0]), args.kbps))
+        except Exception as error:
+            print(f'  could not say {said!r}: {error}', file=sys.stderr)
+            continue
+        rows.append(
+            f'<li><audio controls preload="none" src="{file}"></audio><p><b>{html.escape(said)}</b> &nbsp;/{html.escape(info["phonemes"].most_common(1)[0][0])}/'
+            f' &nbsp;<small>{info["count"]:,} times: {html.escape(", ".join(info["ids"]))}</small></p></li>'
+        )
+    (out / 'words.html').write_text(page_html(f'The {len(rows)} words Kokoro guesses most often, {meta["voice"]}', rows), encoding='utf-8')
+    # The words already fixed leave the list above, so they are said here, as the recordings will say them.
+    fixes = []
+    for word, say in lexicon_lines(Path(args.lexicon) if args.lexicon else DEFAULT_LEXICON):
+        file = 'fix-' + hashlib.sha1(word.encode('utf-8')).hexdigest()[:8] + '.mp3'
+        try:
+            write_file(out / file, mp3(tidy(voice.say(for_kokoro(word, lexicon))[0]), args.kbps))
+        except Exception as error:
+            print(f'  could not say {word!r}: {error}', file=sys.stderr)
+            continue
+        fixes.append(f'<li><audio controls preload="none" src="{file}"></audio><p><b>{html.escape(word)}</b> &nbsp;{html.escape(say)}</p></li>')
+    (out / 'fixes.html').write_text(page_html(f'The {len(fixes)} words fixed in pronunciations.tsv, {meta["voice"]}', fixes), encoding='utf-8')
+    print(
+        f'{len(ranked):,} words guessed, used {sum(i["count"] for _, i in ranked):,} times: {out / "words.html"} (the {len(rows)} most used) '
+        f'and words.tsv (all); {out / "fixes.html"} says the {len(fixes)} words fixed.'
+    )
+
+
 # ---------------- command line ----------------
 
 
@@ -419,6 +588,7 @@ def main(argv: list[str] | None = None) -> None:
     common(c)
     c.add_argument('--model', default='small.en', help='Whisper model (small.en; medium.en hears more but is slower)')
     c.add_argument('--no-listen', action='store_true', help='only check each recording’s length against its text')
+    c.add_argument('--shard', help='listen to this part, like 1/3: run 1/3, 2/3 and 3/3 at once, then check again to list them all')
 
     t = commands.add_parser('try', help='say a line, to hear how a word comes out')
     common(t, with_jobs=False)
@@ -429,12 +599,20 @@ def main(argv: list[str] | None = None) -> None:
     t.add_argument('--lexicon', help='pronunciation fixes (scripts/voice/pronunciations.tsv)')
     t.add_argument('--play', action='store_true', help='open it in the default player (Windows)')
 
+    w = commands.add_parser('words', help='list the words Kokoro has to guess, most used first, and say each one')
+    w.add_argument('jobs', nargs='?', default=str(Path('voice') / 'jobs.jsonl'), help='the list from export-library.ts (voice/jobs.jsonl)')
+    w.add_argument('--out', default=str(Path('voice') / 'words'), help='the folder for the list and the recordings (voice/words)')
+    common(w, with_jobs=False)
+    w.add_argument('--top', type=int, default=300, help='say this many of the most used (300); words.tsv lists them all')
+    w.add_argument('--kbps', type=int, default=48)
+    w.add_argument('--lexicon', help='pronunciation fixes (scripts/voice/pronunciations.tsv)')
+
     args = parser.parse_args(argv)
     # A Windows console that is not set to UTF-8 should show a ? for a phoneme, not stop the run.
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, 'reconfigure'):
             stream.reconfigure(errors='replace')
-    {'generate': generate, 'check': check, 'try': try_line}[args.command](args)
+    {'generate': generate, 'check': check, 'try': try_line, 'words': guessed_words}[args.command](args)
 
 
 if __name__ == '__main__':
