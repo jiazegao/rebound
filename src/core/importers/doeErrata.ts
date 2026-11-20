@@ -90,6 +90,11 @@ export const DOE_TEXT_FIXES: DoeTextFix[] = [
     reviewed: '2026-11-20',
   },
   {
+    id: 'doe-hs-02-r14-b12',
+    fixes: [{ field: 'stem', from: 'Find dd/(dd) at', to: 'Find dy/(dx) at' }],
+    reviewed: '2026-11-20',
+  },
+  {
     id: 'doe-hs-03-r06-b11',
     fixes: [
       { field: 'stem', from: '! 2 (80a²b⁴c³)', to: '−2√(80a²b⁴c³)' },
