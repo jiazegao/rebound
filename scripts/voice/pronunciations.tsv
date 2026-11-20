@@ -45,17 +45,27 @@ Kirchhoff	/kˈɜɹkɔf/
 Raoult	/ɹɑˈul/
 Wien	/vˈin/
 
-# Chemical formulas (NaCl, CO2, Ca(OH)2) and element symbols (Fe 2 plus) are spelled letter by letter by a rule
-# in kokoro_voice.py (for_kokoro), so they need no line here.
+# Chemical formulas (NaCl, CO2, Ca(OH)2) and element symbols (Fe 2 plus, Pu-239, Ti-Cl) are spelled letter by letter
+# by a rule in kokoro_voice.py (for_kokoro), and chemical names are said a part at a time ("2-methyl-1-propene" is
+# "2 methyl 1 propene"), so they need no line here.
 
 # More abbreviations and symbols
 eq	E-Q
 ab	/ˌAbˈi/
+bi	/bˌiˈI/
 mm	millimeters
 WWII	World War Two
 PPI	P-P one
 PPII	P-P two
 PPIII	P-P three
+HaeIII	/hˈA θɹˈi/
+
+# Antibody classes, spelled ("IgE" is "I G E", not "ig E")
+IgA	I-G-A
+IgD	I-G-D
+IgE	I-G-E
+IgG	I-G-G
+IgM	I-G-M
 
 # Abbreviations Kokoro says as a word, spelled ("NO solutions" first: there NO is the word)
 ABO	/ˌAbˌiˈO/
@@ -90,18 +100,29 @@ SLAC	/slˈæk/
 TATA	/tˈɑtˌɑ/
 
 # Words
+coli	/kˈOlI/
 di-electric	/dˌIəlˈɛktɹɪk/
+dienophile	/dˌIˈinəfˌIl/
 disequilibrium	/dˌɪsˌikwəlˈɪbɹiəm/
+do de cane	/dˈOdəkˌAn/
 equilibrium	/ˌikwəlˈɪbɹiəm/
 fructose	/fɹˈuktˌOs/
 Sciencebowlium	/sˌIənsbˈOliəm/
-tert-butyl	/tˈɜɹt bjˈutᵊl/
+
+# The prefix di- is "dye" in chemistry (the rule in kokoro_voice.py says it in a hyphenated word or a name said a part
+# at a time); these whole words Kokoro said "dih"
+dichloride	/dˌIklˈɔɹˌId/
+dichloro	/dˌIklˈɔɹO/
+dichloromethane	/dˌIklˌɔɹOmˈɛθAn/
+dideoxyribonucleoside	/dˌIdiˈɑksɪɹˌɪbənˌuklɪˌɑsId/
+difluoride	/dˌIflˈʊɹˌId/
+difluorine	/dˌIflˈʊɹˌin/
+difunctional	/dˌIfˈʌŋkʃᵊnəl/
+dinitrogen	/dˌInˈItɹəʤᵊn/
+dinucleotide	/dˌInˈukliətˌId/
+diprotic	/dˌIpɹˈɑTɪk/
 
 # Hyphenated words with a fixed word in them: a fix by phonemes covers a word only on its own
-Fructose-1,6-bisphosphate	/fɹˈuktˌOs wˈʌn sˈɪks bIsfˈɑsfAt/
-fructose-1,6-bis-phosphate	/fɹˈuktˌOs wˈʌn sˈɪks bIsfˈɑsfAt/
-fructose-6-phosphate	/fɹˈuktˌOs sˈɪks fˈɑsfAt/
 GABA-B	/ɡˈæbə bˈi/
 non-equilibrium	/nˌɑn ˌikwəlˈɪbɹiəm/
 Sciencebowlium-23	/sˌIənsbˈOliəm twˈɛnti θɹˈi/
-Tert-butyl-amine	/tˈɜɹt bjˈutᵊl əmˈin/

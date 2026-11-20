@@ -98,17 +98,28 @@ A few things to know when adding a fix:
 - A word in capitals only is matched only in capitals, so `AMP` leaves "amp" alone; any other matches in any
   capitalization.
 - A fix by phonemes applies to the word on its own: given phonemes for part of a hyphenated word, Kokoro drops or
-  repeats words, so a hyphenated word gets a fix of its own (`fructose-6-phosphate`).
+  repeats words, so a hyphenated word gets a fix of its own (`GABA-B`). Chemical names are split at their hyphens
+  first (below), so their parts take ordinary fixes (`fructose`).
 
 Besides these fixes, `kokoro_voice.py` follows some rules of its own about what Kokoro reads (`for_kokoro`), each
 found by listening to the library. Chemical formulas and element symbols are spelled letter by letter, as Science
-Bowl reads them (Kokoro would say "CO2" as "koh two", "NaCl" as "nah C L" and "Cu" as "koo"), and DOE's states are
-said in words ("H_(2(g))" is "H 2, gas"). Numbers keep their decimal point and trailing zeros ("4.0M" is "four point
-zero M", not "four M"). sin, cos, tan and ln are said "sine", "cosine", "tangent" and "natural log", and II, III and IV
-are numbers. The variable a is the letter, not the word "a". A genotype in a question about genetics is said
-"big A little a", as DOE's guides say one, and a noble-gas core is spelled ("A-R"). An s orbital is "one S", not
-"ones". DOE's notes to moderators ("short pause") become pauses, and a single letter ending a sentence keeps its
-pause. None of these changes the words, and so the recordings' names.
+Bowl reads them (Kokoro would say "CO2" as "koh two", "NaCl" as "nah C L" and "Cu" as "koo"), also when a hyphen joins
+a symbol to a mass number or another symbol ("Pu-239" is "P U 239", "Ti-Cl" "T I C L"), and DOE's states are said in
+words ("H_(2(g))" is "H 2, gas"). A chemical name is said a part at a time, its positions one by one
+("1,3-butadiene" is "1 3 butadiene"; Kokoro said "thirteen butadiene"), and the prefix di- is "dye". Numbers keep
+their decimal point and trailing zeros ("4.0M" is "four point zero M", not "four M"). sin, cos, tan and ln are said
+"sine", "cosine", "tangent" and "natural log" (also written against their variable, "tanx"), and II, III and IV are
+numbers. The variable a is the letter, not the word "a". A genotype in a question about genetics is said "big A
+little a", as DOE's guides say one, and a noble-gas core is spelled ("A-R"). An s orbital is "one S", not "ones".
+DOE's notes to moderators ("short pause") become pauses, and a single letter ending a sentence keeps its pause.
+Curly apostrophes are made straight ("Darcy’s" alone was "Darcy S"). None of these changes the words, and so the
+recordings' names.
+
+How the questions themselves are said, for every voice of the site, is decided in `src/core/speech.ts`: DOE's reading
+guides, symbols in words, the brackets of math ("open parenthesis x plus 5 close parenthesis squared", and "times"
+between two groups, as DOE's own guides read them), factorials, slashes ("meters per second", "m2 over m1",
+"CRISPR Cas9"), and a stem the answer choices complete, which ends at its colon rather than a full stop. A change
+there changes the words, and so the names of the recordings it touches.
 
 ## 4. The whole library
 

@@ -184,6 +184,65 @@ def spell(token: str) -> str:
     return f'{LETTER_A} {letters[2:]}' if letters.startswith('A-') else letters
 
 
+# An element symbol joined by a hyphen to a mass number or to another symbol is spelled too: Kokoro said "Pu-239" as
+# "poo 239", "Ti-Cl" as "tie C L" and "Cu-H" as "koo H". So is helium in a list of symbols ("Li plus, He."), which
+# would be the word "he".
+ISOTOPE = re.compile(r'(?<![\w\[/-])([A-Z][a-z])-(\d+m?)(?![\w-])')
+BOND = re.compile(r'(?<![\w\[/-])([A-Z][a-z]?(?:-[A-Z][a-z]?)+)(?![\w\]-])')
+HELIUM_LISTED = re.compile(r'(?<=, )He(?=[.,;?!]|$)')
+
+
+def say_bond(m: re.Match) -> str:
+    symbols = m.group(1).split('-')
+    if not all(s in ELEMENTS for s in symbols) or not any(len(s) == 2 for s in symbols):
+        return m.group(0)  # "H-C-O-O-H", "Co-A": already letters, or not symbols
+    return ' '.join(spell(s) for s in symbols)
+
+
+# A chemical name is said a part at a time, as a chemist reads it: "2-methyl-1-propene" is "2 methyl 1 propene" and
+# "cis-5,6-dimethyl-1,3-cyclohexadiene" is "cis 5, 6 dimethyl 1, 3 cyclohexadiene". Kokoro ran the parts together, and
+# read a list of positions as one number ("1,3-butadiene" was "thirteen butadiene"). A name is a hyphenated word with
+# a position or a prefix (di, cis, tert) before a chemical part, or made only of chemical parts ("dichloro-methane").
+CHEMICAL_PART = re.compile(
+    r'(?i)meth|eth|prop|but|pent|hex|hept|oct|chlor|brom|fluor|iod|nitr|amin|amid|hydrox|cyclo|benz|phen|phosph'
+    r'|sulf|carb|cyan|acet|glyc|xyl|tolu|oxy|^\w{3,}(?:ane|ene|yne|ol|al|one|yl|oic|ose|ate|ide|ine|ium)$'  # "oxide", not "side"
+)
+POSITION = re.compile(r"\(?\d+[′'’]?(?:,\d+[′'’]?)*[A-Z]?\)?|\([RSEZ]\)|[NOS]")
+NAME_PREFIXES = {'di', 'tri', 'tetra', 'penta', 'hexa', 'bis', 'tris', 'cis', 'trans', 'tert', 'sec', 'iso', 'neo', 'alpha', 'beta', 'gamma'}
+CHEMICAL_NAME = re.compile(r'(?<![\w\[\]/-])[\w,′\'’()]+(?:-[\w,′\'’()]+)+')
+LOOSE_POSITION = re.compile(r'(?<=[\d)])-\s+(?=[\d(a-z])|(?<=\b\d), (?=\d+-[A-Za-z])')  # "(R)-2- bromobutane", "1, 1-dichloro"
+
+
+def say_chemical(m: re.Match) -> str:
+    token = m.group(0)
+    # Punctuation after the name, and brackets around it ("(2-methylpropane)"), stay as they are.
+    head, core, tail = '', token, ''
+    while core and (core[-1] in ',;:' or (core[-1] == ')' and core.count(')') > core.count('('))):
+        core, tail = core[:-1], core[-1] + tail
+    if core.startswith('(') and core.endswith(')') and core.count('(') == 1:
+        head, core, tail = '(', core[1:-1], ')' + tail
+    parts = core.split('-')
+    named = [bool(re.fullmatch(r'[A-Za-z]{3,}', p) and CHEMICAL_PART.search(p)) for p in parts]
+    before_name = [i + 1 < len(parts) and named[i + 1] for i in range(len(parts))]
+    if not (
+        any(POSITION.fullmatch(p) and before_name[i] for i, p in enumerate(parts))
+        or any(p.lower() in NAME_PREFIXES and before_name[i] for i, p in enumerate(parts))
+        or all(named)
+    ):
+        return token
+    # Positions are said one by one, without a pause between them ("2,4" is "2 4": with a comma, Kokoro rose on the
+    # first as if asking).
+    return head + ' '.join(re.sub(r',(?=\d)', ' ', p) for p in parts if p) + tail
+
+
+# The prefix di- is "dye" (DOE's guides spell it "dy-METH-uhl"), which Kokoro said "dih" in a word it had to guess:
+# "di-ene", "di-GMP", and a name said a part at a time ("2,2 di methyl"). Whole words are in pronunciations.tsv.
+DI = re.compile(r'(?<![\w\[/-])([Dd]i)(?:-|\s+)(?=[A-Za-z])')
+
+# Kokoro takes a curly apostrophe for a quotation mark: "Darcy’s" alone was "Darcy S".
+APOSTROPHE = re.compile(r'(?<=[A-Za-z])[’‘](?=[A-Za-z])')
+
+
 def say_formula(m: re.Match) -> str:
     token = m.group(0)
     symbols = re.findall(r'[A-Z][a-z]?', token)
@@ -224,6 +283,8 @@ FUNCTIONS = {
     'cosh': 'hyperbolic cosine', 'tanh': 'hyperbolic tangent', 'ln': 'natural log',
 }
 FUNCTION = re.compile(r'(?<![A-Za-z-])(' + '|'.join(sorted(FUNCTIONS, key=len, reverse=True)) + r')(?![A-Za-z-])(\s*\()?', re.IGNORECASE)
+# A function written against its variable ("tanx/secx", "cosx"), which Kokoro read as a word ("tanks").
+FUNCTION_JOINED = re.compile(r'(?<![A-Za-z-])(sin|cos|tan|sec|csc|cot|ln)(x)(?![A-Za-z])')  # x only: "cost" is a word
 
 
 def say_function(m: re.Match) -> str:
@@ -263,7 +324,7 @@ CAPITAL_A = re.compile(  # after a word or number ("point A", "3 A"), not after 
 # Kokoro takes a single letter before a full stop for an initial ("block A. The", "angle G. Z, ...", "the U.S. W,
 # ...") and runs on into the next sentence without a pause: a space before the stop keeps it. Initials themselves
 # ("J. J. Thomson"), and "U.S." within a sentence ("the U.S. Navy"), are left as they are.
-LETTER_STOP = re.compile(r'(?<![A-Z]\. )(?<!\.)\b([A-Za-z])\. (?=[A-Z])(?![A-Z]\. )|(?<=\.)([A-Za-z])\. (?=[WXYZ], )')
+LETTER_STOP = re.compile(r"(?<![A-Z]\. )(?<!\.)(?<!['’])\b([A-Za-z])\. (?=[A-Z])(?![A-Z]\. )|(?<=\.)([A-Za-z])\. (?=[WXYZ], )")
 
 
 def for_kokoro(text: str, lexicon: list[tuple[re.Pattern, str]]) -> str:
@@ -276,17 +337,24 @@ def for_kokoro(text: str, lexicon: list[tuple[re.Pattern, str]]) -> str:
     text = NOBLE_CORE.sub(lambda m: NOBLE_GASES[m.group(1)], text)
     if GENETICS.search(text):
         text = GENOTYPE.sub(say_genotype, text)
+    text = APOSTROPHE.sub("'", text)
+    text = ISOTOPE.sub(lambda m: f'{spell(m.group(1))} {m.group(2)}' if m.group(1) in ELEMENTS else m.group(0), text)
+    text = BOND.sub(say_bond, text)
+    text = HELIUM_LISTED.sub('H-E', text)
+    text = CHEMICAL_NAME.sub(say_chemical, LOOSE_POSITION.sub(lambda m: ',' if ',' in m.group(0) else '-', text))
     for pattern, say in lexicon:
         if phonemes_of(say):
             text = pattern.sub(lambda m, say=say: f'[{m.group(0)}]({say})', text)
         else:
             text = pattern.sub(lambda m, say=say: say, text)
+    text = DI.sub(r'[\1](/dˈI/) ', text)
     text = FORMULA.sub(say_formula, text)
     text = LONE_SYMBOL.sub(lambda m: spell(m.group(0)), text)
     text = SIZED_A.sub(lambda m: f'{m.group(1)} {LETTER_A}', text)
     text = ORBITAL.sub(r'\1 s', text)
     text = STUCK_DECIMAL.sub(r'\1 ', text)
     text = TRAILING_ZERO.sub(lambda m: f'{m.group(1)} point ' + ' '.join(m.group(2)), text)
+    text = FUNCTION_JOINED.sub(lambda m: f' {FUNCTIONS[m.group(1)]} {m.group(2)}', text)
     text = FUNCTION.sub(say_function, text)
     text = ROMAN.sub(lambda m: ROMAN_WORDS[m.group(1)], text)
     text = ROMAN_ONE.sub(r'\1 one', text)
