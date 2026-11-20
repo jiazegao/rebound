@@ -30,6 +30,8 @@ const NOTATION = /[=+×÷^√π<>≤≥⁺⁻₀-₉⁰¹²³⁴-⁹/]/u;
  */
 export function bracketKind(content: string): BracketKind {
   const c = content.trim();
+  // A noble-gas core ("[Ar]4s²3d⁹") is part of the configuration, which DOE's guide after it reads whole.
+  if (/^(He|Ne|Ar|Kr|Xe|Rn)$/.test(c)) return 'notation';
   if (/[-–_]/.test(c) && /\p{Lu}{2,}/u.test(c)) return 'pronunciation';
   if (/^\p{Lu}{2,}$/u.test(c) || /^[\p{Ll}'’]+(-[\p{Ll}'’]+)+$/u.test(c)) return 'pronunciation';
   if (/^(read|pause|say|note|emphasi[sz]e|spell|do not)\b/i.test(c)) return 'pronunciation';
@@ -68,6 +70,35 @@ function superscript(run: string, before: string): string {
   return ` to the power of ${spoken} `;
 }
 
+/** States of matter after a formula, as DOE writes them: "(g)", "(aq)". */
+const STATES: Record<string, string> = {
+  g: 'gas', l: 'liquid', s: 'solid', aq: 'aqueous', cr: 'crystal', gas: 'gas', liquid: 'liquid', solid: 'solid', aqueous: 'aqueous',
+};
+/** A subscript the import could not write in Unicode, "_(...)" (src/core/importers/pdfText.ts), and a limit's. */
+const SCRIPT = /_\(((?:[^()]|\([^()]*\))*)\)/gu;
+const LIMIT = /\blim\s*_\(\s*([a-zA-Z])\s*→\s*((?:[^()]|\([^()]*\))*)\)/gu;
+
+/**
+ * A "_(...)" subscript in words: its digits join the formula and its state is said ("H_(2(g))" "H2 gas",
+ * "NaOH_((aq))" "NaOH aqueous"); letters are said "sub" ("K_(eq)" "K sub eq", "t_(1/2)" "t sub one half").
+ */
+function scriptWords(inner: string): string {
+  const t = inner.trim();
+  const state = /^(\d*)\s*\((g|l|s|aq|cr|gas|liquid|solid|aqueous)\)$/.exec(t);
+  if (state) return `${state[1]} ${STATES[state[2]!]} `;
+  if (/^\d+([A-Z]|$)/.test(t)) return t; // the rest of a formula ("Fe_(3O4)")
+  return ` sub ${t === '1/2' ? 'one half' : t} `;
+}
+
+/**
+ * A slash between numbers is said "over" for a fraction ("125/343", "14π/3", "1/x") and "divided by" for a quantity in
+ * brackets ("x/(x + 2)"); between letters it is left for "per" (units: "m/s").
+ */
+function slashWords(match: string, left: string, right: string): string {
+  if (/^[A-Za-z]$/.test(left) && /^[A-Za-z]$/.test(right)) return match;
+  return `${left} ${left === ')' || right === '(' ? 'divided by' : 'over'} `;
+}
+
 /** Symbol words, applied after superscripts and subscripts. Longer and more specific ones first. */
 const WORDS: Array<[RegExp, string | ((...groups: string[]) => string)]> = [
   [/°\s?C\b/gu, ' degrees Celsius'],
@@ -104,7 +135,9 @@ const WORDS: Array<[RegExp, string | ((...groups: string[]) => string)]> = [
   [/ω/gu, ' omega '],
   [/ε/gu, ' epsilon '],
   [/<pause>/giu, ', '],
-  [/(?<=[\d)])\s*\/\s*(?=[\d(])/gu, ' over '],
+  // An x between numbers is a times sign: "1.6 x 10⁻¹⁹" is "1.6 times 10 to the power of negative 19".
+  [/(?<=[\d)]|\bpi) x (?=[\d(]|pi\b)/gu, ' times '],
+  [/([\d)]|\b(?:pi|e|squared|cubed)|(?<![A-Za-z_-])[A-Za-z])\s*\/\s*(?=([\d(]|(?:pi|e)\b|[A-Za-z](?![\w-])))/gu, slashWords],
   [/\band\/or\b/gu, 'and or'],
   [/(?<=\b[a-zA-Zµμ]{1,3})\/(?=[a-zA-Z]{1,3}\b)/gu, ' per '],
   [/=/gu, ' equals '],
@@ -122,7 +155,8 @@ const WORDS: Array<[RegExp, string | ((...groups: string[]) => string)]> = [
 
 /** A piece of question text in words a voice can say. */
 export function spokenText(text: string): string {
-  let s = text.replace(SUPER_RUN, (run, offset: number, all: string) => superscript(run, all.slice(0, offset)));
+  let s = text.replace(LIMIT, ' the limit as $1 approaches $2 ').replace(SCRIPT, (_m, inner: string) => scriptWords(inner));
+  s = s.replace(SUPER_RUN, (run, offset: number, all: string) => superscript(run, all.slice(0, offset)));
   // Subscript numbers join the formula (H₂O "H2O"); subscript letters are said "sub" (aₙ "a sub n").
   s = s.replace(SUB_RUN, (run) => {
     const plain = [...run].map((ch) => SUB[ch] ?? ch).join('');
@@ -136,6 +170,29 @@ export function spokenText(text: string): string {
     .replace(/\s+([,.;:?!)])/g, '$1')
     .replace(/\(\s+/g, '(')
     .trim();
+}
+
+/** How a number ends, and how one starts (π and e are numbers too). */
+const NUMBER_END = /(?:[\d)π²³]|\bpi|\be)$/u;
+const NUMBER_START = /^(?:[\d(π−–]|pi\b|e\b)/u;
+
+/**
+ * A word said by what is around it, as the text is said a word at a time: an "x" between numbers is a times sign
+ * ("1.6 x 10⁻¹⁹"), and a slash on its own after a number ("(x + 1)² / 16") is "over", or "divided by" with a
+ * quantity in brackets. Null for any other word.
+ */
+function wordInContext(word: string, before: string, after: string): string | null {
+  const b = before.trimEnd();
+  const a = after.trimStart();
+  if (word === 'x' && NUMBER_END.test(b) && NUMBER_START.test(a)) return 'times';
+  if (word.startsWith('/') && (NUMBER_END.test(b) || /(?<![A-Za-z])[A-Za-z]$/.test(b))) {
+    const rest = word.slice(1);
+    const next = rest || a;
+    if (!NUMBER_START.test(next) && !/^[A-Za-z](?![\w-])/.test(next)) return null;
+    const bracket = /\)$/.test(b) || next.startsWith('(');
+    return `${bracket ? 'divided by' : 'over'} ${rest ? spokenText(rest) : ''}`.trim();
+  }
+  return null;
 }
 
 /* ---------------- what to say, piece by piece ---------------- */
@@ -179,6 +236,17 @@ const OPERATORS: Array<[RegExp, RegExp]> = [
   [/^±$/u, /plus or minus/i],
 ];
 
+/** A genotype ("AaBb", "bb"), and a guide that says its letters' sizes ("big A, little a"), which reads it whole. */
+const GENOTYPE = /^(?:([a-z])\1)+$/i;
+const SIZES = /\b(big|little|small|capital|upper ?case|lower ?case)\b/i;
+/**
+ * A guide that only names an operator: "[yields]" after "→", or "[in equilibrium with]" where the arrow was lost from
+ * the PDF. It reads that symbol, not the math before it ("3 Zn + Fe₂O₃ → [yields] 2Fe").
+ */
+const OPERATOR_GUIDE = /^(?:is )?(?:in equilibrium with|yields?|produces?|reacts? to (?:form|produce|yield)|forms?|gives?)$/i;
+/** Notes to the moderator inside a guide ("A-R-4-s-2-short pause-3-d-9", "He 2 [pause] 2 plus"): a pause. */
+const GUIDE_PAUSE = /-?\[?(?<!<)\b(?:(?:short|long|brief|slight) )?pause\b(?!>)\]?-?/gi;
+
 /**
  * Whether a word before a reading guide is part of what the guide reads (`first`: the word right before it).
  * Numbers, symbols and single letters are; an operator is if the guide says it; a word is if the guide says it,
@@ -186,6 +254,7 @@ const OPERATORS: Array<[RegExp, RegExp]> = [
  */
 function readByGuide(token: string, guide: string, first: boolean): boolean {
   if (/[:;,.?!]$/.test(token) || /^[WXYZ]\)$/.test(token)) return false;
+  if (GENOTYPE.test(token) && SIZES.test(guide)) return true;
   const operator = OPERATORS.find(([op]) => op.test(token));
   if (operator) return operator[1].test(guide);
   if (/^[A-Za-z]$/.test(token) || FUNCTION_WORD.test(token)) return true;
@@ -210,7 +279,8 @@ export function speechPieces(text: string): Piece[] {
     if (kind === 'notation') continue;
     const end = m.index + m[0].length;
     if (kind === 'pronunciation') {
-      replaced.push({ start: m.index, end, say: '' });
+      // Skipped, but a note to pause ("He 2 [pause] 2 plus") is a pause.
+      replaced.push({ start: m.index, end, say: /^(?:(?:short|long|brief|slight) )?pause$/i.test(m[1]!.trim()) ? ',' : '' });
       continue;
     }
     // A reading guide: back over what it reads (in the same line), which it replaces.
@@ -218,17 +288,25 @@ export function speechPieces(text: string): Piece[] {
     let start = m.index;
     const lineStart = text.lastIndexOf('\n', m.index - 1) + 1;
     const before = text.slice(lineStart, m.index);
-    // Text joined to the bracket ("4ˣ⁺³[...]") is part of the math.
-    const joined = /\S+$/.exec(before);
-    if (joined && !/[:;,.?!]$/.test(joined[0])) start = lineStart + joined.index;
-    const words = [...text.slice(lineStart, start).matchAll(/\S+/g)];
-    for (let i = words.length - 1; i >= 0; i--) {
-      if (!readByGuide(words[i]![0], guide, start === m.index && i === words.length - 1)) break;
-      start = lineStart + words[i]!.index;
+    if (OPERATOR_GUIDE.test(guide)) {
+      // It reads the operator right before it, if that is the one it names, and nothing more.
+      const last = /\S+(?=\s*$)/.exec(before);
+      if (last && OPERATORS.some(([op, says]) => op.test(last[0]) && says.test(guide))) start = lineStart + last.index;
+    } else {
+      // Text joined to the bracket ("4ˣ⁺³[...]") is part of the math.
+      const joined = /\S+$/.exec(before);
+      if (joined && !/[:;,.?!]$/.test(joined[0])) start = lineStart + joined.index;
+      const words = [...text.slice(lineStart, start).matchAll(/\S+/g)];
+      for (let i = words.length - 1; i >= 0; i--) {
+        const word = words[i]![0];
+        if (!readByGuide(word, guide, start === m.index && i === words.length - 1)) break;
+        start = lineStart + words[i]!.index;
+        if (GENOTYPE.test(word) && SIZES.test(guide)) break; // a genotype is all its guide reads ("a bb [little b little b]")
+      }
     }
     const previous = replaced[replaced.length - 1];
     if (previous && previous.end > start) start = previous.end;
-    replaced.push({ start, end, say: spokenText(guide) });
+    replaced.push({ start, end, say: spokenText(guide.replace(GUIDE_PAUSE, ', ')) });
   }
 
   const pieces: Piece[] = [];
@@ -249,7 +327,8 @@ export function speechPieces(text: string): Piece[] {
       const end = start + w[0].length;
       // A choice letter at the start of a line ("W) ...") is said as its own short beat.
       const choice = /^([WXYZ])\)$/.exec(w[0]);
-      const say = choice && (start === 0 || text[start - 1] === '\n') ? `${choice[1]},` : spokenText(w[0]);
+      const say =
+        choice && (start === 0 || text[start - 1] === '\n') ? `${choice[1]},` : (wordInContext(w[0], text.slice(0, start), text.slice(end)) ?? spokenText(w[0]));
       add(start, end, say);
     }
   };

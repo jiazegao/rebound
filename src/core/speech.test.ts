@@ -31,8 +31,17 @@ describe('symbols in words', () => {
     ['1s²2s²2p⁵', '1s 2 2s 2 2p 5'],
     ['25.101 – 0.9608', '25.101 minus 0.9608'],
     ['b = –1', 'b equals negative 1'],
-    ['(x² − 16)/(4x − x²)', '(x squared minus 16) over (4x minus x squared)'],
+    ['(x² − 16)/(4x − x²)', '(x squared minus 16) divided by (4x minus x squared)'],
     ['125/343', '125 over 343'],
+    ['14π/3', '14 pi over 3'],
+    ['1/x', '1 over x'],
+    ['x/(x + 2)', 'x divided by (x plus 2)'],
+    ['1.6 x 10⁻¹⁹', '1.6 times 10 to the power of negative 19'],
+    ['2 Mg_((s)) + O_(2(g))', '2 Mg solid plus O2 gas'],
+    ['NaOH_((aq))', 'NaOH aqueous'],
+    ['K_(eq)', 'K sub eq'],
+    ['t_(1/2)', 't sub one half'],
+    ['lim_(x→0) f(x)', 'the limit as x approaches 0 f of x'],
     ['12°C', '12 degrees Celsius'],
     ['in terms of π', 'in terms of pi'],
     ['√x', 'the square root of x'],
@@ -62,6 +71,40 @@ describe('what is said', () => {
     );
     expect(sayAll('Which genotype is AAA [A, A, A] here?')).toBe('Which genotype is A, A, A here?');
     expect(sayAll('Burning wood: Wood → [yields] Fire')).toBe('Burning wood: Wood yields Fire');
+  });
+
+  it('says an x between numbers as times, and a slash on its own as over or divided by', () => {
+    expect(sayAll('a buoyant force of 19.6 x 10³ newtons, or 6.02 x 10²³')).toBe('a buoyant force of 19.6 times 10 cubed newtons, or 6.02 times 10 to the power of 23');
+    expect(sayAll('the ellipse (x + 1)² / 16 + y² /9 = 1, and x / (x + 2)')).toBe(
+      'the ellipse (x plus 1) squared over 16 plus y squared over 9 equals 1, and x divided by (x plus 2)',
+    );
+    expect(sayAll('Is x between 2 and 3, or 2 x y?')).toBe('Is x between 2 and 3, or 2 x y?');
+  });
+
+  it('says a guide that only names an operator in place of that operator, keeping the math before it', () => {
+    expect(sayAll('Which is reduced in the reaction: 3 Zn + Fe₂O₃ → [yields] 2Fe + 3 ZnO.')).toBe(
+      'Which is reduced in the reaction: 3 Zn plus Fe2O3 yields 2Fe plus 3 ZnO.',
+    );
+    // The arrow was lost from the PDF; the guide stands in for it.
+    expect(sayAll('in the gas phase: 2 H₂O_((g)) [in equilibrium with] 2 H_(2(g)) + O_(2(g)).')).toBe(
+      'in the gas phase: 2 H2O gas in equilibrium with 2 H2 gas plus O2 gas.',
+    );
+  });
+
+  it('says a core or a genotype once, by the guide that reads it', () => {
+    expect(say('Which configuration is most stable?', { W: '[He]2s¹ [H-E-2-S-1]', X: '[Ar]4s²3d⁹ [A-R-4-s-2-short pause-3-d-9]', Y: 'He 2 [pause] 2 plus', Z: '[He] 2s²2p⁶' })).toEqual([
+      'Which configuration is most stable?',
+      'W, H-E-2-S-1',
+      'X, A-R-4-s-2, 3-d-9',
+      'Y, He 2, 2 plus',
+      'Z, He 2s 2 2p 6',
+    ]);
+    expect(sayAll('When two organisms with the genotype Aa [big A, little a] are crossed, what proportion?')).toBe(
+      'When two organisms with the genotype big A, little a are crossed, what proportion?',
+    );
+    expect(sayAll('If a bb [little B little B] mouse is crossed with a Bb [big B little b] mouse, what percent?')).toBe(
+      'If a little B little B mouse is crossed with a big B little b mouse, what percent?',
+    );
   });
 
   it('skips pronunciation guides', () => {
