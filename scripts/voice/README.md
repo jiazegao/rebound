@@ -103,9 +103,11 @@ A few things to know when adding a fix:
 
 Besides these fixes, `kokoro_voice.py` follows some rules of its own about what Kokoro reads (`for_kokoro`), each
 found by listening to the library. Chemical formulas and element symbols are spelled letter by letter, as Science
-Bowl reads them (Kokoro would say "CO2" as "koh two", "NaCl" as "nah C L" and "Cu" as "koo"), also when a hyphen joins
-a symbol to a mass number or another symbol ("Pu-239" is "P U 239", "Ti-Cl" "T I C L"), and DOE's states are said in
-words ("H_(2(g))" is "H 2, gas"). A chemical name is said a part at a time, its positions one by one
+Bowl reads them (Kokoro would say "CO2" as "koh two", "NaCl" as "nah C L" and "Cu" as "koo"), with a group's brackets
+said, so the number after one is heard to count the group ("Ca(OH)2" is "C A open parenthesis O H close parenthesis
+2"), also when a hyphen joins a symbol to a mass number or another symbol ("Pu-239" is "P U 239", "Ti-Cl" "T I C L"),
+and DOE's states are said in words ("H_(2(g))" is "H 2, gas"). In math, a comma after a bracketed group, before the
+operator after it, lets Kokoro breathe between terms rather than inside one ("x minus, 3"). A chemical name is said a part at a time, its positions one by one
 ("1,3-butadiene" is "1 3 butadiene"; Kokoro said "thirteen butadiene"), and the prefix di- is "dye". Numbers keep
 their decimal point and trailing zeros ("4.0M" is "four point zero M", not "four M"). sin, cos, tan and ln are said
 "sine", "cosine", "tangent" and "natural log" (also written against their variable, "tanx"), and II, III and IV are
@@ -117,9 +119,9 @@ recordings' names.
 
 How the questions themselves are said, for every voice of the site, is decided in `src/core/speech.ts`: DOE's reading
 guides, symbols in words, the brackets of math ("open parenthesis x plus 5 close parenthesis squared", and "times"
-between two groups, as DOE's own guides read them), factorials, slashes ("meters per second", "m2 over m1",
-"CRISPR Cas9"), and a stem the answer choices complete, which ends at its colon rather than a full stop. A change
-there changes the words, and so the names of the recordings it touches.
+between two groups, as DOE's own guides read them), factorials, derivatives ("d y over d x"), slashes ("meters per
+second", "x over y", "DC to DC", "CRISPR Cas9"), and a stem the answer choices complete, which ends at its colon
+rather than a full stop. A change there changes the words, and so the names of the recordings it touches.
 
 ## 4. The whole library
 
@@ -144,7 +146,7 @@ python scripts/voice/kokoro_voice.py check
 
 Whisper (on the graphics card) listens to every recording and compares what it hears with the text. Open
 `voice/audio/review.html` for the ones to listen to, worst first: a phrase left out or said twice, or a recording
-whose length is odd for its text (`review.tsv` has the same list). Whisper also writes some math and chemistry
+whose length is odd for what Kokoro was given to say (`review.tsv` has the same list). Whisper also writes some math and chemistry
 differently from the text, so expect a few false alarms there. To fix one, delete its MP3 (or fix a pronunciation)
 and run `generate` again. `check --no-listen` only compares lengths, in seconds; `--model medium.en` hears more
 carefully but is slower.

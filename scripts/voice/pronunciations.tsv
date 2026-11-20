@@ -11,6 +11,9 @@
 # Places and abbreviations ("Mt." first, so its full stop goes too: "Mount Everest", not "Mount. Everest")
 Mt.	Mount
 Mt	Mount
+type Ia	type one A
+(6,6)-coordination	6 6 coordination
+Poly(A)	poly A
 aq	aqueous
 aqueous	/ˈAkwiəs/
 
@@ -108,6 +111,7 @@ do de cane	/dˈOdəkˌAn/
 equilibrium	/ˌikwəlˈɪbɹiəm/
 fructose	/fɹˈuktˌOs/
 Sciencebowlium	/sˌIənsbˈOliəm/
+titanium	/tItˈAniəm/
 
 # The prefix di- is "dye" in chemistry (the rule in kokoro_voice.py says it in a hyphenated word or a name said a part
 # at a time); these whole words Kokoro said "dih"

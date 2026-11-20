@@ -179,9 +179,22 @@ LONE_SYMBOL = re.compile(
 
 
 def spell(token: str) -> str:
-    """NaCl -> N-A-C-L, Ca(OH)2 -> C-A-O-H-2, AgCl -> [A](/ˈA/) G-C-L."""
-    letters = '-'.join(p if p.isdigit() else '-'.join(p.upper()) for p in re.findall(r'\d+|[A-Z][a-z]?', token))
-    return f'{LETTER_A} {letters[2:]}' if letters.startswith('A-') else letters
+    """
+    NaCl -> N-A-C-L, AgCl -> [A](/ˈA/) G-C-L, and a group's brackets said, so the number after one is heard to count the
+    group: Ca(OH)2 -> C-A open parenthesis O-H close parenthesis 2.
+    """
+    words = []
+    for run in re.split(r'([()])', token):
+        if run in '()':
+            words.append({'(': 'open parenthesis', ')': 'close parenthesis'}.get(run, ''))
+            continue
+        letters = '-'.join(p if p.isdigit() else '-'.join(p.upper()) for p in re.findall(r'\d+|[A-Z][a-z]?', run))
+        words.append(f'{LETTER_A} {letters[2:]}' if letters.startswith('A-') else letters)
+    return ' '.join(w for w in words if w)
+
+
+# DOE's own spelling of a formula keeps its brackets ("Ni(CO)4 [N-I(C-O)4]"): they are said too.
+SPELLED_GROUP = re.compile(r'(?<![\w\[/-])([A-Z0-9](?:-[A-Z0-9]+)*)\(([A-Z0-9](?:-[A-Z0-9]+)*)\)(\d*)(?![\w\]-])')
 
 
 # An element symbol joined by a hyphen to a mass number or to another symbol is spelled too: Kokoro said "Pu-239" as
@@ -307,6 +320,14 @@ ROMAN_ONE_PAIR = re.compile(r'(?<![\w-])I(?= and two\b)')
 # An s orbital ("1s 2 2s 2") is a number and a letter, which Kokoro would read as a plural ("ones", "twos").
 ORBITAL = re.compile(r'(?<![\w.])([1-7])s(?![\w-])')
 
+# In a long stretch of math Kokoro takes a breath where it likes, and it liked "x minus, 3" and "plus open parenthesis,
+# y": a comma after a bracketed group (with its power or denominator), before the operator that follows, lets it
+# breathe between terms instead ("... close parenthesis squared over 16, plus open parenthesis ...").
+GROUP_END = re.compile(  # an operator, with a term after it: "Co(NH3)4Cl2 plus?" ends with a charge
+    r'(close parenthesis(?: (?!(?:plus|minus|times|divided|equals|open|close)\b)[^\s,.;:?!]+){0,5}) '
+    r'(?=(?:plus|minus|times|divided by|equals|is less than|is greater than) [^\s,.;:?!])'
+)
+
 # Phonemes given on a single letter or word just before a full stop ("block [A](/ˈA/). The") make Kokoro take the two
 # for an abbreviation and lose its place in the sentence, so it drops or repeats words after it: a space keeps them apart.
 STUCK_STOP = re.compile(r'(\]\(/[^)]*/\))(?=[.?!])')
@@ -314,8 +335,9 @@ STUCK_STOP = re.compile(r'(\]\(/[^)]*/\))(?=[.?!])')
 # The variable a ("a plus b", "where a, b and c are constants") and a capital A within a sentence ("and A is") are the
 # letter, which Kokoro would read as the word "a". The word "a" is never followed by these words or by punctuation.
 VARIABLE_FOLLOWERS = r'(?:plus|minus|times|over|equals|squared|cubed|divided|and|or|is|are|be|was|were|has|have|to|sub|then|than|multiplied)(?![\w-])'
-VARIABLE_A = re.compile(  # not a.m.; and after "the" ("the a parameter"), where the word "a" never is
-    r'(?<![\w-])a(?![\w-])(?!\.\w)(?=\s*(?:[,.;:?!)]|$)|\s+' + VARIABLE_FOLLOWERS + r')|(?<=\b[Tt]he )a(?![\w-])(?!\.\w)'
+VARIABLE_A = re.compile(  # not a.m.; after "the" ("the a parameter"); and an operator DOE names ("a star b")
+    r'(?<![\w-])a(?![\w-])(?!\.\w)(?=\s*(?:[,.;:?!)]|$)|\s+' + VARIABLE_FOLLOWERS + r'|\s+star\s+[a-z](?![\w-]))'
+    r'|(?<=\b[Tt]he )a(?![\w-])(?!\.\w)'
 )
 CAPITAL_A = re.compile(  # after a word or number ("point A", "3 A"), not after "1) " where a list item starts
     r'(?:(?<=[a-z0-9’\'] )|(?<=[a-z0-9], ))A(?![\w-])|(?<![\w-])A(?![\w-])(?=\s*(?:[,.;:?!)]|$)|\s+' + VARIABLE_FOLLOWERS + ')'
@@ -342,13 +364,15 @@ def for_kokoro(text: str, lexicon: list[tuple[re.Pattern, str]]) -> str:
     text = BOND.sub(say_bond, text)
     text = HELIUM_LISTED.sub('H-E', text)
     text = CHEMICAL_NAME.sub(say_chemical, LOOSE_POSITION.sub(lambda m: ',' if ',' in m.group(0) else '-', text))
+    # Formulas before the fixes, so a fix for a word in capitals ("CO" "C-O") leaves a formula with it whole ("Ni(CO)4").
+    text = FORMULA.sub(say_formula, text)
+    text = SPELLED_GROUP.sub(lambda m: f'{m.group(1)} open parenthesis {m.group(2)} close parenthesis {m.group(3)}'.rstrip(), text)
     for pattern, say in lexicon:
         if phonemes_of(say):
             text = pattern.sub(lambda m, say=say: f'[{m.group(0)}]({say})', text)
         else:
             text = pattern.sub(lambda m, say=say: say, text)
     text = DI.sub(r'[\1](/dˈI/) ', text)
-    text = FORMULA.sub(say_formula, text)
     text = LONE_SYMBOL.sub(lambda m: spell(m.group(0)), text)
     text = SIZED_A.sub(lambda m: f'{m.group(1)} {LETTER_A}', text)
     text = ORBITAL.sub(r'\1 s', text)
@@ -361,6 +385,7 @@ def for_kokoro(text: str, lexicon: list[tuple[re.Pattern, str]]) -> str:
     text = ROMAN_ONE_PAIR.sub('one', text)
     text = VARIABLE_A.sub(LETTER_A, text)
     text = CAPITAL_A.sub(LETTER_A, text)
+    text = GROUP_END.sub(r'\1, ', text)
     text = LETTER_STOP.sub(lambda m: (m.group(1) or m.group(2)) + ' . ', text)
     text = STUCK_STOP.sub(r'\1 ', text)
     return re.sub(r' {2,}', ' ', re.sub(r'\s+,', ',', text)).strip()
@@ -659,7 +684,10 @@ def check(args: argparse.Namespace, hear=None) -> None:
     present = [j for j in jobs if (out / f"{j['key']}.mp3").exists()]
     if not present:
         sys.exit(f'No recordings in {out} yet: run generate first.')
-    paces = [made[j['key']]['chars'] / (made[j['key']]['ms'] / 1000) for j in present if j['key'] in made and made[j['key']]['ms'] > 0]
+    # Pace is measured on what Kokoro reads: a formula spelled out, or a bracket said, takes longer than its text.
+    lexicon = load_lexicon(Path(args.lexicon) if getattr(args, 'lexicon', None) else DEFAULT_LEXICON)
+    length = {j['key']: len(re.sub(r'\[([^\]]*)\]\(/[^)]*/\)', r'\1', for_kokoro(j['text'], lexicon))) for j in present}
+    paces = [length[j['key']] / (made[j['key']]['ms'] / 1000) for j in present if j['key'] in made and made[j['key']]['ms'] > 0]
     usual = statistics.median(paces) if paces else 15.0
     # What Whisper hears is kept as it goes (heard.jsonl), so check can be stopped and started again, and run in parts
     # at once (--shard). A recording made again since is heard again.
@@ -690,7 +718,7 @@ def check(args: argparse.Namespace, hear=None) -> None:
     rows = []
     for job in present:
         ms = made.get(job['key'], {}).get('ms') or 0
-        pace = len(job['text']) / (ms / 1000) if ms else usual
+        pace = length[job['key']] / (ms / 1000) if ms else usual
         heard = said(job)
         similarity, missing, added = compare(job['text'], heard) if heard is not None else (None, 0, 0)
         found = problems(similarity, missing, added, pace, usual)
