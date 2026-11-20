@@ -391,6 +391,63 @@ def for_kokoro(text: str, lexicon: list[tuple[re.Pattern, str]]) -> str:
     return re.sub(r' {2,}', ' ', re.sub(r'\s+,', ',', text)).strip()
 
 
+# Kokoro decides how long every sound lasts before it speaks, and in math it often drew out an operator and paused
+# after it, inside a term: "x minus... 6" (its last sound held 250 ms, then a pause), "open parenthesis... e to the
+# power of x". In math, the gap after an operator ("minus", "of" in "the power of"), before "squared" or "cubed", and
+# every gap inside a bracketed group are kept to an ordinary gap between words; it still breathes between terms.
+# The words are matched by their phonemes, as misaki writes them (a stress mark may come before any vowel).
+_S = '[ˈˌ]?'
+_M = '[ˈˌ]'  # stressed, as letters and numbers always are: "four" is fˈɔɹ, "for" fɔɹ; "two" tˈu, "to" tə
+GAP_AFTER = re.compile(rf'^(?:pl{_S}ʌs|m{_S}Inəs|t{_S}Imz|{_S}ikwᵊlz|p{_S}Wəɹ)$')  # plus, minus, times, equals, power
+GAP_AFTER_NEAR_MATH = re.compile(  # words that are math only next to math ("the square root of x", not "square feet")
+    rf'^(?:{_S}[ʌə]v|t{_S}ə|ð{_S}[əi]|b{_S}I|{_S}Ovəɹ|n{_S}ɛɡəTɪv|{_S}Opᵊn|kl{_S}O[sz]|s{_S}ʌb|ɹ{_S}ut|l{_S}ɔɡ|b{_S}As|kw{_S}ɑntəTi'
+    rf'|skw{_S}ɛɹ|kj{_S}ub|v{_S}ælju)$'  # of, to, the, by, over, negative, open, close, sub, root, log, base, quantity, ...
+)
+GAP_BEFORE = re.compile(rf'^(?:skw{_S}ɛɹd|kj{_S}ubd|fækt{_S}ɔɹiəl|pɹ{_S}Im)$')  # squared, cubed, factorial, prime
+MATH_WORD = re.compile(
+    rf'^(?:{_M}A|b{_M}i|s{_M}i|d{_M}i|{_M}i|{_M}ɛf|ʤ{_M}i|{_M}Aʧ|{_M}I|k{_M}A|{_M}ɛl|{_M}ɛm|{_M}ɛn|{_M}O|p{_M}i|kj{_M}u|{_M}ɑɹ|{_M}ɛs'
+    rf'|t{_M}i|j{_M}u|v{_M}i|d{_M}ʌbᵊlju|{_M}ɛks|w{_M}I|z{_M}i|p{_M}I|θ{_M}ATə|z{_M}ɪɹO|w{_M}ʌn|t{_M}u|θɹ{_M}i|f{_M}ɔɹ|f{_M}Iv|s{_M}ɪks'
+    rf'|s{_M}ɛvən|{_M}At|n{_M}In|t{_M}ɛn|əl{_M}ɛvən|tw{_M}ɛlv|h{_M}ʌndɹəd|θ{_M}Wzənd)$'  # letters, pi, theta, numbers
+)
+OPEN_BRACKET = re.compile(rf'^{_S}Opᵊn$')
+CLOSE_BRACKET = re.compile(rf'^kl{_S}O[sz]$')
+BRACKET = re.compile(rf'^pəɹ{_S}ɛnθəsɪs$')
+TO, THE, POWER, OVER = (re.compile(rf'^{p}$') for p in (rf't{_S}[əu]', rf'ð{_S}[əi]', rf'p{_S}Wəɹ', rf'{_S}Ovəɹ'))
+
+
+def math_gaps(phonemes: str) -> set[int]:
+    """Where in Kokoro's phonemes a gap between words is kept short: the positions of those spaces."""
+    words = [(m.end(), m.group(0)) for m in re.finditer(r'\S+', phonemes)]
+    core = lambda w: w.rstrip(',.;:?!').strip('()')  # noqa: E731  (a bracket of the text, "(1 over 2)", is part of a word)
+    math = lambda w: bool(  # noqa: E731
+        MATH_WORD.match(w) or GAP_AFTER.match(w) or GAP_BEFORE.match(w) or BRACKET.match(w) or OPEN_BRACKET.match(w) or re.search(r'\d', w)
+    )
+    gaps, depth = set(), 0
+    for n, (end, word) in enumerate(words[:-1]):
+        here, previous = core(word), core(words[n - 1][1]) if n else ''
+        following = [core(w) for _, w in words[n + 1 : n + 4]]
+        # After "close parenthesis", or a bracket of the text, it breathes as it likes: the group is said.
+        closed = bool(BRACKET.match(here) and CLOSE_BRACKET.match(previous)) or word.rstrip(',.;:?!').endswith(')')
+        if BRACKET.match(here) and CLOSE_BRACKET.match(previous):
+            depth = max(0, depth - 1)
+        if OPEN_BRACKET.match(here) and BRACKET.match(following[0]):
+            depth += 1
+        if word.rstrip(',.;:?!') != word:
+            continue  # punctuation: a pause belongs there
+        # What belongs to the term before it: "squared", "cubed", "to the power of" ("close parenthesis to the power of").
+        power = len(following) == 3 and TO.match(following[0]) and THE.match(following[1]) and POWER.match(following[2])
+        # A simple fraction, "1 over 2", is one term.
+        fraction = OVER.match(following[0]) and MATH_WORD.match(here) and len(following) > 1 and MATH_WORD.match(following[1])
+        if (
+            GAP_BEFORE.match(following[0])
+            or power
+            or fraction
+            or (not closed and (depth > 0 or GAP_AFTER.match(here) or (GAP_AFTER_NEAR_MATH.match(here) and math(following[0]))))
+        ):
+            gaps.add(end)
+    return gaps
+
+
 class Voice:
     """One Kokoro voice, loaded once (the model and the voice download from Hugging Face the first time)."""
 
@@ -445,13 +502,54 @@ class Voice:
         """The audio (24 kHz, float) and the phonemes Kokoro read, chunk by chunk."""
         parts: list[np.ndarray] = []
         phonemes: list[str] = []
-        for result in self.pipeline(text, voice=self.name, speed=self.speed, split_pattern=None):
-            phonemes.append(result.phonemes)
-            if result.audio is not None:
-                parts.append(result.audio.detach().cpu().numpy().astype(np.float32))
+        # As KPipeline does it (its words to phonemes, in chunks Kokoro can say at once), with the gaps in math kept short.
+        for _, ps, _ in self.pipeline.en_tokenize(self.pipeline.g2p(text)[1]):
+            if not ps:
+                continue
+            ps = ps[:510]
+            phonemes.append(ps)
+            parts.append(self.speak(ps, math_gaps(ps)))
         if not parts:
             raise RuntimeError('Kokoro made no audio')
         return np.concatenate(parts), phonemes
+
+    def speak(self, phonemes: str, short_gaps: set[int]) -> np.ndarray:
+        """
+        Kokoro's own forward pass (KModel.forward_with_tokens), but with the gaps at `short_gaps` (positions in
+        `phonemes`) kept to an ordinary gap between words (2 frames of 25 ms), and the sound before each no longer than
+        3 frames. Pitch and loudness are predicted after the lengths, so the voice runs on over a gap kept short.
+        """
+        import torch
+
+        model = self.pipeline.model
+        if not hasattr(self, 'pack'):
+            self.pack = self.pipeline.load_voice(self.name).to(model.device)
+        keep = [k for k, c in enumerate(phonemes) if model.vocab.get(c) is not None]  # as KModel.forward drops the rest
+        place = {k: n + 1 for n, k in enumerate(keep)}  # a phoneme's place among the ids, after the start token
+        with torch.no_grad():
+            ids = torch.LongTensor([[0, *(model.vocab[phonemes[k]] for k in keep), 0]]).to(model.device)
+            ref_s = self.pack[len(phonemes) - 1].to(model.device)
+            lengths = torch.full((1,), ids.shape[-1], device=model.device, dtype=torch.long)
+            mask = torch.gt(torch.arange(lengths.max()).unsqueeze(0).type_as(lengths) + 1, lengths.unsqueeze(1)).to(model.device)
+            d_en = model.bert_encoder(model.bert(ids, attention_mask=(~mask).int())).transpose(-1, -2)
+            style = ref_s[:, 128:]
+            d = model.predictor.text_encoder(d_en, style, lengths, mask)
+            x, _ = model.predictor.lstm(d)
+            duration = torch.sigmoid(model.predictor.duration_proj(x)).sum(axis=-1) / self.speed
+            frames = torch.round(duration).clamp(min=1).long().squeeze()
+            for k in short_gaps:
+                if k in place:
+                    frames[place[k]] = min(int(frames[place[k]]), 2)
+                if k - 1 in place:
+                    frames[place[k - 1]] = min(int(frames[place[k - 1]]), 3)
+            indices = torch.repeat_interleave(torch.arange(ids.shape[1], device=model.device), frames)
+            alignment = torch.zeros((ids.shape[1], indices.shape[0]), device=model.device)
+            alignment[indices, torch.arange(indices.shape[0])] = 1
+            alignment = alignment.unsqueeze(0)
+            f0, energy = model.predictor.F0Ntrain(d.transpose(-1, -2) @ alignment, style)
+            asr = model.text_encoder(ids, lengths, mask) @ alignment
+            audio = model.decoder(asr, f0, energy, ref_s[:, :128]).squeeze()
+        return audio.detach().cpu().numpy().astype(np.float32)
 
 
 def tidy(audio: np.ndarray) -> np.ndarray:

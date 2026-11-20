@@ -106,8 +106,12 @@ found by listening to the library. Chemical formulas and element symbols are spe
 Bowl reads them (Kokoro would say "CO2" as "koh two", "NaCl" as "nah C L" and "Cu" as "koo"), with a group's brackets
 said, so the number after one is heard to count the group ("Ca(OH)2" is "C A open parenthesis O H close parenthesis
 2"), also when a hyphen joins a symbol to a mass number or another symbol ("Pu-239" is "P U 239", "Ti-Cl" "T I C L"),
-and DOE's states are said in words ("H_(2(g))" is "H 2, gas"). In math, a comma after a bracketed group, before the
-operator after it, lets Kokoro breathe between terms rather than inside one ("x minus, 3"). A chemical name is said a part at a time, its positions one by one
+and DOE's states are said in words ("H_(2(g))" is "H 2, gas"). In math, Kokoro used to pause inside a term: it drew
+out an operator and stopped after it ("x minus... 6", "open parenthesis... e to the power of x"). Kokoro decides how
+long every sound lasts before it speaks, so `kokoro_voice.py` keeps those gaps to an ordinary gap between words: after
+an operator ("plus", "minus", "times", "equals", and "of", "the", "over" next to math), before "squared", "cubed" and
+"to the power of", and inside a bracketed group, while a comma after a group, before the operator after it, lets it
+breathe between terms. A chemical name is said a part at a time, its positions one by one
 ("1,3-butadiene" is "1 3 butadiene"; Kokoro said "thirteen butadiene"), and the prefix di- is "dye". Numbers keep
 their decimal point and trailing zeros ("4.0M" is "four point zero M", not "four M"). sin, cos, tan and ln are said
 "sine", "cosine", "tangent" and "natural log" (also written against their variable, "tanx"), and II, III and IV are
