@@ -186,6 +186,11 @@ export const DOE_TEXT_FIXES: DoeTextFix[] = [
     reviewed: '2026-11-20',
   },
   {
+    id: 'doe-ms-04-r06-t02',
+    fixes: [{ field: 'stem', from: 'form: 0.99 - [', to: 'form: 0.99 − 3/4 [' }],
+    reviewed: '2026-11-20',
+  },
+  {
     id: 'doe-ms-04-r14-t14',
     fixes: [{ field: 'stem', from: 'What is!⁴3⁴ [', to: 'What is ⁴√(3⁴) [' }],
     reviewed: '2026-11-20',
