@@ -113,7 +113,11 @@ an operator ("plus", "minus", "times", "equals", and "of", "the", "over" next to
 "to the power of", and inside a bracketed group, while a comma after a group, before the operator after it, lets it
 breathe between terms. A chemical name is said a part at a time, its positions one by one
 ("1,3-butadiene" is "1 3 butadiene"; Kokoro said "thirteen butadiene"), and the prefix di- is "dye". Numbers keep
-their decimal point and trailing zeros ("4.0M" is "four point zero M", not "four M"). sin, cos, tan and ln are said
+their decimal point and trailing zeros ("4.0M" is "four point zero M", not "four M"). A four-digit number is a number,
+not a year ("9525%" is "nine thousand five hundred twenty-five percent"; Kokoro said "ninety-five twenty-five"),
+unless it reads as a year: after "in", "since", "by" or a month, in a range of years, before a name ("the 2011 Nobel
+Prize") or as the answer to "what year". A word Kokoro would skip because it has no sounds for it (the "238" of
+"Uranium-238", "18y", "Cas9") is said on its own. sin, cos, tan and ln are said
 "sine", "cosine", "tangent" and "natural log" (also written against their variable, "tanx"), and II, III and IV are
 numbers. The variable a is the letter, not the word "a". A genotype in a question about genetics is said "big A
 little a", as DOE's guides say one, and a noble-gas core is spelled ("A-R"). An s orbital is "one S", not "ones".
@@ -124,8 +128,8 @@ recordings' names.
 How the questions themselves are said, for every voice of the site, is decided in `src/core/speech.ts`: DOE's reading
 guides, symbols in words, the brackets of math ("open parenthesis x plus 5 close parenthesis squared", and "times"
 between two groups, as DOE's own guides read them), factorials, derivatives ("d y over d x"), slashes ("meters per
-second", "x over y", "DC to DC", "CRISPR Cas9"), and a stem the answer choices complete, which ends at its colon
-rather than a full stop. A change there changes the words, and so the names of the recordings it touches.
+second", "x over y", "DC to DC", "CRISPR Cas9"), a plain hyphen between numbers ("negative 10", "3 minus 2i", "5 to
+10%"), and a stem the answer choices complete, which ends at its colon rather than a full stop. A change there changes the words, and so the names of the recordings it touches.
 
 ## 4. The whole library
 

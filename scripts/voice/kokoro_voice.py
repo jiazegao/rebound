@@ -289,6 +289,44 @@ def say_genotype(m: re.Match) -> str:
 STUCK_DECIMAL = re.compile(r'(?<![\w.])(\d+\.\d+)(?=[A-Za-z(])')
 TRAILING_ZERO = re.compile(r'(?<![\w.$£€])(\d+)\.(\d*0)(?!\d)(?!\.\d)')  # not money: "$2.00" is "two dollars"
 
+# Misaki reads every four-digit number as a year: "9525%" is "ninety-five twenty-five percent" and "1029" "ten
+# twenty-nine". A number that is not a year gets its thousands comma ("9,525"), which misaki reads as a number. A year
+# keeps its reading: after "in", "since", "by" or a month ("In 1995", "March 11, 2011", "the spring of 2013"), in a
+# range of years ("from 2001 to 2011"), before "'s", an era or a name ("the 1970's", "the 2011 Nobel Prize"), in an
+# event ("a landmark 1958 study"), and as a choice when the question asks for a year. So do a steel grade ("1040
+# steel") and a radio station ("WDOE 1410"). A round number reads well either way ("fifteen hundred", "two thousand
+# five") and is left alone.
+FOUR_DIGITS = re.compile(r'(?<![\w.,$£€¥-])([1-9]\d{3})(?![\w-]|[.,]\d)')
+_MONTH = r'(?:January|February|March|April|May|June|July|August|September|October|November|December)'
+YEAR_BEFORE = re.compile(
+    rf'(?:\b(?i:in|since|until|till|years?|from|between|during|before|after|circa)'
+    rf'|(?<!divisible )(?<!divided )(?<!multiplied )\b(?i:by)|\b{_MONTH}(?: \d{{1,2}},)?'
+    rf'|\b(?:{_MONTH}|spring|summer|fall|autumn|winter|quarter|[Aa]s|Act|eruption|year) of'
+    rf'|\b(?i:the) (?:spring|summer|fall|autumn|winter)|\b(?:1\d{{3}}|20\d\d) (?:to|and|or|through)|\b[KW][A-Z]{{2,3}})\s+$'
+)
+YEAR_AFTER = re.compile(  # a name after it, not a unit named for someone ("2660 Torr")
+    r"['’]s\b|\s+(?:B\.?C\.?(?:E\.?)?|A\.?D\.?|C\.?E\.?)(?!\w)|\s+steel\b"
+    r'|\s+(?!(?:Torr|Kelvins?|Celsius|Fahrenheit|Newtons?|Joules?|Watts?|Pascals?|Hertz|Volts?|Amperes?|Ohms?|Teslas?'
+    r'|Gauss|Calories?|Daltons?)\b)[A-Z][a-z]{2,}'
+)
+YEAR_EVENT = re.compile(  # "the 1994 Nobel Prize", "his 1801 double-slit experiment"
+    r'(?:\s+[\w-]+){0,2}?\s+(?:earthquake|eruption|experiment|study|disaster|season|hurricane|spill|census|election'
+    r'|eclipse|flood|tsunami|outbreak|expedition|mission|accident|launch|discovery|survey|report|paper|treaty|act)\b'
+)
+YEAR_DETERMINER = re.compile(r'\b(?i:the|an?|his|her|its|their|our|what|landmark)\s+$')
+YEAR_CHOICE = re.compile(r'(?:^|\s)[WXYZ],\s*$')
+YEAR_QUESTION = re.compile(r'\b(?i:what|which|next|following)\s+years?\b')
+
+
+def say_four_digits(m: re.Match) -> str:
+    number, before, after = m.group(1), m.string[: m.start()], m.string[m.end():]
+    high, low = divmod(int(number), 100)
+    if (low == 0 or (high % 10 == 0 and low < 10) or YEAR_BEFORE.search(before) or YEAR_AFTER.match(after)
+            or (YEAR_DETERMINER.search(before) and YEAR_EVENT.match(after))
+            or (YEAR_CHOICE.search(before) and re.match(r'\s*(?:[.,;]|$)', after) and YEAR_QUESTION.search(m.string))):
+        return number
+    return f'{number[0]},{number[1:]}'
+
 # Functions are said by their names, "sine of (x)", not as written ("sin", "cos").
 FUNCTIONS = {
     'sin': 'sine', 'cos': 'cosine', 'tan': 'tangent', 'sec': 'secant', 'csc': 'cosecant', 'cot': 'cotangent',
@@ -378,6 +416,7 @@ def for_kokoro(text: str, lexicon: list[tuple[re.Pattern, str]]) -> str:
     text = ORBITAL.sub(r'\1 s', text)
     text = STUCK_DECIMAL.sub(r'\1 ', text)
     text = TRAILING_ZERO.sub(lambda m: f'{m.group(1)} point ' + ' '.join(m.group(2)), text)
+    text = FOUR_DIGITS.sub(say_four_digits, text)
     text = FUNCTION_JOINED.sub(lambda m: f' {FUNCTIONS[m.group(1)]} {m.group(2)}', text)
     text = FUNCTION.sub(say_function, text)
     text = ROMAN.sub(lambda m: ROMAN_WORDS[m.group(1)], text)
@@ -502,8 +541,15 @@ class Voice:
         """The audio (24 kHz, float) and the phonemes Kokoro read, chunk by chunk."""
         parts: list[np.ndarray] = []
         phonemes: list[str] = []
+        tokens = self.pipeline.g2p(text)[1]
+        # Now and then misaki gives a word no phonemes ("18" in "plus 18y plus", "-10"), and Kokoro would leave it out
+        # without a word: such a word is said on its own.
+        for token in tokens:
+            if not token.phonemes and re.search(r'[A-Za-z0-9]', token.text):
+                alone = self.pipeline.g2p(re.sub(r'^-(?=\d)', 'minus ', token.text))[1]
+                token.phonemes = ' '.join(t.phonemes for t in alone if t.phonemes)
         # As KPipeline does it (its words to phonemes, in chunks Kokoro can say at once), with the gaps in math kept short.
-        for _, ps, _ in self.pipeline.en_tokenize(self.pipeline.g2p(text)[1]):
+        for _, ps, _ in self.pipeline.en_tokenize(tokens):
             if not ps:
                 continue
             ps = ps[:510]
