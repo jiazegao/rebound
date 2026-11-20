@@ -13,7 +13,7 @@ import { describe, expect, it } from 'vitest';
 import { type Catalog, type ConceptIndex, type LibraryIndex, type Question, type QuestionSet } from '../schema';
 import { tagQuestion } from '../tagging';
 import { TOPICS } from '../taxonomy';
-import { DOE_ERRATA } from './doeErrata';
+import { DOE_ERRATA, DOE_TEXT_FIXES } from './doeErrata';
 import { isPrintedPhysicalScience, physicalScienceEvidence } from './doeSubjects';
 import { catalogRound } from '../levels';
 
@@ -45,6 +45,21 @@ describe.skipIf(!built)('the DOE library index', () => {
       'Double Elimination Round 1',
       'Double Elimination Round 3',
     ]);
+  });
+
+  it('has every reviewed text correction applied, at both levels', () => {
+    const byId = new Map(index.sets.flatMap((s) => questionsOf(read<QuestionSet>(s.file)).map(({ q }) => [q.id, q] as const)));
+    for (const c of DOE_TEXT_FIXES) {
+      const q = byId.get(c.id);
+      expect(q, c.id).toBeDefined();
+      for (const { field, from, to } of c.fixes) {
+        const texts = field === 'stem' ? [q!.stem] : field === 'answer' ? [q!.answer, q!.answerRaw, ...q!.accept] : [q!.choices?.[field] ?? ''];
+        expect(texts.some((t) => t.includes(to)), `${c.id} ${field}: ${to}`).toBe(true);
+        if (!to.includes(from)) expect(texts.some((t) => t.includes(from)), `${c.id} ${field}: ${from}`).toBe(false);
+      }
+      expect(q!.flags).toContain('text-corrected');
+      expect(q!.flags).not.toContain('possible-lost-formatting');
+    }
   });
 
   it('matches every set file', () => {

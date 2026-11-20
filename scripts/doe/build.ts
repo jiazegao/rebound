@@ -74,7 +74,7 @@ import {
   type ParseWarning,
 } from '../../src/core/importers/doe';
 import { extractTextLines } from '../../src/core/importers/pdfText';
-import { applyDoeErrata, DOE_ERRATA } from '../../src/core/importers/doeErrata';
+import { applyDoeErrata, applyDoeTextFixes, DOE_ERRATA } from '../../src/core/importers/doeErrata';
 import { isPrintedPhysicalScience, physicalScienceEvidence, splitPhysicalScience } from '../../src/core/importers/doeSubjects';
 
 /** A sample set number, or the key of an unnumbered section of rounds on the page ("sample-rounds"). */
@@ -387,6 +387,7 @@ async function parseRound(cfg: LevelConfig, setId: string, entry: ManifestEntry,
   try {
     const lines = await extractTextLines(doc, { ops: pdfjs.OPS as unknown as Record<string, number> });
     const result = parseDoeRound(lines, meta);
+    applyDoeTextFixes(result.round);
     applyDoeErrata(result.round);
     const split = cfg.level === 'MS' ? splitPhysicalScience(result.round) : undefined;
     tagRound(result.round);
@@ -806,6 +807,7 @@ function buildReport(
     'choice-letters-fixed': 'option letters misprinted in the PDF (read as W, X, Y, Z in order)',
     'choices-reordered': "options printed out of letter order; listed W, X, Y, Z with DOE's letters so the answer key still matches",
     erratum: 'a reviewed correction from src/core/importers/doeErrata.ts was applied (see the note on the question)',
+    'text-corrected': 'math symbols lost in text extraction were restored by a reviewed correction (DOE_TEXT_FIXES in src/core/importers/doeErrata.ts)',
     'answer-letter-corrected': 'printed answer letter named a different option than the printed answer text; letter follows the text',
     'answer-letter-inferred': 'the answer line printed only the text of an option; the letter is the option with that text',
     'number-mismatch': 'printed question number out of sequence',

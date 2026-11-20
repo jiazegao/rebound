@@ -65,6 +65,170 @@ export const DOE_ERRATA: DoeErratum[] = [
   },
 ];
 
+/**
+ * Reviewed corrections to a question's text: math symbols that DOE's PDF fonts lost in text extraction ("!" for a
+ * minus sign, a missing √ or fraction bar), restored as DOE printed them. Each was checked by a person against the
+ * original PDF. The build applies them right after parsing, so topics are tagged from the corrected text, and stops
+ * with an error if one no longer fits the parsed question.
+ */
+export interface DoeTextFix {
+  /** Question id, e.g. "doe-ms-03-r11-t02". */
+  id: string;
+  /**
+   * Exact replacements: in the stem, an answer choice, or the answer (its answer, printed answer line and accepted
+   * answers alike).
+   */
+  fixes: Array<{ field: 'stem' | 'answer' | Letter; from: string; to: string }>;
+  /** Date the correction was checked against the PDF. */
+  reviewed: string;
+}
+
+export const DOE_TEXT_FIXES: DoeTextFix[] = [
+  {
+    id: 'doe-hs-01-r01-b04',
+    fixes: [{ field: 'stem', from: '8 ×10⁷ 1 (4 ×10⁴)²', to: '(8 × 10⁷)/(4 × 10⁴)^(1/2)' }],
+    reviewed: '2026-11-20',
+  },
+  {
+    id: 'doe-hs-03-r06-b11',
+    fixes: [
+      { field: 'stem', from: '! 2 (80a²b⁴c³)', to: '−2√(80a²b⁴c³)' },
+      { field: 'answer', from: '!8ab²c 5c', to: '−8ab²c√(5c)' },
+    ],
+    reviewed: '2026-11-20',
+  },
+  {
+    id: 'doe-hs-03-r07-t11',
+    fixes: [{ field: 'stem', from: '(2x²y^(!1)z³)⁰/((2x^(!3)y^(!4)z^(!5)))', to: '(2x²y⁻¹z³)⁰/(2x⁻³y⁻⁴z⁻⁵)' }],
+    reviewed: '2026-11-20',
+  },
+  {
+    id: 'doe-hs-03-r08-t04',
+    fixes: [
+      { field: 'stem', from: 'θ =! 3/4', to: 'θ = −3/4' },
+      { field: 'answer', from: '3/5 AND! 3/5', to: '3/5 AND −3/5' },
+    ],
+    reviewed: '2026-11-20',
+  },
+  {
+    id: 'doe-hs-03-r08-b04',
+    fixes: [{ field: 'stem', from: '(x³ − 8) (x − 2)', to: '(x³ − 8)/(x − 2)' }],
+    reviewed: '2026-11-20',
+  },
+  {
+    id: 'doe-hs-03-r13-t11',
+    fixes: [{ field: 'stem', from: 'form:!144/49', to: 'form: √(−144/49)' }],
+    reviewed: '2026-11-20',
+  },
+  {
+    id: 'doe-hs-03-r13-b11',
+    fixes: [
+      { field: 'stem', from: '(2 + i 2)(3 – i 2)', to: '(2 + i√2)(3 – i√2)' },
+      { field: 'answer', from: '8 + 2 i', to: '8 + √2 i' },
+      { field: 'answer', from: '8 + i 2', to: '8 + i√2' },
+    ],
+    reviewed: '2026-11-20',
+  },
+  {
+    id: 'doe-hs-05-r02-b11',
+    fixes: [
+      { field: 'stem', from: 'xⁿ ∞ _(n!)', to: '∑_(n=0)^(∞) xⁿ/n!' },
+      { field: 'stem', from: 'over n n=0 factorial', to: 'over n factorial' },
+    ],
+    reviewed: '2026-11-20',
+  },
+  {
+    id: 'doe-hs-05-r09-t16',
+    fixes: [{ field: 'stem', from: 'r =! [', to: 'r = θ [' }],
+    reviewed: '2026-11-20',
+  },
+  // Middle school
+  {
+    id: 'doe-ms-03-r03-b07',
+    fixes: [
+      { field: 'stem', from: '4/8! 14/12', to: '4/8 − 14/12' },
+      { field: 'answer', from: '! 2/3', to: '−2/3' },
+    ],
+    reviewed: '2026-11-20',
+  },
+  {
+    id: 'doe-ms-03-r04-t06',
+    fixes: [{ field: 'stem', from: '(! 5/6)"(!6/11)', to: '(−5/6) × (−6/11)' }],
+    reviewed: '2026-11-20',
+  },
+  {
+    id: 'doe-ms-03-r04-b06',
+    fixes: [{ field: 'stem', from: '(8/9! 1/9) − (5/9!12/9)', to: '(8/9 − 1/9) − (5/9 − 12/9)' }],
+    reviewed: '2026-11-20',
+  },
+  {
+    id: 'doe-ms-03-r11-t02',
+    fixes: [{ field: 'stem', from: '(!3x³ + 9x!10x²)', to: '(−3x³ + 9x − 10x²)' }],
+    reviewed: '2026-11-20',
+  },
+  {
+    id: 'doe-ms-03-r11-t12',
+    fixes: [
+      { field: 'X', from: 'to the third power 1 !', to: 'to the third power' },
+      { field: 'Y', from: '(k) ³ Read as', to: '(k)^(−1/3) Read as' },
+      { field: 'Z', from: '− k³ Read as', to: '−|k|³ Read as' },
+    ],
+    reviewed: '2026-11-20',
+  },
+  {
+    id: 'doe-ms-03-r13-b25',
+    fixes: [{ field: 'stem', from: '1 !(16x⁴)⁴', to: '−(16x⁴)^(1/4)' }],
+    reviewed: '2026-11-20',
+  },
+  {
+    id: 'doe-ms-04-r14-t14',
+    fixes: [{ field: 'stem', from: 'What is!⁴3⁴ [', to: 'What is ⁴√(3⁴) [' }],
+    reviewed: '2026-11-20',
+  },
+  {
+    id: 'doe-ms-04-r16-t15',
+    fixes: [{ field: 'Y', from: '|!100|', to: '|√100|' }],
+    reviewed: '2026-11-20',
+  },
+];
+
+/**
+ * Apply reviewed text corrections to one parsed round. Returns the ids corrected; throws if a correction no longer
+ * finds the text it replaces. A corrected question is flagged "text-corrected" in place of "possible-lost-formatting".
+ */
+export function applyDoeTextFixes(round: Round, corrections: DoeTextFix[] = DOE_TEXT_FIXES): string[] {
+  const byId = new Map(corrections.map((c) => [c.id, c]));
+  const applied: string[] = [];
+  const fix = (q: Question) => {
+    const c = byId.get(q.id);
+    if (!c) return;
+    for (const { field, from, to } of c.fixes) {
+      const replace = (text: string) => text.split(from).join(to);
+      let found = false;
+      if (field === 'stem') {
+        found = q.stem.includes(from);
+        q.stem = replace(q.stem);
+      } else if (field === 'answer') {
+        found = [q.answer, q.answerRaw, ...q.accept].some((t) => t.includes(from));
+        q.answer = replace(q.answer);
+        q.answerRaw = replace(q.answerRaw);
+        q.accept = q.accept.map(replace);
+      } else if (q.choices?.[field] !== undefined) {
+        found = q.choices[field].includes(from);
+        q.choices[field] = replace(q.choices[field]);
+      }
+      if (!found) throw new Error(`Text correction for ${q.id} no longer fits: its ${field} has no "${from}"`);
+    }
+    q.flags = [...(q.flags ?? []).filter((f) => f !== 'possible-lost-formatting' && f !== 'text-corrected'), 'text-corrected'];
+    applied.push(q.id);
+  };
+  for (const pair of round.pairs) {
+    fix(pair.tossup);
+    if (pair.bonus) fix(pair.bonus);
+  }
+  return applied;
+}
+
 const compact = (s: string) =>
   s
     .toUpperCase()

@@ -86,6 +86,7 @@ const FLAG_TEXT: Record<string, string> = {
   'choice-letters-fixed': 'The choice letters were repaired during import.',
   'choices-reordered': 'The PDF printed the choices out of letter order; they are listed here in W, X, Y, Z order with DOE’s letters.',
   erratum: 'Rebound corrected a misprint in DOE’s answer line after review; see the note under the answer.',
+  'text-corrected': 'Some math symbols did not come through from the PDF; Rebound restored them after checking the original.',
   'mc-answer-mismatch': 'The printed answer does not exactly match any of the choices.',
   'type-mismatch': 'The printed question type did not match its format.',
   'kind-inferred': 'The toss-up or bonus label was missing and was inferred.',

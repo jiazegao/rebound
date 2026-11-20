@@ -1,4 +1,4 @@
-import { applyDoeErrata } from './doeErrata';
+import { applyDoeErrata, applyDoeTextFixes } from './doeErrata';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { Question, Round } from '../schema';
@@ -854,5 +854,25 @@ ANSWER: W) MERCURY-OXIDE CELLS`);
     expect(q.flags).toEqual(['erratum']);
     expect(q.notes).toEqual(['Corrected: test']);
     expect(() => applyDoeErrata(r, [{ ...erratum, answerLetter: 'Y' }])).toThrow(/no longer fits/);
+  });
+
+  it('restores symbols lost from the PDF by reviewed text corrections, and refuses ones that no longer fit', () => {
+    const r = round(`TOSS-UP
+4) MATH Short Answer Given that tangent θ =! 3/4, find the possible values of sine θ:
+ANSWER: 3/5 AND! 3/5`);
+    const q = r.pairs[0].tossup;
+    const correction = {
+      id: q.id,
+      fixes: [
+        { field: 'stem' as const, from: 'θ =! 3/4', to: 'θ = −3/4' },
+        { field: 'answer' as const, from: '3/5 AND! 3/5', to: '3/5 AND −3/5' },
+      ],
+      reviewed: '2026-11-20',
+    };
+    expect(applyDoeTextFixes(r, [correction])).toEqual([q.id]);
+    expect(q.stem).toBe('Given that tangent θ = −3/4, find the possible values of sine θ:');
+    expect([q.answer, q.answerRaw]).toEqual(['3/5 AND −3/5', '3/5 AND −3/5']);
+    expect(q.flags).toEqual(['text-corrected']);
+    expect(() => applyDoeTextFixes(r, [correction])).toThrow(/no longer fits/);
   });
 });
