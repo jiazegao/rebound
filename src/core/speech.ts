@@ -114,7 +114,19 @@ function slashWords(match: string, left: string, right: string): string {
 }
 
 const UNIT_WORD =
-  /^(?:(?:kilo|centi|milli|micro|nano)?(?:meter|metre|gram|liter|litre|second|joule|watt|newton|volt|ampere|amp|mole|coulomb|pascal|calorie)s?|minutes?|hours?|days?|weeks?|years?|miles?|feet|foot|inch(?:es)?|gallons?|pounds?|ohms?|kelvin|hertz)$/i;
+  /^(?:(?:kilo|centi|milli|micro|nano)?(?:meter|metre|gram|liter|litre|second|joule|watt|newton|volt|ampere|amp|mole|coulomb|pascal|calorie)s?|minutes?|hours?|days?|weeks?|years?|miles?|feet|foot|inch(?:es)?|gallons?|pounds?|ohms?|kelvin|hertz|Celsius|Fahrenheit|degrees?)$/i;
+const UNIT_SYMBOL = /^(?:m|s|km|kg|g|mg|L|mL|mol|J|kJ|K|N|W|kW|V|A|C|h|hr|min|cm|mm|nm|[µμ][mgs]|Hz|Pa|kPa|atm|lb|ft|mi|yr)$/;
+
+/**
+ * A slash between short words: units are "per" ("m/s"), the same abbreviation twice a range ("DC/DC" "DC to DC"), two
+ * names a pair ("UV/Vis", "Oil/Gas"), and variables a ratio ("x/y" "x over y", "mg/Q" "mg over Q").
+ */
+function shortSlash(_match: string, left: string, right: string): string {
+  if (UNIT_SYMBOL.test(left) && UNIT_SYMBOL.test(right)) return `${left} per ${right}`;
+  if (/^[A-Z]{2,}$/.test(left) && /^[A-Z]{2,}$/.test(right)) return left === right ? `${left} to ${right}` : `${left} ${right}`;
+  if (/^[A-Z][a-z]{2,}$/.test(left) || /^[A-Z][a-z]{2,}$/.test(right)) return `${left} ${right}`;
+  return `${left} over ${right}`;
+}
 const QUANTITY_WORD = /^(?:work|force|power|mass|energy|distance|time|velocity|speed|volume|area|density|pressure|charge|momentum|acceleration|displacement|length|weight)$/i;
 
 /**
@@ -123,7 +135,8 @@ const QUANTITY_WORD = /^(?:work|force|power|mass|energy|distance|time|velocity|s
  * "true/false").
  */
 function wordSlash(_match: string, left: string, right: string): string {
-  if (UNIT_WORD.test(left) && UNIT_WORD.test(right)) return `${left} per ${right}`;
+  const unit = (w: string) => UNIT_WORD.test(w) || UNIT_SYMBOL.test(w);
+  if (unit(left) && unit(right)) return `${left} per ${right}`;
   const variable = (w: string) => /^[A-Za-z]\d+$/.test(w);
   const quantity = (w: string) => QUANTITY_WORD.test(w) || /^(?:sin|cos|tan|sec|csc|cot)[a-z]$/.test(w);
   if ((variable(left) && variable(right)) || (quantity(left) && (quantity(right) || /^surface$/i.test(right)))) return `${left} over ${right}`;
@@ -178,7 +191,8 @@ const WORDS: Array<[RegExp, string | ((...groups: string[]) => string)]> = [
   [/\b(G[012]|S|M)\/(G[012]|S|M)\b/gu, '$1 $2'],
   [/([\d)]|\b(?:pi|e|squared|cubed)|(?<![A-Za-z_-])[A-Za-z])\s*\/\s*(?=([\d(]|(?:pi|e)\b|[A-Za-z](?![\w-])))/gu, slashWords],
   [/\band\/or\b/gu, 'and or'],
-  [/(?<=\b[a-zA-Zµμ]{1,3})\/(?=[a-zA-Z]{1,3}\b)/gu, ' per '],
+  [/\bK\/T\b/gu, 'K T'], // the Cretaceous–Tertiary boundary (said a word at a time, so "boundary" is not in sight)
+  [/(?<![\w/])([a-zA-Zµμ]{1,3})\/([a-zA-Z]{1,3})(?![\w/])/gu, shortSlash],
   [/(?<![\w/])([A-Za-z][\w'’-]*)\/([A-Za-z][\w'’-]*)(?![\w/])/gu, wordSlash],
   [/=/gu, ' equals '],
   [/<(?!=)/gu, ' less than '],
@@ -189,6 +203,8 @@ const WORDS: Array<[RegExp, string | ((...groups: string[]) => string)]> = [
   [/\+/gu, ' plus '],
   // f(x) "f of x", V(r) "V of r", g'(2) "g prime of 2".
   [/(?<![A-Za-z])([A-Za-z])(['’]?)\(([^()\s]{1,8})\)/gu, (_m: string, f: string, prime: string, x: string) => `${f}${prime ? ' prime' : ''} of ${x}`],
+  // A function of a function, "f(g(x))": "f of g of x".
+  [/(?<![A-Za-z])([fgh])\(([fgh] of [^()\s]{1,8})\)/gu, '$1 of $2'],
   // A factorial follows a number, a single letter or a bracket ("25!", "n!", "(n + 1)!"); "snow!" is an exclamation.
   [/(?<=[\d)]|(?<![A-Za-z])[A-Za-z])!/gu, ' factorial '],
   // An initial stuck to the word after it: "E.coli" is "E. coli".
@@ -201,7 +217,15 @@ const ROOTS: Record<string, string> = { '³': 'cube', '⁴': 'fourth', '⁵': 'f
 
 /** A piece of question text in words a voice can say. */
 export function spokenText(text: string): string {
-  let s = text.replace(LIMIT, ' the limit as $1 approaches $2 ').replace(SCRIPT, (_m, inner: string) => scriptWords(inner));
+  let s = text
+    // A statement's number written against its first word ("2)They have"), and a plural in brackets ("capacitor(s)").
+    .replace(/^(\d{1,2}\))(?=\p{L})/u, '$1 ')
+    .replace(/(?<=[a-z]{3})\((e?s)\)/g, '$1')
+    // A derivative, which the import writes as a fraction ("dy/(dx)"): "d y over d x".
+    .replace(/(?<![A-Za-z])d([A-Za-zθ])\s*\/\s*\(?d([A-Za-zθ])\)?(?![A-Za-z])/gu, ' d $1 over d $2 ')
+    // A function named in full, as in "cosine(x)": "cosine of x".
+    .replace(/\b(sine|cosine|tangent|secant|cosecant|cotangent)\(([^()\s]{1,8})\)/g, '$1 of $2');
+  s = s.replace(LIMIT, ' the limit as $1 approaches $2 ').replace(SCRIPT, (_m, inner: string) => scriptWords(inner));
   // A logarithm's base: "log₂ 8" is "log base 2 of 8", not "log 2 8".
   s = s.replace(/\blog([₀₁₂₃₄₅₆₇₈₉]+)\s*/gu, (_m, base: string) => `log base ${[...base].map((ch) => SUB[ch]).join('')} of `);
   // A root's index: "⁴√81" is "the fourth root of 81".
@@ -396,7 +420,10 @@ function squashed(text: string): string {
  * Numbers, symbols and single letters are; an operator is if the guide says it; a word is if the guide says it,
  * and so is a code in capitals right before the guide ("AAA [A, A, A]").
  */
-function readByGuide(token: string, guide: string, first: boolean): boolean {
+function readByGuide(raw: string, guide: string, first: boolean): boolean {
+  // A comma ends the math a guide reads, unless the guide reads across one ("Given f(x) = tanx/secx, find f′(2π/3)
+  // [Given f of x equals tangent of x over secant of x, find f prime of 2 pi over 3]").
+  const token = raw.endsWith(',') && guide.includes(',') ? raw.slice(0, -1) : raw;
   if (/[:;,.?]$/.test(token) || (/!$/.test(token) && !(FACTORIAL.test(token) && /factorial/i.test(guide))) || /^[WXYZ]\)$/.test(token)) return false;
   if (GENOTYPE.test(token) && SIZES.test(guide)) return true;
   const operator = OPERATORS.find(([op]) => op.test(token));

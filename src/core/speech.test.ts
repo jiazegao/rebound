@@ -72,6 +72,14 @@ describe('symbols in words', () => {
     ['log₂ 8', 'log base 2 of 8'],
     ['−2√5 and i√2', 'negative 2 times the square root of 5 and i times the square root of 2'],
     ['⁴√81', 'the fourth root of 81'],
+    ['x/y and mg/Q', 'x over y and mg over Q'],
+    ['a DC/DC converter, UV/Vis, the K/T boundary', 'a DC to DC converter, UV Vis, the K T boundary'],
+    ['6.5°C/km and 150 km/s', '6.5 degrees Celsius per km and 150 km per s'],
+    ['2)They', '2) They'],
+    ['the capacitor(s)', 'the capacitors'],
+    ['find dy/(dx)', 'find d y over d x'],
+    ['cosine(x)', 'cosine of x'],
+    ['f(g(x))', 'f of g of x'],
   ])('%s is said "%s"', (text, words) => {
     expect(spokenText(text)).toBe(words);
   });
@@ -135,6 +143,10 @@ describe('what is said', () => {
       'If a star b equals a times b divided by the quantity a plus b, then',
     );
     expect(sayAll('have bond orders: 1) H-two [H-2]; 2) He-two [H-E-2]')).toBe('have bond orders: 1) H-2; 2) H-E-2');
+    // A guide that reads across a comma reads the math before the comma too.
+    expect(sayAll('Given f(x) = tanx/secx, find f’(2π/3) [Given f of x equals tangent of x over secant of x, find f prime of 2 pi over 3].')).toBe(
+      'Given f of x equals tangent of x over secant of x, find f prime of 2 pi over 3.',
+    );
   });
 
   it('says a guide that only names an operator in place of that operator, keeping the math before it', () => {
