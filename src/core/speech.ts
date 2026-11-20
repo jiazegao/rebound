@@ -6,7 +6,9 @@
  * - Reading guides, the notes DOE writes for moderators ("y = √x² − 3x [y equals the square root of x squared
  *   minus 3x]"), are said in place of the math before them.
  * - Other symbols are said in words: x² "x squared", 10⁻³ "10 to the power of negative 3", SO₄²⁻ "SO4, 2 minus",
- *   π "pi", √ "the square root of", 25 – 9 "25 minus 9", 125/343 "125 over 343", and so on.
+ *   π "pi", √ "the square root of", 25 – 9 "25 minus 9", 125/343 "125 over 343", 5! "5 factorial", and so on.
+ * - The brackets of math are said, as DOE's guides say them: (x + 5)² "open parenthesis x plus 5 close parenthesis
+ *   squared", (6 + 3i)(4 + i) with "times" between the two.
  * - The question is said in short phrases, each with its place on the timeline, so every device stays in step.
  */
 import { buildReading, msPerChar, type Reading } from '../lib/reading';
@@ -34,6 +36,18 @@ export function bracketKind(content: string): BracketKind {
   if (/^(He|Ne|Ar|Kr|Xe|Rn)$/.test(c)) return 'notation';
   if (/[-–_]/.test(c) && /\p{Lu}{2,}/u.test(c)) return 'pronunciation';
   if (/^\p{Lu}{2,}$/u.test(c) || /^[\p{Ll}'’]+(-[\p{Ll}'’]+)+$/u.test(c)) return 'pronunciation';
+  // Syllables with a one-letter stressed one, "dy-E-thi-leen"; not a spelling ("A-R-4-s-2"), or a reading with one
+  // word in it ("X-big-B", "S-eye").
+  const syllables = c.split('-');
+  if (
+    syllables.length > 2 &&
+    syllables.every((s) => /^[\p{L}'’]+$/u.test(s)) &&
+    syllables.some((s) => /^\p{Lu}+$/u.test(s)) &&
+    syllables.filter((s) => /^\p{Ll}{2,}$/u.test(s)).length >= 2 &&
+    !syllables.some((s) => /^(?:big|little|small|capital|sub|plus|minus|prime|bar|naught|dot|star|double|single|triple|bond)$/i.test(s))
+  ) {
+    return 'pronunciation';
+  }
   if (/^(read|pause|say|note|emphasi[sz]e|spell|do not)\b/i.test(c)) return 'pronunciation';
   if (/<pause>/i.test(c) || READING_WORDS.test(c)) return 'reading';
   if (NOTATION.test(c)) return 'notation';
@@ -99,11 +113,31 @@ function slashWords(match: string, left: string, right: string): string {
   return `${left} ${left === ')' || right === '(' ? 'divided by' : 'over'} `;
 }
 
+const UNIT_WORD =
+  /^(?:(?:kilo|centi|milli|micro|nano)?(?:meter|metre|gram|liter|litre|second|joule|watt|newton|volt|ampere|amp|mole|coulomb|pascal|calorie)s?|minutes?|hours?|days?|weeks?|years?|miles?|feet|foot|inch(?:es)?|gallons?|pounds?|ohms?|kelvin|hertz)$/i;
+const QUANTITY_WORD = /^(?:work|force|power|mass|energy|distance|time|velocity|speed|volume|area|density|pressure|charge|momentum|acceleration|displacement|length|weight)$/i;
+
+/**
+ * A slash between words: units are "per" ("meters/second"), a ratio of two quantities or variables is "over"
+ * ("Force/mass", "m2/m1"), and two names or alternatives are said as a pair, without the slash ("CRISPR/Cas9",
+ * "true/false").
+ */
+function wordSlash(_match: string, left: string, right: string): string {
+  if (UNIT_WORD.test(left) && UNIT_WORD.test(right)) return `${left} per ${right}`;
+  const variable = (w: string) => /^[A-Za-z]\d+$/.test(w);
+  const quantity = (w: string) => QUANTITY_WORD.test(w) || /^(?:sin|cos|tan|sec|csc|cot)[a-z]$/.test(w);
+  if ((variable(left) && variable(right)) || (quantity(left) && (quantity(right) || /^surface$/i.test(right)))) return `${left} over ${right}`;
+  return `${left} ${right}`;
+}
+
 /** Symbol words, applied after superscripts and subscripts. Longer and more specific ones first. */
 const WORDS: Array<[RegExp, string | ((...groups: string[]) => string)]> = [
-  [/°\s?C\b/gu, ' degrees Celsius'],
-  [/°\s?F\b/gu, ' degrees Fahrenheit'],
+  // Some sets write the degree sign as the ordinal sign: "20ºC".
+  [/[°º]\s?C\b/gu, ' degrees Celsius'],
+  [/[°º]\s?F\b/gu, ' degrees Fahrenheit'],
   [/[°º]/gu, ' degrees'],
+  // A root multiplied by what is written right before it: "−2√5" is "negative 2 times the square root of 5".
+  [/(?<=[\w)²³])√/gu, ' times the square root of '],
   [/√/gu, ' the square root of '],
   [/∛/gu, ' the cube root of '],
   [/½/gu, ' one half'],
@@ -134,12 +168,18 @@ const WORDS: Array<[RegExp, string | ((...groups: string[]) => string)]> = [
   [/[φϕ]/gu, ' phi '],
   [/ω/gu, ' omega '],
   [/ε/gu, ' epsilon '],
+  // An antibonding orbital is "sigma star"; an asterisk after a word is a footnote mark ("a fungus*").
+  [/(?<=\b(?:sigma|pi)\s?)\*/gu, ' star '],
+  [/(?<=[A-Za-z]{2})\*(?=$|[\s.,;:?!])/gu, ''],
   [/<pause>/giu, ', '],
   // An x between numbers is a times sign: "1.6 x 10⁻¹⁹" is "1.6 times 10 to the power of negative 19".
   [/(?<=[\d)]|\bpi) x (?=[\d(]|pi\b)/gu, ' times '],
+  // The cell cycle's checkpoints are named by a pair of phases: "G1/S" is "G1 S", not "G1 over S".
+  [/\b(G[012]|S|M)\/(G[012]|S|M)\b/gu, '$1 $2'],
   [/([\d)]|\b(?:pi|e|squared|cubed)|(?<![A-Za-z_-])[A-Za-z])\s*\/\s*(?=([\d(]|(?:pi|e)\b|[A-Za-z](?![\w-])))/gu, slashWords],
   [/\band\/or\b/gu, 'and or'],
   [/(?<=\b[a-zA-Zµμ]{1,3})\/(?=[a-zA-Z]{1,3}\b)/gu, ' per '],
+  [/(?<![\w/])([A-Za-z][\w'’-]*)\/([A-Za-z][\w'’-]*)(?![\w/])/gu, wordSlash],
   [/=/gu, ' equals '],
   [/<(?!=)/gu, ' less than '],
   [/>/gu, ' greater than '],
@@ -149,13 +189,25 @@ const WORDS: Array<[RegExp, string | ((...groups: string[]) => string)]> = [
   [/\+/gu, ' plus '],
   // f(x) "f of x", V(r) "V of r", g'(2) "g prime of 2".
   [/(?<![A-Za-z])([A-Za-z])(['’]?)\(([^()\s]{1,8})\)/gu, (_m: string, f: string, prime: string, x: string) => `${f}${prime ? ' prime' : ''} of ${x}`],
+  // A factorial follows a number, a single letter or a bracket ("25!", "n!", "(n + 1)!"); "snow!" is an exclamation.
+  [/(?<=[\d)]|(?<![A-Za-z])[A-Za-z])!/gu, ' factorial '],
+  // An initial stuck to the word after it: "E.coli" is "E. coli".
+  [/\b([A-Z])\.(?=[a-z]{3,})/gu, '$1. '],
   [/[|_]/gu, ' '],
   [/[[\]{}]/gu, ' '],
 ];
 
+const ROOTS: Record<string, string> = { '³': 'cube', '⁴': 'fourth', '⁵': 'fifth', '⁶': 'sixth', '⁷': 'seventh', '⁸': 'eighth', '⁹': 'ninth' };
+
 /** A piece of question text in words a voice can say. */
 export function spokenText(text: string): string {
   let s = text.replace(LIMIT, ' the limit as $1 approaches $2 ').replace(SCRIPT, (_m, inner: string) => scriptWords(inner));
+  // A logarithm's base: "log₂ 8" is "log base 2 of 8", not "log 2 8".
+  s = s.replace(/\blog([₀₁₂₃₄₅₆₇₈₉]+)\s*/gu, (_m, base: string) => `log base ${[...base].map((ch) => SUB[ch]).join('')} of `);
+  // A root's index: "⁴√81" is "the fourth root of 81".
+  s = s.replace(/(?<![\w)])([³⁴⁵⁶⁷⁸⁹])√/gu, (_m, n: string) => ` the ${ROOTS[n]} root of `);
+  // A mass number before an element symbol is said after it, as for "H-1": "¹H-NMR" is "H 1 NMR".
+  s = s.replace(/(?<![\w)⁰¹²³⁴⁵⁶⁷⁸⁹])([⁰¹²³⁴⁵⁶⁷⁸⁹]+)([A-Z][a-z]?)(?![a-z])-?/gu, (_m, mass: string, symbol: string) => `${symbol} ${[...mass].map((ch) => SUPER[ch]).join('')} `);
   s = s.replace(SUPER_RUN, (run, offset: number, all: string) => superscript(run, all.slice(0, offset)));
   // Subscript numbers join the formula (H₂O "H2O"); subscript letters are said "sub" (aₙ "a sub n").
   s = s.replace(SUB_RUN, (run) => {
@@ -169,12 +221,15 @@ export function spokenText(text: string): string {
     .replace(/\s+/g, ' ')
     .replace(/\s+([,.;:?!)])/g, '$1')
     .replace(/\(\s+/g, '(')
+    .replace(/\b(alpha|beta|gamma|delta|sigma|omega|lambda|theta|kappa|epsilon|mu|pi|phi) -(?=[A-Za-z])/g, '$1-') // "α-Defensin"
     .trim();
 }
 
-/** How a number ends, and how one starts (π and e are numbers too). */
+/** How a number ends, and how one starts (π and e are numbers too; a minus sign starts one only joined to it). */
 const NUMBER_END = /(?:[\d)π²³]|\bpi|\be)$/u;
-const NUMBER_START = /^(?:[\d(π−–]|pi\b|e\b)/u;
+const NUMBER_START = /^(?:[\d(π]|[−–](?=\d)|pi\b|e\b)/u;
+/** An answer choice's letter at the start of its line ("X) x − 2"): its bracket does not end a number. */
+const CHOICE_LABEL = /(?:^|\n)[WXYZ]\)$/;
 
 /**
  * A word said by what is around it, as the text is said a word at a time: an "x" between numbers is a times sign
@@ -184,7 +239,9 @@ const NUMBER_START = /^(?:[\d(π−–]|pi\b|e\b)/u;
 function wordInContext(word: string, before: string, after: string): string | null {
   const b = before.trimEnd();
   const a = after.trimStart();
-  if (word === 'x' && NUMBER_END.test(b) && NUMBER_START.test(a)) return 'times';
+  if (word === 'x' && NUMBER_END.test(b) && !CHOICE_LABEL.test(b) && NUMBER_START.test(a)) return 'times';
+  // A minus sign said before a bracket on its own: "y = −(25 − x²)" is "y equals negative open parenthesis ...".
+  if (/^[−–]$/.test(word) && after.startsWith('(')) return /(?:^|[\s(=])$/.test(before) ? 'negative' : 'minus';
   if (word.startsWith('/') && (NUMBER_END.test(b) || /(?<![A-Za-z])[A-Za-z]$/.test(b))) {
     const rest = word.slice(1);
     const next = rest || a;
@@ -193,6 +250,81 @@ function wordInContext(word: string, before: string, after: string): string | nu
     return `${bracket ? 'divided by' : 'over'} ${rest ? spokenText(rest) : ''}`.trim();
   }
   return null;
+}
+
+/* ---------------- brackets in math ---------------- */
+
+/**
+ * How a bracket in math is said. Science Bowl reads the brackets of a group ("open parenthesis x plus 5 close
+ * parenthesis squared") and says "times" between two groups multiplied, as DOE's own reading guides do. Otherwise
+ * "(6 + 3i)(4 + i)" would be heard as "6 plus 3i 4 plus i".
+ */
+interface BracketMark {
+  /** Said "open parenthesis" or "close parenthesis"; otherwise only `before` is said ("(−2)(−5)" "negative 2 times negative 5"). */
+  said: boolean;
+  open: boolean;
+  /** Said before an opening bracket: "times" for a product ("3(x + 1)"), "of" after a function ("f(x + 1)"). */
+  before: '' | 'times' | 'of';
+}
+
+/** A function before a bracket: "f(x + 1)" is "f of ...", "log₂(x + 5)" "log base 2 of ...". */
+const FUNCTION_BEFORE = /(?:(?<![A-Za-z])[fghFGHP]['’]?|\b(?:sin|cos|tan|sec|csc|cot|arcsin|arccos|arctan|sinh|cosh|tanh|log|ln|exp)[₀-₉]*)\s*$/u;
+/** What multiplies a bracket written right after it: a number, a variable, a power ("3(x + 1)", "x²(x − 1)"). */
+const MULTIPLIER = /[\dA-Za-z²³¹⁰⁴⁵⁶⁷⁸⁹]$/u;
+/** A power right after a closing bracket: "(x + 2)⁵", "(−3)²", "(a + b)^(n)". */
+const POWER_AFTER = /^[⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺ˣⁿ^]/u;
+/**
+ * An operator between two terms ("x + 1", "4x − x²", "1/3", "x-3"), not a sign in front of one ("−3"), nor the
+ * hyphens of a spelling ("K-A-T").
+ */
+const BETWEEN = /[^\s+−–×÷=<>≤≥±·*/(-]\s*(?:[+−–×÷=<>≤≥±·*/]|\s-|-\s|(?<=[\w)²³])-(?=\d))/u;
+/**
+ * Brackets that are not math: a chemical group ("Ca(OH)₂"), a state ("(aq)"), words ("(read as ...)"), and a value
+ * given in passing ("from air (n = 1.00) to the cornea").
+ */
+const FORMULA_GROUP = /^(?:[A-Z][a-z]?[\d₀-₉]*)+$/u;
+const STATE_GROUP = /^(?:s|l|g|aq|cr|gas|liquid|solid|aqueous)$/;
+const WORDS_INSIDE = /(?!(?:sin|cos|tan|sec|csc|cot|log|sinh|cosh|tanh|arcsin|arccos|arctan)\b)\b[A-Za-z]{4,}/;
+const VALUE_GIVEN = /^\s*\w[\w₀-₉]*\s*=\s*[−–-]?[\d.]+\s*[A-Za-z]{0,3}\s*$/u;
+
+/**
+ * The brackets of the math in `text` and how each is said, by its place in the text. Brackets inside `skip` (the
+ * math a reading guide reads) are left to the guide.
+ */
+function mathBrackets(text: string, skip: ReadonlyArray<{ start: number; end: number }>): Map<number, BracketMark> {
+  const marks = new Map<number, BracketMark>();
+  const skipped = (i: number) => skip.some((r) => i >= r.start && i < r.end);
+  const pairs: Array<[number, number]> = [];
+  let open: number[] = [];
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '\n') open = [];
+    else if (text[i] === '(') open.push(i);
+    else if (text[i] === ')' && open.length) pairs.push([open.pop()!, i]);
+  }
+  // The import's notation for a sub- or superscript ("x^(2)", "H_(2(g))"), and everything inside it.
+  const scripts = pairs.filter(([start]) => /[_^]/.test(text[start - 1] ?? ''));
+  for (const [start, end] of pairs) {
+    if (skipped(start) || skipped(end) || scripts.some(([s, e]) => start >= s && end <= e)) continue;
+    let inner = text.slice(start + 1, end);
+    while (/\([^()]*\)/.test(inner)) inner = inner.replace(/\([^()]*\)/g, '1'); // what is inside at the top level
+    const line = text.slice(text.lastIndexOf('\n', start - 1) + 1, start);
+    // A point or a list ("(3, −5)"), a chemical group, a state, words, a value given in passing.
+    if (inner.includes(',') || FORMULA_GROUP.test(inner) || STATE_GROUP.test(inner) || WORDS_INSIDE.test(inner) || VALUE_GIVEN.test(inner)) continue;
+    // A choice's letter or a statement's number before the bracket ("W) (x − 5)³", "1) (x + 1)²") multiplies nothing.
+    const label = /^[WXYZ]\)\s*$|(?:^|[:;]\s?)\d{1,2}\)\s*$/.test(line);
+    const said = BETWEEN.test(inner) || (POWER_AFTER.test(text.slice(end + 1)) && /\S/.test(inner));
+    let before: BracketMark['before'] = '';
+    if (!label && FUNCTION_BEFORE.test(line)) before = 'of';
+    else if (!label && (/\)$/.test(line) || MULTIPLIER.test(line))) before = 'times';
+    if (said) {
+      marks.set(start, { said: true, open: true, before });
+      marks.set(end, { said: true, open: false, before: '' });
+    } else if (before === 'times' && /[\d)²³¹⁰⁴⁵⁶⁷⁸⁹]$/u.test(line)) {
+      // A bracket that needs no words, multiplied by a number or a bracket before it: "(−2)(−5)", "2(abc)".
+      marks.set(start, { said: false, open: true, before });
+    }
+  }
+  return marks;
 }
 
 /* ---------------- what to say, piece by piece ---------------- */
@@ -228,7 +360,7 @@ const OPERATORS: Array<[RegExp, RegExp]> = [
   [/^[=≈≠]$/u, /equal|approximately/i],
   [/^\+$/u, /plus|add|and/i],
   [/^[−–-]$/u, /minus|negative|subtract/i],
-  [/^[×*·]$/u, /times|multipl|by/i],
+  [/^[×*·]$/u, /times|multipl|by|star/i],
   [/^[÷/]$/u, /over|divided|per/i],
   [/^[→⇌↔⇄]$/u, /yield|to\b|arrow|equilibrium|produc|gives|form/i],
   [/^[<>≤≥]$/u, /less|greater|than|equal/i],
@@ -246,6 +378,18 @@ const SIZES = /\b(big|little|small|capital|upper ?case|lower ?case)\b/i;
 const OPERATOR_GUIDE = /^(?:is )?(?:in equilibrium with|yields?|produces?|reacts? to (?:form|produce|yield)|forms?|gives?)$/i;
 /** Notes to the moderator inside a guide ("A-R-4-s-2-short pause-3-d-9", "He 2 [pause] 2 plus"): a pause. */
 const GUIDE_PAUSE = /-?\[?(?<!<)\b(?:(?:short|long|brief|slight) )?pause\b(?!>)\]?-?/gi;
+/** A factorial at the end of a word ("25!", "n!", "(n + 1)!"), not an exclamation ("snow!"). */
+const FACTORIAL = /(?:\d|\)|(?<![A-Za-z])[A-Za-z])!$/;
+/** Short words that are not a product of variables. */
+const SHORT_WORDS = /^(?:an|as|at|be|by|do|go|he|if|in|is|it|me|my|no|of|on|or|so|to|up|us|we|and|are|but|can|for|has|its|may|not|the|was|who|how|why|all|any)$/;
+const NUMBER_WORDS: Record<string, string> = { one: '1', two: '2', three: '3', four: '4', five: '5', six: '6', seven: '7', eight: '8', nine: '9' };
+/** Letters and digits only, with numbers in words as digits: "He-two" and "H-E-2" are both "he2". */
+function squashed(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/\b(?:one|two|three|four|five|six|seven|eight|nine)\b/g, (w) => NUMBER_WORDS[w]!)
+    .replace(/[^a-z0-9]/g, '');
+}
 
 /**
  * Whether a word before a reading guide is part of what the guide reads (`first`: the word right before it).
@@ -253,11 +397,15 @@ const GUIDE_PAUSE = /-?\[?(?<!<)\b(?:(?:short|long|brief|slight) )?pause\b(?!>)\
  * and so is a code in capitals right before the guide ("AAA [A, A, A]").
  */
 function readByGuide(token: string, guide: string, first: boolean): boolean {
-  if (/[:;,.?!]$/.test(token) || /^[WXYZ]\)$/.test(token)) return false;
+  if (/[:;,.?]$/.test(token) || (/!$/.test(token) && !(FACTORIAL.test(token) && /factorial/i.test(guide))) || /^[WXYZ]\)$/.test(token)) return false;
   if (GENOTYPE.test(token) && SIZES.test(guide)) return true;
   const operator = OPERATORS.find(([op]) => op.test(token));
   if (operator) return operator[1].test(guide);
   if (/^[A-Za-z]$/.test(token) || FUNCTION_WORD.test(token)) return true;
+  // A product of variables ("ab" for "a times b"): each of its letters is in the guide on its own.
+  if (/^[a-z]{2,3}$/.test(token) && !SHORT_WORDS.test(token) && [...token].every((c) => new RegExp(`(^|[^A-Za-z])${c}([^A-Za-z]|$)`).test(guide))) return true;
+  // A formula spelled in words ("He-two" before [H-E-2]).
+  if (/^[A-Z][a-z]?(?:-[A-Za-z0-9]+)+$/.test(token) && squashed(guide).startsWith(squashed(token))) return true;
   const word = /^[A-Za-z'’]{2,}$/.test(token);
   if (word || /^[A-Za-z0-9-]{2,}$/.test(token)) {
     if (new RegExp(`(^|[^A-Za-z])${token.replace(/[^A-Za-z0-9]/g, '')}([^A-Za-z]|$)`, 'i').test(guide)) return true;
@@ -268,13 +416,34 @@ function readByGuide(token: string, guide: string, first: boolean): boolean {
 }
 
 /**
+ * DOE's guides, in order: in square brackets, and in a few sets written out, "(read as the quantity 1 plus i to the
+ * twelfth)", "Fibrinogen (read as; fy-BRI-noh-jehn)", or "Read as: ..." to the end of the line. Each match's group 1 is
+ * what the guide says; the separators of a written-out reading ("negative - open parenthesis - k") are pauses.
+ */
+function guidesIn(text: string): RegExpExecArray[] {
+  const found = [
+    ...text.matchAll(/\[([^\]\n]*)\]/g),
+    ...text.matchAll(/\([Rr]ead as[:;]?\s*((?:[^()\n]|\([^()\n]*\))*)\)/g),
+    ...text.matchAll(/\(?\b[Rr]ead as:\s*([^\n]*?)(?=\??$)/gm),
+  ].sort((a, b) => a.index - b.index);
+  const guides: RegExpExecArray[] = [];
+  for (const m of found) {
+    const last = guides[guides.length - 1];
+    if (last && m.index < last.index + last[0].length) continue; // a guide inside one already found
+    if (!m[0].startsWith('[')) m[1] = m[1]!.replace(/\s+-\s+/g, ', ');
+    guides.push(m);
+  }
+  return guides;
+}
+
+/**
  * The reading's text as pieces to say, in order: words (with symbols in words), reading guides in place of their
  * math, and nothing for pronunciation guides. Each piece keeps its place in the text, for its time on the timeline.
  */
 export function speechPieces(text: string): Piece[] {
   // Brackets first: their kind decides what is said around them.
   const replaced: Array<{ start: number; end: number; say: string }> = [];
-  for (const m of text.matchAll(/\[([^\]\n]*)\]/g)) {
+  for (const m of guidesIn(text)) {
     const kind = bracketKind(m[1]!);
     if (kind === 'notation') continue;
     const end = m.index + m[0].length;
@@ -299,6 +468,8 @@ export function speechPieces(text: string): Piece[] {
       const words = [...text.slice(lineStart, start).matchAll(/\S+/g)];
       for (let i = words.length - 1; i >= 0; i--) {
         const word = words[i]![0];
+        // A statement's number ("1) H-two [H-2]; 2) ...") is not part of the math.
+        if (/^\d{1,2}\)$/.test(word) && (i === 0 || /[:;]$/.test(words[i - 1]![0]))) break;
         if (!readByGuide(word, guide, start === m.index && i === words.length - 1)) break;
         start = lineStart + words[i]!.index;
         if (GENOTYPE.test(word) && SIZES.test(guide)) break; // a genotype is all its guide reads ("a bb [little b little b]")
@@ -308,6 +479,7 @@ export function speechPieces(text: string): Piece[] {
     if (previous && previous.end > start) start = previous.end;
     replaced.push({ start, end, say: spokenText(guide.replace(GUIDE_PAUSE, ', ')) });
   }
+  const brackets = mathBrackets(text, replaced);
 
   const pieces: Piece[] = [];
   const add = (start: number, end: number, say: string) => {
@@ -321,15 +493,47 @@ export function speechPieces(text: string): Piece[] {
     pieces.push({ start, end, say, ...pauseAfter(text, end, say) });
   };
   let at = 0;
+  /** Part of a word, said by itself: "3i" of "3i)(4". */
+  const part = (start: number, end: number, before: string) => {
+    if (end <= start) return;
+    // A slash before a bracket that is said is said with it ("2/(n + 6)" "2 divided by open parenthesis").
+    if (end - start > 1 && text[end - 1] === '/' && brackets.get(end)?.said) {
+      part(start, end - 1, before);
+      part(end - 1, end, '');
+      return;
+    }
+    const said = wordInContext(text.slice(start, end), text.slice(0, start), text.slice(end)) ?? spokenText(text.slice(start, end));
+    add(start, end, before && said ? `${before} ${said}` : said);
+  };
   const words = (from: number, to: number) => {
     for (const w of text.slice(from, to).matchAll(/\S+/g)) {
       const start = from + w.index;
       const end = start + w[0].length;
       // A choice letter at the start of a line ("W) ...") is said as its own short beat.
       const choice = /^([WXYZ])\)$/.exec(w[0]);
-      const say =
-        choice && (start === 0 || text[start - 1] === '\n') ? `${choice[1]},` : (wordInContext(w[0], text.slice(0, start), text.slice(end)) ?? spokenText(w[0]));
-      add(start, end, say);
+      if (choice && (start === 0 || text[start - 1] === '\n')) {
+        add(start, end, `${choice[1]},`);
+        continue;
+      }
+      // Brackets in math are said on their own ("3i)(4" "3i close parenthesis times open parenthesis 4").
+      let rest = start;
+      let before = '';
+      for (let i = start; i < end; i++) {
+        const mark = brackets.get(i);
+        if (!mark) continue;
+        part(rest, i, before);
+        before = '';
+        if (mark.said) {
+          // "log₂(x + 5)" "log base 2 of open parenthesis": the "of" is said once.
+          const of = mark.before === 'of' && /\bof$/.test(pieces[pieces.length - 1]?.say ?? '');
+          add(i, i + 1, `${mark.before && !of ? `${mark.before} ` : ''}${mark.open ? 'open' : 'close'} parenthesis`);
+          rest = i + 1;
+        } else {
+          rest = i;
+          before = mark.before;
+        }
+      }
+      part(rest, end, before);
     }
   };
   for (const r of replaced) {
@@ -354,12 +558,20 @@ export function speechPieces(text: string): Piece[] {
  * each answer choice its own short sentence ("W, basic.").
  */
 export function spokenQuestion(text: string): string {
-  const out: string[] = [];
-  for (const p of speechPieces(text)) {
-    if (!p.say) continue;
-    out.push(p.lineEnd && !/[.?!]$/.test(p.say) ? `${p.say.replace(/[,;:]$/, '')}.` : p.say);
-  }
-  return out.join(' ');
+  const pieces = speechPieces(text).filter((p) => p.say);
+  const choice = (p: Piece | undefined) => p !== undefined && /^[WXYZ],$/.test(p.say);
+  let lineStart = 0;
+  return pieces
+    .map((p, i) => {
+      const first = pieces[lineStart];
+      if (p.lineEnd) lineStart = i + 1;
+      if (!p.lineEnd || /[.?!]$/.test(p.say)) return p.say;
+      // A stem the answer choices complete ("Most of the energy is lost as:") pauses before them, without the fall
+      // of a full stop; any other line, an answer choice included, ends as a sentence.
+      const completed = !choice(first) && choice(pieces[i + 1]);
+      return `${p.say.replace(/[,;:]$/, '')}${completed ? ':' : '.'}`;
+    })
+    .join(' ');
 }
 
 /* ---------------- recordings of the questions ---------------- */

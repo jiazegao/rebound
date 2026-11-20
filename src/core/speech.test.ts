@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { buildReading, readingDurationMs } from '../lib/reading';
-import { bracketKind, MAX_PHRASE_MS, MAX_RATE, MIN_PHRASE_MS, MIN_RATE, rateFor, speechChunks, spokenText } from './speech';
+import { bracketKind, MAX_PHRASE_MS, MAX_RATE, MIN_PHRASE_MS, MIN_RATE, rateFor, speechChunks, spokenFor, spokenText } from './speech';
 
 const say = (stem: string, choices?: Record<'W' | 'X' | 'Y' | 'Z', string>) => speechChunks(buildReading({ stem, choices }), 180).map((c) => c.say);
 const sayAll = (stem: string) => say(stem).join(' ');
 
 describe('brackets in DOE questions', () => {
   it('skips pronunciation guides and notes to the moderator', () => {
-    for (const c of ['SU-doe-POH-dee-ah', 'ves-TIB-u-lar', 'TALL – you – een', 'SHIST', 'ray-nee', 'read slowly', 'pause']) expect(bracketKind(c)).toBe('pronunciation');
+    for (const c of ['SU-doe-POH-dee-ah', 'ves-TIB-u-lar', 'TALL – you – een', 'SHIST', 'ray-nee', 'read slowly', 'pause', 'dy-E-thi-leen', 'play-O-truh-pee']) {
+      expect(bracketKind(c)).toBe('pronunciation');
+    }
+    for (const c of ['X-big-B-X-little-B', 'S-eye', 'A-R-4-s-2']) expect(bracketKind(c)).toBe('reading');
   });
 
   it('reads reading guides, and says notation like the rest of the text', () => {
@@ -51,6 +54,24 @@ describe('symbols in words', () => {
     ['aₙ = 5', 'a sub n equals 5'],
     ['0 ≤ x < 2π', '0 less than or equal to x less than 2 pi'],
     ['Cu₂O', 'Cu2O'],
+    ['25!', '25 factorial'],
+    ['x³/3!', 'x cubed over 3 factorial'],
+    ['there is snow!', 'there is snow!'],
+    ['20ºC', '20 degrees Celsius'],
+    ['343 meters/second', '343 meters per second'],
+    ['1 + m2/m1', '1 plus m2 over m1'],
+    ['Force/mass', 'Force over mass'],
+    ['CRISPR/Cas9', 'CRISPR Cas9'],
+    ['true/false', 'true false'],
+    ['the G1/S checkpoint', 'the G1 S checkpoint'],
+    ['the σ* 1s orbital', 'the sigma star 1s orbital'],
+    ['a fungus*', 'a fungus'],
+    ['E.coli', 'E. coli'],
+    ['α-Defensin', 'alpha-Defensin'],
+    ['¹H-NMR', 'H 1 NMR'],
+    ['log₂ 8', 'log base 2 of 8'],
+    ['−2√5 and i√2', 'negative 2 times the square root of 5 and i times the square root of 2'],
+    ['⁴√81', 'the fourth root of 81'],
   ])('%s is said "%s"', (text, words) => {
     expect(spokenText(text)).toBe(words);
   });
@@ -76,9 +97,44 @@ describe('what is said', () => {
   it('says an x between numbers as times, and a slash on its own as over or divided by', () => {
     expect(sayAll('a buoyant force of 19.6 x 10³ newtons, or 6.02 x 10²³')).toBe('a buoyant force of 19.6 times 10 cubed newtons, or 6.02 times 10 to the power of 23');
     expect(sayAll('the ellipse (x + 1)² / 16 + y² /9 = 1, and x / (x + 2)')).toBe(
-      'the ellipse (x plus 1) squared over 16 plus y squared over 9 equals 1, and x divided by (x plus 2)',
+      'the ellipse open parenthesis x plus 1 close parenthesis squared over 16 plus y squared over 9 equals 1, and x divided by open parenthesis x plus 2 close parenthesis',
     );
     expect(sayAll('Is x between 2 and 3, or 2 x y?')).toBe('Is x between 2 and 3, or 2 x y?');
+  });
+
+  it('says the brackets of math, and "times" between brackets multiplied, as DOE reads them', () => {
+    expect(sayAll('Multiply, giving your answer in standard a + bi form: (6 + 3i)(4 + i)')).toBe(
+      'Multiply, giving your answer in standard a plus bi form: open parenthesis 6 plus 3i close parenthesis times open parenthesis 4 plus i close parenthesis',
+    );
+    expect(sayAll('Arrange in order: (–3)²; –(4)²')).toBe(
+      'Arrange in order: open parenthesis negative 3 close parenthesis squared; negative open parenthesis 4 close parenthesis squared',
+    );
+    expect(sayAll('Solve 3(x + 1) ≥ 9, express f(x + 1), and find 2/(n + 6)')).toBe(
+      'Solve 3 times open parenthesis x plus 1 close parenthesis greater than or equal to 9, express f of open parenthesis x plus 1 close parenthesis, and find 2 divided by open parenthesis n plus 6 close parenthesis',
+    );
+    expect(sayAll('Multiply the following 5 numbers: (-2)(-5)(-4)')).toBe('Multiply the following 5 numbers: (-2) times (-5) times (-4)');
+    // Points, chemical groups, states, values given in passing and spellings keep their brackets unsaid.
+    expect(sayAll('the point (3, –5), Ca(OH)₂, NaOH_((aq)), air (n = 1.00), the name (K-A-T)')).toBe(
+      'the point (3, negative 5), Ca(OH)2, NaOH aqueous, air (n equals 1.00), the name (K-A-T)',
+    );
+  });
+
+  it('says an x after a choice letter as the variable', () => {
+    expect(say('Which is a root?', { W: 'x − 2 = 0', X: 'x + 2 = 0', Y: '2x = 1', Z: 'x² = 4' })).toEqual([
+      'Which is a root?',
+      'W, x minus 2 equals 0',
+      'X, x plus 2 equals 0',
+      'Y, 2x equals 1',
+      'Z, x squared equals 4',
+    ]);
+  });
+
+  it('lets a guide read a factorial, a star and a product of variables, but not a statement number', () => {
+    expect(sayAll('How many zeroes are at the end of 25! [25 factorial]?')).toBe('How many zeroes are at the end of 25 factorial?');
+    expect(sayAll('If a * b = ab ÷ (a + b) [a star b equals a times b divided by the quantity a plus b], then')).toBe(
+      'If a star b equals a times b divided by the quantity a plus b, then',
+    );
+    expect(sayAll('have bond orders: 1) H-two [H-2]; 2) He-two [H-E-2]')).toBe('have bond orders: 1) H-2; 2) H-E-2');
   });
 
   it('says a guide that only names an operator in place of that operator, keeping the math before it', () => {
@@ -107,6 +163,14 @@ describe('what is said', () => {
     );
   });
 
+  it('takes guides written out in the text, "(read as ...)" and "Read as: ...", like those in brackets', () => {
+    expect(sayAll('Find (1 + i)¹² (read as the quantity 1 plus i to the twelfth).')).toBe('Find the quantity 1 plus i to the twelfth.');
+    expect(say('Which is correct?', { W: 'Fibrinogen (read as; fy-BRI-noh-jehn)', X: 'k', Y: 'j', Z: 'i' })[1]).toBe('W, Fibrinogen');
+    expect(say('Which is greater than 1:', { W: '–(–k)³ Read as: negative - open parenthesis - negative k - closed parenthesis - to the third power', X: 'k', Y: 'j', Z: 'i' })[1]).toBe(
+      'W, negative, open parenthesis, negative k, closed parenthesis, to the third power',
+    );
+  });
+
   it('skips pronunciation guides', () => {
     expect(sayAll('It engulfs a particle by extending its pseudopodia [SU-doe-POH-dee-ah] around the particle?')).toBe(
       'It engulfs a particle by extending its pseudopodia around the particle?',
@@ -122,6 +186,15 @@ describe('what is said', () => {
       'Y, e',
       'Z, 0',
     ]);
+  });
+});
+
+describe('a recording of a question', () => {
+  it('pauses before the choices that complete a stem, and ends every other line as a sentence', () => {
+    const choices = { W: 'heat', X: 'light', Y: 'sound', Z: 'motion' };
+    expect(spokenFor({ stem: 'Most of the energy is lost as:', choices })).toBe('Most of the energy is lost as: W, heat. X, light. Y, sound. Z, motion.');
+    expect(spokenFor({ stem: 'Most of the energy is lost as', choices })).toBe('Most of the energy is lost as: W, heat. X, light. Y, sound. Z, motion.');
+    expect(spokenFor({ stem: 'Which is lost most?', choices })).toBe('Which is lost most? W, heat. X, light. Y, sound. Z, motion.');
   });
 });
 
