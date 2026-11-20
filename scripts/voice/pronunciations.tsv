@@ -12,6 +12,7 @@
 Mt.	Mount
 Mt	Mount
 aq	aqueous
+aqueous	/ˈAkwiəs/
 
 # Times on the hour: "6:00 p.m." is "six p.m.", not "six zero zero"
 1:00	1
@@ -40,7 +41,7 @@ zinc(II)	zinc two
 Carnot	/kɑɹnˈO/
 Gay-Lussac	/ɡˌAlusˈæk/
 Hall-Heroult	/hˈɔl ɛɹˈu/
-Kirchhoff	/kˈɪɹkɔf/
+Kirchhoff	/kˈɜɹkɔf/
 Raoult	/ɹɑˈul/
 Wien	/vˈin/
 
@@ -86,7 +87,7 @@ AMPA	/ˈæmpə/
 GABA	/ɡˈæbə/
 NOAA	/nˈOə/
 SLAC	/slˈæk/
-TATA	/tˈɑtə/
+TATA	/tˈɑtˌɑ/
 
 # Words
 di-electric	/dˌIəlˈɛktɹɪk/
