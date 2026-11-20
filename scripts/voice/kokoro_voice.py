@@ -106,22 +106,196 @@ def lexicon_lines(path: Path | None) -> list[tuple[str, str]]:
     return lines
 
 
+def phonemes_of(say: str) -> bool:
+    """A fix given as phonemes between slashes, rather than as a respelling."""
+    return len(say) > 2 and say.startswith('/') and say.endswith('/')
+
+
+def word_pattern(word: str, joined: bool = True) -> re.Pattern:
+    """
+    Where a word or phrase of pronunciations.tsv is in a text: whole, and with `joined`, also as part of a hyphenated
+    word ("NaCl-based"). One in capitals only (ADP, OF) matches only in capitals, leaving "amp" and "of" alone; any
+    other matches in any capitalization.
+    """
+    capitals = any(c.isupper() for c in word) and not any(c.islower() for c in word)
+    edge = r'\w' if joined else r'[\w-]'
+    return re.compile(rf'(?<!{edge})' + re.escape(word) + rf'(?!{edge})', 0 if capitals else re.IGNORECASE)
+
+
 def load_lexicon(path: Path | None) -> list[tuple[re.Pattern, str]]:
-    """The fixes in pronunciations.tsv, each as the whole word to find (any capitalization) and how to say it."""
-    return [(re.compile(r'(?<![\w-])' + re.escape(word) + r'(?![\w-])', re.IGNORECASE), say) for word, say in lexicon_lines(path)]
+    """
+    The fixes in pronunciations.tsv: where each word is, and how to say it. Phonemes are given to Kokoro on the word
+    itself, which it gets wrong when the word is joined to another by a hyphen (it drops or repeats words): those fix
+    only a word on its own, and a hyphenated word takes a fix of its own (Fructose-1,6-bisphosphate).
+    """
+    return [(word_pattern(word, joined=not phonemes_of(say)), say) for word, say in lexicon_lines(path)]
+
+
+# Rules for what Kokoro is given to read, found by listening to the library (scripts/voice/README.md, "Fixing a word").
+# None changes the words a question is said with, which its recording's name comes from: only how Kokoro says them.
+
+LETTER_A = '[A](/ˈA/)'  # the letter A, which Kokoro often reads as the word "a" ("uh")
+
+# A note to the moderator inside DOE's reading guides ("A-R-4-s-2-short pause-3-d-9") is a pause, not words to say.
+NOTE = re.compile(r'-?\b(?:short|long|brief|slight) pause\b-?|(?<=[\d)] )pause\b|\bpause(?= (?:open|\d))', re.IGNORECASE)
+
+# A noble-gas core ("[Ar] 4s 2") is spelled, as DOE's guides spell it; just before that spelling ("Ar A-R-4-s-2",
+# the core and its guide both kept by the reading) it is left out, rather than said twice.
+NOBLE_GASES = {'He': 'H-E', 'Ne': 'N-E', 'Ar': 'A-R', 'Kr': 'K-R', 'Xe': 'X-E', 'Rn': 'R-N'}
+NOBLE_BEFORE_GUIDE = re.compile(r'\b(He|Ne|Ar|Kr|Xe|Rn) (?=(H-E|N-E|A-R|K-R|X-E|R-N)\b)')
+NOBLE_CORE = re.compile(r'\b(He|Ne|Ar|Kr|Xe|Rn)(?= ?\d)')
+
+# A genotype ("AaBb") in a question about genetics is said the way DOE's guides say one, "big A little a big B
+# little b"; just before such a guide, it is left out. (Outside genetics, "RR Lyrae" and "aa lava" stay as they are.)
+GENETICS = re.compile(
+    r'\b(?:genotypes?|phenotypes?|alleles?|homozygous|heterozygous|dominant|recessive|offspring|cross(?:es|ed|ing)?'
+    r'|Punnett|gametes?|Mendel\w*|self-fertiliz\w*|\w*hybrid)\b',
+    re.IGNORECASE,
+)
+GENOTYPE = re.compile(r'(?<![\w-])(?:([A-Za-z])(?i:\1))+(?![\w-])')
+SIZED_A = re.compile(r'\b(big|little)[- ]([Aa])\b', re.IGNORECASE)  # "big A, little a": the letter, not "uh"
+
+# DOE writes a subscript and a state as "2 H_(2(g))", which the reading keeps as "2 H (2(g))": the subscript goes back
+# on its formula and the state is said in words ("2 H2 (gas)"), as for "NaOH ((aq))" ("NaOH (aqueous)").
+STATES = {'g': 'gas', 'l': 'liquid', 's': 'solid', 'aq': 'aqueous', 'gas': 'gas', 'liquid': 'liquid', 'solid': 'solid', 'aqueous': 'aqueous'}
+SUBSCRIPT_STATE = re.compile(r'(?<=[A-Za-z)]) \((\d+) ?\((g|l|s|aq|gas|liquid|solid|aqueous)\)\)')
+DOUBLE_STATE = re.compile(r'\(\((g|l|s|aq|gas|liquid|solid|aqueous)\)\)')
+
+# Chemical formulas are said letter by letter, as Science Bowl reads them: Kokoro says "CO2" as "koh two", "NaCl" as
+# "nah C L" and "Cu" as "koo". A formula is a word made only of element symbols, digits and brackets, with a digit, a
+# bracket or a two-letter symbol in it (so NO, OF and HIV are left to the fixes); a two-letter symbol on its own (Fe 2
+# plus) too, unless it is a word (He, In, As). Kokoro reads a leading "A-" as the word "a", so that A is given its sound.
+ELEMENTS = frozenset(
+    'H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo '
+    'Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl '
+    'Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr'.split()
+)
+NOT_FORMULAS = {'HeLa'}
+FORMULA = re.compile(r'(?<![\w\[/-])(?<!\d[.,])\d*(?:[A-Z][a-z]?\d*|\((?:[A-Z][a-z]?\d*)+\)\d*)+(?![\w\]-])')  # not "10,000K"
+LONE_SYMBOL = re.compile(
+    r'(?<![\w\[/-])(Cu|Na|Fe|Zn|Mg|Ag|Au|Pb|Sn|Hg|Ca|Cl|Br|Mn|Cr|Ni|Li|Rb|Cs|Sr|Ba|Kr|Ne|Xe|Rn|Si|Sb|Cd|Ti|Pt|Pd|Ga|Ge|Se|Te'
+    r'|Tl|Sc|Zr|Nb|Ru|Rh|Ir|Hf|Ta|Ar|Al)(?![\w\]-])'
+)
+
+
+def spell(token: str) -> str:
+    """NaCl -> N-A-C-L, Ca(OH)2 -> C-A-O-H-2, AgCl -> [A](/ˈA/) G-C-L."""
+    letters = '-'.join(p if p.isdigit() else '-'.join(p.upper()) for p in re.findall(r'\d+|[A-Z][a-z]?', token))
+    return f'{LETTER_A} {letters[2:]}' if letters.startswith('A-') else letters
+
+
+def say_formula(m: re.Match) -> str:
+    token = m.group(0)
+    symbols = re.findall(r'[A-Z][a-z]?', token)
+    if (
+        token in NOT_FORMULAS
+        or any(s not in ELEMENTS for s in symbols)
+        or re.sub(r'[A-Z][a-z]?|\d|[()]', '', token)
+        or re.fullmatch(r'\(?[IVX]+\)?', token)  # Roman numerals, not iodine and vanadium
+        or token.endswith('s')  # plurals (CFCs, VOCs), not caesium or osmium
+        or not (re.search(r'[\d(]', token) or any(len(s) == 2 for s in symbols))
+        or (len(symbols) < 2 and not re.search(r'\d', token))
+    ):
+        return token
+    if re.fullmatch(r'\([^()]+\)', token):  # "(CCS)": the brackets stay, for the pause
+        return f'({spell(token[1:-1])})'
+    return spell(token)
+
+
+def say_genotype(m: re.Match) -> str:
+    token = m.group(0)
+    if re.fullmatch(r'[XYZWxyzw]+|II', token):  # sex chromosomes (XX, ZW), and the numeral II
+        return token
+    if re.match(r'[\s,]*(?:big|little)\b', m.string[m.end() :], re.IGNORECASE):
+        return ''
+    return ' '.join(('big ' if c.isupper() else 'little ') + (LETTER_A if c in 'Aa' else c.upper()) for c in token)
+
+
+# A decimal keeps its point and its zeros. Kokoro reads "4.0M" as "four M", "2.0" as "two" and "1.50" as "one point
+# five", dropping significant figures: a number with letters stuck on is parted from them, and one ending in a zero is
+# said digit by digit ("2 point 0").
+STUCK_DECIMAL = re.compile(r'(?<![\w.])(\d+\.\d+)(?=[A-Za-z(])')
+TRAILING_ZERO = re.compile(r'(?<![\w.$£€])(\d+)\.(\d*0)(?!\d)(?!\.\d)')  # not money: "$2.00" is "two dollars"
+
+# Functions are said by their names, "sine of (x)", not as written ("sin", "cos").
+FUNCTIONS = {
+    'sin': 'sine', 'cos': 'cosine', 'tan': 'tangent', 'sec': 'secant', 'csc': 'cosecant', 'cot': 'cotangent',
+    'arcsin': 'arc sine', 'arccos': 'arc cosine', 'arctan': 'arc tangent', 'sinh': 'hyperbolic sine',
+    'cosh': 'hyperbolic cosine', 'tanh': 'hyperbolic tangent', 'ln': 'natural log',
+}
+FUNCTION = re.compile(r'(?<![A-Za-z-])(' + '|'.join(sorted(FUNCTIONS, key=len, reverse=True)) + r')(?![A-Za-z-])(\s*\()?', re.IGNORECASE)
+
+
+def say_function(m: re.Match) -> str:
+    name = m.group(1).lower()
+    if name == 'sec' and not m.group(2) and re.search(r'\d\s*$', m.string[: m.start()]):
+        return m.group(0)  # seconds ("10 sec")
+    return f' {FUNCTIONS[name]}' + (' of (' if m.group(2) else '')
+
+
+# Roman numerals: II, III and IV are numbers wherever they are (Photosystem II, iron III); I only after a word that
+# numbers things (Population I, Meiosis I), or before "and II", as elsewhere it is a variable or a pronoun.
+ROMAN = re.compile(r'(?<![\w-])(III|II|IV)(?![\w-])')
+ROMAN_WORDS = {'II': 'two', 'III': 'three', 'IV': 'four'}
+ROMAN_ONE = re.compile(
+    r'\b((?i:population|type|meiosis|mitosis|photosystem|prophase|metaphase|anaphase|telophase|phase|quadrant|class'
+    r'|stage|region|complex|generation|war|polymerase)) I(?![\w-])'
+)
+ROMAN_ONE_PAIR = re.compile(r'(?<![\w-])I(?= and two\b)')
+
+# An s orbital ("1s 2 2s 2") is a number and a letter, which Kokoro would read as a plural ("ones", "twos").
+ORBITAL = re.compile(r'(?<![\w.])([1-7])s(?![\w-])')
+
+# Phonemes given on a single letter or word just before a full stop ("block [A](/ˈA/). The") make Kokoro take the two
+# for an abbreviation and lose its place in the sentence, so it drops or repeats words after it: a space keeps them apart.
+STUCK_STOP = re.compile(r'(\]\(/[^)]*/\))(?=[.?!])')
+
+# The variable a ("a plus b", "where a, b and c are constants") and a capital A within a sentence ("and A is") are the
+# letter, which Kokoro would read as the word "a". The word "a" is never followed by these words or by punctuation.
+VARIABLE_FOLLOWERS = r'(?:plus|minus|times|over|equals|squared|cubed|divided|and|or|is|are|be|was|were|has|have|to|sub|then|than|multiplied)(?![\w-])'
+VARIABLE_A = re.compile(  # not a.m.; and after "the" ("the a parameter"), where the word "a" never is
+    r'(?<![\w-])a(?![\w-])(?!\.\w)(?=\s*(?:[,.;:?!)]|$)|\s+' + VARIABLE_FOLLOWERS + r')|(?<=\b[Tt]he )a(?![\w-])(?!\.\w)'
+)
+CAPITAL_A = re.compile(  # after a word or number ("point A", "3 A"), not after "1) " where a list item starts
+    r'(?:(?<=[a-z0-9’\'] )|(?<=[a-z0-9], ))A(?![\w-])|(?<![\w-])A(?![\w-])(?=\s*(?:[,.;:?!)]|$)|\s+' + VARIABLE_FOLLOWERS + ')'
+)
+
+# Kokoro takes a single letter before a full stop for an initial ("block A. The", "angle G. Z, ...", "the U.S. W,
+# ...") and runs on into the next sentence without a pause: a space before the stop keeps it. Initials themselves
+# ("J. J. Thomson"), and "U.S." within a sentence ("the U.S. Navy"), are left as they are.
+LETTER_STOP = re.compile(r'(?<![A-Z]\. )(?<!\.)\b([A-Za-z])\. (?=[A-Z])(?![A-Z]\. )|(?<=\.)([A-Za-z])\. (?=[WXYZ], )')
 
 
 def for_kokoro(text: str, lexicon: list[tuple[re.Pattern, str]]) -> str:
-    """The words as Kokoro reads them: square brackets mean something to it, and the lexicon's fixes apply."""
+    """The words as Kokoro reads them: square brackets mean something to it, and the rules above and the fixes apply."""
     text = text.replace('[', '(').replace(']', ')')
+    text = NOTE.sub(', ', text)
+    text = SUBSCRIPT_STATE.sub(lambda m: f'{m.group(1)} ({STATES[m.group(2)]})', text)
+    text = DOUBLE_STATE.sub(lambda m: f'({STATES[m.group(1)]})', text)
+    text = NOBLE_BEFORE_GUIDE.sub(lambda m: '' if NOBLE_GASES[m.group(1)] == m.group(2) else m.group(0), text)
+    text = NOBLE_CORE.sub(lambda m: NOBLE_GASES[m.group(1)], text)
+    if GENETICS.search(text):
+        text = GENOTYPE.sub(say_genotype, text)
     for pattern, say in lexicon:
-        if len(say) > 2 and say.startswith('/') and say.endswith('/'):
+        if phonemes_of(say):
             text = pattern.sub(lambda m, say=say: f'[{m.group(0)}]({say})', text)
         else:
             text = pattern.sub(lambda m, say=say: say, text)
-    # Kokoro takes a single letter before a full stop for an initial ("angle G. Z, ...", "the U.S. W, ...") and runs on
-    # into the next answer choice without a pause; a space before the stop keeps it.
-    return re.sub(r'\b([A-Za-z])\. (?=[WXYZ], )', r'\1 . ', text)
+    text = FORMULA.sub(say_formula, text)
+    text = LONE_SYMBOL.sub(lambda m: spell(m.group(0)), text)
+    text = SIZED_A.sub(lambda m: f'{m.group(1)} {LETTER_A}', text)
+    text = ORBITAL.sub(r'\1 s', text)
+    text = STUCK_DECIMAL.sub(r'\1 ', text)
+    text = TRAILING_ZERO.sub(lambda m: f'{m.group(1)} point ' + ' '.join(m.group(2)), text)
+    text = FUNCTION.sub(say_function, text)
+    text = ROMAN.sub(lambda m: ROMAN_WORDS[m.group(1)], text)
+    text = ROMAN_ONE.sub(r'\1 one', text)
+    text = ROMAN_ONE_PAIR.sub('one', text)
+    text = VARIABLE_A.sub(LETTER_A, text)
+    text = CAPITAL_A.sub(LETTER_A, text)
+    text = LETTER_STOP.sub(lambda m: (m.group(1) or m.group(2)) + ' . ', text)
+    text = STUCK_STOP.sub(r'\1 ', text)
+    return re.sub(r' {2,}', ' ', re.sub(r'\s+,', ',', text)).strip()
 
 
 class Voice:
@@ -248,7 +422,7 @@ def generate(args: argparse.Namespace) -> None:
     mine = [j for i, j in enumerate(jobs) if i % parts == part]
     if args.only_with:
         # Only the questions with these words (after fixing how one is said).
-        found = [re.compile(r'(?<![\w-])' + re.escape(w) + r'(?![\w-])', re.IGNORECASE) for w in args.only_with]
+        found = [word_pattern(w) for w in args.only_with]
         mine = [j for j in mine if any(p.search(j['text']) for p in found)]
     todo = [j for j in mine if args.force or not (out / f"{j['key']}.mp3").exists()]
     if args.limit:
@@ -556,10 +730,48 @@ def guessed_words(args: argparse.Namespace) -> None:
             continue
         fixes.append(f'<li><audio controls preload="none" src="{file}"></audio><p><b>{html.escape(word)}</b> &nbsp;{html.escape(say)}</p></li>')
     (out / 'fixes.html').write_text(page_html(f'The {len(fixes)} words fixed in pronunciations.tsv, {meta["voice"]}', fixes), encoding='utf-8')
+    # Words in capitals that Kokoro says as a word rather than letter by letter, as the recordings will say them: most
+    # are words (NOT, NASA), but an abbreviation among them (ADP said "adp") needs a fix, which these lists would miss.
+    def sounds(text: str) -> str:
+        return re.sub(r'[ˈˌ\s]', '', ''.join(t.phonemes or '' for t in voice.pipeline.g2p(text)[1]))
+
+    capitals = Counter(m.group(0) for job in jobs for m in re.finditer(r'(?<![\w-])[A-Z]{2,6}(?![\w-])', job['text']))
+    found_in = {}
+    for job in jobs:
+        for m in re.finditer(r'(?<![\w-])[A-Z]{2,6}(?![\w-])', job['text']):
+            found_in.setdefault(m.group(0), job['ids'][0])
+    said_as_word = []
+    for word, count in capitals.most_common():
+        said = for_kokoro(word, lexicon)
+        if sounds(said) == ''.join(LETTER_SOUNDS[c] for c in word):
+            continue
+        file = 'caps-' + hashlib.sha1(word.encode('utf-8')).hexdigest()[:8] + '.mp3'
+        try:
+            write_file(out / file, mp3(tidy(voice.say(said)[0]), args.kbps))
+        except Exception as error:
+            print(f'  could not say {word!r}: {error}', file=sys.stderr)
+            continue
+        said_as_word.append(
+            f'<li><audio controls preload="none" src="{file}"></audio><p><b>{html.escape(word)}</b> &nbsp;<small>{count:,} times, '
+            f'as in {html.escape(found_in[word])}</small></p></li>'
+        )
+    (out / 'abbreviations.html').write_text(
+        page_html(f'The {len(said_as_word)} words in capitals Kokoro says as a word, not letter by letter, {meta["voice"]}', said_as_word), encoding='utf-8'
+    )
     print(
         f'{len(ranked):,} words guessed, used {sum(i["count"] for _, i in ranked):,} times: {out / "words.html"} (the {len(rows)} most used) '
-        f'and words.tsv (all); {out / "fixes.html"} says the {len(fixes)} words fixed.'
+        f'and words.tsv (all); {out / "fixes.html"} says the {len(fixes)} words fixed, and {out / "abbreviations.html"} the '
+        f'{len(said_as_word)} in capitals said as a word.'
     )
+
+
+# Each letter's name as Kokoro says it (its phonemes, without stress marks): a word in capitals said as these, one after
+# another, is spelled out.
+LETTER_SOUNDS = dict(zip(
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    ['A', 'bi', 'si', 'di', 'i', 'ɛf', 'ʤi', 'Aʧ', 'I', 'ʤA', 'kA', 'ɛl', 'ɛm', 'ɛn', 'O', 'pi', 'kju', 'ɑɹ', 'ɛs', 'ti', 'ju', 'vi',
+     'dʌbᵊlju', 'ɛks', 'wI', 'zi'],
+))
 
 
 # ---------------- command line ----------------

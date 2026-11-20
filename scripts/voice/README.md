@@ -87,8 +87,28 @@ python scripts/voice/kokoro_voice.py words
 
 Open `voice/words/words.html` to hear the 300 most used, each said alone beside its phonemes; `words.tsv` lists all of
 them, with questions they are in. A word fixed in `pronunciations.tsv` leaves that list, and `fixes.html` says each
-fixed word as the recordings will. Chemical formulas are fixed by spelling them with hyphens (`NaCl	N-A-C-L`), as
-Science Bowl reads them; Kokoro would otherwise say some as syllables ("nah-C-L").
+fixed word as the recordings will. `abbreviations.html` says each word in capitals that Kokoro says as a word rather
+than letter by letter: most are words (NOT, NASA), but an abbreviation among them (ADP said "adp") needs a fix.
+
+A few things to know when adding a fix:
+
+- Abbreviations are spelled with hyphens (`DOE	D-O-E`); chemical formulas need no line, as a rule spells them. Kokoro
+  sometimes reads an "A-" at the start of a spelling as the word "a" ("uh"), so those are given phonemes
+  (`ADP	/ˌAdˌipˈi/`).
+- A word in capitals only is matched only in capitals, so `AMP` leaves "amp" alone; any other matches in any
+  capitalization.
+- A fix by phonemes applies to the word on its own: given phonemes for part of a hyphenated word, Kokoro drops or
+  repeats words, so a hyphenated word gets a fix of its own (`fructose-6-phosphate`).
+
+Besides these fixes, `kokoro_voice.py` follows some rules of its own about what Kokoro reads (`for_kokoro`), each
+found by listening to the library. Chemical formulas and element symbols are spelled letter by letter, as Science
+Bowl reads them (Kokoro would say "CO2" as "koh two", "NaCl" as "nah C L" and "Cu" as "koo"), and DOE's states are
+said in words ("H_(2(g))" is "H 2, gas"). Numbers keep their decimal point and trailing zeros ("4.0M" is "four point
+zero M", not "four M"). sin, cos, tan and ln are said "sine", "cosine", "tangent" and "natural log", and II, III and IV
+are numbers. The variable a is the letter, not the word "a". A genotype in a question about genetics is said
+"big A little a", as DOE's guides say one, and a noble-gas core is spelled ("A-R"). An s orbital is "one S", not
+"ones". DOE's notes to moderators ("short pause") become pauses, and a single letter ending a sentence keeps its
+pause. None of these changes the words, and so the recordings' names.
 
 ## 4. The whole library
 

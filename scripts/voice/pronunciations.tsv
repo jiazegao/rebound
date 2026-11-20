@@ -2,8 +2,10 @@
 # One word a line: the word, a tab, then either
 #   phonemes between slashes, as `kokoro_voice.py try` prints them   e.g.  phenotype<TAB>/fˈinətˌIp/
 #   or a respelling that Kokoro says right                         e.g.  pseudopodia<TAB>sue doe poe dee uh
-# Whole words only, any capitalization. The recordings' names do not change, so after adding a word, record the
-# questions that use it again:  python scripts/voice/kokoro_voice.py generate --force --only-with <word>
+# Whole words only. A word in capitals only (ADP) is matched only in capitals, so it leaves "amp" alone; others match
+# any capitalization. A fix by phonemes applies only to a word on its own, not as part of a hyphenated word.
+# The recordings' names do not change, so after adding a word, record the questions that use it again:
+#   python scripts/voice/kokoro_voice.py generate --force --only-with <word>
 # `kokoro_voice.py words` lists the words Kokoro has to guess (voice/words/words.html) and says these (fixes.html).
 
 # Places and abbreviations ("Mt." first, so its full stop goes too: "Mount Everest", not "Mount. Everest")
@@ -42,120 +44,63 @@ Kirchhoff	/kˈɪɹkɔf/
 Raoult	/ɹɑˈul/
 Wien	/vˈin/
 
-# Chemical formulas, letter by letter as Science Bowl reads them (the ones Kokoro would guess)
-(NH4)2SnCl6	N-H-4-2-S-N-C-L-6
-2CaO	2-C-A-O
-2HCl	2-H-C-L
-2KCl	2-K-C-L
-2KClO3	2-K-C-L-O-3
-2MgCl2	2-M-G-C-L-2
-2MgO	2-M-G-O
-2NaCl	2-N-A-C-L
-2NaCl2	2-N-A-C-L-2
-3CuS	3-C-U-S
-3CuSO	3-C-U-S-O
-AgBr	A-G-B-R
-AgCl	A-G-C-L
-Al(NO3)3	A-L-N-O-3-3
-Al2(SO4)3	A-L-2-S-O-4-3
-AlCl3	A-L-C-L-3
-Ba(NO3)2	B-A-N-O-3-2
-Ba(OH)2	B-A-O-H-2
-BaCl2	B-A-C-L-2
-BeCl2	B-E-C-L-2
-BrF5	B-R-F-5
-C4H4Cl2	C-4-H-4-C-L-2
-C4H8Cl2	C-4-H-8-C-L-2
-Ca(OH)2	C-A-O-H-2
-CaCl2	C-A-C-L-2
-CaCO3	C-A-C-O-3
-CaF2	C-A-F-2
-CaO	C-A-O
-CaSO4	C-A-S-O-4
-CaTiO3	C-A-T-I-O-3
-CCl4	C-C-L-4
-Cd(MnO4)2	C-D-M-N-O-4-2
-CH3Br	C-H-3-B-R
-CH3Cl	C-H-3-C-L
-CH3Hg	C-H-3-H-G
-CHCl3	C-H-C-L-3
-ClBr	C-L-B-R
-ClF3	C-L-F-3
-ClF5	C-L-F-5
-ClO	C-L-O
-Co(NH3)4Cl2	C-O-N-H-3-4-C-L-2
-Cr2(SeO4)3	C-R-2-S-E-O-4-3
-CrO4	C-R-O-4
-Cu(CN)4	C-U-C-N-4
-Cu(NO3)	C-U-N-O-3
-Cu(OH)	C-U-O-H
-CuCl	C-U-C-L
-CuCl2	C-U-C-L-2
-CuO	C-U-O
-CuS	C-U-S
-CuSO	C-U-S-O
-CuSO4	C-U-S-O-4
-Fe(IO4)3	F-E-I-O-4-3
-Fe(NH2)3	F-E-N-H-2-3
-Fe(NO2)3	F-E-N-O-2-3
-Fe(OH)3	F-E-O-H-3
-Fe3(PO3)2	F-E-3-P-O-3-2
-Fe3(PO4)2	F-E-3-P-O-4-2
-Fe3O4	F-E-3-O-4
-Fe3P2	F-E-3-P-2
-FeO	F-E-O
-FePO4	F-E-P-O-4
-FeSO	F-E-S-O
-GeV	G-E-V
-HBr	H-B-R
-HBrO	H-B-R-O
-HBrO2	H-B-R-O-2
-HBrO3	H-B-R-O-3
-HCl	H-C-L
-HClO	H-C-L-O
-HClO2	H-C-L-O-2
-HClO3	H-C-L-O-3
-HClO4	H-C-L-O-4
-HfO2	H-F-O-2
-KBr	K-B-R
-KCl	K-C-L
-KClO3	K-C-L-O-3
-KClO4	K-C-L-O-4
-LiBr	L-I-B-R
-LiCl	L-I-C-L
-Mg3N2	M-G-3-N-2
-MgBr2	M-G-B-R-2
-MgCl	M-G-C-L
-MgCl2	M-G-C-L-2
-MgCO3	M-G-C-O-3
-MgF2	M-G-F-2
-MgO	M-G-O
-MgSiO3	M-G-S-I-O-3
-MgSO4	M-G-S-O-4
-MnO2	M-N-O-2
-MnO4	M-N-O-4
-NaBr	N-A-B-R
-NaCl	N-A-C-L
-NaOCl	N-A-O-C-L
-NH4Cl	N-H-4-C-L
-Ni(CO)4	N-I-C-O-4
-PbCO3	P-B-C-O-3
-PbO2	P-B-O-2
-PbS	P-B-S
-PCl	P-C-L
-PCl3	P-C-L-3
-PCl5	P-C-L-5
-RbF	R-B-F
-RuBP	R-U-B-P
-SiCl4	S-I-C-L-4
-SnCl2	S-N-C-L-2
-SnF2	S-N-F-2
-SnS2	S-N-S-2
-SOCl2	S-O-C-L-2
-Sr(OH)2	S-R-O-H-2
-XeF4	X-E-F-4
-ZnBr2	Z-N-B-R-2
-ZnCl2	Z-N-C-L-2
-ZnO	Z-N-O
-ZnSO	Z-N-S-O
-ZnSO3	Z-N-S-O-3
+# Chemical formulas (NaCl, CO2, Ca(OH)2) and element symbols (Fe 2 plus) are spelled letter by letter by a rule
+# in kokoro_voice.py (for_kokoro), so they need no line here.
+
+# More abbreviations and symbols
+eq	E-Q
+ab	/ˌAbˈi/
+mm	millimeters
+WWII	World War Two
+PPI	P-P one
+PPII	P-P two
+PPIII	P-P three
+
+# Abbreviations Kokoro says as a word, spelled ("NO solutions" first: there NO is the word)
+ABO	/ˌAbˌiˈO/
+ADP	/ˌAdˌipˈi/
+ALT	/ˌAˌɛltˈi/
+AMP	/ˌAˌɛmpˈi/
+CAD	C-A-D
+CO	C-O
+CAT	C-A-T
+DEF	D-E-F
+DOG	D-O-G
+DOE	D-O-E
+EM	E-M
+FAD	F-A-D
+LED	L-E-D
+MOC	M-O-C
+NAD	N-A-D
+NO solutions	no solutions
+NO	N-O
+OF	O-F
+PAH	P-A-H
+PET	P-E-T
+PSI	P-S-I
+SAP	S-A-P
+UMP	U-M-P
+
+# Abbreviations said as words
+AMPA	/ˈæmpə/
+GABA	/ɡˈæbə/
+NOAA	/nˈOə/
+SLAC	/slˈæk/
+TATA	/tˈɑtə/
+
+# Words
+di-electric	/dˌIəlˈɛktɹɪk/
+disequilibrium	/dˌɪsˌikwəlˈɪbɹiəm/
+equilibrium	/ˌikwəlˈɪbɹiəm/
+fructose	/fɹˈuktˌOs/
+Sciencebowlium	/sˌIənsbˈOliəm/
+tert-butyl	/tˈɜɹt bjˈutᵊl/
+
+# Hyphenated words with a fixed word in them: a fix by phonemes covers a word only on its own
+Fructose-1,6-bisphosphate	/fɹˈuktˌOs wˈʌn sˈɪks bIsfˈɑsfAt/
+fructose-1,6-bis-phosphate	/fɹˈuktˌOs wˈʌn sˈɪks bIsfˈɑsfAt/
+fructose-6-phosphate	/fɹˈuktˌOs sˈɪks fˈɑsfAt/
+GABA-B	/ɡˈæbə bˈi/
+non-equilibrium	/nˌɑn ˌikwəlˈɪbɹiəm/
+Sciencebowlium-23	/sˌIənsbˈOliəm twˈɛnti θɹˈi/
+Tert-butyl-amine	/tˈɜɹt bjˈutᵊl əmˈin/
