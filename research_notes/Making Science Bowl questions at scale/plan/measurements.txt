@@ -1,0 +1,46 @@
+left out (the log names no single matching id): pilot-gen-ms-r01-t12+cand ['doe-ms-04-r03-t21 (same first nine words)']
+left out (the log names no single matching id): pilot-gen-ms-r01-t15+cand ['doe-ms-11-r04-b15, doe-ms-15-r01-t07']
+library questions: 23720; labelled drafts: 63
+
+== writer: replaced draft (n=41)
+  top  5: stem-only BM25 25 | stem+answer BM25 32 | same-answer list (BM25 order) 31 | either list 38
+  top 10: stem-only BM25 28 | stem+answer BM25 36 | same-answer list (BM25 order) 32 | either list 41
+  top 20: stem-only BM25 29 | stem+answer BM25 40 | same-answer list (BM25 order) 32 | either list 41
+  top 50: stem-only BM25 37 | stem+answer BM25 40 | same-answer list (BM25 order) 32 | either list 41
+  match is in the same-answer list at any depth: 32 | median size of that list: 16
+
+== writer: rejected candidate (n=11)
+  top  5: stem-only BM25  7 | stem+answer BM25 10 | same-answer list (BM25 order) 11 | either list 11
+  top 10: stem-only BM25  8 | stem+answer BM25 11 | same-answer list (BM25 order) 11 | either list 11
+  top 20: stem-only BM25  9 | stem+answer BM25 11 | same-answer list (BM25 order) 11 | either list 11
+  top 50: stem-only BM25 10 | stem+answer BM25 11 | same-answer list (BM25 order) 11 | either list 11
+  match is in the same-answer list at any depth: 11 | median size of that list: 4
+
+== checker: same answer and cue (n=3)
+  top  5: stem-only BM25  0 | stem+answer BM25  0 | same-answer list (BM25 order)  1 | either list  1
+  top 10: stem-only BM25  0 | stem+answer BM25  1 | same-answer list (BM25 order)  1 | either list  1
+  top 20: stem-only BM25  2 | stem+answer BM25  2 | same-answer list (BM25 order)  2 | either list  3
+  top 50: stem-only BM25  2 | stem+answer BM25  2 | same-answer list (BM25 order)  2 | either list  3
+  match is in the same-answer list at any depth: 2 | median size of that list: 13
+
+== checker: same template (n=8)
+  top  5: stem-only BM25  6 | stem+answer BM25  6 | same-answer list (BM25 order)  1 | either list  6
+  top 10: stem-only BM25  6 | stem+answer BM25  6 | same-answer list (BM25 order)  1 | either list  6
+  top 20: stem-only BM25  6 | stem+answer BM25  6 | same-answer list (BM25 order)  1 | either list  6
+  top 50: stem-only BM25  6 | stem+answer BM25  6 | same-answer list (BM25 order)  1 | either list  6
+  match is in the same-answer list at any depth: 1 | median size of that list: 0
+
+== ALL (n=63)
+  top  5: stem-only BM25 38 | stem+answer BM25 48 | same-answer list (BM25 order) 44 | either list 56
+  top 10: stem-only BM25 42 | stem+answer BM25 54 | same-answer list (BM25 order) 45 | either list 59
+  top 20: stem-only BM25 46 | stem+answer BM25 59 | same-answer list (BM25 order) 46 | either list 61
+  top 50: stem-only BM25 55 | stem+answer BM25 59 | same-answer list (BM25 order) 46 | either list 61
+  match is in the same-answer list at any depth: 46 | median size of that list: 14
+
+not found in top 20 of either list: [('M044', 'checker: same template', 172, 1000000000), ('M050', 'checker: same template', 84, 1000000000)]
+
+== word answers used more than once (short-answer questions; numbers and list answers left out)
+  HS: 3656 questions, 2804 different answers; answer used 2+ times: 36% of questions, 3+: 20%, 5+: 8%
+     most used: one (15), helium (13), mercury (13), hydrogen (13), water (13), zero (12), methane (12), oxygen (11), carbon (10), carbon dioxide (10), four (9), electron (8)
+  MS: 3951 questions, 2659 different answers; answer used 2+ times: 47% of questions, 3+: 32%, 5+: 16%
+     most used: water (32), carbon dioxide (23), iron (17), oxygen (17), one (17), nitrogen (17), venus (16), hydrogen (15), helium (14), methane (14), zero (14), two (13)
