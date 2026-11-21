@@ -875,4 +875,35 @@ ANSWER: 3/5 AND! 3/5`);
     expect(q.flags).toEqual(['text-corrected']);
     expect(() => applyDoeTextFixes(r, [correction])).toThrow(/no longer fits/);
   });
+
+  it('restores an answer and choices the PDF drew as images, and settles the warnings they raised', () => {
+    const r = round(`TOSS-UP
+4) MATH Short Answer What is the reference angle for?
+ANSWER: x`);
+    const q = r.pairs[0].tossup;
+    Object.assign(q, { answer: '', answerRaw: '(ACCEPT:)', accept: [], flags: ['answer-missing', 'image-not-extracted', 'possible-lost-formatting'] });
+    const fixes = [
+      { field: 'stem' as const, from: 'angle for?', to: 'angle for 7π/6?' },
+      { field: 'answer' as const, from: '', to: 'π/6' },
+      { field: 'answer' as const, from: '(ACCEPT:)', to: 'π/6 (ACCEPT: 30°)' },
+      { field: 'accept' as const, from: '', to: '30°' },
+    ];
+    expect(applyDoeTextFixes(r, [{ id: q.id, fixes, reviewed: '2026-11-20' }])).toEqual([q.id]);
+    expect([q.stem, q.answer, q.answerRaw, q.accept]).toEqual(['What is the reference angle for 7π/6?', 'π/6', 'π/6 (ACCEPT: 30°)', ['30°']]);
+    expect(q.flags).toEqual(['text-corrected']);
+    // Filling a field that is no longer empty does not fit.
+    expect(() => applyDoeTextFixes(r, [{ id: q.id, fixes: [fixes[1]], reviewed: '2026-11-20' }])).toThrow(/is not empty/);
+
+    // Choices: a partial restoration keeps the image warning, and "choices-missing" while one is still empty.
+    q.choices = { W: '5', X: '', Y: '', Z: '50' };
+    q.flags = ['choices-missing', 'image-not-extracted', 'possible-lost-formatting'];
+    applyDoeTextFixes(r, [{ id: q.id, fixes: [{ field: 'Y', from: '', to: '20' }], partial: true, reviewed: '2026-11-20' }]);
+    expect(q.choices.Y).toBe('20');
+    expect(q.flags).toEqual(['choices-missing', 'image-not-extracted', 'text-corrected']);
+
+    // Checked, and nothing missing: the warnings go, and nothing is marked corrected.
+    q.flags = ['image-not-extracted', 'possible-lost-formatting'];
+    applyDoeTextFixes(r, [{ id: q.id, fixes: [], note: 'The image is blank.', reviewed: '2026-11-20' }]);
+    expect(q.flags).toBeUndefined();
+  });
 });
