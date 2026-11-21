@@ -1,0 +1,72 @@
+{
+ "about": "Which websites the question pipeline may read when it checks a fact or writes from a passage, and which it may never use. 'allowed' is what the web search is limited to (the national laboratories' own sites, from labs.json, are added to it). 'banned' sites are refused whatever else is true. A site on neither list is unlisted: a person decides before it is used. Only facts are taken from a source, never its wording. The allowed list starts narrow on purpose; add a site only after reading its terms on AI use.",
+ "checked": "2026-11-21",
+ "allowed": [
+  {
+   "group": "U.S. government science agencies",
+   "why": "The agencies' own pages. Government information on them is generally in the public domain; material they credit to someone else may not be.",
+   "domains": [
+    "nasa.gov",
+    "noaa.gov",
+    "usgs.gov",
+    "nih.gov",
+    "nist.gov",
+    "eia.gov",
+    "epa.gov",
+    "nps.gov",
+    "cdc.gov",
+    "usda.gov",
+    "nsf.gov",
+    "energy.gov"
+   ]
+  },
+  {
+   "group": "Wikipedia",
+   "why": "For checking textbook facts. Its text is under CC BY-SA, which does not reach a fact restated in other words.",
+   "domains": [
+    "wikipedia.org"
+   ]
+  }
+ ],
+ "banned": [
+  {
+   "group": "OpenStax",
+   "why": "Its license does not allow putting its books into AI tools. Rebound's server refuses it for the same reason (server/src/ai.ts).",
+   "domains": [
+    "openstax.org"
+   ]
+  },
+  {
+   "group": "NAQT",
+   "why": "From 2026-27 NAQT forbids putting its content into any AI model without written permission.",
+   "domains": [
+    "naqt.com"
+   ]
+  },
+  {
+   "group": "Question banks, packet archives and tournament sites",
+   "why": "Their questions belong to their writers and carry no open license, and another question is not a source for a fact.",
+   "domains": [
+    "sbreader.github.io",
+    "scibowl.app",
+    "scibowl.live",
+    "isobowl.com",
+    "hsquizbowl.org",
+    "acf-quizbowl.com",
+    "pace-nsc.org",
+    "mitsciencebowl.com",
+    "scibowl.stanford.edu",
+    "berkeleysb.org",
+    "yalesciencebowl.org",
+    "texassciencebowl.org"
+   ]
+  },
+  {
+   "group": "DOE's National Science Bowl pages",
+   "why": "Rebound's library is built from the sample questions here, so checking a draft against them proves nothing; unreleased official questions are never used at all (Rule 1-2).",
+   "domains": [
+    "science.osti.gov/wdts/nsb"
+   ]
+  }
+ ]
+}

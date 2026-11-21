@@ -80,6 +80,17 @@ used). Never commit a secret, paste one into an issue, or put one in `wrangler.t
   same bytes. When DOE adds a sample set, fetch, build, read the report, run `npm test`, commit.
 - **Duplicate fingerprints for Write.** After any change to the library, run `npm run data:fingerprints`; a test
   fails if `public/data/doe/fingerprints.json` is out of date.
+- **The question pipeline's numbers and lists** (`scripts/gen/`, see its README).
+  - After any change to the library, run `npm run gen:profile`; a test fails if
+    `scripts/gen/data/style-profile.json` is out of date.
+  - **Every quarter, check the lab table.** Open `scripts/gen/data/labs.json` beside its `source` (DOE's list of
+    national laboratories), correct any name, home page or news page that changed, add a renamed lab's old name
+    under `former` with the date and where the change is stated, and set `checked` to today. A lab renamed in
+    December 2025 put an out-of-date name into five of the first pilot's twelve Energy questions. The check
+    command says so when the table is more than 100 days old.
+  - Add a site to the allowed list in `scripts/gen/data/sources.json` only after reading its terms on AI use.
+  - Unreleased questions never go in this repository, which is public: the ledger and rounds live in
+    `private-data/gen/` (ignored by git), or wherever `REBOUND_BANK` points.
 - **Photos for visual bonuses.** `python3 -I scripts/visual/build-photos.py` (public-domain Wikimedia Commons
   files only; see the script's header).
 - **Never commit** community or invitational packets, or anything else you are not allowed to publish. Keep
@@ -100,7 +111,8 @@ October 1 as a reminder if DOE's site refuses automated requests. The issue carr
 3. In the same file, set `CURRENT_SEASON`, `CURRENT_PRESET_IDS` and `CURRENT_RULES_URL` (add `RULES_2028_URL`)
    to the new season, and move the variant presets (`invitational-neg4`, `practice-untimed`) to the new season.
    Pages, scrimmages and the Reader console read these constants, so nothing else needs the year.
-4. If the answer conventions changed, update `src/core/judge/` and its tests. If the categories changed,
+4. If the answer conventions changed, update `src/core/judge/` and its tests, and the house-style checks that
+   follow them (`scripts/gen/checks.ts`: list answers, simplest form, units). If the categories changed,
    `src/core/importers/doeSubjects.ts` and the taxonomy.
 5. Update the engine tests (`src/core/rules/engine.test.ts`) and `e2e/smoke.cjs` where numbers changed. Run
    `npm test`, the smoke test, and look at the Rules page and a game in the Reader console.

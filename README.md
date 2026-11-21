@@ -85,6 +85,8 @@ python scripts/voice/kokoro_voice.py publish # put the recordings online and wri
 node e2e/middle-school.cjs # a middle school team against the real library
 npx tsx scripts/checks/judge-self-check.ts   # grade every printed answer in the library against itself
 npx tsx scripts/checks/review-load.ts 30 0.6 # simulate 90 days of reviews for a 30-minute plan and a 60% player
+npm run gen:check -- packet.nsb.json         # house-style checks on a file of questions (scripts/gen/README.md)
+npm run gen:search -- --stem "…" --answer "…" # the library questions a draft might repeat
 cd server && npm test                        # the team server's tests, in the Workers runtime
 ```
 
@@ -231,6 +233,8 @@ scripts/studio/      builds public/data/doe/fingerprints.json for the writing st
 scripts/rules/       the fall check for next season's rulebook (run by .github/workflows/rules-watch.yml)
 scripts/icons/       renders the app icons with Playwright
 scripts/visual/      builds the public-domain photo set for the Visual lab
+scripts/gen/         the question pipeline's foundations: DOE's style in numbers, house-style checks, library search
+                     for duplicates, the national lab table, source lists and the question ledger (see its README.md)
 e2e/                 browser tests (the smoke test, the team-server test with several accounts, matches read aloud,
                      middle school), the accounts helper they share, a stand-in for the recorded voice, and a small
                      fixture question set

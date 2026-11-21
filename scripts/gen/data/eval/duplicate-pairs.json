@@ -1,0 +1,726 @@
+{
+ "about": "Drafts from Rebound's November 2026 pilot that were judged to repeat a DOE library question, each with the library question(s) it matched. 'same': the same answer from the same cue (or the same computation with the same numbers). 'template': the same method or fact with new numbers or a reversed cue. writer-replaced and writer-rejected come from the writer's own library check; checker-found from the two independent checkers. A fixed test set: do not edit.",
+ "pairs": [
+  {
+   "id": "pilot-gen-hs-r01-t02",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "What is the molecular geometry of xenon [ZEE-non] tetrafluoride?",
+   "answer": "SQUARE PLANAR",
+   "matches": [
+    "doe-hs-02-r09-b08"
+   ],
+   "note": "Same question: 'According to the VSEPR model, what is the molecular geometry of xenon [ZEE-non] tetrafluoride?' (SQUARE PLANAR), down to the pronunciation guide."
+  },
+  {
+   "id": "pilot-gen-hs-r01-t03",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "Which of the following is a felsic [FEL-sik] intrusive igneous rock?",
+   "answer": "GRANITE",
+   "matches": [
+    "doe-hs-04-r04-t22"
+   ],
+   "note": "Same cue and answer: 'Which of the following rock types would be felsic?' with basalt, granite and gabbro among the choices (GRANITE)."
+  },
+  {
+   "id": "pilot-gen-hs-r01-t07",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "What is the term for the channels that pass through plant cell walls and connect the cytoplasm of neighboring cells?",
+   "answer": "PLASMODESMATA [plaz-moh-dez-MAH-tah]",
+   "matches": [
+    "doe-hs-07-r04-b19"
+   ],
+   "note": "Same cue: 'Name the two types of cell junctions that connect the cytoplasm of adjacent cells' (PLASMODESMATA AND GAP JUNCTION)."
+  },
+  {
+   "id": "pilot-gen-hs-r01-t10",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "Scientists at Argonne National Laboratory are developing cathodes for lithium-ion batteries. In the common cathode material abbreviated NMC, the letters stand for nickel, manganese, and what other metal?",
+   "answer": "COBALT",
+   "matches": [
+    "doe-ms-15-r08-t14"
+   ],
+   "note": "Same lab, topic and answer: 'Scientists at Argonne National Lab are developing lithium-ion battery cathodes that contain manganese instead of what element found in vitamin B12?' (COBALT)."
+  },
+  {
+   "id": "pilot-gen-hs-r01-b11",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "How many positive integer divisors does 360 have?",
+   "answer": "24",
+   "matches": [
+    "doe-hs-04-r14-b17"
+   ],
+   "note": "Same question with the same number: 'The number 360 has how many positive integer factors?' (24)."
+  },
+  {
+   "id": "pilot-gen-hs-r01-t12",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "An object is placed 10 centimeters from a converging lens with a focal length of 20 centimeters. Which of the following best describes the image?",
+   "answer": "VIRTUAL, UPRIGHT, AND ENLARGED",
+   "matches": [
+    "doe-ms-07-r05-t19"
+   ],
+   "note": "Same question with the same numbers: 'An object is placed 10 centimeters from a double convex lens with a focal length of 20 centimeters. Which of the following types of image will be produced?'"
+  },
+  {
+   "id": "pilot-gen-hs-r01-t15",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "Which of the following planets has the shortest sidereal rotation period?",
+   "answer": "JUPITER",
+   "matches": [
+    "doe-hs-17-r06-t16"
+   ],
+   "note": "Same question: 'What planet in our solar system has the shortest rotational period?' (JUPITER)."
+  },
+  {
+   "id": "pilot-gen-hs-r01-b17",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "Two fair six-sided dice are rolled. What is the probability that the sum of the numbers rolled is prime?",
+   "answer": "5/12",
+   "matches": [
+    "doe-ms-13-r06-b12"
+   ],
+   "note": "Same question: 'Two six-sided dice are rolled. What is the probability that the sum of the two numbers is prime?' (5/12)."
+  },
+  {
+   "id": "pilot-gen-hs-r01-b18",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "A satellite is in a circular orbit around Earth. If the radius of its orbit were quadrupled, by what factor would its orbital period increase?",
+   "answer": "8",
+   "matches": [
+    "doe-hs-15-r03-b03"
+   ],
+   "note": "Same law with the same numbers: a semi-major axis of 4 AU gives a period of 8 years; the draft quadrupled the radius for a factor of 8."
+  },
+  {
+   "id": "pilot-gen-ms-r01-b01",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "During protein synthesis, what type of RNA molecule carries amino acids to the ribosome?",
+   "answer": "TRANSFER RNA",
+   "matches": [
+    "doe-hs-13-r06-t16"
+   ],
+   "note": "Same question: 'What type of RNA carries amino acids to the ribosomes?' (tRNA); also doe-ms-03-r05-b12."
+  },
+  {
+   "id": "pilot-gen-ms-r01-b02",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "Which of the following elements is a metalloid?",
+   "answer": "SILICON",
+   "matches": [
+    "doe-ms-06-r04-t23"
+   ],
+   "note": "Same stem and nearly the same choices: 'Which of the following elements is a metalloid?' (Silicon / Calcium / Iron / Argon); also doe-hs-02-r05-t08."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t03",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "Which of the following layers of Earth is liquid?",
+   "answer": "OUTER CORE",
+   "matches": [
+    "doe-hs-07-r01-t22"
+   ],
+   "note": "Same cue and answer: 'The lack of transmission of earthquake S-waves through what layer of the Earth is evidence that it is liquid?' (OUTER CORE), with three of the same choices."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t05",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "What is 15 percent of 80?",
+   "answer": "12",
+   "matches": [
+    "doe-ms-09-r13-t02"
+   ],
+   "note": "Same numbers, inverted: 'What percent of 80 is 12?' (15)."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t06",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "Which of the following is the SI unit of force?",
+   "answer": "NEWTON",
+   "matches": [
+    "doe-ms-14-r08-t02"
+   ],
+   "note": "Same question in substance: 'Which of the following SI units can be used to measure weight?' (NEWTON), with joule, watt and newton among the choices; also doe-ms-09-r02-t07 ('the SI unit of mass')."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t09",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "Which of the following is the third most abundant gas in dry air near Earth’s surface?",
+   "answer": "ARGON",
+   "matches": [
+    "doe-ms-10-r11-t18"
+   ],
+   "note": "Same question: 'What gas is the third most abundant gas in the Earth's atmosphere?' (ARGON); also doe-hs-17-r03-t14."
+  },
+  {
+   "id": "pilot-gen-ms-r01-b09",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "What is the name of the supercontinent that included nearly all of Earth’s land about 250 million years ago?",
+   "answer": "PANGAEA",
+   "matches": [
+    "doe-ms-04-r10-t19"
+   ],
+   "note": "Same question: 'What is the name given to the supercontinent believed to have existed around 250 million years ago...?' (PANGAEA)."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t12",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "What is the term for the bending of light as it passes at an angle from one material into another, such as from air into water?",
+   "answer": "REFRACTION",
+   "matches": [
+    "doe-ms-14-r12-b22"
+   ],
+   "note": "Same question: 'What is the term for the bending of a wave as it moves from one medium to another?' (REFRACTION); also doe-hs-10-r08-t06."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t15",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "During which of the following phases of the Moon can a solar eclipse occur?",
+   "answer": "NEW MOON",
+   "matches": [
+    "doe-hs-09-r08-b05"
+   ],
+   "note": "Same question: 'A total solar eclipse can occur only during what phase of the moon?' with the same four phases as choices (NEW MOON)."
+  },
+  {
+   "id": "pilot-gen-ms-r01-b15",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "Which of the following types of faults forms when tension pulls rocks apart, so that the hanging wall moves down relative to the footwall?",
+   "answer": "NORMAL FAULT",
+   "matches": [
+    "doe-ms-04-r12-b05"
+   ],
+   "note": "Same cue and answer: 'A fault in the Earth's surface in which the hanging wall has moved down relative to the footwall is called:' (NORMAL FAULT)."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t16",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "Scientists at the National Energy Technology Laboratory study ways to capture carbon dioxide from power plants. Which of the following energy sources is a fossil fuel?",
+   "answer": "NATURAL GAS",
+   "matches": [
+    "doe-ms-08-r05-t17"
+   ],
+   "note": "Same stem: 'Which of the following energy sources is considered a fossil fuel?' (CRUDE OIL)."
+  },
+  {
+   "id": "pilot-gen-hs-r01-t02",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "What is the term for a redox reaction in which atoms of one element, all starting in the same oxidation state, are both oxidized and reduced, as when hydrogen peroxide decomposes into water and oxygen?",
+   "answer": "DISPROPORTIONATION",
+   "matches": [
+    "doe-hs-08-r04-t12"
+   ],
+   "note": "Replacement matched: 'What type of redox reaction involves the simultaneous oxidation and reduction of a singular species?' (DISPROPORTIONATION)."
+  },
+  {
+   "id": "pilot-gen-hs-r01-t07",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "What is the term for the programmed cell death that removes the tissue between the developing fingers of a human embryo?",
+   "answer": "APOPTOSIS [ay-pop-TOH-sis]",
+   "matches": [
+    "doe-hs-10-r01-t04"
+   ],
+   "note": "Replacement matched almost word for word: 'The webbed hand of a human embryo develops into five separate fingers by a process of programmed cell death. What is the term for this process?' (APOPTOSIS)."
+  },
+  {
+   "id": "pilot-gen-hs-r01-t07-candidate-1",
+   "group": "writer-rejected",
+   "label": "same",
+   "stem": "What hormone, secreted by fat tissue, signals the brain that the body has enough energy stored and reduces appetite?",
+   "answer": "LEPTIN",
+   "matches": [
+    "doe-hs-11-r14-t02"
+   ],
+   "note": "A replacement candidate the writer rejected before use as matching this DOE question."
+  },
+  {
+   "id": "pilot-gen-hs-r01-t07-candidate-2",
+   "group": "writer-rejected",
+   "label": "same",
+   "stem": "In humans, what structure connects the middle ear to the throat and lets air pressure on the two sides of the eardrum equalize?",
+   "answer": "EUSTACHIAN TUBE",
+   "matches": [
+    "doe-ms-14-r01-b18"
+   ],
+   "note": "A replacement candidate the writer rejected before use as matching this DOE question."
+  },
+  {
+   "id": "pilot-gen-hs-r01-t07-candidate-3",
+   "group": "writer-rejected",
+   "label": "same",
+   "stem": "In the lac operon of E. coli, binding of what molecule to the repressor causes the repressor to release the operator, allowing transcription?",
+   "answer": "ALLOLACTOSE",
+   "matches": [
+    "doe-hs-03-r15-b10"
+   ],
+   "note": "A replacement candidate the writer rejected before use as matching this DOE question."
+  },
+  {
+   "id": "pilot-gen-hs-r01-t07-candidate-4",
+   "group": "writer-rejected",
+   "label": "same",
+   "stem": "Besides ATP, what electron-carrying molecule made in the light-dependent reactions of photosynthesis supplies the Calvin cycle with reducing power?",
+   "answer": "NADPH",
+   "matches": [
+    "doe-ms-13-r17-b16"
+   ],
+   "note": "A replacement candidate the writer rejected before use as matching this DOE question."
+  },
+  {
+   "id": "pilot-gen-hs-r01-t15",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "Which of the following moons sprays plumes of water vapor and ice grains from fractures near its south pole?",
+   "answer": "ENCELADUS",
+   "matches": [
+    "doe-hs-03-r02-b12"
+   ],
+   "note": "Replacement matched: 'What moon of Saturn was shown by the Cassini space-craft to be spewing a watery, gassy plume from its geothermally heated south pole?' (ENCELADUS)."
+  },
+  {
+   "id": "pilot-gen-hs-r01-t15-candidate-1",
+   "group": "writer-rejected",
+   "label": "same",
+   "stem": "Which of the following stars is a red supergiant?",
+   "answer": "BETELGEUSE",
+   "matches": [
+    "doe-ms-12-r07-t10"
+   ],
+   "note": "A replacement candidate the writer rejected before use as matching this DOE question."
+  },
+  {
+   "id": "pilot-gen-ms-r01-b04",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "Scientists at Lawrence Livermore National Laboratory use powerful lasers to heat tiny capsules of hydrogen fuel to millions of degrees Celsius in fusion experiments. At such temperatures, electrons are stripped from their atoms, and matter exists in what state?",
+   "answer": "PLASMA",
+   "matches": [
+    "doe-ms-15-r07-b15"
+   ],
+   "note": "Self-review had already removed the lab-name giveaway, but the question still matched: 'Scientists at the DIII-D National Fusion Facility are studying nuclear fusion. In what state of matter is the substance they are fusing?' (PLASMA)."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t12",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "What is the term for the maximum distance that a point on a wave moves from its rest position?",
+   "answer": "AMPLITUDE",
+   "matches": [
+    "doe-ms-04-r04-t20"
+   ],
+   "note": "Replacement matched: 'What is the vertical distance from the undisturbed position of the medium to the top of a crest of a wave called?' (AMPLITUDE); also doe-ms-04-r12-t11 and doe-ms-14-r06-b16."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t12-candidate-1",
+   "group": "writer-rejected",
+   "label": "same",
+   "stem": "After a balloon is rubbed on a wool sweater, the balloon has a negative charge. What particles moved from the sweater to the balloon?",
+   "answer": "ELECTRONS",
+   "matches": [
+    "doe-ms-13-r04-t17"
+   ],
+   "note": "A replacement candidate the writer rejected before use as matching this DOE question."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t12-candidate-2",
+   "group": "writer-rejected",
+   "label": "same",
+   "stem": "Red light and green light are shone onto the same spot of a white wall. What color does the spot appear?",
+   "answer": "YELLOW",
+   "matches": [
+    "doe-ms-14-r14-t12"
+   ],
+   "note": "A replacement candidate the writer rejected before use as matching this DOE question."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t09",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "In which of the following layers of the atmosphere does temperature increase with altitude because ozone absorbs ultraviolet light?",
+   "answer": "STRATOSPHERE",
+   "matches": [
+    "doe-ms-08-r02-t04"
+   ],
+   "note": "Replacement matched in cue: 'Which of the following atmospheric layers contains the ozone layer?' (STRATOSPHERE); also doe-ms-10-r08-t08."
+  },
+  {
+   "id": "pilot-gen-hs-r01-b03",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "What is the name of the cold, dense water mass that forms around Antarctica, sinks along the continental slope, and is the densest water mass in the open ocean?",
+   "answer": "ANTARCTIC BOTTOM WATER",
+   "matches": [
+    "doe-ms-05-r12-t06"
+   ],
+   "note": "Same cue: 'Which of the following is the coldest and densest water in Earth’s oceans?' (ANTARCTIC BOTTOM WATER); also doe-ms-13-r16-t15."
+  },
+  {
+   "id": "pilot-gen-hs-r01-b09",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "Which of the following cloud types is most associated with steady, prolonged precipitation ahead of an approaching warm front?",
+   "answer": "NIMBOSTRATUS",
+   "matches": [
+    "doe-ms-01-r07-b22"
+   ],
+   "note": "Same cue: 'Which of the following is a dark gray, low cloud associated with continuous falling rain:' (NIMBOSTRATUS)."
+  },
+  {
+   "id": "pilot-gen-ms-r01-b03",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "On the June solstice, the noon Sun is directly overhead at which of the following latitudes?",
+   "answer": "THE TROPIC OF CANCER",
+   "matches": [
+    "doe-ms-01-r04-b20"
+   ],
+   "note": "Same cue: 'What is the name for the northern-most latitude where the Sun can appear directly overhead?' (TROPIC OF CANCER)."
+  },
+  {
+   "id": "pilot-gen-ms-r01-b06",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "A 4-kilogram cart starts from rest on a frictionless track, and a constant net force of 20 newtons acts on it for 3 seconds. In meters, how far does the cart travel during those 3 seconds?",
+   "answer": "22.5",
+   "matches": [
+    "doe-ms-14-r14-b20"
+   ],
+   "note": "Same numbers: 'Starting from rest, a bike accelerates at 5 meters per second squared for 3 seconds. In meters, what distance did it travel?' (22.5); the draft only added F = ma on top."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t10",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "Scientists at Idaho National Laboratory design and test nuclear reactors. What is the term for the process in which a large nucleus such as uranium-235 splits into two smaller nuclei and releases energy?",
+   "answer": "FISSION",
+   "matches": [
+    "doe-ms-09-r02-b04"
+   ],
+   "note": "Same cue: 'The energy stored in a uranium atom can be released via what type of nuclear reaction?' (FISSION); also doe-ms-11-r02-t01."
+  },
+  {
+   "id": "pilot-gen-ms-r01-b12",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "When white light passes through a glass prism, which of the following colors is bent the most?",
+   "answer": "VIOLET",
+   "matches": [
+    "doe-ms-03-r14-b07"
+   ],
+   "note": "Same cue: 'Which one of the following 4 colors of light has the greatest angle of refraction in normal glass: orange; violet; red; yellow' (VIOLET)."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t13",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "What is the term for the loss of water vapor from a plant, mostly through small pores in its leaves?",
+   "answer": "TRANSPIRATION",
+   "matches": [
+    "doe-ms-04-r03-t07"
+   ],
+   "note": "Same cue: 'What do we call the evaporation of water from plants that occurs chiefly while their stomata are open...?' (TRANSPIRATION); also doe-ms-06-r08-b22 and doe-ms-finals-r01-t22."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t13-candidate-1",
+   "group": "writer-rejected",
+   "label": "same",
+   "stem": "In a plant cell, what large, water-filled organelle presses against the cell wall to help keep the plant firm?",
+   "answer": "CENTRAL VACUOLE",
+   "matches": [
+    "doe-hs-03-r01-t22"
+   ],
+   "note": "A replacement candidate the writer rejected before use as matching this DOE question."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t13-candidate-2",
+   "group": "writer-rejected",
+   "label": "same",
+   "stem": "Ferns and mosses do not make seeds. What tiny reproductive cells do they release instead?",
+   "answer": "SPORES",
+   "matches": [
+    "doe-ms-09-r17-b07"
+   ],
+   "note": "A replacement candidate the writer rejected before use as matching this DOE question."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t13-candidate-3",
+   "group": "writer-rejected",
+   "label": "same",
+   "stem": "A caterpillar becomes a pupa and then emerges as an adult butterfly. What is the term for this kind of dramatic change in body form during an animal’s life?",
+   "answer": "METAMORPHOSIS",
+   "matches": [
+    "doe-ms-14-r05-t21"
+   ],
+   "note": "A replacement candidate the writer rejected before use as matching this DOE question."
+  },
+  {
+   "id": "pilot-gen-ms-r01-b14",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "When the equation for the combustion of methane, CH₄ plus O₂ yields CO₂ plus H₂O, is balanced using the smallest whole-number coefficients, what is the coefficient of oxygen gas?",
+   "answer": "2",
+   "matches": [
+    "doe-ms-01-r18-b15"
+   ],
+   "note": "Same question: 'When the following chemical equation is balanced, the coefficient of oxygen will be what value: CH₄ + O₂ → CO₂ + H₂O' (2)."
+  },
+  {
+   "id": "pilot-gen-hs-r01-t13",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "Which of the following animals lacks true tissues?",
+   "answer": "SEA SPONGE",
+   "matches": [
+    "doe-hs-11-r10-t12"
+   ],
+   "note": "Same cue in other words: 'Which of the following organisms is characterized as a parazoan?' (SPONGE); parazoans are defined by lacking true tissues."
+  },
+  {
+   "id": "pilot-gen-hs-r01-t18",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "What law of electromagnetism states that the electromotive force induced in a closed loop is proportional to the rate of change of the magnetic flux through the loop?",
+   "answer": "FARADAY’S LAW",
+   "matches": [
+    "doe-hs-10-r15-b01"
+   ],
+   "note": "Same cue: 'Which of the following best describes the electromotive force produced in a circuit by a changing flux?' (FARADAY’S LAW)."
+  },
+  {
+   "id": "pilot-gen-hs-r01-t18-candidate-1",
+   "group": "writer-rejected",
+   "label": "same",
+   "stem": "What dimensionless number, the ratio of inertial forces to viscous forces in a flowing fluid, is used to predict whether the flow will be laminar or turbulent?",
+   "answer": "REYNOLDS NUMBER",
+   "matches": [
+    "doe-hs-10-r15-b19"
+   ],
+   "note": "A replacement candidate the writer rejected before use as matching this DOE question."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t03",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "Which of the following processes carries heat through Earth’s mantle and is thought to help drive the motion of tectonic plates?",
+   "answer": "CONVECTION",
+   "matches": [
+    "doe-ms-03-r02-t07"
+   ],
+   "note": "First-round replacement matched: 'Which of the following is believed to be the process that causes Earth’s tectonic plates to move:' (CONVECTION CURRENTS IN THE MANTLE); also doe-ms-finals-r03-t02."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t06",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "A book rests on a table. According to Newton’s third law, which of the following is the reaction force to Earth’s gravitational pull on the book?",
+   "answer": "THE BOOK PULLING UP ON EARTH",
+   "matches": [
+    "doe-hs-06-r05-t09"
+   ],
+   "note": "First-round replacement matched: 'An object of mass m sits on a flat table. The Earth pulls on the object with force mg. Which of the following is the corresponding reaction force?' (THE OBJECT PULLING UPWARD ON THE EARTH)."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t07",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "In pea plants, the allele for purple flowers is dominant over the allele for white flowers. If two plants that are heterozygous for flower color are crossed, what fraction of their offspring are expected to have white flowers?",
+   "answer": "1/4",
+   "matches": [
+    "doe-hs-03-r09-b03"
+   ],
+   "note": "Same cue and computation: a cross of two heterozygotes for flower color with red (or purple) dominant over white (3 TO 1); also doe-ms-07-r05-b11."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t15",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "Which of the following best explains why the same side of the Moon always faces Earth?",
+   "answer": "THE MOON ROTATES ONCE ON ITS AXIS IN THE SAME TIME IT TAKES TO ORBIT EARTH",
+   "matches": [
+    "doe-ms-08-r04-t07"
+   ],
+   "note": "First-round replacement matched: 'Why does the same side of the Moon always face the Earth?' (THE MOON ROTATES ABOUT ITS AXIS ...); also doe-ms-09-r12-t21."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t18",
+   "group": "writer-replaced",
+   "label": "same",
+   "stem": "A ball is thrown straight up. At the highest point of its path, which of the following is true?",
+   "answer": "ITS VELOCITY IS ZERO, BUT ITS ACCELERATION IS NOT ZERO",
+   "matches": [
+    "doe-hs-05-r07-t21"
+   ],
+   "note": "Same cue: 'A ball is thrown vertically upward ... which of the following pairs best describes its velocity and acceleration' at the top (ZERO, NEGATIVE)."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t10",
+   "group": "checker-found",
+   "label": "same",
+   "stem": "Scientists at Idaho National Laboratory study nuclear power plants. In these plants, heat from the reactor turns water into steam, and the steam spins what device that is connected to a generator?",
+   "answer": "TURBINE",
+   "matches": [
+    "doe-ms-09-r05-t17"
+   ],
+   "note": "Both ask for the turbine from steam turning a generator."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t06",
+   "group": "checker-found",
+   "label": "same",
+   "stem": "A winter coat stuffed with down feathers keeps a person warm mainly because of which of the following?",
+   "answer": "AIR TRAPPED BETWEEN THE FEATHERS CONDUCTS HEAT POORLY",
+   "matches": [
+    "doe-ms-16-r09-b18"
+   ],
+   "note": "Both ask why down feathers insulate: trapped air.",
+   "choices": {
+    "W": "The feathers produce heat",
+    "X": "The feathers reflect cold back outside",
+    "Y": "Air trapped between the feathers conducts heat poorly",
+    "Z": "The feathers absorb sunlight"
+   }
+  },
+  {
+   "id": "pilot-gen-ms-r01-b01",
+   "group": "checker-found",
+   "label": "same",
+   "stem": "A lichen is a partnership between a fungus and what other kind of organism that carries out photosynthesis?",
+   "answer": "ALGAE",
+   "matches": [
+    "doe-hs-03-r08-b06"
+   ],
+   "note": "Both ask for the partners in a lichen."
+  },
+  {
+   "id": "pilot-gen-ms-r01-t12",
+   "group": "checker-found",
+   "label": "template",
+   "stem": "A light ray strikes a flat mirror at an angle of 35 degrees from the normal. In degrees, what is the angle of reflection?",
+   "answer": "35",
+   "matches": [
+    "doe-ms-14-r07-t06",
+    "doe-ms-01-r03-t20",
+    "doe-ms-10-r11-t06"
+   ],
+   "note": "Template-level: only the angle differs."
+  },
+  {
+   "id": "pilot-gen-ms-r01-b12",
+   "group": "checker-found",
+   "label": "template",
+   "stem": "A student stands 680 meters from a tall cliff and claps once. Taking the speed of sound in air to be 340 meters per second, how many seconds after the clap does the student hear the echo?",
+   "answer": "4",
+   "matches": [
+    "doe-ms-07-r05-b01"
+   ],
+   "note": "Template-level: the same echo task with other numbers.",
+   "choices": {
+    "W": "0.5",
+    "X": "1",
+    "Y": "2",
+    "Z": "4"
+   }
+  },
+  {
+   "id": "pilot-gen-ms-r01-t08",
+   "group": "checker-found",
+   "label": "template",
+   "stem": "Which of the following is a typical property of metals?",
+   "answer": "MALLEABILITY",
+   "matches": [
+    "doe-ms-02-r01-t13"
+   ],
+   "note": "Template-level: the same fact with the cue reversed.",
+   "choices": {
+    "W": "Brittleness",
+    "X": "Poor conduction of heat",
+    "Y": "Malleability",
+    "Z": "Dull appearance"
+   }
+  },
+  {
+   "id": "pilot-gen-ms-r01-t16",
+   "group": "checker-found",
+   "label": "template",
+   "stem": "Scientists at the National Renewable Energy Laboratory study geothermal power plants. Geothermal energy comes mainly from which of the following?",
+   "answer": "HEAT FROM INSIDE EARTH",
+   "matches": [
+    "doe-ms-08-r03-t14"
+   ],
+   "note": "Template-level: the source of geothermal energy.",
+   "choices": {
+    "W": "Heat from inside Earth",
+    "X": "Sunlight absorbed by the ground",
+    "Y": "Ocean tides",
+    "Z": "Burning underground coal seams"
+   }
+  },
+  {
+   "id": "pilot-gen-hs-r01-t17",
+   "group": "checker-found",
+   "label": "template",
+   "stem": "What is the determinant of the 2-by-2 matrix whose first row is 3, 5 and whose second row is 2, 4?",
+   "answer": "2",
+   "matches": [
+    "doe-ms-16-r05-t01"
+   ],
+   "note": "The same determinant question, word for word apart from two numbers."
+  },
+  {
+   "id": "pilot-gen-hs-r01-b12",
+   "group": "checker-found",
+   "label": "template",
+   "stem": "A 6-ohm resistor and a 3-ohm resistor are connected in parallel, and this combination is connected in series with a 4-ohm resistor across an ideal 12-volt battery. In amperes, what is the current through the 3-ohm resistor?",
+   "answer": "4/3",
+   "matches": [
+    "doe-hs-14-r03-b06",
+    "doe-ms-14-r15-b01"
+   ],
+   "note": "The same parallel-then-series resistor structure."
+  },
+  {
+   "id": "pilot-gen-hs-r01-t11",
+   "group": "checker-found",
+   "label": "template",
+   "stem": "In degrees, what is the sum of the interior angles of a decagon?",
+   "answer": "1,440",
+   "matches": [
+    "doe-ms-05-r15-t06",
+    "doe-ms-03-r10-b03"
+   ],
+   "note": "The same interior-angle-sum formula for a different polygon."
+  },
+  {
+   "id": "pilot-gen-hs-r01-b17",
+   "group": "checker-found",
+   "label": "template",
+   "stem": "A bag contains 4 red marbles and 6 blue marbles. Two marbles are drawn at random without replacement. What is the probability that the two marbles are different colors?",
+   "answer": "8/15",
+   "matches": [
+    "doe-ms-13-r01-b17"
+   ],
+   "note": "Marbles drawn without replacement, with other colours and numbers."
+  }
+ ]
+}

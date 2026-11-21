@@ -1,0 +1,206 @@
+{
+ "about": "Questions from Rebound's November 2026 pilot with faults a code check should catch, and the finding each should raise. 'firstDraftKeys' are the multiple-choice key letters of the two first-draft rounds, which were bunched on X. A fixed test set: do not edit.",
+ "questions": [
+  {
+   "expect": "answer-in-lab-name",
+   "why": "First draft: the lab's name contains the answer.",
+   "question": {
+    "id": "pilot-gen-ms-r01-b04",
+    "level": "MS",
+    "kind": "bonus",
+    "subject": "energy",
+    "format": "short_answer",
+    "stem": "Scientists at Princeton Plasma Physics Laboratory heat hydrogen fuel to more than 100 million degrees Celsius in fusion experiments. At such temperatures, electrons are stripped from their atoms, and matter exists in what state?",
+    "answer": "PLASMA",
+    "accept": [],
+    "reject": []
+   }
+  },
+  {
+   "expect": "right-choice-long",
+   "why": "Final round (H033): the right choice is a full reason two to three times longer than the others.",
+   "question": {
+    "id": "pilot-gen-hs-r01-t15",
+    "level": "HS",
+    "kind": "tossup",
+    "subject": "earth_space",
+    "format": "multiple_choice",
+    "stem": "Which of the following is the main reason the Moon’s surface keeps far more impact craters than Earth’s surface does?",
+    "choices": {
+     "W": "The Moon is struck by more meteoroids than Earth",
+     "X": "The Moon’s gravity pulls in more asteroids than Earth’s gravity does",
+     "Y": "Most lunar craters were made by volcanoes",
+     "Z": "The Moon lacks the weathering, erosion and plate tectonics that erase craters on Earth"
+    },
+    "answer": "THE MOON LACKS THE WEATHERING, EROSION AND PLATE TECTONICS THAT ERASE CRATERS ON EARTH",
+    "answerLetter": "Z",
+    "accept": [],
+    "reject": []
+   }
+  },
+  {
+   "expect": "because-clause",
+   "why": "Final round (M006): the choices carry \"because\" clauses.",
+   "question": {
+    "id": "pilot-gen-ms-r01-b02",
+    "level": "MS",
+    "kind": "bonus",
+    "subject": "chemistry",
+    "format": "multiple_choice",
+    "stem": "A strip of magnesium is burned completely in air, and all of the white powder that forms is collected. How does the mass of the powder compare with the mass of the original magnesium strip?",
+    "choices": {
+     "W": "It is greater, because the magnesium combined with oxygen",
+     "X": "It is the same, because mass is conserved",
+     "Y": "It is smaller, because some of the matter was destroyed",
+     "Z": "It is zero, because the magnesium turned into light and heat"
+    },
+    "answer": "IT IS GREATER, BECAUSE THE MAGNESIUM COMBINED WITH OXYGEN",
+    "answerLetter": "W",
+    "accept": [],
+    "reject": []
+   }
+  },
+  {
+   "expect": "former-lab-name",
+   "why": "Final round: names a lab that was renamed on 1 December 2025.",
+   "question": {
+    "id": "pilot-gen-hs-r01-t04",
+    "level": "HS",
+    "kind": "tossup",
+    "subject": "energy",
+    "format": "multiple_choice",
+    "stem": "Scientists at the National Renewable Energy Laboratory are developing solar cells made from perovskites [puh-ROV-skites]. These materials are named after the mineral perovskite, which has what chemical composition?",
+    "choices": {
+     "W": "Calcium titanate",
+     "X": "Silicon dioxide",
+     "Y": "Iron disulfide",
+     "Z": "Barium sulfate"
+    },
+    "answer": "CALCIUM TITANATE",
+    "answerLetter": "W",
+    "accept": [],
+    "reject": []
+   }
+  },
+  {
+   "expect": "former-lab-name",
+   "why": "Final round: names a lab that was renamed on 1 December 2025.",
+   "question": {
+    "id": "pilot-gen-hs-r01-b10",
+    "level": "HS",
+    "kind": "bonus",
+    "subject": "energy",
+    "format": "multiple_choice",
+    "stem": "Researchers at the National Renewable Energy Laboratory study the electrolysis of water. Which of the following is produced at the cathode?",
+    "choices": {
+     "W": "Hydrogen gas",
+     "X": "Oxygen gas",
+     "Y": "Hydrogen peroxide",
+     "Z": "Ozone"
+    },
+    "answer": "HYDROGEN GAS",
+    "answerLetter": "W",
+    "accept": [],
+    "reject": []
+   }
+  },
+  {
+   "expect": "former-lab-name",
+   "why": "Final round: names a lab that was renamed on 1 December 2025.",
+   "question": {
+    "id": "pilot-gen-hs-r01-b16",
+    "level": "HS",
+    "kind": "bonus",
+    "subject": "energy",
+    "format": "short_answer",
+    "stem": "Engineers at the National Renewable Energy Laboratory test wind turbines. If both the rotor diameter and the wind speed are doubled, by what factor does the power carried by the wind through the rotor’s swept area increase?",
+    "answer": "32",
+    "accept": [],
+    "reject": []
+   }
+  },
+  {
+   "expect": "former-lab-name",
+   "why": "Final round: names a lab that was renamed on 1 December 2025.",
+   "question": {
+    "id": "pilot-gen-ms-r01-t04",
+    "level": "MS",
+    "kind": "tossup",
+    "subject": "energy",
+    "format": "multiple_choice",
+    "stem": "Scientists at the National Renewable Energy Laboratory are working to make solar panels more efficient. Solar cells convert sunlight directly into what form of energy?",
+    "choices": {
+     "W": "Electrical energy",
+     "X": "Thermal energy",
+     "Y": "Chemical energy",
+     "Z": "Nuclear energy"
+    },
+    "answer": "ELECTRICAL ENERGY",
+    "answerLetter": "W",
+    "accept": [],
+    "reject": []
+   }
+  },
+  {
+   "expect": "former-lab-name",
+   "why": "Final round: names a lab that was renamed on 1 December 2025.",
+   "question": {
+    "id": "pilot-gen-ms-r01-t16",
+    "level": "MS",
+    "kind": "tossup",
+    "subject": "energy",
+    "format": "multiple_choice",
+    "stem": "Scientists at the National Renewable Energy Laboratory study geothermal power plants. Geothermal energy comes mainly from which of the following?",
+    "choices": {
+     "W": "Heat from inside Earth",
+     "X": "Sunlight absorbed by the ground",
+     "Y": "Ocean tides",
+     "Z": "Burning underground coal seams"
+    },
+    "answer": "HEAT FROM INSIDE EARTH",
+    "answerLetter": "W",
+    "accept": [],
+    "reject": []
+   }
+  }
+ ],
+ "firstDraftKeys": {
+  "HS": [
+   "Y",
+   "Z",
+   "W",
+   "X",
+   "X",
+   "Y",
+   "X",
+   "Y",
+   "Y",
+   "X",
+   "W",
+   "X",
+   "X",
+   "X",
+   "X",
+   "W",
+   "Y"
+  ],
+  "MS": [
+   "X",
+   "Z",
+   "W",
+   "Y",
+   "X",
+   "X",
+   "Y",
+   "Y",
+   "Y",
+   "X",
+   "X",
+   "Z",
+   "X",
+   "W",
+   "X",
+   "X"
+  ]
+ }
+}

@@ -1,0 +1,599 @@
+{
+ "about": "Measured from DOE's National Science Bowl sample sets of 2019 and later in Rebound's library, by scripts/gen/profile.ts. Shares are fractions (0–1) of the group they sit in; word counts leave out pronunciation guides. Do not edit by hand: run npm run gen:profile.",
+ "fromYear": 2019,
+ "sets": [
+  "doe-hs-13",
+  "doe-hs-14",
+  "doe-hs-15",
+  "doe-hs-16",
+  "doe-hs-17",
+  "doe-ms-13",
+  "doe-ms-14",
+  "doe-ms-15",
+  "doe-ms-16"
+ ],
+ "levels": {
+  "HS": {
+   "questions": 2464,
+   "rounds": 59,
+   "cells": {
+    "biology": {
+     "tossup": {
+      "questions": 211,
+      "multipleChoice": 0.251,
+      "numeric": 0.014,
+      "identifyAll": 0.009,
+      "rank": 0.005,
+      "accept": 0.424,
+      "doNotAccept": 0.057,
+      "guide": 0.351,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 16,
+       "p90": 24
+      }
+     },
+     "bonus": {
+      "questions": 211,
+      "multipleChoice": 0.284,
+      "numeric": 0.057,
+      "identifyAll": 0.313,
+      "rank": 0.043,
+      "accept": 0.245,
+      "doNotAccept": 0.02,
+      "guide": 0.431,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 21,
+       "p90": 37
+      }
+     }
+    },
+    "chemistry": {
+     "tossup": {
+      "questions": 211,
+      "multipleChoice": 0.398,
+      "numeric": 0.104,
+      "identifyAll": 0.066,
+      "rank": 0.033,
+      "accept": 0.291,
+      "doNotAccept": 0.024,
+      "guide": 0.204,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 16,
+       "p90": 30
+      }
+     },
+     "bonus": {
+      "questions": 211,
+      "multipleChoice": 0.218,
+      "numeric": 0.152,
+      "identifyAll": 0.261,
+      "rank": 0.185,
+      "accept": 0.152,
+      "doNotAccept": 0.024,
+      "guide": 0.318,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 20,
+       "p90": 40
+      }
+     }
+    },
+    "earth_space": {
+     "tossup": {
+      "questions": 211,
+      "multipleChoice": 0.427,
+      "numeric": 0.057,
+      "identifyAll": 0,
+      "rank": 0,
+      "accept": 0.281,
+      "doNotAccept": 0.025,
+      "guide": 0.251,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 15,
+       "p90": 27
+      }
+     },
+     "bonus": {
+      "questions": 211,
+      "multipleChoice": 0.327,
+      "numeric": 0.09,
+      "identifyAll": 0.275,
+      "rank": 0.109,
+      "accept": 0.113,
+      "doNotAccept": 0.035,
+      "guide": 0.27,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 21,
+       "p90": 38
+      }
+     }
+    },
+    "energy": {
+     "tossup": {
+      "questions": 177,
+      "multipleChoice": 0.412,
+      "numeric": 0.045,
+      "identifyAll": 0.023,
+      "rank": 0,
+      "accept": 0.413,
+      "doNotAccept": 0.077,
+      "guide": 0.271,
+      "labLeadIn": 0.684,
+      "namesLab": 0.972,
+      "stemWords": {
+       "median": 30,
+       "p90": 43
+      }
+     },
+     "bonus": {
+      "questions": 177,
+      "multipleChoice": 0.333,
+      "numeric": 0.085,
+      "identifyAll": 0.136,
+      "rank": 0.017,
+      "accept": 0.339,
+      "doNotAccept": 0.059,
+      "guide": 0.311,
+      "labLeadIn": 0.712,
+      "namesLab": 0.921,
+      "stemWords": {
+       "median": 33,
+       "p90": 46
+      }
+     }
+    },
+    "math": {
+     "tossup": {
+      "questions": 211,
+      "multipleChoice": 0.161,
+      "numeric": 0.82,
+      "identifyAll": 0.005,
+      "rank": 0,
+      "accept": 0.13,
+      "doNotAccept": 0.011,
+      "guide": 0.005,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 19,
+       "p90": 35
+      }
+     },
+     "bonus": {
+      "questions": 211,
+      "multipleChoice": 0.024,
+      "numeric": 0.777,
+      "identifyAll": 0.009,
+      "rank": 0,
+      "accept": 0.209,
+      "doNotAccept": 0.015,
+      "guide": 0,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 25,
+       "p90": 39
+      }
+     }
+    },
+    "physics": {
+     "tossup": {
+      "questions": 211,
+      "multipleChoice": 0.379,
+      "numeric": 0.275,
+      "identifyAll": 0.047,
+      "rank": 0.009,
+      "accept": 0.244,
+      "doNotAccept": 0.069,
+      "guide": 0.137,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 25,
+       "p90": 44
+      }
+     },
+     "bonus": {
+      "questions": 211,
+      "multipleChoice": 0.114,
+      "numeric": 0.645,
+      "identifyAll": 0.199,
+      "rank": 0.014,
+      "accept": 0.166,
+      "doNotAccept": 0.021,
+      "guide": 0.109,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 37,
+       "p90": 56
+      }
+     }
+    }
+   },
+   "all": {
+    "tossup": {
+     "questions": 1232,
+     "multipleChoice": 0.336,
+     "numeric": 0.224,
+     "identifyAll": 0.025,
+     "rank": 0.008,
+     "accept": 0.289,
+     "doNotAccept": 0.042,
+     "guide": 0.201,
+     "labLeadIn": 0.098,
+     "namesLab": 0.14,
+     "stemWords": {
+      "median": 20,
+      "p90": 37
+     }
+    },
+    "bonus": {
+     "questions": 1232,
+     "multipleChoice": 0.213,
+     "numeric": 0.307,
+     "identifyAll": 0.2,
+     "rank": 0.063,
+     "accept": 0.198,
+     "doNotAccept": 0.027,
+     "guide": 0.238,
+     "labLeadIn": 0.102,
+     "namesLab": 0.132,
+     "stemWords": {
+      "median": 25,
+      "p90": 44
+     }
+    }
+   },
+   "choices": {
+    "words": {
+     "median": 2,
+     "p90": 8
+    },
+    "meanWords": {
+     "median": 2,
+     "p90": 8.8,
+     "p95": 10.5
+    },
+    "letters": {
+     "W": 0.254,
+     "X": 0.245,
+     "Y": 0.248,
+     "Z": 0.253
+    },
+    "rightIsLongest": 0.207,
+    "endsWithQuestionMark": 0.999
+   },
+   "capitalNot": 0.015,
+   "perRound": {
+    "tossupStemMedian": {
+     "low": 15,
+     "mid": 20,
+     "high": 24
+    },
+    "bonusStemMedian": {
+     "low": 19,
+     "mid": 24.5,
+     "high": 31.5
+    },
+    "multipleChoice": {
+     "low": 0.152,
+     "mid": 0.261,
+     "high": 0.5
+    },
+    "choiceMeanWords": {
+     "low": 1.5,
+     "mid": 3.5,
+     "high": 6
+    },
+    "rightIsLongest": {
+     "low": 0,
+     "mid": 0.182,
+     "high": 0.4
+    }
+   }
+  },
+  "MS": {
+   "questions": 2152,
+   "rounds": 53,
+   "cells": {
+    "biology": {
+     "tossup": {
+      "questions": 227,
+      "multipleChoice": 0.282,
+      "numeric": 0,
+      "identifyAll": 0.004,
+      "rank": 0.004,
+      "accept": 0.325,
+      "doNotAccept": 0.049,
+      "guide": 0.211,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 16,
+       "p90": 26
+      }
+     },
+     "bonus": {
+      "questions": 227,
+      "multipleChoice": 0.291,
+      "numeric": 0.048,
+      "identifyAll": 0.159,
+      "rank": 0.031,
+      "accept": 0.23,
+      "doNotAccept": 0.043,
+      "guide": 0.335,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 18,
+       "p90": 31
+      }
+     }
+    },
+    "chemistry": {
+     "tossup": {
+      "questions": 98,
+      "multipleChoice": 0.306,
+      "numeric": 0.082,
+      "identifyAll": 0.01,
+      "rank": 0.01,
+      "accept": 0.147,
+      "doNotAccept": 0.015,
+      "guide": 0.122,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 15,
+       "p90": 30
+      }
+     },
+     "bonus": {
+      "questions": 100,
+      "multipleChoice": 0.23,
+      "numeric": 0.23,
+      "identifyAll": 0.27,
+      "rank": 0.12,
+      "accept": 0.078,
+      "doNotAccept": 0,
+      "guide": 0.13,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 19,
+       "p90": 36
+      }
+     }
+    },
+    "earth_space": {
+     "tossup": {
+      "questions": 227,
+      "multipleChoice": 0.419,
+      "numeric": 0.057,
+      "identifyAll": 0.004,
+      "rank": 0.004,
+      "accept": 0.235,
+      "doNotAccept": 0.083,
+      "guide": 0.233,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 15,
+       "p90": 26
+      }
+     },
+     "bonus": {
+      "questions": 227,
+      "multipleChoice": 0.322,
+      "numeric": 0.057,
+      "identifyAll": 0.242,
+      "rank": 0.101,
+      "accept": 0.104,
+      "doNotAccept": 0.013,
+      "guide": 0.211,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 20,
+       "p90": 37
+      }
+     }
+    },
+    "energy": {
+     "tossup": {
+      "questions": 159,
+      "multipleChoice": 0.352,
+      "numeric": 0.082,
+      "identifyAll": 0.013,
+      "rank": 0,
+      "accept": 0.427,
+      "doNotAccept": 0.019,
+      "guide": 0.252,
+      "labLeadIn": 0.711,
+      "namesLab": 0.969,
+      "stemWords": {
+       "median": 29,
+       "p90": 42
+      }
+     },
+     "bonus": {
+      "questions": 159,
+      "multipleChoice": 0.296,
+      "numeric": 0.069,
+      "identifyAll": 0.088,
+      "rank": 0.006,
+      "accept": 0.339,
+      "doNotAccept": 0.018,
+      "guide": 0.239,
+      "labLeadIn": 0.698,
+      "namesLab": 0.95,
+      "stemWords": {
+       "median": 31,
+       "p90": 45
+      }
+     }
+    },
+    "math": {
+     "tossup": {
+      "questions": 227,
+      "multipleChoice": 0.079,
+      "numeric": 0.824,
+      "identifyAll": 0.004,
+      "rank": 0,
+      "accept": 0.134,
+      "doNotAccept": 0,
+      "guide": 0.004,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 17,
+       "p90": 29
+      }
+     },
+     "bonus": {
+      "questions": 227,
+      "multipleChoice": 0.009,
+      "numeric": 0.828,
+      "identifyAll": 0.009,
+      "rank": 0,
+      "accept": 0.107,
+      "doNotAccept": 0.022,
+      "guide": 0.009,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 23,
+       "p90": 38
+      }
+     }
+    },
+    "physics": {
+     "tossup": {
+      "questions": 134,
+      "multipleChoice": 0.358,
+      "numeric": 0.231,
+      "identifyAll": 0,
+      "rank": 0,
+      "accept": 0.116,
+      "doNotAccept": 0.081,
+      "guide": 0.075,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 20,
+       "p90": 36
+      }
+     },
+     "bonus": {
+      "questions": 140,
+      "multipleChoice": 0.179,
+      "numeric": 0.543,
+      "identifyAll": 0.1,
+      "rank": 0.057,
+      "accept": 0.165,
+      "doNotAccept": 0.026,
+      "guide": 0.057,
+      "labLeadIn": 0,
+      "namesLab": 0,
+      "stemWords": {
+       "median": 27,
+       "p90": 44
+      }
+     }
+    }
+   },
+   "all": {
+    "tossup": {
+     "questions": 1072,
+     "multipleChoice": 0.29,
+     "numeric": 0.235,
+     "identifyAll": 0.006,
+     "rank": 0.003,
+     "accept": 0.231,
+     "doNotAccept": 0.038,
+     "guide": 0.153,
+     "labLeadIn": 0.105,
+     "namesLab": 0.144,
+     "stemWords": {
+      "median": 18,
+      "p90": 33
+     }
+    },
+    "bonus": {
+     "questions": 1080,
+     "multipleChoice": 0.219,
+     "numeric": 0.298,
+     "identifyAll": 0.137,
+     "rank": 0.047,
+     "accept": 0.166,
+     "doNotAccept": 0.023,
+     "guide": 0.171,
+     "labLeadIn": 0.103,
+     "namesLab": 0.14,
+     "stemWords": {
+      "median": 22,
+      "p90": 40
+     }
+    }
+   },
+   "choices": {
+    "words": {
+     "median": 2,
+     "p90": 7
+    },
+    "meanWords": {
+     "median": 1.6,
+     "p90": 7.8,
+     "p95": 9.8
+    },
+    "letters": {
+     "W": 0.239,
+     "X": 0.276,
+     "Y": 0.249,
+     "Z": 0.236
+    },
+    "rightIsLongest": 0.19,
+    "endsWithQuestionMark": 1
+   },
+   "capitalNot": 0.011,
+   "perRound": {
+    "tossupStemMedian": {
+     "low": 14.5,
+     "mid": 18,
+     "high": 23.5
+    },
+    "bonusStemMedian": {
+     "low": 17,
+     "mid": 22.5,
+     "high": 27
+    },
+    "multipleChoice": {
+     "low": 0.13,
+     "mid": 0.244,
+     "high": 0.472
+    },
+    "choiceMeanWords": {
+     "low": 1.5,
+     "mid": 2.7,
+     "high": 4.9
+    },
+    "rightIsLongest": {
+     "low": 0,
+     "mid": 0.194,
+     "high": 0.364
+    }
+   }
+  }
+ }
+}
