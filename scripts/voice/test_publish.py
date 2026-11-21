@@ -208,6 +208,32 @@ class Deploy(unittest.TestCase):
             self.run_stub("import sys\nprint('You are not authenticated. Please run `wrangler login`.')\nsys.exit(1)\n")
         self.assertIn('wrangler login', str(stopped.exception))
 
+    def test_a_folder_named_from_the_current_one(self):
+        # The default --stage is relative (voice/publish): wrangler, run inside the Worker's folder, must still find
+        # its configuration. The stand-in fails as wrangler does when the file named by --config is not there.
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        folder = root / 'voice' / 'publish' / 'rebound-voice-1'
+        folder.mkdir(parents=True)
+        (folder / 'wrangler.json').write_text('{}')
+        stub = root / 'wrangler_stub.py'
+        stub.write_text(
+            "import os, sys\n"
+            "config = sys.argv[sys.argv.index('--config') + 1]\n"
+            "if not os.path.exists(config):\n"
+            "    print(f'Could not read file: {config}')\n"
+            "    sys.exit(1)\n"
+            "print('  https://rebound-voice-1.someone.workers.dev')\n"
+        )
+        before = os.getcwd()
+        os.chdir(root)
+        try:
+            with mock.patch.dict(os.environ, {'REBOUND_WRANGLER': f'{sys.executable} {stub}'}), contextlib.redirect_stdout(io.StringIO()):
+                url = publish.deploy(Path('voice') / 'publish' / 'rebound-voice-1', None)
+        finally:
+            os.chdir(before)
+        self.assertEqual(url, 'https://rebound-voice-1.someone.workers.dev')
+
     def test_more_than_one_account(self):
         with self.assertRaises(SystemExit) as stopped:
             self.run_stub("import sys\nprint('More than one account available but unable to select one in non-interactive mode.')\nsys.exit(1)\n")

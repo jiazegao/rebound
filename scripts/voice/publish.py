@@ -234,6 +234,9 @@ def wrangler_command() -> list[str]:
 
 def deploy(folder: Path, account: str | None) -> str:
     """Uploads one Worker's files (only those new or changed) and gives back its address."""
+    # wrangler runs in the Worker's folder, so its configuration is named in full (a relative --stage, the default,
+    # would otherwise be read from inside itself).
+    folder = folder.resolve()
     env = dict(os.environ, FORCE_COLOR='0', CI='1')
     if account:
         env['CLOUDFLARE_ACCOUNT_ID'] = account
@@ -359,7 +362,7 @@ def publish(args: argparse.Namespace) -> None:
     total = sum(i['bytes'] for i in found.values())
     hours = sum(i['ms'] for i in found.values()) / 3_600_000
     print(f'  all here: {total / 1e9:.2f} GB, {hours:.1f} hours of speech.', flush=True)
-    folders = stage(found, args.hosts, Path(args.stage))
+    folders = stage(found, args.hosts, Path(args.stage).resolve())
     for folder in folders:
         count = sum(1 for p in (folder / 'files').iterdir() if p.suffix == '.mp3')
         print(f'  {folder.name}: {count:,} files ready in {folder}', flush=True)
