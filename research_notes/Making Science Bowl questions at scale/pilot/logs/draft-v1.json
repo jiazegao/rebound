@@ -1,0 +1,992 @@
+[
+ {
+  "id": "pilot-gen-hs-r01-t01",
+  "level": "HS",
+  "kind": "tossup",
+  "number": 1,
+  "subject": "biology",
+  "format": "multiple_choice",
+  "difficulty": "easy-medium",
+  "stem": "Which of the following hormones is secreted by the adrenal medulla?",
+  "answerRaw": "Y) EPINEPHRINE",
+  "choices": {
+   "W": "Cortisol",
+   "X": "Aldosterone [al-DOSS-ter-ohn]",
+   "Y": "Epinephrine [ep-ih-NEF-rin]",
+   "Z": "Thyroxine [thigh-ROCK-seen]"
+  }
+ },
+ {
+  "id": "pilot-gen-hs-r01-b01",
+  "level": "HS",
+  "kind": "bonus",
+  "number": 1,
+  "subject": "biology",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "In C₄ plants such as corn, carbon dioxide is first fixed into a four-carbon acid in mesophyll cells. In what type of cells, which form a ring around the leaf veins, does the Calvin cycle then take place?",
+  "answerRaw": "BUNDLE-SHEATH CELLS (ACCEPT: BUNDLE SHEATH)"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t02",
+  "level": "HS",
+  "kind": "tossup",
+  "number": 2,
+  "subject": "chemistry",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "What is the molecular geometry of xenon [ZEE-non] tetrafluoride?",
+  "answerRaw": "SQUARE PLANAR (DO NOT ACCEPT: OCTAHEDRAL)"
+ },
+ {
+  "id": "pilot-gen-hs-r01-b02",
+  "level": "HS",
+  "kind": "bonus",
+  "number": 2,
+  "subject": "chemistry",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "A student mixes 50 milliliters of 0.20-molar hydrochloric acid with 50 milliliters of 0.10-molar sodium hydroxide. To one decimal place, what is the pH of the resulting solution?",
+  "answerRaw": "1.3"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t03",
+  "level": "HS",
+  "kind": "tossup",
+  "number": 3,
+  "subject": "earth_space",
+  "format": "multiple_choice",
+  "difficulty": "easy-medium",
+  "stem": "Which of the following is a felsic [FEL-sik] intrusive igneous rock?",
+  "answerRaw": "Z) GRANITE",
+  "choices": {
+   "W": "Basalt",
+   "X": "Gabbro [GAB-roh]",
+   "Y": "Rhyolite [RYE-oh-lite]",
+   "Z": "Granite"
+  }
+ },
+ {
+  "id": "pilot-gen-hs-r01-b03",
+  "level": "HS",
+  "kind": "bonus",
+  "number": 3,
+  "subject": "earth_space",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "What is the name of the cold, dense water mass that forms around Antarctica, sinks along the continental slope, and is the densest water mass in the open ocean?",
+  "answerRaw": "ANTARCTIC BOTTOM WATER (ACCEPT: AABW)"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t04",
+  "level": "HS",
+  "kind": "tossup",
+  "number": 4,
+  "subject": "energy",
+  "format": "multiple_choice",
+  "difficulty": "medium-hard",
+  "stem": "Scientists at the National Renewable Energy Laboratory are developing solar cells made from perovskites [puh-ROV-skites]. These materials are named after the mineral perovskite, which has what chemical composition?",
+  "answerRaw": "W) CALCIUM TITANATE",
+  "choices": {
+   "W": "Calcium titanate",
+   "X": "Silicon dioxide",
+   "Y": "Iron disulfide",
+   "Z": "Barium sulfate"
+  }
+ },
+ {
+  "id": "pilot-gen-hs-r01-b04",
+  "level": "HS",
+  "kind": "bonus",
+  "number": 4,
+  "subject": "energy",
+  "format": "multiple_choice",
+  "difficulty": "easy-medium",
+  "stem": "Researchers at Princeton Plasma Physics Laboratory study magnetic confinement fusion. The deuterium–tritium fusion reaction produces a helium-4 nucleus and what other particle, which carries most of the energy released?",
+  "answerRaw": "X) NEUTRON",
+  "choices": {
+   "W": "Proton",
+   "X": "Neutron",
+   "Y": "Positron",
+   "Z": "Gamma-ray photon"
+  }
+ },
+ {
+  "id": "pilot-gen-hs-r01-t05",
+  "level": "HS",
+  "kind": "tossup",
+  "number": 5,
+  "subject": "math",
+  "format": "multiple_choice",
+  "difficulty": "easy",
+  "stem": "Which of the following functions of x is odd?",
+  "answerRaw": "X) x³ – x",
+  "choices": {
+   "W": "x² + 1",
+   "X": "x³ – x",
+   "Y": "Absolute value of x",
+   "Z": "Cosine of x"
+  }
+ },
+ {
+  "id": "pilot-gen-hs-r01-b05",
+  "level": "HS",
+  "kind": "bonus",
+  "number": 5,
+  "subject": "math",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "What is the remainder when 2 to the 100th power is divided by 7?",
+  "answerRaw": "2"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t06",
+  "level": "HS",
+  "kind": "tossup",
+  "number": 6,
+  "subject": "physics",
+  "format": "multiple_choice",
+  "difficulty": "medium",
+  "stem": "A charged particle moves in a circle in a uniform magnetic field, with its velocity perpendicular to the field. If the particle’s speed is doubled, what happens to the radius of its circular path?",
+  "answerRaw": "Y) IT DOUBLES",
+  "choices": {
+   "W": "It is halved",
+   "X": "It stays the same",
+   "Y": "It doubles",
+   "Z": "It quadruples"
+  }
+ },
+ {
+  "id": "pilot-gen-hs-r01-b06",
+  "level": "HS",
+  "kind": "bonus",
+  "number": 6,
+  "subject": "physics",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "A 2-kilogram block is released from rest and slides down a frictionless ramp, dropping a vertical height of 5 meters. It then slides onto a rough horizontal floor where the coefficient of kinetic friction is 0.25. In meters, how far does the block slide along the floor before stopping?",
+  "answerRaw": "20"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t07",
+  "level": "HS",
+  "kind": "tossup",
+  "number": 7,
+  "subject": "biology",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "What is the term for the channels that pass through plant cell walls and connect the cytoplasm of neighboring cells?",
+  "answerRaw": "PLASMODESMATA [plaz-moh-dez-MAH-tah] (ACCEPT: PLASMODESMA)"
+ },
+ {
+  "id": "pilot-gen-hs-r01-b07",
+  "level": "HS",
+  "kind": "bonus",
+  "number": 7,
+  "subject": "biology",
+  "format": "multiple_choice",
+  "difficulty": "medium",
+  "stem": "In a population at Hardy-Weinberg equilibrium, 4% of individuals show a recessive phenotype controlled by a single gene with two alleles. What percentage of the population is expected to be heterozygous?",
+  "answerRaw": "X) 32%",
+  "choices": {
+   "W": "16%",
+   "X": "32%",
+   "Y": "64%",
+   "Z": "80%"
+  }
+ },
+ {
+  "id": "pilot-gen-hs-r01-t08",
+  "level": "HS",
+  "kind": "tossup",
+  "number": 8,
+  "subject": "chemistry",
+  "format": "multiple_choice",
+  "difficulty": "easy",
+  "stem": "Which of the following compounds has the highest normal boiling point?",
+  "answerRaw": "Y) ETHANOL",
+  "choices": {
+   "W": "Propane",
+   "X": "Dimethyl ether",
+   "Y": "Ethanol",
+   "Z": "Methane"
+  }
+ },
+ {
+  "id": "pilot-gen-hs-r01-b08",
+  "level": "HS",
+  "kind": "bonus",
+  "number": 8,
+  "subject": "chemistry",
+  "format": "multiple_choice",
+  "difficulty": "medium",
+  "stem": "Assuming ideal behavior, which of the following aqueous solutions has the lowest freezing point?",
+  "answerRaw": "Y) 0.10-MOLAL CALCIUM CHLORIDE",
+  "choices": {
+   "W": "0.10-molal glucose",
+   "X": "0.10-molal sodium chloride",
+   "Y": "0.10-molal calcium chloride",
+   "Z": "0.15-molal sucrose"
+  }
+ },
+ {
+  "id": "pilot-gen-hs-r01-t09",
+  "level": "HS",
+  "kind": "tossup",
+  "number": 9,
+  "subject": "earth_space",
+  "format": "short_answer",
+  "difficulty": "hard",
+  "stem": "What is the name of the boundary in the outer heliosphere where the solar wind abruptly slows from supersonic to subsonic speed as it begins to interact with the interstellar medium?",
+  "answerRaw": "TERMINATION SHOCK (DO NOT ACCEPT: HELIOPAUSE OR BOW SHOCK)"
+ },
+ {
+  "id": "pilot-gen-hs-r01-b09",
+  "level": "HS",
+  "kind": "bonus",
+  "number": 9,
+  "subject": "earth_space",
+  "format": "multiple_choice",
+  "difficulty": "medium",
+  "stem": "Which of the following cloud types is most associated with steady, prolonged precipitation ahead of an approaching warm front?",
+  "answerRaw": "X) NIMBOSTRATUS",
+  "choices": {
+   "W": "Cumulonimbus",
+   "X": "Nimbostratus",
+   "Y": "Cirrocumulus",
+   "Z": "Altocumulus"
+  }
+ },
+ {
+  "id": "pilot-gen-hs-r01-t10",
+  "level": "HS",
+  "kind": "tossup",
+  "number": 10,
+  "subject": "energy",
+  "format": "short_answer",
+  "difficulty": "easy-medium",
+  "stem": "Scientists at Argonne National Laboratory are developing cathodes for lithium-ion batteries. In the common cathode material abbreviated NMC, the letters stand for nickel, manganese, and what other metal?",
+  "answerRaw": "COBALT (ACCEPT: Co)"
+ },
+ {
+  "id": "pilot-gen-hs-r01-b10",
+  "level": "HS",
+  "kind": "bonus",
+  "number": 10,
+  "subject": "energy",
+  "format": "multiple_choice",
+  "difficulty": "medium",
+  "stem": "Researchers at Oak Ridge National Laboratory use neutron beams from the Spallation Neutron Source to study materials. Neutrons can locate hydrogen atoms in a sample far better than X-rays can, mainly because neutrons scatter from which of the following?",
+  "answerRaw": "W) ATOMIC NUCLEI",
+  "choices": {
+   "W": "Atomic nuclei",
+   "X": "Electron clouds",
+   "Y": "Chemical bonds",
+   "Z": "Photons in the sample"
+  }
+ },
+ {
+  "id": "pilot-gen-hs-r01-t11",
+  "level": "HS",
+  "kind": "tossup",
+  "number": 11,
+  "subject": "math",
+  "format": "short_answer",
+  "difficulty": "easy",
+  "stem": "In degrees, what is the sum of the interior angles of a decagon?",
+  "answerRaw": "1,440"
+ },
+ {
+  "id": "pilot-gen-hs-r01-b11",
+  "level": "HS",
+  "kind": "bonus",
+  "number": 11,
+  "subject": "math",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "How many positive integer divisors does 360 have?",
+  "answerRaw": "24"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t12",
+  "level": "HS",
+  "kind": "tossup",
+  "number": 12,
+  "subject": "physics",
+  "format": "multiple_choice",
+  "difficulty": "medium",
+  "stem": "An object is placed 10 centimeters from a converging lens with a focal length of 20 centimeters. Which of the following best describes the image?",
+  "answerRaw": "X) VIRTUAL, UPRIGHT, AND ENLARGED",
+  "choices": {
+   "W": "Real, inverted, and enlarged",
+   "X": "Virtual, upright, and enlarged",
+   "Y": "Real, inverted, and reduced",
+   "Z": "Virtual, upright, and reduced"
+  }
+ },
+ {
+  "id": "pilot-gen-hs-r01-b12",
+  "level": "HS",
+  "kind": "bonus",
+  "number": 12,
+  "subject": "physics",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "A 6-ohm resistor and a 3-ohm resistor are connected in parallel, and this combination is connected in series with a 4-ohm resistor across an ideal 12-volt battery. In amperes, what is the current through the 3-ohm resistor?",
+  "answerRaw": "4/3 (ACCEPT: 1 1/3, 1.33)"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t13",
+  "level": "HS",
+  "kind": "tossup",
+  "number": 13,
+  "subject": "biology",
+  "format": "multiple_choice",
+  "difficulty": "easy-medium",
+  "stem": "Which of the following animals lacks true tissues?",
+  "answerRaw": "X) SEA SPONGE",
+  "choices": {
+   "W": "Sea anemone [uh-NEM-uh-nee]",
+   "X": "Sea sponge",
+   "Y": "Planarian [pluh-NAIR-ee-un]",
+   "Z": "Jellyfish"
+  }
+ },
+ {
+  "id": "pilot-gen-hs-r01-b13",
+  "level": "HS",
+  "kind": "bonus",
+  "number": 13,
+  "subject": "biology",
+  "format": "short_answer",
+  "difficulty": "medium-hard",
+  "stem": "Identify all of the following three statements that are true of the loop of Henle [HEN-lee] in the human kidney: 1) Its descending limb is permeable to water; 2) Its thick ascending limb actively transports sodium and chloride ions out of the filtrate; 3) It lies entirely within the renal cortex.",
+  "answerRaw": "1, 2"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t14",
+  "level": "HS",
+  "kind": "tossup",
+  "number": 14,
+  "subject": "chemistry",
+  "format": "multiple_choice",
+  "difficulty": "medium-hard",
+  "stem": "Which of the following elements releases the most energy when a neutral gaseous atom gains an electron?",
+  "answerRaw": "X) CHLORINE",
+  "choices": {
+   "W": "Fluorine",
+   "X": "Chlorine",
+   "Y": "Oxygen",
+   "Z": "Bromine"
+  }
+ },
+ {
+  "id": "pilot-gen-hs-r01-b14",
+  "level": "HS",
+  "kind": "bonus",
+  "number": 14,
+  "subject": "chemistry",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "How many constitutional isomers, including the straight-chain isomer, have the molecular formula C₆H₁₄?",
+  "answerRaw": "5"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t15",
+  "level": "HS",
+  "kind": "tossup",
+  "number": 15,
+  "subject": "earth_space",
+  "format": "multiple_choice",
+  "difficulty": "easy-medium",
+  "stem": "Which of the following planets has the shortest day, as measured by its sidereal rotation period?",
+  "answerRaw": "X) JUPITER",
+  "choices": {
+   "W": "Earth",
+   "X": "Jupiter",
+   "Y": "Saturn",
+   "Z": "Neptune"
+  }
+ },
+ {
+  "id": "pilot-gen-hs-r01-b15",
+  "level": "HS",
+  "kind": "bonus",
+  "number": 15,
+  "subject": "earth_space",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "Identify all of the following three minerals that are harder than quartz on the Mohs scale: 1) Topaz; 2) Orthoclase [OR-thoh-clays]; 3) Corundum [kuh-RUN-dum].",
+  "answerRaw": "1, 3"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t16",
+  "level": "HS",
+  "kind": "tossup",
+  "number": 16,
+  "subject": "energy",
+  "format": "multiple_choice",
+  "difficulty": "easy-medium",
+  "stem": "Scientists at Idaho National Laboratory test new fuels for light-water reactors. In these reactors, ordinary water acts as the coolant and also serves which of the following roles?",
+  "answerRaw": "W) NEUTRON MODERATOR",
+  "choices": {
+   "W": "Neutron moderator",
+   "X": "Neutron source",
+   "Y": "Fuel cladding",
+   "Z": "Control rod material"
+  }
+ },
+ {
+  "id": "pilot-gen-hs-r01-b16",
+  "level": "HS",
+  "kind": "bonus",
+  "number": 16,
+  "subject": "energy",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "Engineers at the National Renewable Energy Laboratory test wind turbines. If both the rotor diameter and the wind speed are doubled, by what factor does the power carried by the wind through the rotor’s swept area increase?",
+  "answerRaw": "32"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t17",
+  "level": "HS",
+  "kind": "tossup",
+  "number": 17,
+  "subject": "math",
+  "format": "short_answer",
+  "difficulty": "easy",
+  "stem": "What is the determinant of the 2-by-2 matrix whose first row is 3, 5 and whose second row is 2, 4?",
+  "answerRaw": "2"
+ },
+ {
+  "id": "pilot-gen-hs-r01-b17",
+  "level": "HS",
+  "kind": "bonus",
+  "number": 17,
+  "subject": "math",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "Two fair six-sided dice are rolled. What is the probability that the sum of the numbers rolled is prime?",
+  "answerRaw": "5/12"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t18",
+  "level": "HS",
+  "kind": "tossup",
+  "number": 18,
+  "subject": "physics",
+  "format": "short_answer",
+  "difficulty": "easy",
+  "stem": "What law of electromagnetism states that the electromotive force induced in a closed loop is proportional to the rate of change of the magnetic flux through the loop?",
+  "answerRaw": "FARADAY’S LAW (ACCEPT: FARADAY’S LAW OF INDUCTION)"
+ },
+ {
+  "id": "pilot-gen-hs-r01-b18",
+  "level": "HS",
+  "kind": "bonus",
+  "number": 18,
+  "subject": "physics",
+  "format": "multiple_choice",
+  "difficulty": "medium",
+  "stem": "A satellite is in a circular orbit around Earth. If the radius of its orbit were quadrupled, by what factor would its orbital period increase?",
+  "answerRaw": "Y) 8",
+  "choices": {
+   "W": "2",
+   "X": "4",
+   "Y": "8",
+   "Z": "16"
+  }
+ },
+ {
+  "id": "pilot-gen-ms-r01-t01",
+  "level": "MS",
+  "kind": "tossup",
+  "number": 1,
+  "subject": "biology",
+  "format": "multiple_choice",
+  "difficulty": "medium",
+  "stem": "Which of the following blood vessels carries oxygen-poor blood from the heart to the lungs?",
+  "answerRaw": "X) PULMONARY ARTERY",
+  "choices": {
+   "W": "Aorta",
+   "X": "Pulmonary artery",
+   "Y": "Pulmonary vein",
+   "Z": "Superior vena cava [VEE-nuh KAY-vuh]"
+  }
+ },
+ {
+  "id": "pilot-gen-ms-r01-b01",
+  "level": "MS",
+  "kind": "bonus",
+  "number": 1,
+  "subject": "biology",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "During protein synthesis, what type of RNA molecule carries amino acids to the ribosome?",
+  "answerRaw": "TRANSFER RNA (ACCEPT: tRNA)"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t02",
+  "level": "MS",
+  "kind": "tossup",
+  "number": 2,
+  "subject": "chemistry",
+  "format": "multiple_choice",
+  "difficulty": "easy",
+  "stem": "Which of the following is a pure substance rather than a mixture?",
+  "answerRaw": "Z) DISTILLED WATER",
+  "choices": {
+   "W": "Air",
+   "X": "Seawater",
+   "Y": "Brass",
+   "Z": "Distilled water"
+  }
+ },
+ {
+  "id": "pilot-gen-ms-r01-b02",
+  "level": "MS",
+  "kind": "bonus",
+  "number": 2,
+  "subject": "chemistry",
+  "format": "multiple_choice",
+  "difficulty": "medium",
+  "stem": "Which of the following elements is a metalloid?",
+  "answerRaw": "W) SILICON",
+  "choices": {
+   "W": "Silicon",
+   "X": "Sulfur",
+   "Y": "Magnesium",
+   "Z": "Argon"
+  }
+ },
+ {
+  "id": "pilot-gen-ms-r01-t03",
+  "level": "MS",
+  "kind": "tossup",
+  "number": 3,
+  "subject": "earth_space",
+  "format": "multiple_choice",
+  "difficulty": "easy",
+  "stem": "Which of the following layers of Earth is liquid?",
+  "answerRaw": "Y) OUTER CORE",
+  "choices": {
+   "W": "Crust",
+   "X": "Mantle",
+   "Y": "Outer core",
+   "Z": "Inner core"
+  }
+ },
+ {
+  "id": "pilot-gen-ms-r01-b03",
+  "level": "MS",
+  "kind": "bonus",
+  "number": 3,
+  "subject": "earth_space",
+  "format": "multiple_choice",
+  "difficulty": "medium",
+  "stem": "On the June solstice, the noon Sun is directly overhead at which of the following latitudes?",
+  "answerRaw": "X) THE TROPIC OF CANCER",
+  "choices": {
+   "W": "The equator",
+   "X": "The Tropic of Cancer",
+   "Y": "The Tropic of Capricorn",
+   "Z": "The Arctic Circle"
+  }
+ },
+ {
+  "id": "pilot-gen-ms-r01-t04",
+  "level": "MS",
+  "kind": "tossup",
+  "number": 4,
+  "subject": "energy",
+  "format": "multiple_choice",
+  "difficulty": "easy",
+  "stem": "Scientists at the National Renewable Energy Laboratory are working to make solar panels more efficient. Solar cells convert sunlight directly into what form of energy?",
+  "answerRaw": "X) ELECTRICAL ENERGY",
+  "choices": {
+   "W": "Thermal energy",
+   "X": "Electrical energy",
+   "Y": "Chemical energy",
+   "Z": "Nuclear energy"
+  }
+ },
+ {
+  "id": "pilot-gen-ms-r01-b04",
+  "level": "MS",
+  "kind": "bonus",
+  "number": 4,
+  "subject": "energy",
+  "format": "short_answer",
+  "difficulty": "easy",
+  "stem": "Scientists at Princeton Plasma Physics Laboratory heat hydrogen fuel to more than 100 million degrees Celsius in fusion experiments. At such temperatures, electrons are stripped from their atoms, and matter exists in what state?",
+  "answerRaw": "PLASMA"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t05",
+  "level": "MS",
+  "kind": "tossup",
+  "number": 5,
+  "subject": "math",
+  "format": "short_answer",
+  "difficulty": "easy",
+  "stem": "What is 15 percent of 80?",
+  "answerRaw": "12"
+ },
+ {
+  "id": "pilot-gen-ms-r01-b05",
+  "level": "MS",
+  "kind": "bonus",
+  "number": 5,
+  "subject": "math",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "What are the two solutions of the equation x² – 5x – 14 = 0?",
+  "answerRaw": "7 AND –2 (accept in either order)"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t06",
+  "level": "MS",
+  "kind": "tossup",
+  "number": 6,
+  "subject": "physics",
+  "format": "multiple_choice",
+  "difficulty": "easy",
+  "stem": "Which of the following is the SI unit of force?",
+  "answerRaw": "Y) NEWTON",
+  "choices": {
+   "W": "Joule",
+   "X": "Watt",
+   "Y": "Newton",
+   "Z": "Pascal"
+  }
+ },
+ {
+  "id": "pilot-gen-ms-r01-b06",
+  "level": "MS",
+  "kind": "bonus",
+  "number": 6,
+  "subject": "physics",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "A 4-kilogram cart starts from rest on a frictionless track, and a constant net force of 20 newtons pushes it for 3 seconds. In meters, how far does the cart travel during those 3 seconds?",
+  "answerRaw": "22.5 (ACCEPT: 45/2, 22 1/2)"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t07",
+  "level": "MS",
+  "kind": "tossup",
+  "number": 7,
+  "subject": "biology",
+  "format": "short_answer",
+  "difficulty": "easy-medium",
+  "stem": "In pea plants, the allele for purple flowers is dominant over the allele for white flowers. If two plants that are heterozygous for flower color are crossed, what fraction of their offspring are expected to have white flowers?",
+  "answerRaw": "1/4 (ACCEPT: 25%)"
+ },
+ {
+  "id": "pilot-gen-ms-r01-b07",
+  "level": "MS",
+  "kind": "bonus",
+  "number": 7,
+  "subject": "biology",
+  "format": "multiple_choice",
+  "difficulty": "easy",
+  "stem": "In a food chain in which grass is eaten by grasshoppers, grasshoppers are eaten by frogs, and frogs are eaten by snakes, which organism is the secondary consumer?",
+  "answerRaw": "Y) FROG",
+  "choices": {
+   "W": "Grass",
+   "X": "Grasshopper",
+   "Y": "Frog",
+   "Z": "Snake"
+  }
+ },
+ {
+  "id": "pilot-gen-ms-r01-t08",
+  "level": "MS",
+  "kind": "tossup",
+  "number": 8,
+  "subject": "chemistry",
+  "format": "multiple_choice",
+  "difficulty": "easy",
+  "stem": "Which of the following is a typical property of metals?",
+  "answerRaw": "Y) MALLEABILITY",
+  "choices": {
+   "W": "Brittleness",
+   "X": "Poor conduction of heat",
+   "Y": "Malleability",
+   "Z": "Dull appearance"
+  }
+ },
+ {
+  "id": "pilot-gen-ms-r01-b08",
+  "level": "MS",
+  "kind": "bonus",
+  "number": 8,
+  "subject": "chemistry",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "A solution is made by dissolving 20 grams of sugar in 80 grams of water. What is the percent by mass of sugar in the solution?",
+  "answerRaw": "20 (ACCEPT: 20%)"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t09",
+  "level": "MS",
+  "kind": "tossup",
+  "number": 9,
+  "subject": "earth_space",
+  "format": "multiple_choice",
+  "difficulty": "medium",
+  "stem": "Which of the following is the third most abundant gas in dry air near Earth’s surface?",
+  "answerRaw": "X) ARGON",
+  "choices": {
+   "W": "Carbon dioxide",
+   "X": "Argon",
+   "Y": "Neon",
+   "Z": "Helium"
+  }
+ },
+ {
+  "id": "pilot-gen-ms-r01-b09",
+  "level": "MS",
+  "kind": "bonus",
+  "number": 9,
+  "subject": "earth_space",
+  "format": "short_answer",
+  "difficulty": "easy",
+  "stem": "What is the name of the supercontinent that included nearly all of Earth’s land about 250 million years ago?",
+  "answerRaw": "PANGAEA (ACCEPT: PANGEA)"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t10",
+  "level": "MS",
+  "kind": "tossup",
+  "number": 10,
+  "subject": "energy",
+  "format": "short_answer",
+  "difficulty": "easy",
+  "stem": "Scientists at Idaho National Laboratory design and test nuclear reactors. What is the term for the process in which a large nucleus such as uranium-235 splits into two smaller nuclei and releases energy?",
+  "answerRaw": "FISSION (ACCEPT: NUCLEAR FISSION)"
+ },
+ {
+  "id": "pilot-gen-ms-r01-b10",
+  "level": "MS",
+  "kind": "bonus",
+  "number": 10,
+  "subject": "energy",
+  "format": "multiple_choice",
+  "difficulty": "medium-hard",
+  "stem": "Scientists at Argonne National Laboratory are designing better lithium-ion batteries. When such a battery is discharging, lithium ions travel from the anode to the cathode through which of the following?",
+  "answerRaw": "X) THE ELECTROLYTE",
+  "choices": {
+   "W": "The external wire",
+   "X": "The electrolyte",
+   "Y": "The battery casing",
+   "Z": "The current collector"
+  }
+ },
+ {
+  "id": "pilot-gen-ms-r01-t11",
+  "level": "MS",
+  "kind": "tossup",
+  "number": 11,
+  "subject": "math",
+  "format": "short_answer",
+  "difficulty": "easy",
+  "stem": "What is the least common multiple of 12 and 18?",
+  "answerRaw": "36"
+ },
+ {
+  "id": "pilot-gen-ms-r01-b11",
+  "level": "MS",
+  "kind": "bonus",
+  "number": 11,
+  "subject": "math",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "A rectangle has a perimeter of 30 centimeters, and its length is twice its width. In square centimeters, what is its area?",
+  "answerRaw": "50"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t12",
+  "level": "MS",
+  "kind": "tossup",
+  "number": 12,
+  "subject": "physics",
+  "format": "short_answer",
+  "difficulty": "easy",
+  "stem": "What is the term for the bending of light as it passes at an angle from one material into another, such as from air into water?",
+  "answerRaw": "REFRACTION"
+ },
+ {
+  "id": "pilot-gen-ms-r01-b12",
+  "level": "MS",
+  "kind": "bonus",
+  "number": 12,
+  "subject": "physics",
+  "format": "multiple_choice",
+  "difficulty": "medium",
+  "stem": "When white light passes through a glass prism, which of the following colors is bent the most?",
+  "answerRaw": "Z) VIOLET",
+  "choices": {
+   "W": "Red",
+   "X": "Yellow",
+   "Y": "Green",
+   "Z": "Violet"
+  }
+ },
+ {
+  "id": "pilot-gen-ms-r01-t13",
+  "level": "MS",
+  "kind": "tossup",
+  "number": 13,
+  "subject": "biology",
+  "format": "short_answer",
+  "difficulty": "easy",
+  "stem": "What is the term for the loss of water vapor from a plant, mostly through small pores in its leaves?",
+  "answerRaw": "TRANSPIRATION"
+ },
+ {
+  "id": "pilot-gen-ms-r01-b13",
+  "level": "MS",
+  "kind": "bonus",
+  "number": 13,
+  "subject": "biology",
+  "format": "short_answer",
+  "difficulty": "easy-medium",
+  "stem": "Identify all of the following three animals that are vertebrates: 1) Shark; 2) Octopus; 3) Salamander.",
+  "answerRaw": "1, 3"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t14",
+  "level": "MS",
+  "kind": "tossup",
+  "number": 14,
+  "subject": "chemistry",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "What element has the chemical symbol W?",
+  "answerRaw": "TUNGSTEN (ACCEPT: WOLFRAM)"
+ },
+ {
+  "id": "pilot-gen-ms-r01-b14",
+  "level": "MS",
+  "kind": "bonus",
+  "number": 14,
+  "subject": "chemistry",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "When the equation for the combustion of methane, CH₄ plus O₂ yields CO₂ plus H₂O, is balanced using the smallest whole-number coefficients, what is the coefficient of oxygen gas?",
+  "answerRaw": "2"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t15",
+  "level": "MS",
+  "kind": "tossup",
+  "number": 15,
+  "subject": "earth_space",
+  "format": "multiple_choice",
+  "difficulty": "medium",
+  "stem": "During which of the following phases of the Moon can a solar eclipse occur?",
+  "answerRaw": "X) NEW MOON",
+  "choices": {
+   "W": "Full moon",
+   "X": "New moon",
+   "Y": "First quarter",
+   "Z": "Third quarter"
+  }
+ },
+ {
+  "id": "pilot-gen-ms-r01-b15",
+  "level": "MS",
+  "kind": "bonus",
+  "number": 15,
+  "subject": "earth_space",
+  "format": "multiple_choice",
+  "difficulty": "medium",
+  "stem": "Which of the following types of faults forms when tension pulls rocks apart, so that the hanging wall moves down relative to the footwall?",
+  "answerRaw": "W) NORMAL FAULT",
+  "choices": {
+   "W": "Normal fault",
+   "X": "Reverse fault",
+   "Y": "Thrust fault",
+   "Z": "Strike-slip fault"
+  }
+ },
+ {
+  "id": "pilot-gen-ms-r01-t16",
+  "level": "MS",
+  "kind": "tossup",
+  "number": 16,
+  "subject": "energy",
+  "format": "multiple_choice",
+  "difficulty": "easy",
+  "stem": "Scientists at the National Energy Technology Laboratory study ways to capture carbon dioxide from power plants. Which of the following energy sources is a fossil fuel?",
+  "answerRaw": "X) NATURAL GAS",
+  "choices": {
+   "W": "Uranium",
+   "X": "Natural gas",
+   "Y": "Biomass",
+   "Z": "Hydrogen"
+  }
+ },
+ {
+  "id": "pilot-gen-ms-r01-b16",
+  "level": "MS",
+  "kind": "bonus",
+  "number": 16,
+  "subject": "energy",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "Researchers at Lawrence Berkeley National Laboratory study energy use in homes. A family replaces a 60-watt incandescent bulb with a 10-watt LED bulb that gives the same amount of light. If the bulb is on for 4 hours each day, how many kilowatt-hours of energy does the family save in 30 days?",
+  "answerRaw": "6"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t17",
+  "level": "MS",
+  "kind": "tossup",
+  "number": 17,
+  "subject": "math",
+  "format": "short_answer",
+  "difficulty": "easy",
+  "stem": "What is the mean of the numbers 4, 8, 15, and 21?",
+  "answerRaw": "12"
+ },
+ {
+  "id": "pilot-gen-ms-r01-b17",
+  "level": "MS",
+  "kind": "bonus",
+  "number": 17,
+  "subject": "math",
+  "format": "short_answer",
+  "difficulty": "medium-hard",
+  "stem": "A right triangle has a hypotenuse of length 13 and one leg of length 5. What is the length of the altitude drawn to the hypotenuse?",
+  "answerRaw": "60/13 (ACCEPT: 4 8/13)"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t18",
+  "level": "MS",
+  "kind": "tossup",
+  "number": 18,
+  "subject": "physics",
+  "format": "multiple_choice",
+  "difficulty": "medium",
+  "stem": "A ball is thrown straight up. At the highest point of its path, which of the following is true?",
+  "answerRaw": "X) ITS VELOCITY IS ZERO, BUT ITS ACCELERATION IS NOT ZERO",
+  "choices": {
+   "W": "Its velocity and acceleration are both zero",
+   "X": "Its velocity is zero, but its acceleration is not zero",
+   "Y": "Its acceleration is zero, but its velocity is not zero",
+   "Z": "Its velocity and acceleration are both at their maximum values"
+  }
+ },
+ {
+  "id": "pilot-gen-ms-r01-b18",
+  "level": "MS",
+  "kind": "bonus",
+  "number": 18,
+  "subject": "physics",
+  "format": "short_answer",
+  "difficulty": "medium",
+  "stem": "A 50-kilogram student climbs a flight of stairs, rising 4 meters in 8 seconds. Using 10 meters per second squared for the acceleration due to gravity, in watts, what is the student’s average power output?",
+  "answerRaw": "250"
+ }
+]

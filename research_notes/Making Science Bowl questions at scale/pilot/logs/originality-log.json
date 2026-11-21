@@ -1,0 +1,517 @@
+[
+ {
+  "id": "pilot-gen-hs-r01-t02",
+  "libraryMatch": "doe-hs-02-r09-b08",
+  "round": 1,
+  "why": "Same question: 'According to the VSEPR model, what is the molecular geometry of xenon [ZEE-non] tetrafluoride?' (SQUARE PLANAR), down to the pronunciation guide.",
+  "oldStem": "What is the molecular geometry of xenon [ZEE-non] tetrafluoride?",
+  "oldAnswer": "SQUARE PLANAR (DO NOT ACCEPT: OCTAHEDRAL)",
+  "newStem": "What is the term for a redox reaction in which atoms of one element, all starting in the same oxidation state, are both oxidized and reduced, as when hydrogen peroxide decomposes into water and oxygen?",
+  "newAnswer": "DISPROPORTIONATION (ACCEPT: DISMUTATION)",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t03",
+  "libraryMatch": "doe-hs-04-r04-t22",
+  "round": 1,
+  "why": "Same cue and answer: 'Which of the following rock types would be felsic?' with basalt, granite and gabbro among the choices (GRANITE).",
+  "oldStem": "Which of the following is a felsic [FEL-sik] intrusive igneous rock?",
+  "oldAnswer": "Z) GRANITE",
+  "newStem": "What term describes the texture of an igneous rock that has large crystals scattered through a much finer-grained groundmass?",
+  "newAnswer": "Z) PORPHYRITIC",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t07",
+  "libraryMatch": "doe-hs-07-r04-b19",
+  "round": 1,
+  "why": "Same cue: 'Name the two types of cell junctions that connect the cytoplasm of adjacent cells' (PLASMODESMATA AND GAP JUNCTION).",
+  "oldStem": "What is the term for the channels that pass through plant cell walls and connect the cytoplasm of neighboring cells?",
+  "oldAnswer": "PLASMODESMATA [plaz-moh-dez-MAH-tah] (ACCEPT: PLASMODESMA)",
+  "newStem": "What is the term for the programmed cell death that removes the tissue between the developing fingers of a human embryo?",
+  "newAnswer": "APOPTOSIS [ay-pop-TOH-sis]",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t10",
+  "libraryMatch": "doe-ms-15-r08-t14",
+  "round": 1,
+  "why": "Same lab, topic and answer: 'Scientists at Argonne National Lab are developing lithium-ion battery cathodes that contain manganese instead of what element found in vitamin B12?' (COBALT).",
+  "oldStem": "Scientists at Argonne National Laboratory are developing cathodes for lithium-ion batteries. In the common cathode material abbreviated NMC, the letters stand for nickel, manganese, and what other metal?",
+  "oldAnswer": "COBALT (ACCEPT: Co)",
+  "newStem": "Scientists supported by the Department of Energy are developing catalysts for the Sabatier [sah-bah-TYAY] reaction, which combines carbon dioxide with hydrogen gas to produce water and what fuel?",
+  "newAnswer": "METHANE (ACCEPT: CH₄)",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-hs-r01-b11",
+  "libraryMatch": "doe-hs-04-r14-b17",
+  "round": 1,
+  "why": "Same question with the same number: 'The number 360 has how many positive integer factors?' (24).",
+  "oldStem": "How many positive integer divisors does 360 have?",
+  "oldAnswer": "24",
+  "newStem": "What is the greatest common divisor of 391 and 299?",
+  "newAnswer": "23",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t12",
+  "libraryMatch": "doe-ms-07-r05-t19",
+  "round": 1,
+  "why": "Same question with the same numbers: 'An object is placed 10 centimeters from a double convex lens with a focal length of 20 centimeters. Which of the following types of image will be produced?'",
+  "oldStem": "An object is placed 10 centimeters from a converging lens with a focal length of 20 centimeters. Which of the following best describes the image?",
+  "oldAnswer": "X) VIRTUAL, UPRIGHT, AND ENLARGED",
+  "newStem": "A guitar string is fixed at both ends. Which of the following changes would raise the frequency of its fundamental mode?",
+  "newAnswer": "X) TIGHTENING THE STRING",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t15",
+  "libraryMatch": "doe-hs-17-r06-t16",
+  "round": 1,
+  "why": "Same question: 'What planet in our solar system has the shortest rotational period?' (JUPITER).",
+  "oldStem": "Which of the following planets has the shortest sidereal rotation period?",
+  "oldAnswer": "Z) JUPITER",
+  "newStem": "Which of the following moons sprays plumes of water vapor and ice grains from fractures near its south pole?",
+  "newAnswer": "Z) ENCELADUS",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-hs-r01-b17",
+  "libraryMatch": "doe-ms-13-r06-b12",
+  "round": 1,
+  "why": "Same question: 'Two six-sided dice are rolled. What is the probability that the sum of the two numbers is prime?' (5/12).",
+  "oldStem": "Two fair six-sided dice are rolled. What is the probability that the sum of the numbers rolled is prime?",
+  "oldAnswer": "5/12",
+  "newStem": "A bag contains 4 red marbles and 6 blue marbles. Two marbles are drawn at random without replacement. What is the probability that the two marbles are different colors?",
+  "newAnswer": "8/15",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-hs-r01-b18",
+  "libraryMatch": "doe-hs-15-r03-b03",
+  "round": 1,
+  "why": "Same law with the same numbers: a semi-major axis of 4 AU gives a period of 8 years; the draft quadrupled the radius for a factor of 8.",
+  "oldStem": "A satellite is in a circular orbit around Earth. If the radius of its orbit were quadrupled, by what factor would its orbital period increase?",
+  "oldAnswer": "Y) 8",
+  "newStem": "A satellite is in a circular orbit around Earth. If the radius of its orbit were made 9 times larger, by what factor would its orbital period increase?",
+  "newAnswer": "Y) 27",
+  "kind": "same law, new numbers"
+ },
+ {
+  "id": "pilot-gen-ms-r01-b01",
+  "libraryMatch": "doe-hs-13-r06-t16",
+  "round": 1,
+  "why": "Same question: 'What type of RNA carries amino acids to the ribosomes?' (tRNA); also doe-ms-03-r05-b12.",
+  "oldStem": "During protein synthesis, what type of RNA molecule carries amino acids to the ribosome?",
+  "oldAnswer": "TRANSFER RNA (ACCEPT: tRNA)",
+  "newStem": "A lichen is a partnership between a fungus and what other kind of organism that carries out photosynthesis?",
+  "newAnswer": "ALGAE (ACCEPT: ALGA, GREEN ALGAE, CYANOBACTERIA, BLUE-GREEN ALGAE)",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-ms-r01-b02",
+  "libraryMatch": "doe-ms-06-r04-t23",
+  "round": 1,
+  "why": "Same stem and nearly the same choices: 'Which of the following elements is a metalloid?' (Silicon / Calcium / Iron / Argon); also doe-hs-02-r05-t08.",
+  "oldStem": "Which of the following elements is a metalloid?",
+  "oldAnswer": "W) SILICON",
+  "newStem": "A strip of magnesium is burned completely in air, and all of the white powder that forms is collected. How does the mass of the powder compare with the mass of the original magnesium strip?",
+  "newAnswer": "W) IT IS GREATER, BECAUSE THE MAGNESIUM COMBINED WITH OXYGEN",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t03",
+  "libraryMatch": "doe-hs-07-r01-t22",
+  "round": 1,
+  "why": "Same cue and answer: 'The lack of transmission of earthquake S-waves through what layer of the Earth is evidence that it is liquid?' (OUTER CORE), with three of the same choices.",
+  "oldStem": "Which of the following layers of Earth is liquid?",
+  "oldAnswer": "Y) OUTER CORE",
+  "newStem": "Which of the following processes carries heat through Earth’s mantle and is thought to help drive the motion of tectonic plates?",
+  "newAnswer": "Y) CONVECTION",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t05",
+  "libraryMatch": "doe-ms-09-r13-t02",
+  "round": 1,
+  "why": "Same numbers, inverted: 'What percent of 80 is 12?' (15).",
+  "oldStem": "What is 15 percent of 80?",
+  "oldAnswer": "12",
+  "newStem": "What is 40 percent of 35?",
+  "newAnswer": "14",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t06",
+  "libraryMatch": "doe-ms-14-r08-t02",
+  "round": 1,
+  "why": "Same question in substance: 'Which of the following SI units can be used to measure weight?' (NEWTON), with joule, watt and newton among the choices; also doe-ms-09-r02-t07 ('the SI unit of mass').",
+  "oldStem": "Which of the following is the SI unit of force?",
+  "oldAnswer": "Y) NEWTON",
+  "newStem": "A book rests on a table. According to Newton’s third law, which of the following is the reaction force to Earth’s gravitational pull on the book?",
+  "newAnswer": "Y) THE BOOK PULLING UP ON EARTH",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t09",
+  "libraryMatch": "doe-ms-10-r11-t18",
+  "round": 1,
+  "why": "Same question: 'What gas is the third most abundant gas in the Earth's atmosphere?' (ARGON); also doe-hs-17-r03-t14.",
+  "oldStem": "Which of the following is the third most abundant gas in dry air near Earth’s surface?",
+  "oldAnswer": "Z) ARGON",
+  "newStem": "In which of the following layers of the atmosphere does temperature increase with altitude because ozone absorbs ultraviolet light?",
+  "newAnswer": "Z) STRATOSPHERE",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-ms-r01-b09",
+  "libraryMatch": "doe-ms-04-r10-t19",
+  "round": 1,
+  "why": "Same question: 'What is the name given to the supercontinent believed to have existed around 250 million years ago...?' (PANGAEA).",
+  "oldStem": "What is the name of the supercontinent that included nearly all of Earth’s land about 250 million years ago?",
+  "oldAnswer": "PANGAEA (ACCEPT: PANGEA)",
+  "newStem": "An earthquake produces both P-waves and S-waves. Which of these two types of waves reaches a distant seismograph first?",
+  "newAnswer": "P-WAVES (ACCEPT: PRIMARY WAVES, COMPRESSIONAL WAVES)",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t12",
+  "libraryMatch": "doe-ms-14-r12-b22",
+  "round": 1,
+  "why": "Same question: 'What is the term for the bending of a wave as it moves from one medium to another?' (REFRACTION); also doe-hs-10-r08-t06.",
+  "oldStem": "What is the term for the bending of light as it passes at an angle from one material into another, such as from air into water?",
+  "oldAnswer": "REFRACTION",
+  "newStem": "What is the term for the maximum distance that a point on a wave moves from its rest position?",
+  "newAnswer": "AMPLITUDE",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t15",
+  "libraryMatch": "doe-hs-09-r08-b05",
+  "round": 1,
+  "why": "Same question: 'A total solar eclipse can occur only during what phase of the moon?' with the same four phases as choices (NEW MOON).",
+  "oldStem": "During which of the following phases of the Moon can a solar eclipse occur?",
+  "oldAnswer": "X) NEW MOON",
+  "newStem": "Which of the following best explains why the same side of the Moon always faces Earth?",
+  "newAnswer": "X) THE MOON ROTATES ONCE ON ITS AXIS IN THE SAME TIME IT TAKES TO ORBIT EARTH",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-ms-r01-b15",
+  "libraryMatch": "doe-ms-04-r12-b05",
+  "round": 1,
+  "why": "Same cue and answer: 'A fault in the Earth's surface in which the hanging wall has moved down relative to the footwall is called:' (NORMAL FAULT).",
+  "oldStem": "Which of the following types of faults forms when tension pulls rocks apart, so that the hanging wall moves down relative to the footwall?",
+  "oldAnswer": "W) NORMAL FAULT",
+  "newStem": "Which of the following features usually forms where two plates carrying continents collide?",
+  "newAnswer": "W) A RANGE OF FOLDED MOUNTAINS",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t16",
+  "libraryMatch": "doe-ms-08-r05-t17",
+  "round": 1,
+  "why": "Same stem: 'Which of the following energy sources is considered a fossil fuel?' (CRUDE OIL).",
+  "oldStem": "Scientists at the National Energy Technology Laboratory study ways to capture carbon dioxide from power plants. Which of the following energy sources is a fossil fuel?",
+  "oldAnswer": "W) NATURAL GAS",
+  "newStem": "Scientists at the National Renewable Energy Laboratory study geothermal power plants. Geothermal energy comes mainly from which of the following?",
+  "newAnswer": "W) HEAT FROM INSIDE EARTH",
+  "kind": "close paraphrase replaced"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t02",
+  "kind": "close paraphrase replaced",
+  "round": 2,
+  "libraryMatch": "doe-hs-08-r04-t12",
+  "why": "Replacement matched: 'What type of redox reaction involves the simultaneous oxidation and reduction of a singular species?' (DISPROPORTIONATION).",
+  "oldStem": "What is the term for a redox reaction in which atoms of one element, all starting in the same oxidation state, are both oxidized and reduced, as when hydrogen peroxide decomposes into water and oxygen?",
+  "oldAnswer": "DISPROPORTIONATION (ACCEPT: DISMUTATION)",
+  "newStem": "How many moles of oxygen atoms are in one mole of calcium nitrate?",
+  "newAnswer": "6"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t07",
+  "kind": "close paraphrase replaced",
+  "round": 2,
+  "libraryMatch": "doe-hs-10-r01-t04",
+  "why": "Replacement matched almost word for word: 'The webbed hand of a human embryo develops into five separate fingers by a process of programmed cell death. What is the term for this process?' (APOPTOSIS).",
+  "oldStem": "What is the term for the programmed cell death that removes the tissue between the developing fingers of a human embryo?",
+  "oldAnswer": "APOPTOSIS [ay-pop-TOH-sis]",
+  "newStem": "Type O-negative red blood cells lack the A and B antigens and also lack what other surface protein, whose absence is indicated by the word negative?",
+  "newAnswer": "RH FACTOR (ACCEPT: RH ANTIGEN, RHESUS FACTOR, D ANTIGEN, RHD)",
+  "rejectedCandidates": [
+   {
+    "stem": "What hormone, secreted by fat tissue, signals the brain that the body has enough energy stored and reduces appetite? (LEPTIN)",
+    "match": "doe-hs-11-r14-t02"
+   },
+   {
+    "stem": "In humans, what structure connects the middle ear to the throat and lets air pressure on the two sides of the eardrum equalize? (EUSTACHIAN TUBE)",
+    "match": "doe-ms-14-r01-b18"
+   },
+   {
+    "stem": "In the lac operon of E. coli, binding of what molecule to the repressor causes the repressor to release the operator, allowing transcription? (ALLOLACTOSE)",
+    "match": "doe-hs-03-r15-b10"
+   },
+   {
+    "stem": "Besides ATP, what electron-carrying molecule made in the light-dependent reactions of photosynthesis supplies the Calvin cycle with reducing power? (NADPH)",
+    "match": "doe-ms-13-r17-b16"
+   }
+  ]
+ },
+ {
+  "id": "pilot-gen-hs-r01-t15",
+  "kind": "close paraphrase replaced",
+  "round": 2,
+  "libraryMatch": "doe-hs-03-r02-b12",
+  "why": "Replacement matched: 'What moon of Saturn was shown by the Cassini space-craft to be spewing a watery, gassy plume from its geothermally heated south pole?' (ENCELADUS).",
+  "oldStem": "Which of the following moons sprays plumes of water vapor and ice grains from fractures near its south pole?",
+  "oldAnswer": "Z) ENCELADUS",
+  "newStem": "Which of the following is the main reason the Moon’s surface keeps far more impact craters than Earth’s surface does?",
+  "newAnswer": "Z) THE MOON LACKS THE WEATHERING, EROSION AND PLATE TECTONICS THAT ERASE CRATERS ON EARTH",
+  "rejectedCandidates": [
+   {
+    "stem": "Which of the following stars is a red supergiant? (BETELGEUSE)",
+    "match": "doe-ms-12-r07-t10"
+   }
+  ]
+ },
+ {
+  "id": "pilot-gen-ms-r01-b04",
+  "kind": "close paraphrase replaced",
+  "round": 2,
+  "libraryMatch": "doe-ms-15-r07-b15",
+  "why": "Self-review had already removed the lab-name giveaway, but the question still matched: 'Scientists at the DIII-D National Fusion Facility are studying nuclear fusion. In what state of matter is the substance they are fusing?' (PLASMA).",
+  "oldStem": "Scientists at Lawrence Livermore National Laboratory use powerful lasers to heat tiny capsules of hydrogen fuel to millions of degrees Celsius in fusion experiments. At such temperatures, electrons are stripped from their atoms, and matter exists in what state?",
+  "oldAnswer": "PLASMA",
+  "newStem": "Scientists at Lawrence Berkeley National Laboratory study cool roofs. In hot climates, a white roof keeps a building cooler than a black roof mainly because the white roof does what to more of the incoming sunlight?",
+  "newAnswer": "REFLECTS IT (ACCEPT: REFLECTS; REFLECTION)"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t12",
+  "kind": "close paraphrase replaced",
+  "round": 2,
+  "libraryMatch": "doe-ms-04-r04-t20",
+  "why": "Replacement matched: 'What is the vertical distance from the undisturbed position of the medium to the top of a crest of a wave called?' (AMPLITUDE); also doe-ms-04-r12-t11 and doe-ms-14-r06-b16.",
+  "oldStem": "What is the term for the maximum distance that a point on a wave moves from its rest position?",
+  "oldAnswer": "AMPLITUDE",
+  "newStem": "A light ray strikes a flat mirror at an angle of 35 degrees from the normal. In degrees, what is the angle of reflection?",
+  "newAnswer": "35 (DO NOT ACCEPT: 55)",
+  "rejectedCandidates": [
+   {
+    "stem": "After a balloon is rubbed on a wool sweater, the balloon has a negative charge. What particles moved from the sweater to the balloon? (ELECTRONS)",
+    "match": "doe-ms-13-r04-t17"
+   },
+   {
+    "stem": "When you stretch a rubber band and hold it, what type of energy is stored in the rubber band? (ELASTIC POTENTIAL ENERGY)",
+    "match": "doe-ms-04-r03-t21 (same first nine words)"
+   },
+   {
+    "stem": "Red light and green light are shone onto the same spot of a white wall. What color does the spot appear? (YELLOW)",
+    "match": "doe-ms-14-r14-t12"
+   }
+  ]
+ },
+ {
+  "id": "pilot-gen-ms-r01-t09",
+  "kind": "close paraphrase replaced",
+  "round": 2,
+  "libraryMatch": "doe-ms-08-r02-t04",
+  "why": "Replacement matched in cue: 'Which of the following atmospheric layers contains the ozone layer?' (STRATOSPHERE); also doe-ms-10-r08-t08.",
+  "oldStem": "In which of the following layers of the atmosphere does temperature increase with altitude because ozone absorbs ultraviolet light?",
+  "oldAnswer": "Z) STRATOSPHERE",
+  "newStem": "Which of the following is the main reason air temperature usually decreases with height in the troposphere?",
+  "newAnswer": "Z) THE TROPOSPHERE IS HEATED MAINLY FROM BELOW BY EARTH’S SURFACE"
+ },
+ {
+  "id": "pilot-gen-hs-r01-b03",
+  "kind": "close paraphrase replaced",
+  "round": 2,
+  "libraryMatch": "doe-ms-05-r12-t06",
+  "why": "Same cue: 'Which of the following is the coldest and densest water in Earth’s oceans?' (ANTARCTIC BOTTOM WATER); also doe-ms-13-r16-t15.",
+  "oldStem": "What is the name of the cold, dense water mass that forms around Antarctica, sinks along the continental slope, and is the densest water mass in the open ocean?",
+  "oldAnswer": "ANTARCTIC BOTTOM WATER (ACCEPT: AABW)",
+  "newStem": "In the open ocean, a tsunami travels at about 200 meters per second. In hours, how long would it take to cross 3,600 kilometers of open ocean?",
+  "newAnswer": "5"
+ },
+ {
+  "id": "pilot-gen-hs-r01-b09",
+  "kind": "close paraphrase replaced",
+  "round": 2,
+  "libraryMatch": "doe-ms-01-r07-b22",
+  "why": "Same cue: 'Which of the following is a dark gray, low cloud associated with continuous falling rain:' (NIMBOSTRATUS).",
+  "oldStem": "Which of the following cloud types is most associated with steady, prolonged precipitation ahead of an approaching warm front?",
+  "oldAnswer": "X) NIMBOSTRATUS",
+  "newStem": "Which of the following conditions most favors the formation of radiation fog?",
+  "newAnswer": "X) A CLEAR, CALM NIGHT WITH MOIST AIR NEAR THE GROUND"
+ },
+ {
+  "id": "pilot-gen-ms-r01-b03",
+  "kind": "close paraphrase replaced",
+  "round": 2,
+  "libraryMatch": "doe-ms-01-r04-b20",
+  "why": "Same cue: 'What is the name for the northern-most latitude where the Sun can appear directly overhead?' (TROPIC OF CANCER).",
+  "oldStem": "On the June solstice, the noon Sun is directly overhead at which of the following latitudes?",
+  "oldAnswer": "X) THE TROPIC OF CANCER",
+  "newStem": "Which of the following is the main reason that coastal cities usually have milder winters than inland cities at the same latitude?",
+  "newAnswer": "X) WATER HEATS UP AND COOLS DOWN MORE SLOWLY THAN LAND"
+ },
+ {
+  "id": "pilot-gen-ms-r01-b06",
+  "kind": "close paraphrase replaced",
+  "round": 2,
+  "libraryMatch": "doe-ms-14-r14-b20",
+  "why": "Same numbers: 'Starting from rest, a bike accelerates at 5 meters per second squared for 3 seconds. In meters, what distance did it travel?' (22.5); the draft only added F = ma on top.",
+  "oldStem": "A 4-kilogram cart starts from rest on a frictionless track, and a constant net force of 20 newtons acts on it for 3 seconds. In meters, how far does the cart travel during those 3 seconds?",
+  "oldAnswer": "22.5 (ACCEPT: 45/2, 22 1/2)",
+  "newStem": "A 5-kilogram cart starts from rest on a frictionless track, and a constant net force of 20 newtons acts on it for 4 seconds. In meters, how far does the cart travel during those 4 seconds?",
+  "newAnswer": "32"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t10",
+  "kind": "close paraphrase replaced",
+  "round": 2,
+  "libraryMatch": "doe-ms-09-r02-b04",
+  "why": "Same cue: 'The energy stored in a uranium atom can be released via what type of nuclear reaction?' (FISSION); also doe-ms-11-r02-t01.",
+  "oldStem": "Scientists at Idaho National Laboratory design and test nuclear reactors. What is the term for the process in which a large nucleus such as uranium-235 splits into two smaller nuclei and releases energy?",
+  "oldAnswer": "FISSION (ACCEPT: NUCLEAR FISSION)",
+  "newStem": "Scientists at Idaho National Laboratory study nuclear power plants. In these plants, heat from the reactor turns water into steam, and the steam spins what device that is connected to a generator?",
+  "newAnswer": "TURBINE (ACCEPT: STEAM TURBINE)"
+ },
+ {
+  "id": "pilot-gen-ms-r01-b12",
+  "kind": "close paraphrase replaced",
+  "round": 2,
+  "libraryMatch": "doe-ms-03-r14-b07",
+  "why": "Same cue: 'Which one of the following 4 colors of light has the greatest angle of refraction in normal glass: orange; violet; red; yellow' (VIOLET).",
+  "oldStem": "When white light passes through a glass prism, which of the following colors is bent the most?",
+  "oldAnswer": "Z) VIOLET",
+  "newStem": "A student stands 680 meters from a tall cliff and claps once. Taking the speed of sound in air to be 340 meters per second, how many seconds after the clap does the student hear the echo?",
+  "newAnswer": "Z) 4"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t13",
+  "kind": "close paraphrase replaced",
+  "round": 2,
+  "libraryMatch": "doe-ms-04-r03-t07",
+  "why": "Same cue: 'What do we call the evaporation of water from plants that occurs chiefly while their stomata are open...?' (TRANSPIRATION); also doe-ms-06-r08-b22 and doe-ms-finals-r01-t22.",
+  "oldStem": "What is the term for the loss of water vapor from a plant, mostly through small pores in its leaves?",
+  "oldAnswer": "TRANSPIRATION",
+  "newStem": "What is the term for the hard outer covering of the crown of a tooth, which is the hardest substance in the human body?",
+  "newAnswer": "ENAMEL (ACCEPT: TOOTH ENAMEL)",
+  "rejectedCandidates": [
+   {
+    "stem": "In a plant cell, what large, water-filled organelle presses against the cell wall to help keep the plant firm? (CENTRAL VACUOLE)",
+    "match": "doe-hs-03-r01-t22"
+   },
+   {
+    "stem": "Ferns and mosses do not make seeds. What tiny reproductive cells do they release instead? (SPORES)",
+    "match": "doe-ms-09-r17-b07"
+   },
+   {
+    "stem": "A caterpillar becomes a pupa and then emerges as an adult butterfly. What is the term for this kind of dramatic change in body form during an animal’s life? (METAMORPHOSIS)",
+    "match": "doe-ms-14-r05-t21"
+   }
+  ]
+ },
+ {
+  "id": "pilot-gen-ms-r01-b14",
+  "kind": "close paraphrase replaced",
+  "round": 2,
+  "libraryMatch": "doe-ms-01-r18-b15",
+  "why": "Same question: 'When the following chemical equation is balanced, the coefficient of oxygen will be what value: CH₄ + O₂ → CO₂ + H₂O' (2).",
+  "oldStem": "When the equation for the combustion of methane, CH₄ plus O₂ yields CO₂ plus H₂O, is balanced using the smallest whole-number coefficients, what is the coefficient of oxygen gas?",
+  "oldAnswer": "2",
+  "newStem": "How many atoms in total are in one formula unit of aluminum sulfate, Al₂(SO₄)₃?",
+  "newAnswer": "17"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t13",
+  "kind": "close paraphrase replaced",
+  "round": 4,
+  "libraryMatch": "doe-hs-11-r10-t12",
+  "why": "Same cue in other words: 'Which of the following organisms is characterized as a parazoan?' (SPONGE); parazoans are defined by lacking true tissues.",
+  "oldStem": "Which of the following animals lacks true tissues?",
+  "oldAnswer": "Z) SEA SPONGE",
+  "newStem": "Which of the following animals is a deuterostome [DOO-ter-oh-stome]?",
+  "newAnswer": "Z) SEA URCHIN"
+ },
+ {
+  "id": "pilot-gen-hs-r01-t18",
+  "kind": "close paraphrase replaced",
+  "round": 4,
+  "libraryMatch": "doe-hs-10-r15-b01",
+  "why": "Same cue: 'Which of the following best describes the electromotive force produced in a circuit by a changing flux?' (FARADAY’S LAW).",
+  "oldStem": "What law of electromagnetism states that the electromotive force induced in a closed loop is proportional to the rate of change of the magnetic flux through the loop?",
+  "oldAnswer": "FARADAY’S LAW (ACCEPT: FARADAY’S LAW OF INDUCTION, FARADAY–LENZ LAW; DO NOT ACCEPT: LENZ’S LAW)",
+  "newStem": "A spring with a spring constant of 200 newtons per meter is compressed by 10 centimeters. In joules, how much elastic potential energy does it store?",
+  "newAnswer": "1",
+  "rejectedCandidates": [
+   {
+    "stem": "What dimensionless number, the ratio of inertial forces to viscous forces in a flowing fluid, is used to predict whether the flow will be laminar or turbulent? (REYNOLDS NUMBER)",
+    "match": "doe-hs-10-r15-b19"
+   }
+  ]
+ },
+ {
+  "id": "pilot-gen-ms-r01-t03",
+  "kind": "close paraphrase replaced",
+  "round": 4,
+  "libraryMatch": "doe-ms-03-r02-t07",
+  "why": "First-round replacement matched: 'Which of the following is believed to be the process that causes Earth’s tectonic plates to move:' (CONVECTION CURRENTS IN THE MANTLE); also doe-ms-finals-r03-t02.",
+  "oldStem": "Which of the following processes carries heat through Earth’s mantle and is thought to help drive the motion of tectonic plates?",
+  "oldAnswer": "Y) CONVECTION",
+  "newStem": "Moving away from the Mid-Atlantic Ridge toward either coast, the age of the rocks on the ocean floor does which of the following?",
+  "newAnswer": "Y) INCREASES"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t06",
+  "kind": "close paraphrase replaced",
+  "round": 4,
+  "libraryMatch": "doe-hs-06-r05-t09",
+  "why": "First-round replacement matched: 'An object of mass m sits on a flat table. The Earth pulls on the object with force mg. Which of the following is the corresponding reaction force?' (THE OBJECT PULLING UPWARD ON THE EARTH).",
+  "oldStem": "A book rests on a table. According to Newton’s third law, which of the following is the reaction force to Earth’s gravitational pull on the book?",
+  "oldAnswer": "Y) THE BOOK PULLING UP ON EARTH",
+  "newStem": "A winter coat stuffed with down feathers keeps a person warm mainly because of which of the following?",
+  "newAnswer": "Y) AIR TRAPPED BETWEEN THE FEATHERS CONDUCTS HEAT POORLY"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t07",
+  "kind": "close paraphrase replaced",
+  "round": 4,
+  "libraryMatch": "doe-hs-03-r09-b03",
+  "why": "Same cue and computation: a cross of two heterozygotes for flower color with red (or purple) dominant over white (3 TO 1); also doe-ms-07-r05-b11.",
+  "oldStem": "In pea plants, the allele for purple flowers is dominant over the allele for white flowers. If two plants that are heterozygous for flower color are crossed, what fraction of their offspring are expected to have white flowers?",
+  "oldAnswer": "1/4 (ACCEPT: 25%)",
+  "newStem": "A dog has 78 chromosomes in each of its body cells. How many chromosomes are in each of its sperm cells?",
+  "newAnswer": "39"
+ },
+ {
+  "id": "pilot-gen-ms-r01-t15",
+  "kind": "close paraphrase replaced",
+  "round": 4,
+  "libraryMatch": "doe-ms-08-r04-t07",
+  "why": "First-round replacement matched: 'Why does the same side of the Moon always face the Earth?' (THE MOON ROTATES ABOUT ITS AXIS ...); also doe-ms-09-r12-t21.",
+  "oldStem": "Which of the following best explains why the same side of the Moon always faces Earth?",
+  "oldAnswer": "X) THE MOON ROTATES ONCE ON ITS AXIS IN THE SAME TIME IT TAKES TO ORBIT EARTH",
+  "newStem": "Which of the following objects is classified as a dwarf planet?",
+  "newAnswer": "X) CERES",
+  "rejectedCandidates": [
+   {
+    "stem": "As a comet nears the Sun, its tail points in which of the following directions? (AWAY FROM THE SUN)",
+    "match": "doe-ms-11-r04-b15, doe-ms-15-r01-t07"
+   }
+  ]
+ },
+ {
+  "id": "pilot-gen-ms-r01-t18",
+  "kind": "close paraphrase replaced",
+  "round": 4,
+  "libraryMatch": "doe-hs-05-r07-t21",
+  "why": "Same cue: 'A ball is thrown vertically upward ... which of the following pairs best describes its velocity and acceleration' at the top (ZERO, NEGATIVE).",
+  "oldStem": "A ball is thrown straight up. At the highest point of its path, which of the following is true?",
+  "oldAnswer": "X) ITS VELOCITY IS ZERO, BUT ITS ACCELERATION IS NOT ZERO",
+  "newStem": "A ball rolls off the edge of a table. Ignoring air resistance, what happens to the ball’s horizontal speed as it falls to the floor?",
+  "newAnswer": "X) IT STAYS THE SAME"
+ }
+]

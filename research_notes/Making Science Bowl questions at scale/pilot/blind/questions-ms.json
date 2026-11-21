@@ -1,0 +1,586 @@
+{
+ "level": "MS",
+ "count": 54,
+ "fields": {
+  "id": "anonymous question id",
+  "category": "the question's category (see categories)",
+  "kind": "tossup or bonus",
+  "type": "multiple_choice or short_answer",
+  "stem": "the question as read",
+  "choices": "W-Z, multiple choice only"
+ },
+ "categories": {
+  "biology": "Biology",
+  "chemistry": "Chemistry",
+  "earth_space": "Earth and Space",
+  "energy": "Energy",
+  "math": "Math",
+  "physics": "Physics"
+ },
+ "questions": [
+  {
+   "id": "M001",
+   "level": "MS",
+   "category": "energy",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "Which of the following animals requires the most energy to survive?",
+   "choices": {
+    "W": "Marmot",
+    "X": "Lizard",
+    "Y": "Salmon",
+    "Z": "Frog"
+   }
+  },
+  {
+   "id": "M002",
+   "level": "MS",
+   "category": "chemistry",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "What element has the chemical symbol W?"
+  },
+  {
+   "id": "M003",
+   "level": "MS",
+   "category": "biology",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "Flowering plants are grouped into what 2 classes named after their number of seed leaves?"
+  },
+  {
+   "id": "M004",
+   "level": "MS",
+   "category": "biology",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "Which of the following blood vessels carries oxygen-poor blood from the heart to the lungs?",
+   "choices": {
+    "W": "Aorta",
+    "X": "Pulmonary artery",
+    "Y": "Pulmonary vein",
+    "Z": "Superior vena cava [VEE-nuh KAY-vuh]"
+   }
+  },
+  {
+   "id": "M005",
+   "level": "MS",
+   "category": "biology",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "In a food chain in which grass is eaten by grasshoppers, grasshoppers are eaten by frogs, and frogs are eaten by snakes, which organism is the secondary consumer?",
+   "choices": {
+    "W": "Grass",
+    "X": "Grasshopper",
+    "Y": "Frog",
+    "Z": "Snake"
+   }
+  },
+  {
+   "id": "M006",
+   "level": "MS",
+   "category": "chemistry",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "A strip of magnesium is burned completely in air, and all of the white powder that forms is collected. How does the mass of the powder compare with the mass of the original magnesium strip?",
+   "choices": {
+    "W": "It is greater, because the magnesium combined with oxygen",
+    "X": "It is the same, because mass is conserved",
+    "Y": "It is smaller, because some of the matter was destroyed",
+    "Z": "It is zero, because the magnesium turned into light and heat"
+   }
+  },
+  {
+   "id": "M007",
+   "level": "MS",
+   "category": "physics",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "An ideal gas with molar mass 26 is kept at 200 kelvins and at 4 atmospheres of pressure, and is found to have a density of 1.6 grams per liter. What is the density, in grams per liter, of a different ideal gas with molar mass 52 if it is at a temperature of 400 kelvins and a pressure of 2 atmospheres?"
+  },
+  {
+   "id": "M008",
+   "level": "MS",
+   "category": "chemistry",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "A solution is made by dissolving 20 grams of sugar in 80 grams of water. What is the percent by mass of sugar in the solution?"
+  },
+  {
+   "id": "M009",
+   "level": "MS",
+   "category": "physics",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "A student stands 680 meters from a tall cliff and claps once. Taking the speed of sound in air to be 340 meters per second, how many seconds after the clap does the student hear the echo?",
+   "choices": {
+    "W": "0.5",
+    "X": "1",
+    "Y": "2",
+    "Z": "4"
+   }
+  },
+  {
+   "id": "M010",
+   "level": "MS",
+   "category": "biology",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "What is the term for the hard outer covering of the crown of a tooth, which is the hardest substance in the human body?"
+  },
+  {
+   "id": "M011",
+   "level": "MS",
+   "category": "energy",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "Scientists at the National Renewable Energy Laboratory are working to make solar panels more efficient. Solar cells convert sunlight directly into what form of energy?",
+   "choices": {
+    "W": "Electrical energy",
+    "X": "Thermal energy",
+    "Y": "Chemical energy",
+    "Z": "Nuclear energy"
+   }
+  },
+  {
+   "id": "M012",
+   "level": "MS",
+   "category": "chemistry",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "What is the chemical name for the compound Cd(MnO₄)₂?"
+  },
+  {
+   "id": "M013",
+   "level": "MS",
+   "category": "earth_space",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "You find a mineral in the local rock shop. You know it is composed of carbonate, that it has perfect rhombohedral cleavage, and when you look through at the text on a nearby newspaper, you find it exhibits the property of double refraction. This mineral would most likely be which of the following:",
+   "choices": {
+    "W": "mica",
+    "X": "calcite",
+    "Y": "basalt",
+    "Z": "halite"
+   }
+  },
+  {
+   "id": "M014",
+   "level": "MS",
+   "category": "chemistry",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "Which of the following is a pure substance rather than a mixture?",
+   "choices": {
+    "W": "Air",
+    "X": "Seawater",
+    "Y": "Brass",
+    "Z": "Distilled water"
+   }
+  },
+  {
+   "id": "M015",
+   "level": "MS",
+   "category": "math",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "At what value of y does the line that contains the points (–3, 5) and (5, 16) cross the y-axis?"
+  },
+  {
+   "id": "M016",
+   "level": "MS",
+   "category": "energy",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "Scientists at Argonne National Laboratory are designing better lithium-ion batteries. When such a battery is discharging, lithium ions travel from the anode to the cathode through which of the following?",
+   "choices": {
+    "W": "The external wire",
+    "X": "The battery casing",
+    "Y": "The current collector",
+    "Z": "The electrolyte"
+   }
+  },
+  {
+   "id": "M017",
+   "level": "MS",
+   "category": "energy",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "Scientists at Idaho National Laboratory study nuclear power plants. In these plants, heat from the reactor turns water into steam, and the steam spins what device that is connected to a generator?"
+  },
+  {
+   "id": "M018",
+   "level": "MS",
+   "category": "earth_space",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "What two phases of the Moon come directly before and after waxing gibbous [GIH-bus], respectively?"
+  },
+  {
+   "id": "M019",
+   "level": "MS",
+   "category": "biology",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "Identify all of the following three animals that are vertebrates: 1) Shark; 2) Octopus; 3) Salamander."
+  },
+  {
+   "id": "M020",
+   "level": "MS",
+   "category": "earth_space",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "Which of the following is the main reason that coastal cities usually have milder winters than inland cities at the same latitude?",
+   "choices": {
+    "W": "Ocean air contains more oxygen",
+    "X": "Water heats up and cools down more slowly than land",
+    "Y": "Coastal cities receive more hours of sunlight",
+    "Z": "Breaking waves release heat through friction"
+   }
+  },
+  {
+   "id": "M021",
+   "level": "MS",
+   "category": "physics",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "A 5-kilogram cart starts from rest on a frictionless track, and a constant net force of 20 newtons acts on it for 4 seconds. In meters, how far does the cart travel during those 4 seconds?"
+  },
+  {
+   "id": "M022",
+   "level": "MS",
+   "category": "earth_space",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "Variable stars will pulsate in size due to the ionized form of what element acting as a compressible spring?"
+  },
+  {
+   "id": "M023",
+   "level": "MS",
+   "category": "math",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "A right triangle has a hypotenuse of length 13 and one leg of length 5. What is the length of the altitude drawn to the hypotenuse?"
+  },
+  {
+   "id": "M024",
+   "level": "MS",
+   "category": "physics",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "The product of mass and velocity would most commonly be described as:",
+   "choices": {
+    "W": "force",
+    "X": "joules",
+    "Y": "momentum",
+    "Z": "acceleration"
+   }
+  },
+  {
+   "id": "M025",
+   "level": "MS",
+   "category": "earth_space",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "Which of the following features usually forms where two plates carrying continents collide?",
+   "choices": {
+    "W": "A range of folded mountains",
+    "X": "A mid-ocean ridge",
+    "Y": "A deep-sea trench",
+    "Z": "A volcanic island arc"
+   }
+  },
+  {
+   "id": "M026",
+   "level": "MS",
+   "category": "energy",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "Scientists at Lawrence Berkeley National Laboratory study cool roofs. In hot climates, a white roof keeps a building cooler than a black roof mainly because the white roof does what to more of the incoming sunlight?"
+  },
+  {
+   "id": "M027",
+   "level": "MS",
+   "category": "math",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "What is the least common multiple of 12 and 18?"
+  },
+  {
+   "id": "M028",
+   "level": "MS",
+   "category": "physics",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "What law of circuits states that the current drawn in a circuit is equal to the voltage divided by the resistance?"
+  },
+  {
+   "id": "M029",
+   "level": "MS",
+   "category": "math",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "What are the two solutions of the equation x² – 5x – 14 = 0?"
+  },
+  {
+   "id": "M030",
+   "level": "MS",
+   "category": "biology",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "The fluid-mosaic model is a representation of the structure and behavior of what cell structure?"
+  },
+  {
+   "id": "M031",
+   "level": "MS",
+   "category": "physics",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "A light ray strikes a flat mirror at an angle of 35 degrees from the normal. In degrees, what is the angle of reflection?"
+  },
+  {
+   "id": "M032",
+   "level": "MS",
+   "category": "energy",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "Researchers at Lawrence Berkeley National Laboratory study energy use in homes. A family replaces a 60-watt incandescent bulb with a 10-watt LED bulb that gives the same amount of light. If the bulb is on for 4 hours each day, how many kilowatt-hours of energy does the family save in 30 days?"
+  },
+  {
+   "id": "M033",
+   "level": "MS",
+   "category": "earth_space",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "Moving away from the Mid-Atlantic Ridge toward either coast, the age of the rocks on the ocean floor does which of the following?",
+   "choices": {
+    "W": "Decreases",
+    "X": "Stays the same",
+    "Y": "Increases",
+    "Z": "Increases and then decreases"
+   }
+  },
+  {
+   "id": "M034",
+   "level": "MS",
+   "category": "chemistry",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "How many atoms in total are in one formula unit of aluminum sulfate, Al₂(SO₄)₃?"
+  },
+  {
+   "id": "M035",
+   "level": "MS",
+   "category": "math",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "What is 40 percent of 35?"
+  },
+  {
+   "id": "M036",
+   "level": "MS",
+   "category": "chemistry",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "According to Charles’s law, which property of a gas increases as its temperature increases?"
+  },
+  {
+   "id": "M037",
+   "level": "MS",
+   "category": "chemistry",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "What is the adjective for the class of reactions that release thermal energy into their surroundings?"
+  },
+  {
+   "id": "M038",
+   "level": "MS",
+   "category": "math",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "A graph of a stationary object graphed with position on the vertical axis and time on the horizontal axis is:",
+   "choices": {
+    "W": "a horizontal line",
+    "X": "a vertical line",
+    "Y": "a curved line",
+    "Z": "a line at 45 degrees"
+   }
+  },
+  {
+   "id": "M039",
+   "level": "MS",
+   "category": "math",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "What is the mean of the numbers 4, 8, 15, and 21?"
+  },
+  {
+   "id": "M040",
+   "level": "MS",
+   "category": "math",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "Solve the following equation for x: x/3 + 5 = 2x + ½."
+  },
+  {
+   "id": "M041",
+   "level": "MS",
+   "category": "earth_space",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "An earthquake produces both P-waves and S-waves. Which of these two types of waves reaches a distant seismograph first?"
+  },
+  {
+   "id": "M042",
+   "level": "MS",
+   "category": "biology",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "Which of the following is an adaptation in birds that facilitates flight?",
+   "choices": {
+    "W": "Hollow bones",
+    "X": "Sharp claws",
+    "Y": "Smooth feathers",
+    "Z": "Small beaks"
+   }
+  },
+  {
+   "id": "M043",
+   "level": "MS",
+   "category": "energy",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "Gross production is the amount of energy acquired while net production is the energy available for the next organism in the food chain. By name or number, identify which of the following organisms has the highest net production of energy: 1) zooplankton, 2) phytoplankton, 3) fish, or 4) bear."
+  },
+  {
+   "id": "M044",
+   "level": "MS",
+   "category": "chemistry",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "Which of the following is a typical property of metals?",
+   "choices": {
+    "W": "Brittleness",
+    "X": "Poor conduction of heat",
+    "Y": "Malleability",
+    "Z": "Dull appearance"
+   }
+  },
+  {
+   "id": "M045",
+   "level": "MS",
+   "category": "energy",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "In the U.S., the frequency of alternating current is which of the following cycles per second?",
+   "choices": {
+    "W": "50",
+    "X": "60",
+    "Y": "70",
+    "Z": "80"
+   }
+  },
+  {
+   "id": "M046",
+   "level": "MS",
+   "category": "earth_space",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "Which of the following objects is classified as a dwarf planet?",
+   "choices": {
+    "W": "Vesta",
+    "X": "Ceres",
+    "Y": "Io [EYE-oh]",
+    "Z": "Titan"
+   }
+  },
+  {
+   "id": "M047",
+   "level": "MS",
+   "category": "earth_space",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "Which of the following is the main reason air temperature usually decreases with height in the troposphere?",
+   "choices": {
+    "W": "The Sun is farther away at higher altitudes",
+    "X": "Ozone absorbs heat near the ground",
+    "Y": "Clouds block sunlight at high altitudes",
+    "Z": "The troposphere is heated mainly from below by Earth’s surface"
+   }
+  },
+  {
+   "id": "M048",
+   "level": "MS",
+   "category": "biology",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "A dog has 78 chromosomes in each of its body cells. How many chromosomes are in each of its sperm cells?"
+  },
+  {
+   "id": "M049",
+   "level": "MS",
+   "category": "physics",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "A ball rolls off the edge of a table. Ignoring air resistance, what happens to the ball’s horizontal speed as it falls to the floor?",
+   "choices": {
+    "W": "It increases",
+    "X": "It stays the same",
+    "Y": "It decreases",
+    "Z": "It drops to zero"
+   }
+  },
+  {
+   "id": "M050",
+   "level": "MS",
+   "category": "energy",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "Scientists at the National Renewable Energy Laboratory study geothermal power plants. Geothermal energy comes mainly from which of the following?",
+   "choices": {
+    "W": "Heat from inside Earth",
+    "X": "Sunlight absorbed by the ground",
+    "Y": "Ocean tides",
+    "Z": "Burning underground coal seams"
+   }
+  },
+  {
+   "id": "M051",
+   "level": "MS",
+   "category": "biology",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "A lichen is a partnership between a fungus and what other kind of organism that carries out photosynthesis?"
+  },
+  {
+   "id": "M052",
+   "level": "MS",
+   "category": "physics",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "A winter coat stuffed with down feathers keeps a person warm mainly because of which of the following?",
+   "choices": {
+    "W": "The feathers produce heat",
+    "X": "The feathers reflect cold back outside",
+    "Y": "Air trapped between the feathers conducts heat poorly",
+    "Z": "The feathers absorb sunlight"
+   }
+  },
+  {
+   "id": "M053",
+   "level": "MS",
+   "category": "math",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "A rectangle has a perimeter of 30 centimeters, and its length is twice its width. In square centimeters, what is its area?"
+  },
+  {
+   "id": "M054",
+   "level": "MS",
+   "category": "physics",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "A 50-kilogram student climbs a flight of stairs, rising 4 meters in 8 seconds. Using 10 meters per second squared for the acceleration due to gravity, at what average rate, in watts, does the student do work against gravity?"
+  }
+ ]
+}

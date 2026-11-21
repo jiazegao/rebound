@@ -1,0 +1,12 @@
+[
+ {
+  "id": "pilot-gen-hs-r01-b10",
+  "kind": "round balance (topic repeat)",
+  "what": "Replaced the neutron-scattering question with one on water electrolysis (key still W). Candidate 'Which of the following storage technologies stores energy mainly as gravitational potential energy?' (pumped hydro) was rejected first: same cue as doe-hs-07-r08-t24. The chosen candidate's opening 'make hydrogen fuel by electrolysis' was cut because it pointed at the key.",
+  "why": "Three of the six HS Energy questions (b04, b10, t16) were about neutrons.",
+  "oldStem": "Researchers at Oak Ridge National Laboratory use neutrons from the Spallation Neutron Source to study materials. Which of the following best explains why neutrons can locate hydrogen atoms in a sample far better than X-rays can?",
+  "oldAnswer": "W) NEUTRONS SCATTER FROM ATOMIC NUCLEI, WHILE X-RAYS SCATTER FROM ELECTRONS",
+  "newStem": "Researchers at the National Renewable Energy Laboratory study the electrolysis of water. Which of the following is produced at the cathode?",
+  "newAnswer": "W) HYDROGEN GAS"
+ }
+]

@@ -1,0 +1,319 @@
+{
+ "level": "HS",
+ "count": 54,
+ "seed": 20261121,
+ "fields": {
+  "source": "generated or doe",
+  "originalId": "id in generated-set.json or the library",
+  "answerLine": "the answer line as written or printed, with any ACCEPT / DO NOT ACCEPT",
+  "confidence": "generated only: the writer's confidence (1-5) that the answer is correct and the only defensible one"
+ },
+ "key": {
+  "H001": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-t08",
+   "answerLine": "Z) ETHANOL",
+   "confidence": 5
+  },
+  "H002": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-t14",
+   "answerLine": "W) CHLORINE",
+   "confidence": 5
+  },
+  "H003": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-t06",
+   "answerLine": "Y) IT DOUBLES",
+   "confidence": 5
+  },
+  "H004": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-b02",
+   "answerLine": "1.3",
+   "confidence": 5
+  },
+  "H005": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-t18",
+   "answerLine": "1",
+   "confidence": 5
+  },
+  "H006": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-b12",
+   "answerLine": "4/3 (ACCEPT: 1 1/3, 1.33)",
+   "confidence": 5
+  },
+  "H007": {
+   "source": "doe",
+   "originalId": "doe-hs-02-r09-b20",
+   "answerLine": "Y) RHODE ISLAND"
+  },
+  "H008": {
+   "source": "doe",
+   "originalId": "doe-hs-12-r04-t08",
+   "answerLine": "(7, –3) (ACCEPT: x = 7 AND y = –3)"
+  },
+  "H009": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-t05",
+   "answerLine": "X) x³ – x",
+   "confidence": 5
+  },
+  "H010": {
+   "source": "doe",
+   "originalId": "doe-hs-12-r05-t12",
+   "answerLine": "TELOMERES"
+  },
+  "H011": {
+   "source": "doe",
+   "originalId": "doe-hs-09-r10-b08",
+   "answerLine": "Y) CONVECTION"
+  },
+  "H012": {
+   "source": "doe",
+   "originalId": "doe-hs-06-r11-b01",
+   "answerLine": "BATEMAN’S"
+  },
+  "H013": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-b14",
+   "answerLine": "5",
+   "confidence": 5
+  },
+  "H014": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-t12",
+   "answerLine": "X) TIGHTENING THE STRING",
+   "confidence": 5
+  },
+  "H015": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-b07",
+   "answerLine": "X) 32%",
+   "confidence": 5
+  },
+  "H016": {
+   "source": "doe",
+   "originalId": "doe-hs-03-r15-t21",
+   "answerLine": "ULTRAVIOLET (ACCEPT: UV)"
+  },
+  "H017": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-t07",
+   "answerLine": "RH FACTOR (ACCEPT: RH ANTIGEN, RHESUS FACTOR, D ANTIGEN, RHD)",
+   "confidence": 4
+  },
+  "H018": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-b04",
+   "answerLine": "Z) NEUTRON",
+   "confidence": 5
+  },
+  "H019": {
+   "source": "doe",
+   "originalId": "doe-hs-17-r03-t12",
+   "answerLine": "W) FRACTIONAL DISTILLATION"
+  },
+  "H020": {
+   "source": "doe",
+   "originalId": "doe-hs-03-r01-b16",
+   "answerLine": "W) VISCOSITY"
+  },
+  "H021": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-b06",
+   "answerLine": "20",
+   "confidence": 5
+  },
+  "H022": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-t16",
+   "answerLine": "W) NEUTRON MODERATOR",
+   "confidence": 5
+  },
+  "H023": {
+   "source": "doe",
+   "originalId": "doe-hs-11-r15-t10",
+   "answerLine": "4"
+  },
+  "H024": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-t03",
+   "answerLine": "Z) PORPHYRITIC",
+   "confidence": 5
+  },
+  "H025": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-b05",
+   "answerLine": "2",
+   "confidence": 5
+  },
+  "H026": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-b16",
+   "answerLine": "32",
+   "confidence": 5
+  },
+  "H027": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-t11",
+   "answerLine": "1,440",
+   "confidence": 5
+  },
+  "H028": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-t10",
+   "answerLine": "METHANE (ACCEPT: CH₄)",
+   "confidence": 5
+  },
+  "H029": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-b11",
+   "answerLine": "23",
+   "confidence": 5
+  },
+  "H030": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-t04",
+   "answerLine": "W) CALCIUM TITANATE",
+   "confidence": 5
+  },
+  "H031": {
+   "source": "doe",
+   "originalId": "doe-hs-12-r15-t20",
+   "answerLine": "ALDEHYDE"
+  },
+  "H032": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-b15",
+   "answerLine": "1, 3",
+   "confidence": 5
+  },
+  "H033": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-t15",
+   "answerLine": "Z) THE MOON LACKS THE WEATHERING, EROSION AND PLATE TECTONICS THAT ERASE CRATERS ON EARTH",
+   "confidence": 4
+  },
+  "H034": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-t02",
+   "answerLine": "6",
+   "confidence": 5
+  },
+  "H035": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-b13",
+   "answerLine": "1, 2",
+   "confidence": 4
+  },
+  "H036": {
+   "source": "doe",
+   "originalId": "doe-hs-09-r13-b21",
+   "answerLine": "2 AND 3"
+  },
+  "H037": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-b03",
+   "answerLine": "5",
+   "confidence": 5
+  },
+  "H038": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-t17",
+   "answerLine": "2",
+   "confidence": 5
+  },
+  "H039": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-b01",
+   "answerLine": "BUNDLE-SHEATH CELLS (ACCEPT: BUNDLE SHEATH)",
+   "confidence": 5
+  },
+  "H040": {
+   "source": "doe",
+   "originalId": "doe-hs-16-r07-t04",
+   "answerLine": "ONE-FOURTH (ACCEPT: 0.25)"
+  },
+  "H041": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-t09",
+   "answerLine": "TERMINATION SHOCK (DO NOT ACCEPT: HELIOPAUSE OR BOW SHOCK)",
+   "confidence": 4
+  },
+  "H042": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-b17",
+   "answerLine": "8/15",
+   "confidence": 5
+  },
+  "H043": {
+   "source": "doe",
+   "originalId": "doe-hs-01-r11-b23",
+   "answerLine": "NEUTROPHIL; BASOPHIL"
+  },
+  "H044": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-b10",
+   "answerLine": "W) HYDROGEN GAS",
+   "confidence": 5
+  },
+  "H045": {
+   "source": "doe",
+   "originalId": "doe-hs-12-r16-b22",
+   "answerLine": "3, 1, 2"
+  },
+  "H046": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-t13",
+   "answerLine": "Z) SEA URCHIN",
+   "confidence": 5
+  },
+  "H047": {
+   "source": "doe",
+   "originalId": "doe-hs-09-r03-t07",
+   "answerLine": "SULFUR"
+  },
+  "H048": {
+   "source": "doe",
+   "originalId": "doe-hs-09-r10-t09",
+   "answerLine": "EPHEMERAL STREAMS"
+  },
+  "H049": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-b09",
+   "answerLine": "X) A CLEAR, CALM NIGHT WITH MOIST AIR NEAR THE GROUND",
+   "confidence": 5
+  },
+  "H050": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-t01",
+   "answerLine": "Y) EPINEPHRINE",
+   "confidence": 5
+  },
+  "H051": {
+   "source": "doe",
+   "originalId": "doe-hs-05-r01-b16",
+   "answerLine": "Z) 0.385"
+  },
+  "H052": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-b18",
+   "answerLine": "Y) 27",
+   "confidence": 5
+  },
+  "H053": {
+   "source": "doe",
+   "originalId": "doe-hs-11-r09-b13",
+   "answerLine": "3/2 (ACCEPT: 1 ½, 1.5, 3 TO 2)"
+  },
+  "H054": {
+   "source": "generated",
+   "originalId": "pilot-gen-hs-r01-b08",
+   "answerLine": "Y) 0.10-MOLAL CALCIUM CHLORIDE",
+   "confidence": 5
+  }
+ }
+}

@@ -1,0 +1,319 @@
+{
+ "level": "MS",
+ "count": 54,
+ "seed": 20261121,
+ "fields": {
+  "source": "generated or doe",
+  "originalId": "id in generated-set.json or the library",
+  "answerLine": "the answer line as written or printed, with any ACCEPT / DO NOT ACCEPT",
+  "confidence": "generated only: the writer's confidence (1-5) that the answer is correct and the only defensible one"
+ },
+ "key": {
+  "M001": {
+   "source": "doe",
+   "originalId": "doe-ms-05-r05-t24",
+   "answerLine": "W) MARMOT"
+  },
+  "M002": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-t14",
+   "answerLine": "TUNGSTEN (ACCEPT: WOLFRAM)",
+   "confidence": 5
+  },
+  "M003": {
+   "source": "doe",
+   "originalId": "doe-ms-09-r01-b01",
+   "answerLine": "MONOCOTS AND DICOTS (ACCEPT: MONOCOTYLEDONS AND DICOTYLEDONS )"
+  },
+  "M004": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-t01",
+   "answerLine": "X) PULMONARY ARTERY",
+   "confidence": 5
+  },
+  "M005": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-b07",
+   "answerLine": "Y) FROG",
+   "confidence": 5
+  },
+  "M006": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-b02",
+   "answerLine": "W) IT IS GREATER, BECAUSE THE MAGNESIUM COMBINED WITH OXYGEN",
+   "confidence": 5
+  },
+  "M007": {
+   "source": "doe",
+   "originalId": "doe-ms-13-r16-b23",
+   "answerLine": "0.8"
+  },
+  "M008": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-b08",
+   "answerLine": "20 (ACCEPT: 20%)",
+   "confidence": 5
+  },
+  "M009": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-b12",
+   "answerLine": "Z) 4",
+   "confidence": 5
+  },
+  "M010": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-t13",
+   "answerLine": "ENAMEL (ACCEPT: TOOTH ENAMEL)",
+   "confidence": 5
+  },
+  "M011": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-t04",
+   "answerLine": "W) ELECTRICAL ENERGY",
+   "confidence": 5
+  },
+  "M012": {
+   "source": "doe",
+   "originalId": "doe-ms-04-r10-b18",
+   "answerLine": "CADMIUM PERMANGANATE"
+  },
+  "M013": {
+   "source": "doe",
+   "originalId": "doe-ms-02-r07-b19",
+   "answerLine": "X) CALCITE"
+  },
+  "M014": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-t02",
+   "answerLine": "Z) DISTILLED WATER",
+   "confidence": 4
+  },
+  "M015": {
+   "source": "doe",
+   "originalId": "doe-ms-13-r14-b09",
+   "answerLine": "73/8 (ACCEPT: 9 1/8, 9.125)"
+  },
+  "M016": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-b10",
+   "answerLine": "Z) THE ELECTROLYTE",
+   "confidence": 5
+  },
+  "M017": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-t10",
+   "answerLine": "TURBINE (ACCEPT: STEAM TURBINE)",
+   "confidence": 5
+  },
+  "M018": {
+   "source": "doe",
+   "originalId": "doe-ms-15-r01-t12",
+   "answerLine": "BEFORE = FIRST QUARTER, AFTER = FULL (ACCEPT: FULL MOON for after)"
+  },
+  "M019": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-b13",
+   "answerLine": "1, 3",
+   "confidence": 5
+  },
+  "M020": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-b03",
+   "answerLine": "X) WATER HEATS UP AND COOLS DOWN MORE SLOWLY THAN LAND",
+   "confidence": 5
+  },
+  "M021": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-b06",
+   "answerLine": "32",
+   "confidence": 5
+  },
+  "M022": {
+   "source": "doe",
+   "originalId": "doe-ms-12-r14-t19",
+   "answerLine": "HELIUM"
+  },
+  "M023": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-b17",
+   "answerLine": "60/13 (ACCEPT: 4 8/13)",
+   "confidence": 5
+  },
+  "M024": {
+   "source": "doe",
+   "originalId": "doe-ms-03-r03-b20",
+   "answerLine": "Y) MOMENTUM"
+  },
+  "M025": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-b15",
+   "answerLine": "W) A RANGE OF FOLDED MOUNTAINS",
+   "confidence": 5
+  },
+  "M026": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-b04",
+   "answerLine": "REFLECTS IT (ACCEPT: REFLECTS; REFLECTION)",
+   "confidence": 4
+  },
+  "M027": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-t11",
+   "answerLine": "36",
+   "confidence": 5
+  },
+  "M028": {
+   "source": "doe",
+   "originalId": "doe-ms-13-r11-t09",
+   "answerLine": "OHM'S LAW"
+  },
+  "M029": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-b05",
+   "answerLine": "7 AND –2 (accept in either order)",
+   "confidence": 5
+  },
+  "M030": {
+   "source": "doe",
+   "originalId": "doe-ms-15-r10-t08",
+   "answerLine": "PLASMA MEMBRANE (ACCEPT: CELL MEMBRANE)"
+  },
+  "M031": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-t12",
+   "answerLine": "35 (DO NOT ACCEPT: 55)",
+   "confidence": 5
+  },
+  "M032": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-b16",
+   "answerLine": "6",
+   "confidence": 5
+  },
+  "M033": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-t03",
+   "answerLine": "Y) INCREASES",
+   "confidence": 5
+  },
+  "M034": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-b14",
+   "answerLine": "17",
+   "confidence": 5
+  },
+  "M035": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-t05",
+   "answerLine": "14",
+   "confidence": 5
+  },
+  "M036": {
+   "source": "doe",
+   "originalId": "doe-ms-04-r13-t21",
+   "answerLine": "VOLUME"
+  },
+  "M037": {
+   "source": "doe",
+   "originalId": "doe-ms-12-r06-t14",
+   "answerLine": "EXOTHERMIC"
+  },
+  "M038": {
+   "source": "doe",
+   "originalId": "doe-ms-02-r09-t05",
+   "answerLine": "W) A HORIZONTAL LINE"
+  },
+  "M039": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-t17",
+   "answerLine": "12",
+   "confidence": 5
+  },
+  "M040": {
+   "source": "doe",
+   "originalId": "doe-ms-10-r07-b10",
+   "answerLine": "x = 27/10 (ACCEPT: 2.7 OR 2 7/10)"
+  },
+  "M041": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-b09",
+   "answerLine": "P-WAVES (ACCEPT: PRIMARY WAVES, COMPRESSIONAL WAVES)",
+   "confidence": 5
+  },
+  "M042": {
+   "source": "doe",
+   "originalId": "doe-ms-06-r01-b13",
+   "answerLine": "W) HOLLOW BONES"
+  },
+  "M043": {
+   "source": "doe",
+   "originalId": "doe-ms-04-r11-b19",
+   "answerLine": "PHYTOPLANKTON (ACCEPT: 2)"
+  },
+  "M044": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-t08",
+   "answerLine": "Y) MALLEABILITY",
+   "confidence": 5
+  },
+  "M045": {
+   "source": "doe",
+   "originalId": "doe-ms-06-r06-t14",
+   "answerLine": "X) 60"
+  },
+  "M046": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-t15",
+   "answerLine": "X) CERES",
+   "confidence": 5
+  },
+  "M047": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-t09",
+   "answerLine": "Z) THE TROPOSPHERE IS HEATED MAINLY FROM BELOW BY EARTH’S SURFACE",
+   "confidence": 4
+  },
+  "M048": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-t07",
+   "answerLine": "39",
+   "confidence": 5
+  },
+  "M049": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-t18",
+   "answerLine": "X) IT STAYS THE SAME",
+   "confidence": 5
+  },
+  "M050": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-t16",
+   "answerLine": "W) HEAT FROM INSIDE EARTH",
+   "confidence": 5
+  },
+  "M051": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-b01",
+   "answerLine": "ALGAE (ACCEPT: ALGA, GREEN ALGAE, CYANOBACTERIA, BLUE-GREEN ALGAE)",
+   "confidence": 4
+  },
+  "M052": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-t06",
+   "answerLine": "Y) AIR TRAPPED BETWEEN THE FEATHERS CONDUCTS HEAT POORLY",
+   "confidence": 5
+  },
+  "M053": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-b11",
+   "answerLine": "50",
+   "confidence": 5
+  },
+  "M054": {
+   "source": "generated",
+   "originalId": "pilot-gen-ms-r01-b18",
+   "answerLine": "250",
+   "confidence": 5
+  }
+ }
+}

@@ -1,0 +1,547 @@
+{
+ "phase": "A",
+ "level": "HS",
+ "answers": [
+  {
+   "id": "H001",
+   "answer": "Z: Ethanol",
+   "confidence": 5,
+   "difficulty_hs_regional": 1,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Textbook intermolecular-force item with four tidy choices"
+  },
+  {
+   "id": "H002",
+   "answer": "W: Chlorine",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Classic electron-affinity trap (Cl > F), clean construction"
+  },
+  {
+   "id": "H003",
+   "answer": "Y: It doubles",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Clean textbook r = mv/qB"
+  },
+  {
+   "id": "H004",
+   "answer": "1.3",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Tidy numbers, limiting-reagent plus pH, uniform phrasing"
+  },
+  {
+   "id": "H005",
+   "answer": "1 joule",
+   "confidence": 5,
+   "difficulty_hs_regional": 1,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Round numbers, 'In joules' phrasing"
+  },
+  {
+   "id": "H006",
+   "answer": "4/3 A (about 1.33 A)",
+   "confidence": 5,
+   "difficulty_hs_regional": 3,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Constructed circuit with neat numbers"
+  },
+  {
+   "id": "H007",
+   "answer": "Y: Rhode Island (sea level, densest air; power scales with air density at equal wind speed)",
+   "confidence": 3,
+   "difficulty_hs_regional": 3,
+   "flags": [
+    {
+     "flag": "multiple_defensible",
+     "reason": "The 'similar wind velocity' premise points to air density (Rhode Island), but a typical key may say West Texas for wind resource"
+    }
+   ],
+   "source_guess": "doe",
+   "guess_reason": "Clunky 'would you anticipate' wording, place-name choices, no lab preface"
+  },
+  {
+   "id": "H008",
+   "answer": "(7, -3)",
+   "confidence": 5,
+   "difficulty_hs_regional": 1,
+   "flags": [],
+   "source_guess": "doe",
+   "guess_reason": "Short, plain, no flourish; generic coordinate-geometry item"
+  },
+  {
+   "id": "H009",
+   "answer": "X: x^3 - x",
+   "confidence": 5,
+   "difficulty_hs_regional": 1,
+   "flags": [],
+   "source_guess": "doe",
+   "guess_reason": "Spaced en dash in 'x³ – x' and terse stem"
+  },
+  {
+   "id": "H010",
+   "answer": "Telomeres",
+   "confidence": 5,
+   "difficulty_hs_regional": 1,
+   "flags": [],
+   "source_guess": "doe",
+   "guess_reason": "Short biology recall with bracketed pronunciation, common DOE pattern"
+  },
+  {
+   "id": "H011",
+   "answer": "Y: Convection",
+   "confidence": 5,
+   "difficulty_hs_regional": 1,
+   "flags": [
+    {
+     "flag": "giveaway",
+     "reason": "'Circulation' of atmospheric cells nearly states convection; Diffusion is not a heat-transfer mode so it is a weak distractor"
+    }
+   ],
+   "source_guess": "doe",
+   "guess_reason": "Slightly loose 'major mode' phrasing, plain recall, energy category stretch"
+  },
+  {
+   "id": "H012",
+   "answer": "Bateman's principle",
+   "confidence": 3,
+   "difficulty_hs_regional": 4,
+   "flags": [
+    {
+     "flag": "multiple_defensible",
+     "reason": "Trivers' parental investment theory also fits 'asymmetric pressures between males and females'"
+    }
+   ],
+   "source_guess": "doe",
+   "guess_reason": "Loosely worded definitional stem with an imprecise 'principle' description"
+  },
+  {
+   "id": "H013",
+   "answer": "5",
+   "confidence": 5,
+   "difficulty_hs_regional": 3,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Tidy constructed counting question, 'including the straight-chain isomer' hedge"
+  },
+  {
+   "id": "H014",
+   "answer": "X: Tightening the string",
+   "confidence": 5,
+   "difficulty_hs_regional": 1,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Clean conceptual item, parallel choices"
+  },
+  {
+   "id": "H015",
+   "answer": "X: 32%",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Clean Hardy-Weinberg with 4% -> q=0.2"
+  },
+  {
+   "id": "H016",
+   "answer": "Visible light (optical)",
+   "confidence": 3,
+   "difficulty_hs_regional": 4,
+   "flags": [
+    {
+     "flag": "multiple_defensible",
+     "reason": "Neutrinos, X-rays, gamma rays and radio are also detected from supernovae; 'most commonly' depends on convention"
+    }
+   ],
+   "source_guess": "doe",
+   "guess_reason": "Vague short stem typical of old sample sets"
+  },
+  {
+   "id": "H017",
+   "answer": "Rh (D) antigen / Rh factor",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Explanatory 'word negative' phrasing, polished"
+  },
+  {
+   "id": "H018",
+   "answer": "Z: Neutron",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "National-lab preface, 'carries most of the energy' scaffolding"
+  },
+  {
+   "id": "H019",
+   "answer": "W: Fractional distillation",
+   "confidence": 5,
+   "difficulty_hs_regional": 1,
+   "flags": [
+    {
+     "flag": "giveaway",
+     "reason": "Stem says 'by differences in boiling point', nearly the definition"
+    }
+   ],
+   "source_guess": "doe",
+   "guess_reason": "Short, loosely worded 'What process' stem with multiple choice"
+  },
+  {
+   "id": "H020",
+   "answer": "W: viscosity",
+   "confidence": 5,
+   "difficulty_hs_regional": 1,
+   "flags": [
+    {
+     "flag": "factual_error",
+     "reason": "Choice Y misspelled 'maleability'; stem ends with a colon; trivial recall"
+    }
+   ],
+   "source_guess": "doe",
+   "guess_reason": "Typo, trailing colon, lowercase choices: looks human-made"
+  },
+  {
+   "id": "H021",
+   "answer": "20 m",
+   "confidence": 5,
+   "difficulty_hs_regional": 3,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Constructed energy problem, 'In meters' phrasing, clean numbers"
+  },
+  {
+   "id": "H022",
+   "answer": "W: Neutron moderator",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "National-lab preface"
+  },
+  {
+   "id": "H023",
+   "answer": "4",
+   "confidence": 5,
+   "difficulty_hs_regional": 3,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Constructed modular arithmetic"
+  },
+  {
+   "id": "H024",
+   "answer": "Z: Porphyritic",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "doe",
+   "guess_reason": "Pronunciation guides on every choice, standard earth-science recall"
+  },
+  {
+   "id": "H025",
+   "answer": "2",
+   "confidence": 5,
+   "difficulty_hs_regional": 3,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Constructed number theory, 'to the 100th power divided by 7'"
+  },
+  {
+   "id": "H026",
+   "answer": "32",
+   "confidence": 5,
+   "difficulty_hs_regional": 3,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "National-lab preface, 'by what factor' scaling"
+  },
+  {
+   "id": "H027",
+   "answer": "1440 degrees",
+   "confidence": 5,
+   "difficulty_hs_regional": 1,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Plain formulaic geometry, 'In degrees' phrasing"
+  },
+  {
+   "id": "H028",
+   "answer": "Methane",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "DOE-supported-scientists preface with pronunciation guide"
+  },
+  {
+   "id": "H029",
+   "answer": "23",
+   "confidence": 5,
+   "difficulty_hs_regional": 3,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Constructed numbers (17*23, 13*23)"
+  },
+  {
+   "id": "H030",
+   "answer": "W: Calcium titanate",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "NREL preface, hedged 'named after the mineral'"
+  },
+  {
+   "id": "H031",
+   "answer": "Aldehydes",
+   "confidence": 5,
+   "difficulty_hs_regional": 3,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Explanatory 'common reaction pathway' wording with pronunciation guide"
+  },
+  {
+   "id": "H032",
+   "answer": "1 and 3 (Topaz and Corundum)",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Numbered items, tidy Mohs content"
+  },
+  {
+   "id": "H033",
+   "answer": "Z: The Moon lacks weathering, erosion and plate tectonics",
+   "confidence": 5,
+   "difficulty_hs_regional": 1,
+   "flags": [
+    {
+     "flag": "giveaway",
+     "reason": "Correct choice is far longer and more elaborate than the others"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Long correct choice, 'main reason' phrasing"
+  },
+  {
+   "id": "H034",
+   "answer": "6",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Clean stoichiometry, plain"
+  },
+  {
+   "id": "H035",
+   "answer": "1 and 2",
+   "confidence": 5,
+   "difficulty_hs_regional": 3,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Polished numbered statements, one clean false statement"
+  },
+  {
+   "id": "H036",
+   "answer": "2 and 3 (1 is false: transmitted intensity is proportional to E squared)",
+   "confidence": 4,
+   "difficulty_hs_regional": 4,
+   "flags": [
+    {
+     "flag": "unclear_aloud",
+     "reason": "Three long technical statements read aloud, and statement 1 phrasing is awkward"
+    }
+   ],
+   "source_guess": "doe",
+   "guess_reason": "Slightly awkward, textbook-derived phrasing; 'plane parallel to the reflecting surface'"
+  },
+  {
+   "id": "H037",
+   "answer": "5 hours",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Constructed unit conversion"
+  },
+  {
+   "id": "H038",
+   "answer": "2",
+   "confidence": 5,
+   "difficulty_hs_regional": 1,
+   "flags": [
+    {
+     "flag": "unclear_aloud",
+     "reason": "Matrix read aloud; acceptable but dense"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Clean constructed matrix"
+  },
+  {
+   "id": "H039",
+   "answer": "Bundle sheath cells",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Explanatory setup then ask"
+  },
+  {
+   "id": "H040",
+   "answer": "0.25 (units not given; m/s if x in meters)",
+   "confidence": 5,
+   "difficulty_hs_regional": 3,
+   "flags": [
+    {
+     "flag": "unclear_aloud",
+     "reason": "'x of t equals 1 over t squared' hard to hear; no units stated"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Constructed calculus, 'instantaneous speed'"
+  },
+  {
+   "id": "H041",
+   "answer": "Termination shock",
+   "confidence": 5,
+   "difficulty_hs_regional": 3,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Long definitional stem, polished"
+  },
+  {
+   "id": "H042",
+   "answer": "8/15",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Constructed probability, neat numbers"
+  },
+  {
+   "id": "H043",
+   "answer": "Neutrophil, basophil and macrophage",
+   "confidence": 4,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "doe",
+   "guess_reason": "'Name all of the following 4' unnumbered list pattern"
+  },
+  {
+   "id": "H044",
+   "answer": "W: Hydrogen gas",
+   "confidence": 5,
+   "difficulty_hs_regional": 1,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "NREL preface"
+  },
+  {
+   "id": "H045",
+   "answer": "Sandstone, shale, limestone (nearest to farthest)",
+   "confidence": 3,
+   "difficulty_hs_regional": 4,
+   "flags": [
+    {
+     "flag": "multiple_defensible",
+     "reason": "Limestone forms in shallow carbonate platforms too; ordering depends on setting"
+    }
+   ],
+   "source_guess": "doe",
+   "guess_reason": "Ordering item with 'typical sequence' hedge"
+  },
+  {
+   "id": "H046",
+   "answer": "Z: Sea urchin",
+   "confidence": 5,
+   "difficulty_hs_regional": 1,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Clean taxonomy recall"
+  },
+  {
+   "id": "H047",
+   "answer": "Sulfur",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "doe",
+   "guess_reason": "Plain recall, energy category stretch, simple phrasing"
+  },
+  {
+   "id": "H048",
+   "answer": "Ephemeral streams (washes/arroyos)",
+   "confidence": 4,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "doe",
+   "guess_reason": "Loose 'what types of streams' phrasing"
+  },
+  {
+   "id": "H049",
+   "answer": "X: A clear, calm night with moist air near the ground",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Tidy distractors each describing a fog type"
+  },
+  {
+   "id": "H050",
+   "answer": "Y: Epinephrine",
+   "confidence": 5,
+   "difficulty_hs_regional": 1,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Pronunciations on choices, clean recall"
+  },
+  {
+   "id": "H051",
+   "answer": "Z: 0.385",
+   "confidence": 5,
+   "difficulty_hs_regional": 3,
+   "flags": [],
+   "source_guess": "doe",
+   "guess_reason": "Odd numbers and 'Suppose, in a certain part of the world' phrasing"
+  },
+  {
+   "id": "H052",
+   "answer": "Y: 27",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Clean Kepler scaling, powers of the same base"
+  },
+  {
+   "id": "H053",
+   "answer": "1.5",
+   "confidence": 5,
+   "difficulty_hs_regional": 3,
+   "flags": [],
+   "source_guess": "doe",
+   "guess_reason": "'before the observer passes the source' clunky phrasing"
+  },
+  {
+   "id": "H054",
+   "answer": "Y: 0.10-molal calcium chloride",
+   "confidence": 5,
+   "difficulty_hs_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Neat colligative distractors"
+  }
+ ]
+}

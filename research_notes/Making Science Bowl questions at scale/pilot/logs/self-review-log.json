@@ -1,0 +1,98 @@
+[
+ {
+  "id": "pilot-gen-hs-r01-t08",
+  "kind": "answer-key balance",
+  "what": "Choices reordered; key moved from Y to Z.",
+  "why": "Key letters in the draft were bunched: 8 of the 17 high school multiple-choice keys were X and only 1 was Z. Reordered the choices (content unchanged) so the keys spread across W-Z."
+ },
+ {
+  "id": "pilot-gen-hs-r01-b04",
+  "kind": "answer-key balance",
+  "what": "Choices reordered; key moved from X to Z.",
+  "why": "Key letters in the draft were bunched: 8 of the 17 high school multiple-choice keys were X and only 1 was Z. Reordered the choices (content unchanged) so the keys spread across W-Z."
+ },
+ {
+  "id": "pilot-gen-hs-r01-t13",
+  "kind": "answer-key balance",
+  "what": "Choices reordered; key moved from X to Z.",
+  "why": "Key letters in the draft were bunched: 8 of the 17 high school multiple-choice keys were X and only 1 was Z. Reordered the choices (content unchanged) so the keys spread across W-Z."
+ },
+ {
+  "id": "pilot-gen-hs-r01-t14",
+  "kind": "answer-key balance",
+  "what": "Choices reordered; key moved from X to W.",
+  "why": "Key letters in the draft were bunched: 8 of the 17 high school multiple-choice keys were X and only 1 was Z. Reordered the choices (content unchanged) so the keys spread across W-Z."
+ },
+ {
+  "id": "pilot-gen-hs-r01-t15",
+  "kind": "wording precision",
+  "what": "Stem changed from 'has the shortest day, as measured by its sidereal rotation period' to 'has the shortest sidereal rotation period'.",
+  "why": "'Day' normally means the solar day, which is not the sidereal rotation period; mixing the two invites a protest even though the key does not change."
+ },
+ {
+  "id": "pilot-gen-hs-r01-t15",
+  "kind": "answer-key balance",
+  "what": "Choices reordered; key moved from X to Z.",
+  "why": "Key letters in the draft were bunched: 8 of the 17 high school multiple-choice keys were X and only 1 was Z. Reordered the choices (content unchanged) so the keys spread across W-Z."
+ },
+ {
+  "id": "pilot-gen-hs-r01-b10",
+  "kind": "distractor quality",
+  "what": "Stem reframed from 'neutrons scatter from which of the following?' to 'which of the following best explains why ...'. New choices: nuclei-versus-electrons (key, W), positive charge, absorbed only by hydrogen, faster than X-rays.",
+  "why": "Choice Z ('Photons in the sample') was not a plausible distractor and 'Chemical bonds' was weak, so the item reduced to nuclei versus electrons. Reasons as choices give four real options."
+ },
+ {
+  "id": "pilot-gen-hs-r01-t05",
+  "kind": "style",
+  "what": "Choices Y and Z changed from words ('Absolute value of x', 'Cosine of x') to symbols ('|x|', 'cos x').",
+  "why": "The four choices were written in two registers (two as formulas, two in words); NSB choices are parallel, and the reader voices the symbols anyway."
+ },
+ {
+  "id": "pilot-gen-hs-r01-t18",
+  "kind": "answer line",
+  "what": "Answer line gained 'FARADAY–LENZ LAW' as an ACCEPT and 'DO NOT ACCEPT: LENZ’S LAW'.",
+  "why": "Lenz's law (which gives only the direction of the induced emf) is the likeliest near-miss, and the moderator needs a ruling; 'Faraday–Lenz law' is a name some textbooks use for the same law."
+ },
+ {
+  "id": "pilot-gen-ms-r01-b04",
+  "kind": "giveaway",
+  "what": "Lab changed from Princeton Plasma Physics Laboratory to Lawrence Livermore National Laboratory (laser fusion), and 'more than 100 million degrees' softened to 'millions of degrees'.",
+  "why": "The lab's name contained the answer (PLASMA). The temperature claim was also tied to one kind of experiment; 'millions of degrees' is safe for any fusion fuel."
+ },
+ {
+  "id": "pilot-gen-ms-r01-t04",
+  "kind": "answer-key balance",
+  "what": "Choices reordered; key moved from X to W.",
+  "why": "Key letters in the draft were bunched: 8 of the 16 middle school multiple-choice keys were X and only 2 each were W and Z. Reordered the choices (content unchanged) so the keys spread across W-Z."
+ },
+ {
+  "id": "pilot-gen-ms-r01-t16",
+  "kind": "answer-key balance",
+  "what": "Choices reordered; key moved from X to W.",
+  "why": "Key letters in the draft were bunched: 8 of the 16 middle school multiple-choice keys were X and only 2 each were W and Z. Reordered the choices (content unchanged) so the keys spread across W-Z."
+ },
+ {
+  "id": "pilot-gen-ms-r01-t09",
+  "kind": "answer-key balance",
+  "what": "Choices reordered; key moved from X to Z.",
+  "why": "Key letters in the draft were bunched: 8 of the 16 middle school multiple-choice keys were X and only 2 each were W and Z. Reordered the choices (content unchanged) so the keys spread across W-Z."
+ },
+ {
+  "id": "pilot-gen-ms-r01-b10",
+  "kind": "answer-key balance",
+  "what": "Choices reordered; key moved from X to Z.",
+  "why": "Key letters in the draft were bunched: 8 of the 16 middle school multiple-choice keys were X and only 2 each were W and Z. Reordered the choices (content unchanged) so the keys spread across W-Z."
+ },
+ {
+  "id": "pilot-gen-ms-r01-b18",
+  "kind": "ambiguity",
+  "what": "Asked for 'the average rate at which the student does work against gravity' instead of 'the student's average power output'.",
+  "why": "A person's power output includes far more than the work against gravity (muscles are roughly 25% efficient), so 'power output' has no single defensible value; the rate of work against gravity is exactly 250 watts."
+ },
+ {
+  "id": "pilot-gen-ms-r01-b06",
+  "kind": "wording precision",
+  "what": "'a constant net force of 20 newtons pushes it' changed to 'a constant net force of 20 newtons acts on it'.",
+  "why": "A net force is the sum of the forces, not a push; the mixed wording blurs which force is meant."
+ }
+]

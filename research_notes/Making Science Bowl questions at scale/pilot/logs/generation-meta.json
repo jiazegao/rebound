@@ -1,0 +1,887 @@
+[
+ {
+  "id": "pilot-gen-hs-r01-t01",
+  "level": "HS",
+  "kind": "tossup",
+  "subject": "biology",
+  "format": "multiple_choice",
+  "difficultyGuess": "easy-medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-hs-r01-b01",
+  "level": "HS",
+  "kind": "bonus",
+  "subject": "biology",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-hs-r01-t02",
+  "level": "HS",
+  "kind": "tossup",
+  "subject": "chemistry",
+  "format": "short_answer",
+  "difficultyGuess": "easy-medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x2"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-hs-r01-b02",
+  "level": "HS",
+  "kind": "bonus",
+  "subject": "chemistry",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-hs-r01-t03",
+  "level": "HS",
+  "kind": "tossup",
+  "subject": "earth_space",
+  "format": "multiple_choice",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-hs-r01-b03",
+  "level": "HS",
+  "kind": "bonus",
+  "subject": "earth_space",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-hs-r01-t04",
+  "level": "HS",
+  "kind": "tossup",
+  "subject": "energy",
+  "format": "multiple_choice",
+  "difficultyGuess": "medium-hard",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-hs-r01-b04",
+  "level": "HS",
+  "kind": "bonus",
+  "subject": "energy",
+  "format": "multiple_choice",
+  "difficultyGuess": "easy-medium",
+  "confidence": 5,
+  "changedBy": [
+   "B self-review x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-hs-r01-t05",
+  "level": "HS",
+  "kind": "tossup",
+  "subject": "math",
+  "format": "multiple_choice",
+  "difficultyGuess": "easy",
+  "confidence": 5,
+  "changedBy": [
+   "B self-review x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-hs-r01-b05",
+  "level": "HS",
+  "kind": "bonus",
+  "subject": "math",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-hs-r01-t06",
+  "level": "HS",
+  "kind": "tossup",
+  "subject": "physics",
+  "format": "multiple_choice",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-hs-r01-b06",
+  "level": "HS",
+  "kind": "bonus",
+  "subject": "physics",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-hs-r01-t07",
+  "level": "HS",
+  "kind": "tossup",
+  "subject": "biology",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 4,
+  "changedBy": [
+   "C library check (replaced) x2",
+   "D review of replacements x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-hs-r01-b07",
+  "level": "HS",
+  "kind": "bonus",
+  "subject": "biology",
+  "format": "multiple_choice",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-hs-r01-t08",
+  "level": "HS",
+  "kind": "tossup",
+  "subject": "chemistry",
+  "format": "multiple_choice",
+  "difficultyGuess": "easy",
+  "confidence": 5,
+  "changedBy": [
+   "B self-review x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-hs-r01-b08",
+  "level": "HS",
+  "kind": "bonus",
+  "subject": "chemistry",
+  "format": "multiple_choice",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-hs-r01-t09",
+  "level": "HS",
+  "kind": "tossup",
+  "subject": "earth_space",
+  "format": "short_answer",
+  "difficultyGuess": "hard",
+  "confidence": 4,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-hs-r01-b09",
+  "level": "HS",
+  "kind": "bonus",
+  "subject": "earth_space",
+  "format": "multiple_choice",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-hs-r01-t10",
+  "level": "HS",
+  "kind": "tossup",
+  "subject": "energy",
+  "format": "short_answer",
+  "difficultyGuess": "easy-medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-hs-r01-b10",
+  "level": "HS",
+  "kind": "bonus",
+  "subject": "energy",
+  "format": "multiple_choice",
+  "difficultyGuess": "easy-medium",
+  "confidence": 5,
+  "changedBy": [
+   "B self-review x1",
+   "E round assembly x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-hs-r01-t11",
+  "level": "HS",
+  "kind": "tossup",
+  "subject": "math",
+  "format": "short_answer",
+  "difficultyGuess": "easy",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-hs-r01-b11",
+  "level": "HS",
+  "kind": "bonus",
+  "subject": "math",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-hs-r01-t12",
+  "level": "HS",
+  "kind": "tossup",
+  "subject": "physics",
+  "format": "multiple_choice",
+  "difficultyGuess": "easy-medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-hs-r01-b12",
+  "level": "HS",
+  "kind": "bonus",
+  "subject": "physics",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-hs-r01-t13",
+  "level": "HS",
+  "kind": "tossup",
+  "subject": "biology",
+  "format": "multiple_choice",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [
+   "B self-review x1",
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-hs-r01-b13",
+  "level": "HS",
+  "kind": "bonus",
+  "subject": "biology",
+  "format": "short_answer",
+  "difficultyGuess": "medium-hard",
+  "confidence": 4,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-hs-r01-t14",
+  "level": "HS",
+  "kind": "tossup",
+  "subject": "chemistry",
+  "format": "multiple_choice",
+  "difficultyGuess": "medium-hard",
+  "confidence": 5,
+  "changedBy": [
+   "B self-review x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-hs-r01-b14",
+  "level": "HS",
+  "kind": "bonus",
+  "subject": "chemistry",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-hs-r01-t15",
+  "level": "HS",
+  "kind": "tossup",
+  "subject": "earth_space",
+  "format": "multiple_choice",
+  "difficultyGuess": "easy-medium",
+  "confidence": 4,
+  "changedBy": [
+   "B self-review x2",
+   "C library check (replaced) x2"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-hs-r01-b15",
+  "level": "HS",
+  "kind": "bonus",
+  "subject": "earth_space",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-hs-r01-t16",
+  "level": "HS",
+  "kind": "tossup",
+  "subject": "energy",
+  "format": "multiple_choice",
+  "difficultyGuess": "easy-medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-hs-r01-b16",
+  "level": "HS",
+  "kind": "bonus",
+  "subject": "energy",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-hs-r01-t17",
+  "level": "HS",
+  "kind": "tossup",
+  "subject": "math",
+  "format": "short_answer",
+  "difficultyGuess": "easy",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-hs-r01-b17",
+  "level": "HS",
+  "kind": "bonus",
+  "subject": "math",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-hs-r01-t18",
+  "level": "HS",
+  "kind": "tossup",
+  "subject": "physics",
+  "format": "short_answer",
+  "difficultyGuess": "easy-medium",
+  "confidence": 5,
+  "changedBy": [
+   "B self-review x1",
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-hs-r01-b18",
+  "level": "HS",
+  "kind": "bonus",
+  "subject": "physics",
+  "format": "multiple_choice",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-t01",
+  "level": "MS",
+  "kind": "tossup",
+  "subject": "biology",
+  "format": "multiple_choice",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-ms-r01-b01",
+  "level": "MS",
+  "kind": "bonus",
+  "subject": "biology",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 4,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-t02",
+  "level": "MS",
+  "kind": "tossup",
+  "subject": "chemistry",
+  "format": "multiple_choice",
+  "difficultyGuess": "easy",
+  "confidence": 4,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-ms-r01-b02",
+  "level": "MS",
+  "kind": "bonus",
+  "subject": "chemistry",
+  "format": "multiple_choice",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-t03",
+  "level": "MS",
+  "kind": "tossup",
+  "subject": "earth_space",
+  "format": "multiple_choice",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x2"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-b03",
+  "level": "MS",
+  "kind": "bonus",
+  "subject": "earth_space",
+  "format": "multiple_choice",
+  "difficultyGuess": "easy-medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-t04",
+  "level": "MS",
+  "kind": "tossup",
+  "subject": "energy",
+  "format": "multiple_choice",
+  "difficultyGuess": "easy",
+  "confidence": 5,
+  "changedBy": [
+   "B self-review x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-b04",
+  "level": "MS",
+  "kind": "bonus",
+  "subject": "energy",
+  "format": "short_answer",
+  "difficultyGuess": "easy",
+  "confidence": 4,
+  "changedBy": [
+   "B self-review x1",
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-t05",
+  "level": "MS",
+  "kind": "tossup",
+  "subject": "math",
+  "format": "short_answer",
+  "difficultyGuess": "easy",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-b05",
+  "level": "MS",
+  "kind": "bonus",
+  "subject": "math",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-ms-r01-t06",
+  "level": "MS",
+  "kind": "tossup",
+  "subject": "physics",
+  "format": "multiple_choice",
+  "difficultyGuess": "easy-medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x2"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-b06",
+  "level": "MS",
+  "kind": "bonus",
+  "subject": "physics",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [
+   "B self-review x1",
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-t07",
+  "level": "MS",
+  "kind": "tossup",
+  "subject": "biology",
+  "format": "short_answer",
+  "difficultyGuess": "easy-medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-b07",
+  "level": "MS",
+  "kind": "bonus",
+  "subject": "biology",
+  "format": "multiple_choice",
+  "difficultyGuess": "easy",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-ms-r01-t08",
+  "level": "MS",
+  "kind": "tossup",
+  "subject": "chemistry",
+  "format": "multiple_choice",
+  "difficultyGuess": "easy",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-ms-r01-b08",
+  "level": "MS",
+  "kind": "bonus",
+  "subject": "chemistry",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-ms-r01-t09",
+  "level": "MS",
+  "kind": "tossup",
+  "subject": "earth_space",
+  "format": "multiple_choice",
+  "difficultyGuess": "medium",
+  "confidence": 4,
+  "changedBy": [
+   "B self-review x1",
+   "C library check (replaced) x2"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-b09",
+  "level": "MS",
+  "kind": "bonus",
+  "subject": "earth_space",
+  "format": "short_answer",
+  "difficultyGuess": "easy-medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-t10",
+  "level": "MS",
+  "kind": "tossup",
+  "subject": "energy",
+  "format": "short_answer",
+  "difficultyGuess": "easy",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-b10",
+  "level": "MS",
+  "kind": "bonus",
+  "subject": "energy",
+  "format": "multiple_choice",
+  "difficultyGuess": "medium-hard",
+  "confidence": 5,
+  "changedBy": [
+   "B self-review x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-t11",
+  "level": "MS",
+  "kind": "tossup",
+  "subject": "math",
+  "format": "short_answer",
+  "difficultyGuess": "easy",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-ms-r01-b11",
+  "level": "MS",
+  "kind": "bonus",
+  "subject": "math",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-ms-r01-t12",
+  "level": "MS",
+  "kind": "tossup",
+  "subject": "physics",
+  "format": "short_answer",
+  "difficultyGuess": "easy",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x2",
+   "D review of replacements x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-b12",
+  "level": "MS",
+  "kind": "bonus",
+  "subject": "physics",
+  "format": "multiple_choice",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-t13",
+  "level": "MS",
+  "kind": "tossup",
+  "subject": "biology",
+  "format": "short_answer",
+  "difficultyGuess": "easy",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1",
+   "D review of replacements x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-b13",
+  "level": "MS",
+  "kind": "bonus",
+  "subject": "biology",
+  "format": "short_answer",
+  "difficultyGuess": "easy-medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-ms-r01-t14",
+  "level": "MS",
+  "kind": "tossup",
+  "subject": "chemistry",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-ms-r01-b14",
+  "level": "MS",
+  "kind": "bonus",
+  "subject": "chemistry",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-t15",
+  "level": "MS",
+  "kind": "tossup",
+  "subject": "earth_space",
+  "format": "multiple_choice",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x2"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-b15",
+  "level": "MS",
+  "kind": "bonus",
+  "subject": "earth_space",
+  "format": "multiple_choice",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-t16",
+  "level": "MS",
+  "kind": "tossup",
+  "subject": "energy",
+  "format": "multiple_choice",
+  "difficultyGuess": "easy",
+  "confidence": 5,
+  "changedBy": [
+   "B self-review x1",
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-b16",
+  "level": "MS",
+  "kind": "bonus",
+  "subject": "energy",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-ms-r01-t17",
+  "level": "MS",
+  "kind": "tossup",
+  "subject": "math",
+  "format": "short_answer",
+  "difficultyGuess": "easy",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-ms-r01-b17",
+  "level": "MS",
+  "kind": "bonus",
+  "subject": "math",
+  "format": "short_answer",
+  "difficultyGuess": "medium-hard",
+  "confidence": 5,
+  "changedBy": [],
+  "sameAsDraftV1": true
+ },
+ {
+  "id": "pilot-gen-ms-r01-t18",
+  "level": "MS",
+  "kind": "tossup",
+  "subject": "physics",
+  "format": "multiple_choice",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [
+   "C library check (replaced) x1"
+  ],
+  "sameAsDraftV1": false
+ },
+ {
+  "id": "pilot-gen-ms-r01-b18",
+  "level": "MS",
+  "kind": "bonus",
+  "subject": "physics",
+  "format": "short_answer",
+  "difficultyGuess": "medium",
+  "confidence": 5,
+  "changedBy": [
+   "B self-review x1"
+  ],
+  "sameAsDraftV1": false
+ }
+]

@@ -1,0 +1,2036 @@
+{
+  "id": "pilot-gen",
+  "provider": "rebound",
+  "levels": [
+    "HS",
+    "MS"
+  ],
+  "title": "Rebound pilot: generated rounds (unverified)",
+  "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person.",
+  "license": "Pilot material for Rebound's own evaluation. Not checked for accuracy; do not publish or redistribute.",
+  "rounds": [
+    {
+      "id": "pilot-gen-hs-r01",
+      "label": "HS Round 1",
+      "order": 1,
+      "level": "HS",
+      "pairs": [
+        {
+          "number": 1,
+          "tossup": {
+            "id": "pilot-gen-hs-r01-t01",
+            "kind": "tossup",
+            "number": 1,
+            "level": "HS",
+            "subject": "biology",
+            "sourceCategory": "Biology",
+            "format": "multiple_choice",
+            "stem": "Which of the following hormones is secreted by the adrenal medulla?",
+            "choices": {
+              "W": "Cortisol",
+              "X": "Aldosterone [al-DOSS-ter-ohn]",
+              "Y": "Epinephrine [ep-ih-NEF-rin]",
+              "Z": "Thyroxine [thigh-ROCK-seen]"
+            },
+            "answer": "EPINEPHRINE",
+            "answerLetter": "Y",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "Y) EPINEPHRINE",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "biology.animal-physiology",
+            "concepts": [
+              "biology.animal-physiology.endocrine",
+              "biology.animal-physiology.nervous-system"
+            ]
+          },
+          "bonus": {
+            "id": "pilot-gen-hs-r01-b01",
+            "kind": "bonus",
+            "number": 1,
+            "level": "HS",
+            "subject": "biology",
+            "sourceCategory": "Biology",
+            "format": "short_answer",
+            "stem": "In C₄ plants such as corn, carbon dioxide is first fixed into a four-carbon acid in mesophyll cells. In what type of cells, which form a ring around the leaf veins, does the Calvin cycle then take place?",
+            "answer": "BUNDLE-SHEATH CELLS",
+            "accept": [
+              "BUNDLE SHEATH"
+            ],
+            "reject": [],
+            "answerRaw": "BUNDLE-SHEATH CELLS (ACCEPT: BUNDLE SHEATH)",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "biology.plant-biology"
+          }
+        },
+        {
+          "number": 2,
+          "tossup": {
+            "id": "pilot-gen-hs-r01-t02",
+            "kind": "tossup",
+            "number": 2,
+            "level": "HS",
+            "subject": "chemistry",
+            "sourceCategory": "Chemistry",
+            "format": "short_answer",
+            "stem": "How many moles of oxygen atoms are in one mole of calcium nitrate?",
+            "answer": "6",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "6",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            }
+          },
+          "bonus": {
+            "id": "pilot-gen-hs-r01-b02",
+            "kind": "bonus",
+            "number": 2,
+            "level": "HS",
+            "subject": "chemistry",
+            "sourceCategory": "Chemistry",
+            "format": "short_answer",
+            "stem": "A student mixes 50 milliliters of 0.20-molar hydrochloric acid with 50 milliliters of 0.10-molar sodium hydroxide. To one decimal place, what is the pH of the resulting solution?",
+            "answer": "1.3",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "1.3",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "chemistry.acids-bases"
+          }
+        },
+        {
+          "number": 3,
+          "tossup": {
+            "id": "pilot-gen-hs-r01-t03",
+            "kind": "tossup",
+            "number": 3,
+            "level": "HS",
+            "subject": "earth_space",
+            "sourceCategory": "Earth and Space",
+            "format": "multiple_choice",
+            "stem": "What term describes the texture of an igneous rock that has large crystals scattered through a much finer-grained groundmass?",
+            "choices": {
+              "W": "Vesicular [veh-SICK-yoo-lar]",
+              "X": "Glassy",
+              "Y": "Pegmatitic [peg-muh-TIT-ik]",
+              "Z": "Porphyritic [por-fuh-RIT-ik]"
+            },
+            "answer": "PORPHYRITIC",
+            "answerLetter": "Z",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "Z) PORPHYRITIC",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "earth_space.minerals-rocks",
+            "concepts": [
+              "earth_space.minerals-rocks.igneous",
+              "earth_space.minerals-rocks.crystals"
+            ]
+          },
+          "bonus": {
+            "id": "pilot-gen-hs-r01-b03",
+            "kind": "bonus",
+            "number": 3,
+            "level": "HS",
+            "subject": "earth_space",
+            "sourceCategory": "Earth and Space",
+            "format": "short_answer",
+            "stem": "In the open ocean, a tsunami travels at about 200 meters per second. In hours, how long would it take to cross 3,600 kilometers of open ocean?",
+            "answer": "5",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "5",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "earth_space.oceanography"
+          }
+        },
+        {
+          "number": 4,
+          "tossup": {
+            "id": "pilot-gen-hs-r01-t04",
+            "kind": "tossup",
+            "number": 4,
+            "level": "HS",
+            "subject": "energy",
+            "sourceCategory": "Energy",
+            "format": "multiple_choice",
+            "stem": "Scientists at the National Renewable Energy Laboratory are developing solar cells made from perovskites [puh-ROV-skites]. These materials are named after the mineral perovskite, which has what chemical composition?",
+            "choices": {
+              "W": "Calcium titanate",
+              "X": "Silicon dioxide",
+              "Y": "Iron disulfide",
+              "Z": "Barium sulfate"
+            },
+            "answer": "CALCIUM TITANATE",
+            "answerLetter": "W",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "W) CALCIUM TITANATE",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "energy.solar",
+            "crossSubject": "chemistry"
+          },
+          "bonus": {
+            "id": "pilot-gen-hs-r01-b04",
+            "kind": "bonus",
+            "number": 4,
+            "level": "HS",
+            "subject": "energy",
+            "sourceCategory": "Energy",
+            "format": "multiple_choice",
+            "stem": "Researchers at Princeton Plasma Physics Laboratory study magnetic confinement fusion. The deuterium–tritium fusion reaction produces a helium-4 nucleus and what other particle, which carries most of the energy released?",
+            "choices": {
+              "W": "Proton",
+              "X": "Positron",
+              "Y": "Gamma-ray photon",
+              "Z": "Neutron"
+            },
+            "answer": "NEUTRON",
+            "answerLetter": "Z",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "Z) NEUTRON",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "energy.nuclear-energy",
+            "crossSubject": "physics"
+          }
+        },
+        {
+          "number": 5,
+          "tossup": {
+            "id": "pilot-gen-hs-r01-t05",
+            "kind": "tossup",
+            "number": 5,
+            "level": "HS",
+            "subject": "math",
+            "sourceCategory": "Math",
+            "format": "multiple_choice",
+            "stem": "Which of the following functions of x is odd?",
+            "choices": {
+              "W": "x² + 1",
+              "X": "x³ – x",
+              "Y": "|x|",
+              "Z": "cos x"
+            },
+            "answer": "x³ – x",
+            "answerLetter": "X",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "X) x³ – x",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "math.algebra",
+            "concepts": [
+              "math.algebra.functions"
+            ]
+          },
+          "bonus": {
+            "id": "pilot-gen-hs-r01-b05",
+            "kind": "bonus",
+            "number": 5,
+            "level": "HS",
+            "subject": "math",
+            "sourceCategory": "Math",
+            "format": "short_answer",
+            "stem": "What is the remainder when 2 to the 100th power is divided by 7?",
+            "answer": "2",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "2",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "math.arithmetic"
+          }
+        },
+        {
+          "number": 6,
+          "tossup": {
+            "id": "pilot-gen-hs-r01-t06",
+            "kind": "tossup",
+            "number": 6,
+            "level": "HS",
+            "subject": "physics",
+            "sourceCategory": "Physics",
+            "format": "multiple_choice",
+            "stem": "A charged particle moves in a circle in a uniform magnetic field, with its velocity perpendicular to the field. If the particle’s speed is doubled, what happens to the radius of its circular path?",
+            "choices": {
+              "W": "It is halved",
+              "X": "It stays the same",
+              "Y": "It doubles",
+              "Z": "It quadruples"
+            },
+            "answer": "IT DOUBLES",
+            "answerLetter": "Y",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "Y) IT DOUBLES",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "physics.magnetism-induction"
+          },
+          "bonus": {
+            "id": "pilot-gen-hs-r01-b06",
+            "kind": "bonus",
+            "number": 6,
+            "level": "HS",
+            "subject": "physics",
+            "sourceCategory": "Physics",
+            "format": "short_answer",
+            "stem": "A 2-kilogram block is released from rest and slides down a frictionless ramp, dropping a vertical height of 5 meters. It then slides onto a rough horizontal floor where the coefficient of kinetic friction is 0.25. In meters, how far does the block slide along the floor before stopping?",
+            "answer": "20",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "20",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "physics.kinematics-forces",
+            "concepts": [
+              "physics.kinematics-forces.friction",
+              "physics.kinematics-forces.one-dimensional-motion",
+              "physics.kinematics-forces.inclines-tension"
+            ]
+          }
+        },
+        {
+          "number": 7,
+          "tossup": {
+            "id": "pilot-gen-hs-r01-t07",
+            "kind": "tossup",
+            "number": 7,
+            "level": "HS",
+            "subject": "biology",
+            "sourceCategory": "Biology",
+            "format": "short_answer",
+            "stem": "Type O-negative red blood cells lack the A and B antigens and also lack what other surface protein, whose absence is indicated by the word negative?",
+            "answer": "RH FACTOR",
+            "accept": [
+              "RH ANTIGEN",
+              "RHESUS FACTOR",
+              "D ANTIGEN",
+              "RHD"
+            ],
+            "reject": [],
+            "answerRaw": "RH FACTOR (ACCEPT: RH ANTIGEN, RHESUS FACTOR, D ANTIGEN, RHD)",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "biology.animal-physiology",
+            "concepts": [
+              "biology.animal-physiology.circulation"
+            ]
+          },
+          "bonus": {
+            "id": "pilot-gen-hs-r01-b07",
+            "kind": "bonus",
+            "number": 7,
+            "level": "HS",
+            "subject": "biology",
+            "sourceCategory": "Biology",
+            "format": "multiple_choice",
+            "stem": "In a population at Hardy-Weinberg equilibrium, 4% of individuals show a recessive phenotype controlled by a single gene with two alleles. What percentage of the population is expected to be heterozygous?",
+            "choices": {
+              "W": "16%",
+              "X": "32%",
+              "Y": "64%",
+              "Z": "80%"
+            },
+            "answer": "32%",
+            "answerLetter": "X",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "X) 32%",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "biology.genetics"
+          }
+        },
+        {
+          "number": 8,
+          "tossup": {
+            "id": "pilot-gen-hs-r01-t08",
+            "kind": "tossup",
+            "number": 8,
+            "level": "HS",
+            "subject": "chemistry",
+            "sourceCategory": "Chemistry",
+            "format": "multiple_choice",
+            "stem": "Which of the following compounds has the highest normal boiling point?",
+            "choices": {
+              "W": "Propane",
+              "X": "Dimethyl ether",
+              "Y": "Methane",
+              "Z": "Ethanol"
+            },
+            "answer": "ETHANOL",
+            "answerLetter": "Z",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "Z) ETHANOL",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "chemistry.organic",
+            "concepts": [
+              "chemistry.organic.functional-groups",
+              "chemistry.organic.hydrocarbons"
+            ]
+          },
+          "bonus": {
+            "id": "pilot-gen-hs-r01-b08",
+            "kind": "bonus",
+            "number": 8,
+            "level": "HS",
+            "subject": "chemistry",
+            "sourceCategory": "Chemistry",
+            "format": "multiple_choice",
+            "stem": "Assuming ideal behavior, which of the following aqueous solutions has the lowest freezing point?",
+            "choices": {
+              "W": "0.10-molal glucose",
+              "X": "0.10-molal sodium chloride",
+              "Y": "0.10-molal calcium chloride",
+              "Z": "0.15-molal sucrose"
+            },
+            "answer": "0.10-MOLAL CALCIUM CHLORIDE",
+            "answerLetter": "Y",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "Y) 0.10-MOLAL CALCIUM CHLORIDE",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "chemistry.stoichiometry-solutions"
+          }
+        },
+        {
+          "number": 9,
+          "tossup": {
+            "id": "pilot-gen-hs-r01-t09",
+            "kind": "tossup",
+            "number": 9,
+            "level": "HS",
+            "subject": "earth_space",
+            "sourceCategory": "Earth and Space",
+            "format": "short_answer",
+            "stem": "What is the name of the boundary in the outer heliosphere where the solar wind abruptly slows from supersonic to subsonic speed as it begins to interact with the interstellar medium?",
+            "answer": "TERMINATION SHOCK",
+            "accept": [],
+            "reject": [
+              "HELIOPAUSE",
+              "BOW SHOCK"
+            ],
+            "answerRaw": "TERMINATION SHOCK (DO NOT ACCEPT: HELIOPAUSE OR BOW SHOCK)",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "earth_space.solar-system",
+            "concepts": [
+              "earth_space.solar-system.magnetospheres"
+            ]
+          },
+          "bonus": {
+            "id": "pilot-gen-hs-r01-b09",
+            "kind": "bonus",
+            "number": 9,
+            "level": "HS",
+            "subject": "earth_space",
+            "sourceCategory": "Earth and Space",
+            "format": "multiple_choice",
+            "stem": "Which of the following conditions most favors the formation of radiation fog?",
+            "choices": {
+              "W": "A windy, cloudy afternoon",
+              "X": "A clear, calm night with moist air near the ground",
+              "Y": "Warm, moist air moving over a cold ocean current",
+              "Z": "Cold air moving over a warm lake"
+            },
+            "answer": "A CLEAR, CALM NIGHT WITH MOIST AIR NEAR THE GROUND",
+            "answerLetter": "X",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "X) A CLEAR, CALM NIGHT WITH MOIST AIR NEAR THE GROUND",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "earth_space.meteorology-climate",
+            "concepts": [
+              "earth_space.meteorology-climate.clouds-precipitation"
+            ]
+          }
+        },
+        {
+          "number": 10,
+          "tossup": {
+            "id": "pilot-gen-hs-r01-t10",
+            "kind": "tossup",
+            "number": 10,
+            "level": "HS",
+            "subject": "energy",
+            "sourceCategory": "Energy",
+            "format": "short_answer",
+            "stem": "Scientists supported by the Department of Energy are developing catalysts for the Sabatier [sah-bah-TYAY] reaction, which combines carbon dioxide with hydrogen gas to produce water and what fuel?",
+            "answer": "METHANE",
+            "accept": [
+              "CH₄"
+            ],
+            "reject": [],
+            "answerRaw": "METHANE (ACCEPT: CH₄)",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "energy.fossil-fuels",
+            "concepts": [
+              "energy.fossil-fuels.natural-gas"
+            ],
+            "crossSubject": "chemistry"
+          },
+          "bonus": {
+            "id": "pilot-gen-hs-r01-b10",
+            "kind": "bonus",
+            "number": 10,
+            "level": "HS",
+            "subject": "energy",
+            "sourceCategory": "Energy",
+            "format": "multiple_choice",
+            "stem": "Researchers at the National Renewable Energy Laboratory study the electrolysis of water. Which of the following is produced at the cathode?",
+            "choices": {
+              "W": "Hydrogen gas",
+              "X": "Oxygen gas",
+              "Y": "Hydrogen peroxide",
+              "Z": "Ozone"
+            },
+            "answer": "HYDROGEN GAS",
+            "answerLetter": "W",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "W) HYDROGEN GAS",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "energy.storage-hydrogen",
+            "crossSubject": "chemistry"
+          }
+        },
+        {
+          "number": 11,
+          "tossup": {
+            "id": "pilot-gen-hs-r01-t11",
+            "kind": "tossup",
+            "number": 11,
+            "level": "HS",
+            "subject": "math",
+            "sourceCategory": "Math",
+            "format": "short_answer",
+            "stem": "In degrees, what is the sum of the interior angles of a decagon?",
+            "answer": "1,440",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "1,440",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "math.geometry",
+            "concepts": [
+              "math.geometry.polygons",
+              "math.geometry.angles-lines"
+            ]
+          },
+          "bonus": {
+            "id": "pilot-gen-hs-r01-b11",
+            "kind": "bonus",
+            "number": 11,
+            "level": "HS",
+            "subject": "math",
+            "sourceCategory": "Math",
+            "format": "short_answer",
+            "stem": "What is the greatest common divisor of 391 and 299?",
+            "answer": "23",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "23",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "math.number-theory"
+          }
+        },
+        {
+          "number": 12,
+          "tossup": {
+            "id": "pilot-gen-hs-r01-t12",
+            "kind": "tossup",
+            "number": 12,
+            "level": "HS",
+            "subject": "physics",
+            "sourceCategory": "Physics",
+            "format": "multiple_choice",
+            "stem": "A guitar string is fixed at both ends. Which of the following changes would raise the frequency of its fundamental mode?",
+            "choices": {
+              "W": "Lengthening the string",
+              "X": "Tightening the string",
+              "Y": "Replacing it with a heavier string of the same length and tension",
+              "Z": "Loosening the string"
+            },
+            "answer": "TIGHTENING THE STRING",
+            "answerLetter": "X",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "X) TIGHTENING THE STRING",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "physics.waves-sound"
+          },
+          "bonus": {
+            "id": "pilot-gen-hs-r01-b12",
+            "kind": "bonus",
+            "number": 12,
+            "level": "HS",
+            "subject": "physics",
+            "sourceCategory": "Physics",
+            "format": "short_answer",
+            "stem": "A 6-ohm resistor and a 3-ohm resistor are connected in parallel, and this combination is connected in series with a 4-ohm resistor across an ideal 12-volt battery. In amperes, what is the current through the 3-ohm resistor?",
+            "answer": "4/3",
+            "accept": [
+              "1 1/3",
+              "1.33"
+            ],
+            "reject": [],
+            "answerRaw": "4/3 (ACCEPT: 1 1/3, 1.33)",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "physics.electrostatics-circuits",
+            "concepts": [
+              "physics.electrostatics-circuits.current-resistance",
+              "physics.electrostatics-circuits.series-parallel",
+              "physics.electrostatics-circuits.instruments-components"
+            ]
+          }
+        },
+        {
+          "number": 13,
+          "tossup": {
+            "id": "pilot-gen-hs-r01-t13",
+            "kind": "tossup",
+            "number": 13,
+            "level": "HS",
+            "subject": "biology",
+            "sourceCategory": "Biology",
+            "format": "multiple_choice",
+            "stem": "Which of the following animals is a deuterostome [DOO-ter-oh-stome]?",
+            "choices": {
+              "W": "Earthworm",
+              "X": "Snail",
+              "Y": "Grasshopper",
+              "Z": "Sea urchin"
+            },
+            "answer": "SEA URCHIN",
+            "answerLetter": "Z",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "Z) SEA URCHIN",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "biology.organism-diversity",
+            "concepts": [
+              "biology.organism-diversity.echinoderms-chordates",
+              "biology.organism-diversity.body-plans"
+            ]
+          },
+          "bonus": {
+            "id": "pilot-gen-hs-r01-b13",
+            "kind": "bonus",
+            "number": 13,
+            "level": "HS",
+            "subject": "biology",
+            "sourceCategory": "Biology",
+            "format": "short_answer",
+            "stem": "Identify all of the following three statements that are true of the loop of Henle [HEN-lee] in the human kidney: 1) Its descending limb is permeable to water; 2) Its thick ascending limb actively transports sodium and chloride ions out of the filtrate; 3) It lies entirely within the renal cortex.",
+            "answer": "1, 2",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "1, 2",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "biology.animal-physiology",
+            "concepts": [
+              "biology.animal-physiology.excretion"
+            ]
+          }
+        },
+        {
+          "number": 14,
+          "tossup": {
+            "id": "pilot-gen-hs-r01-t14",
+            "kind": "tossup",
+            "number": 14,
+            "level": "HS",
+            "subject": "chemistry",
+            "sourceCategory": "Chemistry",
+            "format": "multiple_choice",
+            "stem": "Which of the following elements releases the most energy when a neutral gaseous atom gains an electron?",
+            "choices": {
+              "W": "Chlorine",
+              "X": "Fluorine",
+              "Y": "Oxygen",
+              "Z": "Bromine"
+            },
+            "answer": "CHLORINE",
+            "answerLetter": "W",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "W) CHLORINE",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "chemistry.atomic-structure"
+          },
+          "bonus": {
+            "id": "pilot-gen-hs-r01-b14",
+            "kind": "bonus",
+            "number": 14,
+            "level": "HS",
+            "subject": "chemistry",
+            "sourceCategory": "Chemistry",
+            "format": "short_answer",
+            "stem": "How many constitutional isomers, including the straight-chain isomer, have the molecular formula C₆H₁₄?",
+            "answer": "5",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "5",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "chemistry.organic",
+            "concepts": [
+              "chemistry.organic.isomers-stereochemistry"
+            ]
+          }
+        },
+        {
+          "number": 15,
+          "tossup": {
+            "id": "pilot-gen-hs-r01-t15",
+            "kind": "tossup",
+            "number": 15,
+            "level": "HS",
+            "subject": "earth_space",
+            "sourceCategory": "Earth and Space",
+            "format": "multiple_choice",
+            "stem": "Which of the following is the main reason the Moon’s surface keeps far more impact craters than Earth’s surface does?",
+            "choices": {
+              "W": "The Moon is struck by more meteoroids than Earth",
+              "X": "The Moon’s gravity pulls in more asteroids than Earth’s gravity does",
+              "Y": "Most lunar craters were made by volcanoes",
+              "Z": "The Moon lacks the weathering, erosion and plate tectonics that erase craters on Earth"
+            },
+            "answer": "THE MOON LACKS THE WEATHERING, EROSION AND PLATE TECTONICS THAT ERASE CRATERS ON EARTH",
+            "answerLetter": "Z",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "Z) THE MOON LACKS THE WEATHERING, EROSION AND PLATE TECTONICS THAT ERASE CRATERS ON EARTH",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "earth_space.solar-system",
+            "concepts": [
+              "earth_space.solar-system.small-bodies",
+              "earth_space.solar-system.earth-moon"
+            ]
+          },
+          "bonus": {
+            "id": "pilot-gen-hs-r01-b15",
+            "kind": "bonus",
+            "number": 15,
+            "level": "HS",
+            "subject": "earth_space",
+            "sourceCategory": "Earth and Space",
+            "format": "short_answer",
+            "stem": "Identify all of the following three minerals that are harder than quartz on the Mohs scale: 1) Topaz; 2) Orthoclase [OR-thoh-clays]; 3) Corundum [kuh-RUN-dum].",
+            "answer": "1, 3",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "1, 3",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "earth_space.minerals-rocks",
+            "concepts": [
+              "earth_space.minerals-rocks.silicates",
+              "earth_space.minerals-rocks.mineral-identification",
+              "earth_space.minerals-rocks.non-silicates"
+            ]
+          }
+        },
+        {
+          "number": 16,
+          "tossup": {
+            "id": "pilot-gen-hs-r01-t16",
+            "kind": "tossup",
+            "number": 16,
+            "level": "HS",
+            "subject": "energy",
+            "sourceCategory": "Energy",
+            "format": "multiple_choice",
+            "stem": "Scientists at Idaho National Laboratory test new fuels for light-water reactors. In these reactors, ordinary water acts as the coolant and also serves which of the following roles?",
+            "choices": {
+              "W": "Neutron moderator",
+              "X": "Neutron source",
+              "Y": "Fuel cladding",
+              "Z": "Control rod material"
+            },
+            "answer": "NEUTRON MODERATOR",
+            "answerLetter": "W",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "W) NEUTRON MODERATOR",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "energy.nuclear-energy",
+            "crossSubject": "physics"
+          },
+          "bonus": {
+            "id": "pilot-gen-hs-r01-b16",
+            "kind": "bonus",
+            "number": 16,
+            "level": "HS",
+            "subject": "energy",
+            "sourceCategory": "Energy",
+            "format": "short_answer",
+            "stem": "Engineers at the National Renewable Energy Laboratory test wind turbines. If both the rotor diameter and the wind speed are doubled, by what factor does the power carried by the wind through the rotor’s swept area increase?",
+            "answer": "32",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "32",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "energy.renewables",
+            "crossSubject": "math"
+          }
+        },
+        {
+          "number": 17,
+          "tossup": {
+            "id": "pilot-gen-hs-r01-t17",
+            "kind": "tossup",
+            "number": 17,
+            "level": "HS",
+            "subject": "math",
+            "sourceCategory": "Math",
+            "format": "short_answer",
+            "stem": "What is the determinant of the 2-by-2 matrix whose first row is 3, 5 and whose second row is 2, 4?",
+            "answer": "2",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "2",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "math.vectors-matrices-complex"
+          },
+          "bonus": {
+            "id": "pilot-gen-hs-r01-b17",
+            "kind": "bonus",
+            "number": 17,
+            "level": "HS",
+            "subject": "math",
+            "sourceCategory": "Math",
+            "format": "short_answer",
+            "stem": "A bag contains 4 red marbles and 6 blue marbles. Two marbles are drawn at random without replacement. What is the probability that the two marbles are different colors?",
+            "answer": "8/15",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "8/15",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "math.probability-combinatorics"
+          }
+        },
+        {
+          "number": 18,
+          "tossup": {
+            "id": "pilot-gen-hs-r01-t18",
+            "kind": "tossup",
+            "number": 18,
+            "level": "HS",
+            "subject": "physics",
+            "sourceCategory": "Physics",
+            "format": "short_answer",
+            "stem": "A spring with a spring constant of 200 newtons per meter is compressed by 10 centimeters. In joules, how much elastic potential energy does it store?",
+            "answer": "1",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "1",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "physics.work-energy-momentum"
+          },
+          "bonus": {
+            "id": "pilot-gen-hs-r01-b18",
+            "kind": "bonus",
+            "number": 18,
+            "level": "HS",
+            "subject": "physics",
+            "sourceCategory": "Physics",
+            "format": "multiple_choice",
+            "stem": "A satellite is in a circular orbit around Earth. If the radius of its orbit were made 9 times larger, by what factor would its orbital period increase?",
+            "choices": {
+              "W": "3",
+              "X": "9",
+              "Y": "27",
+              "Z": "81"
+            },
+            "answer": "27",
+            "answerLetter": "Y",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "Y) 27",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-hs-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "physics.rotation-gravitation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pilot-gen-ms-r01",
+      "label": "MS Round 1",
+      "order": 2,
+      "level": "MS",
+      "pairs": [
+        {
+          "number": 1,
+          "tossup": {
+            "id": "pilot-gen-ms-r01-t01",
+            "kind": "tossup",
+            "number": 1,
+            "level": "MS",
+            "subject": "biology",
+            "sourceCategory": "Biology",
+            "format": "multiple_choice",
+            "stem": "Which of the following blood vessels carries oxygen-poor blood from the heart to the lungs?",
+            "choices": {
+              "W": "Aorta",
+              "X": "Pulmonary artery",
+              "Y": "Pulmonary vein",
+              "Z": "Superior vena cava [VEE-nuh KAY-vuh]"
+            },
+            "answer": "PULMONARY ARTERY",
+            "answerLetter": "X",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "X) PULMONARY ARTERY",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "biology.animal-physiology",
+            "concepts": [
+              "biology.animal-physiology.circulation",
+              "biology.animal-physiology.respiration"
+            ]
+          },
+          "bonus": {
+            "id": "pilot-gen-ms-r01-b01",
+            "kind": "bonus",
+            "number": 1,
+            "level": "MS",
+            "subject": "biology",
+            "sourceCategory": "Biology",
+            "format": "short_answer",
+            "stem": "A lichen is a partnership between a fungus and what other kind of organism that carries out photosynthesis?",
+            "answer": "ALGAE",
+            "accept": [
+              "ALGA",
+              "GREEN ALGAE",
+              "CYANOBACTERIA",
+              "BLUE-GREEN ALGAE"
+            ],
+            "reject": [],
+            "answerRaw": "ALGAE (ACCEPT: ALGA, GREEN ALGAE, CYANOBACTERIA, BLUE-GREEN ALGAE)",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "biology.organism-diversity",
+            "concepts": [
+              "biology.organism-diversity.fungi",
+              "biology.organism-diversity.protists-algae"
+            ]
+          }
+        },
+        {
+          "number": 2,
+          "tossup": {
+            "id": "pilot-gen-ms-r01-t02",
+            "kind": "tossup",
+            "number": 2,
+            "level": "MS",
+            "subject": "chemistry",
+            "sourceCategory": "Chemistry",
+            "format": "multiple_choice",
+            "stem": "Which of the following is a pure substance rather than a mixture?",
+            "choices": {
+              "W": "Air",
+              "X": "Seawater",
+              "Y": "Brass",
+              "Z": "Distilled water"
+            },
+            "answer": "DISTILLED WATER",
+            "answerLetter": "Z",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "Z) DISTILLED WATER",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            }
+          },
+          "bonus": {
+            "id": "pilot-gen-ms-r01-b02",
+            "kind": "bonus",
+            "number": 2,
+            "level": "MS",
+            "subject": "chemistry",
+            "sourceCategory": "Chemistry",
+            "format": "multiple_choice",
+            "stem": "A strip of magnesium is burned completely in air, and all of the white powder that forms is collected. How does the mass of the powder compare with the mass of the original magnesium strip?",
+            "choices": {
+              "W": "It is greater, because the magnesium combined with oxygen",
+              "X": "It is the same, because mass is conserved",
+              "Y": "It is smaller, because some of the matter was destroyed",
+              "Z": "It is zero, because the magnesium turned into light and heat"
+            },
+            "answer": "IT IS GREATER, BECAUSE THE MAGNESIUM COMBINED WITH OXYGEN",
+            "answerLetter": "W",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "W) IT IS GREATER, BECAUSE THE MAGNESIUM COMBINED WITH OXYGEN",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            }
+          }
+        },
+        {
+          "number": 3,
+          "tossup": {
+            "id": "pilot-gen-ms-r01-t03",
+            "kind": "tossup",
+            "number": 3,
+            "level": "MS",
+            "subject": "earth_space",
+            "sourceCategory": "Earth and Space",
+            "format": "multiple_choice",
+            "stem": "Moving away from the Mid-Atlantic Ridge toward either coast, the age of the rocks on the ocean floor does which of the following?",
+            "choices": {
+              "W": "Decreases",
+              "X": "Stays the same",
+              "Y": "Increases",
+              "Z": "Increases and then decreases"
+            },
+            "answer": "INCREASES",
+            "answerLetter": "Y",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "Y) INCREASES",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "earth_space.oceanography"
+          },
+          "bonus": {
+            "id": "pilot-gen-ms-r01-b03",
+            "kind": "bonus",
+            "number": 3,
+            "level": "MS",
+            "subject": "earth_space",
+            "sourceCategory": "Earth and Space",
+            "format": "multiple_choice",
+            "stem": "Which of the following is the main reason that coastal cities usually have milder winters than inland cities at the same latitude?",
+            "choices": {
+              "W": "Ocean air contains more oxygen",
+              "X": "Water heats up and cools down more slowly than land",
+              "Y": "Coastal cities receive more hours of sunlight",
+              "Z": "Breaking waves release heat through friction"
+            },
+            "answer": "WATER HEATS UP AND COOLS DOWN MORE SLOWLY THAN LAND",
+            "answerLetter": "X",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "X) WATER HEATS UP AND COOLS DOWN MORE SLOWLY THAN LAND",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "earth_space.oceanography"
+          }
+        },
+        {
+          "number": 4,
+          "tossup": {
+            "id": "pilot-gen-ms-r01-t04",
+            "kind": "tossup",
+            "number": 4,
+            "level": "MS",
+            "subject": "energy",
+            "sourceCategory": "Energy",
+            "format": "multiple_choice",
+            "stem": "Scientists at the National Renewable Energy Laboratory are working to make solar panels more efficient. Solar cells convert sunlight directly into what form of energy?",
+            "choices": {
+              "W": "Electrical energy",
+              "X": "Thermal energy",
+              "Y": "Chemical energy",
+              "Z": "Nuclear energy"
+            },
+            "answer": "ELECTRICAL ENERGY",
+            "answerLetter": "W",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "W) ELECTRICAL ENERGY",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "energy.solar"
+          },
+          "bonus": {
+            "id": "pilot-gen-ms-r01-b04",
+            "kind": "bonus",
+            "number": 4,
+            "level": "MS",
+            "subject": "energy",
+            "sourceCategory": "Energy",
+            "format": "short_answer",
+            "stem": "Scientists at Lawrence Berkeley National Laboratory study cool roofs. In hot climates, a white roof keeps a building cooler than a black roof mainly because the white roof does what to more of the incoming sunlight?",
+            "answer": "REFLECTS IT",
+            "accept": [
+              "REFLECTS",
+              "REFLECTION"
+            ],
+            "reject": [],
+            "answerRaw": "REFLECTS IT (ACCEPT: REFLECTS; REFLECTION)",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "energy.doe-labs",
+            "concepts": [
+              "energy.doe-labs.earth-environment"
+            ],
+            "crossSubject": "earth_space"
+          }
+        },
+        {
+          "number": 5,
+          "tossup": {
+            "id": "pilot-gen-ms-r01-t05",
+            "kind": "tossup",
+            "number": 5,
+            "level": "MS",
+            "subject": "math",
+            "sourceCategory": "Math",
+            "format": "short_answer",
+            "stem": "What is 40 percent of 35?",
+            "answer": "14",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "14",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "math.arithmetic"
+          },
+          "bonus": {
+            "id": "pilot-gen-ms-r01-b05",
+            "kind": "bonus",
+            "number": 5,
+            "level": "MS",
+            "subject": "math",
+            "sourceCategory": "Math",
+            "format": "short_answer",
+            "stem": "What are the two solutions of the equation x² – 5x – 14 = 0?",
+            "answer": "7 AND –2",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "7 AND –2 (accept in either order)",
+            "notes": [
+              "accept in either order"
+            ],
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "math.algebra"
+          }
+        },
+        {
+          "number": 6,
+          "tossup": {
+            "id": "pilot-gen-ms-r01-t06",
+            "kind": "tossup",
+            "number": 6,
+            "level": "MS",
+            "subject": "physics",
+            "sourceCategory": "Physics",
+            "format": "multiple_choice",
+            "stem": "A winter coat stuffed with down feathers keeps a person warm mainly because of which of the following?",
+            "choices": {
+              "W": "The feathers produce heat",
+              "X": "The feathers reflect cold back outside",
+              "Y": "Air trapped between the feathers conducts heat poorly",
+              "Z": "The feathers absorb sunlight"
+            },
+            "answer": "AIR TRAPPED BETWEEN THE FEATHERS CONDUCTS HEAT POORLY",
+            "answerLetter": "Y",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "Y) AIR TRAPPED BETWEEN THE FEATHERS CONDUCTS HEAT POORLY",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "physics.thermodynamics"
+          },
+          "bonus": {
+            "id": "pilot-gen-ms-r01-b06",
+            "kind": "bonus",
+            "number": 6,
+            "level": "MS",
+            "subject": "physics",
+            "sourceCategory": "Physics",
+            "format": "short_answer",
+            "stem": "A 5-kilogram cart starts from rest on a frictionless track, and a constant net force of 20 newtons acts on it for 4 seconds. In meters, how far does the cart travel during those 4 seconds?",
+            "answer": "32",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "32",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "physics.kinematics-forces",
+            "concepts": [
+              "physics.kinematics-forces.newtons-laws",
+              "physics.kinematics-forces.one-dimensional-motion"
+            ]
+          }
+        },
+        {
+          "number": 7,
+          "tossup": {
+            "id": "pilot-gen-ms-r01-t07",
+            "kind": "tossup",
+            "number": 7,
+            "level": "MS",
+            "subject": "biology",
+            "sourceCategory": "Biology",
+            "format": "short_answer",
+            "stem": "A dog has 78 chromosomes in each of its body cells. How many chromosomes are in each of its sperm cells?",
+            "answer": "39",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "39",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "biology.genetics"
+          },
+          "bonus": {
+            "id": "pilot-gen-ms-r01-b07",
+            "kind": "bonus",
+            "number": 7,
+            "level": "MS",
+            "subject": "biology",
+            "sourceCategory": "Biology",
+            "format": "multiple_choice",
+            "stem": "In a food chain in which grass is eaten by grasshoppers, grasshoppers are eaten by frogs, and frogs are eaten by snakes, which organism is the secondary consumer?",
+            "choices": {
+              "W": "Grass",
+              "X": "Grasshopper",
+              "Y": "Frog",
+              "Z": "Snake"
+            },
+            "answer": "FROG",
+            "answerLetter": "Y",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "Y) FROG",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "biology.organism-diversity",
+            "concepts": [
+              "biology.organism-diversity.amphibians-reptiles",
+              "biology.organism-diversity.arthropods"
+            ]
+          }
+        },
+        {
+          "number": 8,
+          "tossup": {
+            "id": "pilot-gen-ms-r01-t08",
+            "kind": "tossup",
+            "number": 8,
+            "level": "MS",
+            "subject": "chemistry",
+            "sourceCategory": "Chemistry",
+            "format": "multiple_choice",
+            "stem": "Which of the following is a typical property of metals?",
+            "choices": {
+              "W": "Brittleness",
+              "X": "Poor conduction of heat",
+              "Y": "Malleability",
+              "Z": "Dull appearance"
+            },
+            "answer": "MALLEABILITY",
+            "answerLetter": "Y",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "Y) MALLEABILITY",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            }
+          },
+          "bonus": {
+            "id": "pilot-gen-ms-r01-b08",
+            "kind": "bonus",
+            "number": 8,
+            "level": "MS",
+            "subject": "chemistry",
+            "sourceCategory": "Chemistry",
+            "format": "short_answer",
+            "stem": "A solution is made by dissolving 20 grams of sugar in 80 grams of water. What is the percent by mass of sugar in the solution?",
+            "answer": "20",
+            "accept": [
+              "20%"
+            ],
+            "reject": [],
+            "answerRaw": "20 (ACCEPT: 20%)",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "chemistry.stoichiometry-solutions"
+          }
+        },
+        {
+          "number": 9,
+          "tossup": {
+            "id": "pilot-gen-ms-r01-t09",
+            "kind": "tossup",
+            "number": 9,
+            "level": "MS",
+            "subject": "earth_space",
+            "sourceCategory": "Earth and Space",
+            "format": "multiple_choice",
+            "stem": "Which of the following is the main reason air temperature usually decreases with height in the troposphere?",
+            "choices": {
+              "W": "The Sun is farther away at higher altitudes",
+              "X": "Ozone absorbs heat near the ground",
+              "Y": "Clouds block sunlight at high altitudes",
+              "Z": "The troposphere is heated mainly from below by Earth’s surface"
+            },
+            "answer": "THE TROPOSPHERE IS HEATED MAINLY FROM BELOW BY EARTH’S SURFACE",
+            "answerLetter": "Z",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "Z) THE TROPOSPHERE IS HEATED MAINLY FROM BELOW BY EARTH’S SURFACE",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "earth_space.meteorology-climate",
+            "concepts": [
+              "earth_space.meteorology-climate.atmosphere-structure"
+            ]
+          },
+          "bonus": {
+            "id": "pilot-gen-ms-r01-b09",
+            "kind": "bonus",
+            "number": 9,
+            "level": "MS",
+            "subject": "earth_space",
+            "sourceCategory": "Earth and Space",
+            "format": "short_answer",
+            "stem": "An earthquake produces both P-waves and S-waves. Which of these two types of waves reaches a distant seismograph first?",
+            "answer": "P-WAVES",
+            "accept": [
+              "PRIMARY WAVES",
+              "COMPRESSIONAL WAVES"
+            ],
+            "reject": [],
+            "answerRaw": "P-WAVES (ACCEPT: PRIMARY WAVES, COMPRESSIONAL WAVES)",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "earth_space.earth-interior"
+          }
+        },
+        {
+          "number": 10,
+          "tossup": {
+            "id": "pilot-gen-ms-r01-t10",
+            "kind": "tossup",
+            "number": 10,
+            "level": "MS",
+            "subject": "energy",
+            "sourceCategory": "Energy",
+            "format": "short_answer",
+            "stem": "Scientists at Idaho National Laboratory study nuclear power plants. In these plants, heat from the reactor turns water into steam, and the steam spins what device that is connected to a generator?",
+            "answer": "TURBINE",
+            "accept": [
+              "STEAM TURBINE"
+            ],
+            "reject": [],
+            "answerRaw": "TURBINE (ACCEPT: STEAM TURBINE)",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "energy.nuclear-energy",
+            "crossSubject": "physics"
+          },
+          "bonus": {
+            "id": "pilot-gen-ms-r01-b10",
+            "kind": "bonus",
+            "number": 10,
+            "level": "MS",
+            "subject": "energy",
+            "sourceCategory": "Energy",
+            "format": "multiple_choice",
+            "stem": "Scientists at Argonne National Laboratory are designing better lithium-ion batteries. When such a battery is discharging, lithium ions travel from the anode to the cathode through which of the following?",
+            "choices": {
+              "W": "The external wire",
+              "X": "The battery casing",
+              "Y": "The current collector",
+              "Z": "The electrolyte"
+            },
+            "answer": "THE ELECTROLYTE",
+            "answerLetter": "Z",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "Z) THE ELECTROLYTE",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "energy.storage-hydrogen",
+            "crossSubject": "chemistry"
+          }
+        },
+        {
+          "number": 11,
+          "tossup": {
+            "id": "pilot-gen-ms-r01-t11",
+            "kind": "tossup",
+            "number": 11,
+            "level": "MS",
+            "subject": "math",
+            "sourceCategory": "Math",
+            "format": "short_answer",
+            "stem": "What is the least common multiple of 12 and 18?",
+            "answer": "36",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "36",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "math.number-theory"
+          },
+          "bonus": {
+            "id": "pilot-gen-ms-r01-b11",
+            "kind": "bonus",
+            "number": 11,
+            "level": "MS",
+            "subject": "math",
+            "sourceCategory": "Math",
+            "format": "short_answer",
+            "stem": "A rectangle has a perimeter of 30 centimeters, and its length is twice its width. In square centimeters, what is its area?",
+            "answer": "50",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "50",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "math.geometry",
+            "concepts": [
+              "math.geometry.area-perimeter",
+              "math.geometry.polygons"
+            ]
+          }
+        },
+        {
+          "number": 12,
+          "tossup": {
+            "id": "pilot-gen-ms-r01-t12",
+            "kind": "tossup",
+            "number": 12,
+            "level": "MS",
+            "subject": "physics",
+            "sourceCategory": "Physics",
+            "format": "short_answer",
+            "stem": "A light ray strikes a flat mirror at an angle of 35 degrees from the normal. In degrees, what is the angle of reflection?",
+            "answer": "35",
+            "accept": [],
+            "reject": [
+              "55"
+            ],
+            "answerRaw": "35 (DO NOT ACCEPT: 55)",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "physics.optics"
+          },
+          "bonus": {
+            "id": "pilot-gen-ms-r01-b12",
+            "kind": "bonus",
+            "number": 12,
+            "level": "MS",
+            "subject": "physics",
+            "sourceCategory": "Physics",
+            "format": "multiple_choice",
+            "stem": "A student stands 680 meters from a tall cliff and claps once. Taking the speed of sound in air to be 340 meters per second, how many seconds after the clap does the student hear the echo?",
+            "choices": {
+              "W": "0.5",
+              "X": "1",
+              "Y": "2",
+              "Z": "4"
+            },
+            "answer": "4",
+            "answerLetter": "Z",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "Z) 4",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "physics.waves-sound"
+          }
+        },
+        {
+          "number": 13,
+          "tossup": {
+            "id": "pilot-gen-ms-r01-t13",
+            "kind": "tossup",
+            "number": 13,
+            "level": "MS",
+            "subject": "biology",
+            "sourceCategory": "Biology",
+            "format": "short_answer",
+            "stem": "What is the term for the hard outer covering of the crown of a tooth, which is the hardest substance in the human body?",
+            "answer": "ENAMEL",
+            "accept": [
+              "TOOTH ENAMEL"
+            ],
+            "reject": [],
+            "answerRaw": "ENAMEL (ACCEPT: TOOTH ENAMEL)",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "biology.animal-physiology",
+            "concepts": [
+              "biology.animal-physiology.digestion"
+            ]
+          },
+          "bonus": {
+            "id": "pilot-gen-ms-r01-b13",
+            "kind": "bonus",
+            "number": 13,
+            "level": "MS",
+            "subject": "biology",
+            "sourceCategory": "Biology",
+            "format": "short_answer",
+            "stem": "Identify all of the following three animals that are vertebrates: 1) Shark; 2) Octopus; 3) Salamander.",
+            "answer": "1, 3",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "1, 3",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "biology.organism-diversity",
+            "concepts": [
+              "biology.organism-diversity.mollusks",
+              "biology.organism-diversity.fishes",
+              "biology.organism-diversity.amphibians-reptiles"
+            ]
+          }
+        },
+        {
+          "number": 14,
+          "tossup": {
+            "id": "pilot-gen-ms-r01-t14",
+            "kind": "tossup",
+            "number": 14,
+            "level": "MS",
+            "subject": "chemistry",
+            "sourceCategory": "Chemistry",
+            "format": "short_answer",
+            "stem": "What element has the chemical symbol W?",
+            "answer": "TUNGSTEN",
+            "accept": [
+              "WOLFRAM"
+            ],
+            "reject": [],
+            "answerRaw": "TUNGSTEN (ACCEPT: WOLFRAM)",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "chemistry.lab-descriptive"
+          },
+          "bonus": {
+            "id": "pilot-gen-ms-r01-b14",
+            "kind": "bonus",
+            "number": 14,
+            "level": "MS",
+            "subject": "chemistry",
+            "sourceCategory": "Chemistry",
+            "format": "short_answer",
+            "stem": "How many atoms in total are in one formula unit of aluminum sulfate, Al₂(SO₄)₃?",
+            "answer": "17",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "17",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "chemistry.stoichiometry-solutions"
+          }
+        },
+        {
+          "number": 15,
+          "tossup": {
+            "id": "pilot-gen-ms-r01-t15",
+            "kind": "tossup",
+            "number": 15,
+            "level": "MS",
+            "subject": "earth_space",
+            "sourceCategory": "Earth and Space",
+            "format": "multiple_choice",
+            "stem": "Which of the following objects is classified as a dwarf planet?",
+            "choices": {
+              "W": "Vesta",
+              "X": "Ceres",
+              "Y": "Io [EYE-oh]",
+              "Z": "Titan"
+            },
+            "answer": "CERES",
+            "answerLetter": "X",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "X) CERES",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "earth_space.solar-system",
+            "concepts": [
+              "earth_space.solar-system.dwarf-planets",
+              "earth_space.solar-system.moons"
+            ]
+          },
+          "bonus": {
+            "id": "pilot-gen-ms-r01-b15",
+            "kind": "bonus",
+            "number": 15,
+            "level": "MS",
+            "subject": "earth_space",
+            "sourceCategory": "Earth and Space",
+            "format": "multiple_choice",
+            "stem": "Which of the following features usually forms where two plates carrying continents collide?",
+            "choices": {
+              "W": "A range of folded mountains",
+              "X": "A mid-ocean ridge",
+              "Y": "A deep-sea trench",
+              "Z": "A volcanic island arc"
+            },
+            "answer": "A RANGE OF FOLDED MOUNTAINS",
+            "answerLetter": "W",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "W) A RANGE OF FOLDED MOUNTAINS",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "earth_space.tectonics-structure"
+          }
+        },
+        {
+          "number": 16,
+          "tossup": {
+            "id": "pilot-gen-ms-r01-t16",
+            "kind": "tossup",
+            "number": 16,
+            "level": "MS",
+            "subject": "energy",
+            "sourceCategory": "Energy",
+            "format": "multiple_choice",
+            "stem": "Scientists at the National Renewable Energy Laboratory study geothermal power plants. Geothermal energy comes mainly from which of the following?",
+            "choices": {
+              "W": "Heat from inside Earth",
+              "X": "Sunlight absorbed by the ground",
+              "Y": "Ocean tides",
+              "Z": "Burning underground coal seams"
+            },
+            "answer": "HEAT FROM INSIDE EARTH",
+            "answerLetter": "W",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "W) HEAT FROM INSIDE EARTH",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "energy.renewables",
+            "crossSubject": "earth_space"
+          },
+          "bonus": {
+            "id": "pilot-gen-ms-r01-b16",
+            "kind": "bonus",
+            "number": 16,
+            "level": "MS",
+            "subject": "energy",
+            "sourceCategory": "Energy",
+            "format": "short_answer",
+            "stem": "Researchers at Lawrence Berkeley National Laboratory study energy use in homes. A family replaces a 60-watt incandescent bulb with a 10-watt LED bulb that gives the same amount of light. If the bulb is on for 4 hours each day, how many kilowatt-hours of energy does the family save in 30 days?",
+            "answer": "6",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "6",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "energy.data-units",
+            "crossSubject": "math"
+          }
+        },
+        {
+          "number": 17,
+          "tossup": {
+            "id": "pilot-gen-ms-r01-t17",
+            "kind": "tossup",
+            "number": 17,
+            "level": "MS",
+            "subject": "math",
+            "sourceCategory": "Math",
+            "format": "short_answer",
+            "stem": "What is the mean of the numbers 4, 8, 15, and 21?",
+            "answer": "12",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "12",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "math.statistics"
+          },
+          "bonus": {
+            "id": "pilot-gen-ms-r01-b17",
+            "kind": "bonus",
+            "number": 17,
+            "level": "MS",
+            "subject": "math",
+            "sourceCategory": "Math",
+            "format": "short_answer",
+            "stem": "A right triangle has a hypotenuse of length 13 and one leg of length 5. What is the length of the altitude drawn to the hypotenuse?",
+            "answer": "60/13",
+            "accept": [
+              "4 8/13"
+            ],
+            "reject": [],
+            "answerRaw": "60/13 (ACCEPT: 4 8/13)",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "math.geometry",
+            "concepts": [
+              "math.geometry.triangles"
+            ]
+          }
+        },
+        {
+          "number": 18,
+          "tossup": {
+            "id": "pilot-gen-ms-r01-t18",
+            "kind": "tossup",
+            "number": 18,
+            "level": "MS",
+            "subject": "physics",
+            "sourceCategory": "Physics",
+            "format": "multiple_choice",
+            "stem": "A ball rolls off the edge of a table. Ignoring air resistance, what happens to the ball’s horizontal speed as it falls to the floor?",
+            "choices": {
+              "W": "It increases",
+              "X": "It stays the same",
+              "Y": "It decreases",
+              "Z": "It drops to zero"
+            },
+            "answer": "IT STAYS THE SAME",
+            "answerLetter": "X",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "X) IT STAYS THE SAME",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "physics.kinematics-forces",
+            "concepts": [
+              "physics.kinematics-forces.friction",
+              "physics.kinematics-forces.one-dimensional-motion"
+            ]
+          },
+          "bonus": {
+            "id": "pilot-gen-ms-r01-b18",
+            "kind": "bonus",
+            "number": 18,
+            "level": "MS",
+            "subject": "physics",
+            "sourceCategory": "Physics",
+            "format": "short_answer",
+            "stem": "A 50-kilogram student climbs a flight of stairs, rising 4 meters in 8 seconds. Using 10 meters per second squared for the acceleration due to gravity, at what average rate, in watts, does the student do work against gravity?",
+            "answer": "250",
+            "accept": [],
+            "reject": [],
+            "answerRaw": "250",
+            "source": {
+              "provider": "rebound",
+              "setId": "pilot-gen",
+              "roundId": "pilot-gen-ms-r01",
+              "credit": "Rebound research pilot: written by an AI model (Claude) from its own knowledge; not yet checked by a person."
+            },
+            "topic": "physics.kinematics-forces",
+            "concepts": [
+              "physics.kinematics-forces.one-dimensional-motion"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

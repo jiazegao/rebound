@@ -1,0 +1,20 @@
+[
+ {
+  "id": "pilot-gen-hs-r01-t07",
+  "kind": "wording precision",
+  "what": "Candidate 'A person with type O-negative blood lacks the A and B antigens and one other red-cell protein. What is this protein, whose absence the word negative refers to?' reworded to the stem now in the set.",
+  "why": "The candidate's second sentence was clumsy to read aloud."
+ },
+ {
+  "id": "pilot-gen-ms-r01-t12",
+  "kind": "answer line",
+  "what": "Added 'DO NOT ACCEPT: 55'.",
+  "why": "55 degrees is the angle from the mirror's surface, the likeliest wrong reading; the moderator needs the ruling."
+ },
+ {
+  "id": "pilot-gen-ms-r01-t13",
+  "kind": "wording precision",
+  "what": "'the hard outer covering of a tooth' changed to 'the hard outer covering of the crown of a tooth'.",
+  "why": "Enamel covers only the crown; the root is covered by cementum, so the unqualified wording was not quite true."
+ }
+]

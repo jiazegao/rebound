@@ -1,0 +1,586 @@
+{
+ "level": "HS",
+ "count": 54,
+ "fields": {
+  "id": "anonymous question id",
+  "category": "the question's category (see categories)",
+  "kind": "tossup or bonus",
+  "type": "multiple_choice or short_answer",
+  "stem": "the question as read",
+  "choices": "W-Z, multiple choice only"
+ },
+ "categories": {
+  "biology": "Biology",
+  "chemistry": "Chemistry",
+  "earth_space": "Earth and Space",
+  "energy": "Energy",
+  "math": "Math",
+  "physics": "Physics"
+ },
+ "questions": [
+  {
+   "id": "H001",
+   "level": "HS",
+   "category": "chemistry",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "Which of the following compounds has the highest normal boiling point?",
+   "choices": {
+    "W": "Propane",
+    "X": "Dimethyl ether",
+    "Y": "Methane",
+    "Z": "Ethanol"
+   }
+  },
+  {
+   "id": "H002",
+   "level": "HS",
+   "category": "chemistry",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "Which of the following elements releases the most energy when a neutral gaseous atom gains an electron?",
+   "choices": {
+    "W": "Chlorine",
+    "X": "Fluorine",
+    "Y": "Oxygen",
+    "Z": "Bromine"
+   }
+  },
+  {
+   "id": "H003",
+   "level": "HS",
+   "category": "physics",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "A charged particle moves in a circle in a uniform magnetic field, with its velocity perpendicular to the field. If the particle’s speed is doubled, what happens to the radius of its circular path?",
+   "choices": {
+    "W": "It is halved",
+    "X": "It stays the same",
+    "Y": "It doubles",
+    "Z": "It quadruples"
+   }
+  },
+  {
+   "id": "H004",
+   "level": "HS",
+   "category": "chemistry",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "A student mixes 50 milliliters of 0.20-molar hydrochloric acid with 50 milliliters of 0.10-molar sodium hydroxide. To one decimal place, what is the pH of the resulting solution?"
+  },
+  {
+   "id": "H005",
+   "level": "HS",
+   "category": "physics",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "A spring with a spring constant of 200 newtons per meter is compressed by 10 centimeters. In joules, how much elastic potential energy does it store?"
+  },
+  {
+   "id": "H006",
+   "level": "HS",
+   "category": "physics",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "A 6-ohm resistor and a 3-ohm resistor are connected in parallel, and this combination is connected in series with a 4-ohm resistor across an ideal 12-volt battery. In amperes, what is the current through the 3-ohm resistor?"
+  },
+  {
+   "id": "H007",
+   "level": "HS",
+   "category": "energy",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "Assuming similar wind velocity and turbine swept area, of the following places, where would you anticipate the largest power output from a wind turbine?",
+   "choices": {
+    "W": "Denver",
+    "X": "Nebraska",
+    "Y": "Rhode Island",
+    "Z": "West Texas"
+   }
+  },
+  {
+   "id": "H008",
+   "level": "HS",
+   "category": "math",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "A segment has its midpoint at (4, 2) and one endpoint at (1, 7). What are the coordinates of the other endpoint?"
+  },
+  {
+   "id": "H009",
+   "level": "HS",
+   "category": "math",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "Which of the following functions of x is odd?",
+   "choices": {
+    "W": "x² + 1",
+    "X": "x³ – x",
+    "Y": "|x|",
+    "Z": "cos x"
+   }
+  },
+  {
+   "id": "H010",
+   "level": "HS",
+   "category": "biology",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "What structures at the ends of eukaryotic [YOU-care-ee-AW-tic] chromosomes prevent their degradation?"
+  },
+  {
+   "id": "H011",
+   "level": "HS",
+   "category": "energy",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "What major mode of heat transfer is primarily responsible for the circulation of atmospheric cells, such as the Hadley cell?",
+   "choices": {
+    "W": "Radiation",
+    "X": "Conduction",
+    "Y": "Convection",
+    "Z": "Diffusion"
+   }
+  },
+  {
+   "id": "H012",
+   "level": "HS",
+   "category": "biology",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "What is the name of the principle that describes the asymmetric fitness pressures between males and females that can lead to sexual selection and evolution?"
+  },
+  {
+   "id": "H013",
+   "level": "HS",
+   "category": "chemistry",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "How many constitutional isomers, including the straight-chain isomer, have the molecular formula C₆H₁₄?"
+  },
+  {
+   "id": "H014",
+   "level": "HS",
+   "category": "physics",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "A guitar string is fixed at both ends. Which of the following changes would raise the frequency of its fundamental mode?",
+   "choices": {
+    "W": "Lengthening the string",
+    "X": "Tightening the string",
+    "Y": "Replacing it with a heavier string of the same length and tension",
+    "Z": "Loosening the string"
+   }
+  },
+  {
+   "id": "H015",
+   "level": "HS",
+   "category": "biology",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "In a population at Hardy-Weinberg equilibrium, 4% of individuals show a recessive phenotype controlled by a single gene with two alleles. What percentage of the population is expected to be heterozygous?",
+   "choices": {
+    "W": "16%",
+    "X": "32%",
+    "Y": "64%",
+    "Z": "80%"
+   }
+  },
+  {
+   "id": "H016",
+   "level": "HS",
+   "category": "earth_space",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "In what region of the electromagnetic spectrum is a supernova most commonly detected?"
+  },
+  {
+   "id": "H017",
+   "level": "HS",
+   "category": "biology",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "Type O-negative red blood cells lack the A and B antigens and also lack what other surface protein, whose absence is indicated by the word negative?"
+  },
+  {
+   "id": "H018",
+   "level": "HS",
+   "category": "energy",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "Researchers at Princeton Plasma Physics Laboratory study magnetic confinement fusion. The deuterium–tritium fusion reaction produces a helium-4 nucleus and what other particle, which carries most of the energy released?",
+   "choices": {
+    "W": "Proton",
+    "X": "Positron",
+    "Y": "Gamma-ray photon",
+    "Z": "Neutron"
+   }
+  },
+  {
+   "id": "H019",
+   "level": "HS",
+   "category": "chemistry",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "What process separates volatiles by differences in boiling point?",
+   "choices": {
+    "W": "Fractional distillation",
+    "X": "Chromatography",
+    "Y": "NMR spectroscopy",
+    "Z": "Mass spectrometry"
+   }
+  },
+  {
+   "id": "H020",
+   "level": "HS",
+   "category": "chemistry",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "Which of the following is the term used to describe the resistance to flow of a liquid:",
+   "choices": {
+    "W": "viscosity",
+    "X": "surface tension",
+    "Y": "maleability",
+    "Z": "vapor pressure"
+   }
+  },
+  {
+   "id": "H021",
+   "level": "HS",
+   "category": "physics",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "A 2-kilogram block is released from rest and slides down a frictionless ramp, dropping a vertical height of 5 meters. It then slides onto a rough horizontal floor where the coefficient of kinetic friction is 0.25. In meters, how far does the block slide along the floor before stopping?"
+  },
+  {
+   "id": "H022",
+   "level": "HS",
+   "category": "energy",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "Scientists at Idaho National Laboratory test new fuels for light-water reactors. In these reactors, ordinary water acts as the coolant and also serves which of the following roles?",
+   "choices": {
+    "W": "Neutron moderator",
+    "X": "Neutron source",
+    "Y": "Fuel cladding",
+    "Z": "Control rod material"
+   }
+  },
+  {
+   "id": "H023",
+   "level": "HS",
+   "category": "math",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "In the integers mod 12, what is 5 times 8?"
+  },
+  {
+   "id": "H024",
+   "level": "HS",
+   "category": "earth_space",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "What term describes the texture of an igneous rock that has large crystals scattered through a much finer-grained groundmass?",
+   "choices": {
+    "W": "Vesicular [veh-SICK-yoo-lar]",
+    "X": "Glassy",
+    "Y": "Pegmatitic [peg-muh-TIT-ik]",
+    "Z": "Porphyritic [por-fuh-RIT-ik]"
+   }
+  },
+  {
+   "id": "H025",
+   "level": "HS",
+   "category": "math",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "What is the remainder when 2 to the 100th power is divided by 7?"
+  },
+  {
+   "id": "H026",
+   "level": "HS",
+   "category": "energy",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "Engineers at the National Renewable Energy Laboratory test wind turbines. If both the rotor diameter and the wind speed are doubled, by what factor does the power carried by the wind through the rotor’s swept area increase?"
+  },
+  {
+   "id": "H027",
+   "level": "HS",
+   "category": "math",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "In degrees, what is the sum of the interior angles of a decagon?"
+  },
+  {
+   "id": "H028",
+   "level": "HS",
+   "category": "energy",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "Scientists supported by the Department of Energy are developing catalysts for the Sabatier [sah-bah-TYAY] reaction, which combines carbon dioxide with hydrogen gas to produce water and what fuel?"
+  },
+  {
+   "id": "H029",
+   "level": "HS",
+   "category": "math",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "What is the greatest common divisor of 391 and 299?"
+  },
+  {
+   "id": "H030",
+   "level": "HS",
+   "category": "energy",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "Scientists at the National Renewable Energy Laboratory are developing solar cells made from perovskites [puh-ROV-skites]. These materials are named after the mineral perovskite, which has what chemical composition?",
+   "choices": {
+    "W": "Calcium titanate",
+    "X": "Silicon dioxide",
+    "Y": "Iron disulfide",
+    "Z": "Barium sulfate"
+   }
+  },
+  {
+   "id": "H031",
+   "level": "HS",
+   "category": "chemistry",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "A common reaction pathway in the liver for the detoxification of primary alcohols is to oxidize them to what functional group before oxidizing them to carboxylic [CAR-box-IHL-ik] acids?"
+  },
+  {
+   "id": "H032",
+   "level": "HS",
+   "category": "earth_space",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "Identify all of the following three minerals that are harder than quartz on the Mohs scale: 1) Topaz; 2) Orthoclase [OR-thoh-clays]; 3) Corundum [kuh-RUN-dum]."
+  },
+  {
+   "id": "H033",
+   "level": "HS",
+   "category": "earth_space",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "Which of the following is the main reason the Moon’s surface keeps far more impact craters than Earth’s surface does?",
+   "choices": {
+    "W": "The Moon is struck by more meteoroids than Earth",
+    "X": "The Moon’s gravity pulls in more asteroids than Earth’s gravity does",
+    "Y": "Most lunar craters were made by volcanoes",
+    "Z": "The Moon lacks the weathering, erosion and plate tectonics that erase craters on Earth"
+   }
+  },
+  {
+   "id": "H034",
+   "level": "HS",
+   "category": "chemistry",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "How many moles of oxygen atoms are in one mole of calcium nitrate?"
+  },
+  {
+   "id": "H035",
+   "level": "HS",
+   "category": "biology",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "Identify all of the following three statements that are true of the loop of Henle [HEN-lee] in the human kidney: 1) Its descending limb is permeable to water; 2) Its thick ascending limb actively transports sodium and chloride ions out of the filtrate; 3) It lies entirely within the renal cortex."
+  },
+  {
+   "id": "H036",
+   "level": "HS",
+   "category": "physics",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "Identify all of the following 3 statements that are true of polarization: 1) The transmitted intensity of the electromagnetic wave is inversely proportional to the square of the electric field; 2) The Brewster angle is the angle of incidence at which the reflected ray is 100% polarized along a plane parallel to the reflecting surface; 3) If a substance can rotate the plane of polarization, it is said to be optically active."
+  },
+  {
+   "id": "H037",
+   "level": "HS",
+   "category": "earth_space",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "In the open ocean, a tsunami travels at about 200 meters per second. In hours, how long would it take to cross 3,600 kilometers of open ocean?"
+  },
+  {
+   "id": "H038",
+   "level": "HS",
+   "category": "math",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "What is the determinant of the 2-by-2 matrix whose first row is 3, 5 and whose second row is 2, 4?"
+  },
+  {
+   "id": "H039",
+   "level": "HS",
+   "category": "biology",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "In C₄ plants such as corn, carbon dioxide is first fixed into a four-carbon acid in mesophyll cells. In what type of cells, which form a ring around the leaf veins, does the Calvin cycle then take place?"
+  },
+  {
+   "id": "H040",
+   "level": "HS",
+   "category": "physics",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "A particle has a position function given by x of t equals 1 over t squared. What is the particle’s instantaneous speed at t = 2?"
+  },
+  {
+   "id": "H041",
+   "level": "HS",
+   "category": "earth_space",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "What is the name of the boundary in the outer heliosphere where the solar wind abruptly slows from supersonic to subsonic speed as it begins to interact with the interstellar medium?"
+  },
+  {
+   "id": "H042",
+   "level": "HS",
+   "category": "math",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "A bag contains 4 red marbles and 6 blue marbles. Two marbles are drawn at random without replacement. What is the probability that the two marbles are different colors?"
+  },
+  {
+   "id": "H043",
+   "level": "HS",
+   "category": "biology",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "Name all of the following 4 cells that are leukocytes: neutrophil; basophil; melanocyte; macrophage"
+  },
+  {
+   "id": "H044",
+   "level": "HS",
+   "category": "energy",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "Researchers at the National Renewable Energy Laboratory study the electrolysis of water. Which of the following is produced at the cathode?",
+   "choices": {
+    "W": "Hydrogen gas",
+    "X": "Oxygen gas",
+    "Y": "Hydrogen peroxide",
+    "Z": "Ozone"
+   }
+  },
+  {
+   "id": "H045",
+   "level": "HS",
+   "category": "earth_space",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "Place the following three rock types in increasing order of distance from shore at the time of deposition in a typical sedimentary sequence: 1) Shale; 2) Limestone; 3) Sandstone."
+  },
+  {
+   "id": "H046",
+   "level": "HS",
+   "category": "biology",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "Which of the following animals is a deuterostome [DOO-ter-oh-stome]?",
+   "choices": {
+    "W": "Earthworm",
+    "X": "Snail",
+    "Y": "Grasshopper",
+    "Z": "Sea urchin"
+   }
+  },
+  {
+   "id": "H047",
+   "level": "HS",
+   "category": "energy",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "When rubber is vulcanized in order to make it more durable, what element is added to the rubber?"
+  },
+  {
+   "id": "H048",
+   "level": "HS",
+   "category": "earth_space",
+   "kind": "tossup",
+   "type": "short_answer",
+   "stem": "What types of streams, usually found in deserts, only carry water in response to specific episodes of rainfall?"
+  },
+  {
+   "id": "H049",
+   "level": "HS",
+   "category": "earth_space",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "Which of the following conditions most favors the formation of radiation fog?",
+   "choices": {
+    "W": "A windy, cloudy afternoon",
+    "X": "A clear, calm night with moist air near the ground",
+    "Y": "Warm, moist air moving over a cold ocean current",
+    "Z": "Cold air moving over a warm lake"
+   }
+  },
+  {
+   "id": "H050",
+   "level": "HS",
+   "category": "biology",
+   "kind": "tossup",
+   "type": "multiple_choice",
+   "stem": "Which of the following hormones is secreted by the adrenal medulla?",
+   "choices": {
+    "W": "Cortisol",
+    "X": "Aldosterone [al-DOSS-ter-ohn]",
+    "Y": "Epinephrine [ep-ih-NEF-rin]",
+    "Z": "Thyroxine [thigh-ROCK-seen]"
+   }
+  },
+  {
+   "id": "H051",
+   "level": "HS",
+   "category": "math",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "Suppose, in a certain part of the world, in any 50-year period, the probability of a major plague is 39%, the probability of a major famine is 52%, and the probability of both a plague and a famine is 15%. Given that there is a plague, which of the following is the probability of a famine?",
+   "choices": {
+    "W": "0.240",
+    "X": "0.288",
+    "Y": "0.370",
+    "Z": "0.385"
+   }
+  },
+  {
+   "id": "H052",
+   "level": "HS",
+   "category": "physics",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "A satellite is in a circular orbit around Earth. If the radius of its orbit were made 9 times larger, by what factor would its orbital period increase?",
+   "choices": {
+    "W": "3",
+    "X": "9",
+    "Y": "27",
+    "Z": "81"
+   }
+  },
+  {
+   "id": "H053",
+   "level": "HS",
+   "category": "physics",
+   "kind": "bonus",
+   "type": "short_answer",
+   "stem": "An observer is moving at 50 meters per second towards a stationary source that is emitting a wave with velocity 100 meters per second. What is the ratio of the observed frequency to the transmitted frequency before the observer passes the source?"
+  },
+  {
+   "id": "H054",
+   "level": "HS",
+   "category": "chemistry",
+   "kind": "bonus",
+   "type": "multiple_choice",
+   "stem": "Assuming ideal behavior, which of the following aqueous solutions has the lowest freezing point?",
+   "choices": {
+    "W": "0.10-molal glucose",
+    "X": "0.10-molal sodium chloride",
+    "Y": "0.10-molal calcium chloride",
+    "Z": "0.15-molal sucrose"
+   }
+  }
+ ]
+}

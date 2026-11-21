@@ -1,0 +1,1 @@
+Signed in and on a team, open Team -> Packets, go to "Upload a packet", choose pilot-gen-hs.nsb.json and/or pilot-gen-ms.nsb.json under Files, check the rounds, then "Save packet" (it stays in the team's own data).

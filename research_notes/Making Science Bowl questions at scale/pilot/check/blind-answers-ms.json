@@ -1,0 +1,686 @@
+{
+ "phase": "A",
+ "level": "MS",
+ "note": "Blind solve; no web, no other files. Guess = DOE or new.",
+ "answers": [
+  {
+   "id": "M001",
+   "answer": "W) Marmot",
+   "confidence": 4,
+   "difficulty_ms_regional": 2,
+   "flags": [],
+   "source_guess": "DOE",
+   "guess_reason": "Terse, slightly quirky stem; no lab preface or 'main reason' framing."
+  },
+  {
+   "id": "M002",
+   "answer": "Tungsten",
+   "confidence": 5,
+   "difficulty_ms_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Plain symbol-to-element recall in clean one-line form; DOE tends to be wordier, but weak cue."
+  },
+  {
+   "id": "M003",
+   "answer": "Monocots and dicots (monocotyledons and dicotyledons)",
+   "confidence": 5,
+   "difficulty_ms_regional": 2,
+   "flags": [],
+   "source_guess": "DOE",
+   "guess_reason": "'Flowering plants are grouped into what 2 classes named after...' has the digit '2' and a bonus-style cue typical of DOE."
+  },
+  {
+   "id": "M004",
+   "answer": "X) Pulmonary artery",
+   "confidence": 5,
+   "difficulty_ms_regional": 2,
+   "flags": [],
+   "source_guess": "DOE",
+   "guess_reason": "Pronunciation guide in brackets on a choice reads like DOE house practice."
+  },
+  {
+   "id": "M005",
+   "answer": "Y) Frog",
+   "confidence": 5,
+   "difficulty_ms_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Textbook food-chain with fully explicit chain; very clean."
+  },
+  {
+   "id": "M006",
+   "answer": "W) It is greater, because the magnesium combined with oxygen",
+   "confidence": 5,
+   "difficulty_ms_regional": 2,
+   "flags": [
+    {
+     "flag": "style",
+     "reason": "Choices carry 'because' explanations; NSB choices are usually short terms"
+    },
+    {
+     "flag": "giveaway",
+     "reason": "Correct choice is the most detailed/plausible, others are strawmen ('turned into light and heat')"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Choices with 'because' clauses and strawman distractors are LLM-typical."
+  },
+  {
+   "id": "M007",
+   "answer": "0.8 grams per liter",
+   "confidence": 4,
+   "difficulty_ms_regional": 4,
+   "flags": [
+    {
+     "flag": "factual_error",
+     "reason": "Stated density 1.6 g/L is inconsistent with an ideal gas of M=26 at 200 K, 4 atm (that would be about 6.3 g/L); only the ratio method gives the intended 0.8"
+    },
+    {
+     "flag": "unclear_aloud",
+     "reason": "Five numeric conditions read aloud are hard to hold"
+    },
+    {
+     "flag": "wrong_level",
+     "reason": "Proportional gas-law reasoning is high for MS"
+    }
+   ],
+   "source_guess": "DOE",
+   "guess_reason": "Odd, over-specified 'is found to have' setup with an internally sloppy number; reads like a DOE quirk. Low confidence."
+  },
+  {
+   "id": "M008",
+   "answer": "20 percent",
+   "confidence": 5,
+   "difficulty_ms_regional": 1,
+   "flags": [
+    {
+     "flag": "wrong_level",
+     "reason": "Trivial for an MS regional bonus"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Clean round numbers, textbook problem."
+  },
+  {
+   "id": "M009",
+   "answer": "Z) 4",
+   "confidence": 5,
+   "difficulty_ms_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Round numbers (680, 340) engineered so the one-way trap (2) and doubled answer are both present."
+  },
+  {
+   "id": "M010",
+   "answer": "Enamel",
+   "confidence": 5,
+   "difficulty_ms_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Definition-style tossup with a clean 'hardest substance' cue; plausible either way."
+  },
+  {
+   "id": "M011",
+   "answer": "W) Electrical energy",
+   "confidence": 5,
+   "difficulty_ms_regional": 1,
+   "flags": [
+    {
+     "flag": "giveaway",
+     "reason": "'convert sunlight directly into' plus 'solar panels more efficient' nearly states electricity"
+    },
+    {
+     "flag": "style",
+     "reason": "National-lab preface is not NSB style"
+    },
+    {
+     "flag": "wrong_level",
+     "reason": "Trivial"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "'Scientists at the National Renewable Energy Laboratory...' preface is a generation-prompt artifact."
+  },
+  {
+   "id": "M012",
+   "answer": "Cadmium permanganate",
+   "confidence": 4,
+   "difficulty_ms_regional": 4,
+   "flags": [
+    {
+     "flag": "unclear_aloud",
+     "reason": "Formula with subscripts and parentheses must be spelled out aloud"
+    },
+    {
+     "flag": "wrong_level",
+     "reason": "Permanganate compound naming is advanced for MS"
+    }
+   ],
+   "source_guess": "DOE",
+   "guess_reason": "Naming an unusual compound from a formula is a DOE-like move; LLM tends to pick common compounds."
+  },
+  {
+   "id": "M013",
+   "answer": "X) Calcite",
+   "confidence": 5,
+   "difficulty_ms_regional": 3,
+   "flags": [],
+   "source_guess": "DOE",
+   "guess_reason": "'You find a mineral in the local rock shop' second-person scenario and lower-case choices; very DOE."
+  },
+  {
+   "id": "M014",
+   "answer": "Z) Distilled water",
+   "confidence": 5,
+   "difficulty_ms_regional": 1,
+   "flags": [
+    {
+     "flag": "wrong_level",
+     "reason": "Trivial"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Generic textbook definition item."
+  },
+  {
+   "id": "M015",
+   "answer": "73/8 (9.125)",
+   "confidence": 5,
+   "difficulty_ms_regional": 3,
+   "flags": [
+    {
+     "flag": "unclear_aloud",
+     "reason": "Coordinates with a negative sign and a fraction answer read poorly aloud"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Plain algebra item; en dash minus appears in both groups, no strong cue."
+  },
+  {
+   "id": "M016",
+   "answer": "Z) The electrolyte",
+   "confidence": 5,
+   "difficulty_ms_regional": 3,
+   "flags": [
+    {
+     "flag": "style",
+     "reason": "National-lab preface not NSB style"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Lab preface; 'when such a battery is discharging' clean-textbook."
+  },
+  {
+   "id": "M017",
+   "answer": "Turbine",
+   "confidence": 5,
+   "difficulty_ms_regional": 2,
+   "flags": [
+    {
+     "flag": "style",
+     "reason": "National-lab preface"
+    },
+    {
+     "flag": "giveaway",
+     "reason": "Stem describes the process so the answer is nearly forced"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Lab preface."
+  },
+  {
+   "id": "M018",
+   "answer": "First quarter and full moon",
+   "confidence": 4,
+   "difficulty_ms_regional": 2,
+   "flags": [],
+   "source_guess": "DOE",
+   "guess_reason": "Odd 'respectively' construction with pronunciation guide for 'gibbous'."
+  },
+  {
+   "id": "M019",
+   "answer": "Shark and salamander (1 and 3)",
+   "confidence": 5,
+   "difficulty_ms_regional": 1,
+   "flags": [
+    {
+     "flag": "wrong_level",
+     "reason": "Trivial for MS"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "'Identify all of the following three...' numbered list, simple; plausible LLM mimic of the DOE form."
+  },
+  {
+   "id": "M020",
+   "answer": "X) Water heats up and cools down more slowly than land",
+   "confidence": 5,
+   "difficulty_ms_regional": 2,
+   "flags": [
+    {
+     "flag": "giveaway",
+     "reason": "Correct choice is longest/most scientific; distractors are absurd ('breaking waves release heat through friction')"
+    },
+    {
+     "flag": "style",
+     "reason": "'main reason' framing with sentence-length choices"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "'Main reason that...' with strawmen."
+  },
+  {
+   "id": "M021",
+   "answer": "32 meters",
+   "confidence": 5,
+   "difficulty_ms_regional": 3,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Clean round numbers, tidy single-step kinematics."
+  },
+  {
+   "id": "M022",
+   "answer": "Helium",
+   "confidence": 4,
+   "difficulty_ms_regional": 5,
+   "flags": [
+    {
+     "flag": "wrong_level",
+     "reason": "Kappa-mechanism/ionization-zone pulsation is far beyond MS"
+    }
+   ],
+   "source_guess": "DOE",
+   "guess_reason": "Unusual astrophysics phrasing 'will pulsate in size... compressible spring' is a DOE quirk, an LLM writing MS questions would rarely go there."
+  },
+  {
+   "id": "M023",
+   "answer": "60/13 (about 4.62)",
+   "confidence": 5,
+   "difficulty_ms_regional": 4,
+   "flags": [
+    {
+     "flag": "unclear_aloud",
+     "reason": "Fractional answer; fine heard aloud but hard to compute on a clock"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Clean 5-12-13 triangle with a neat twist."
+  },
+  {
+   "id": "M024",
+   "answer": "Y) Momentum",
+   "confidence": 5,
+   "difficulty_ms_regional": 2,
+   "flags": [
+    {
+     "flag": "giveaway",
+     "reason": "'joules' is a unit not a quantity, easily eliminated"
+    }
+   ],
+   "source_guess": "DOE",
+   "guess_reason": "Short stem ending with a colon and lower-case unit-mixed choices ('joules'); DOE-like sloppiness."
+  },
+  {
+   "id": "M025",
+   "answer": "W) A range of folded mountains",
+   "confidence": 4,
+   "difficulty_ms_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Clean textbook plate-tectonics item with four parallel features."
+  },
+  {
+   "id": "M026",
+   "answer": "Reflect it (reflects more of it)",
+   "confidence": 5,
+   "difficulty_ms_regional": 1,
+   "flags": [
+    {
+     "flag": "style",
+     "reason": "National-lab preface"
+    },
+    {
+     "flag": "giveaway",
+     "reason": "'white roof...mainly because' near-gives 'reflects'"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Lab preface."
+  },
+  {
+   "id": "M027",
+   "answer": "36",
+   "confidence": 5,
+   "difficulty_ms_regional": 1,
+   "flags": [
+    {
+     "flag": "wrong_level",
+     "reason": "Trivial"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Generic arithmetic."
+  },
+  {
+   "id": "M028",
+   "answer": "Ohm's law",
+   "confidence": 5,
+   "difficulty_ms_regional": 1,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Clean definition-to-name."
+  },
+  {
+   "id": "M029",
+   "answer": "7 and -2",
+   "confidence": 5,
+   "difficulty_ms_regional": 3,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Clean factorable quadratic."
+  },
+  {
+   "id": "M030",
+   "answer": "Cell membrane (plasma membrane)",
+   "confidence": 5,
+   "difficulty_ms_regional": 3,
+   "flags": [],
+   "source_guess": "DOE",
+   "guess_reason": "Terse, specific 'fluid-mosaic model' cue, in DOE's style."
+  },
+  {
+   "id": "M031",
+   "answer": "35 degrees",
+   "confidence": 5,
+   "difficulty_ms_regional": 1,
+   "flags": [
+    {
+     "flag": "wrong_level",
+     "reason": "Trivial; the law of reflection is given away by the phrasing"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Trivial plain item."
+  },
+  {
+   "id": "M032",
+   "answer": "6 kilowatt-hours",
+   "confidence": 5,
+   "difficulty_ms_regional": 3,
+   "flags": [
+    {
+     "flag": "style",
+     "reason": "National-lab preface"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Lab preface, clean numbers."
+  },
+  {
+   "id": "M033",
+   "answer": "Y) Increases",
+   "confidence": 5,
+   "difficulty_ms_regional": 2,
+   "flags": [],
+   "source_guess": "DOE",
+   "guess_reason": "Mid-Atlantic Ridge 'toward either coast' phrasing reads like a human."
+  },
+  {
+   "id": "M034",
+   "answer": "17 atoms",
+   "confidence": 5,
+   "difficulty_ms_regional": 3,
+   "flags": [
+    {
+     "flag": "unclear_aloud",
+     "reason": "Formula with parentheses and subscripts must be spelled out aloud"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Clean textbook count."
+  },
+  {
+   "id": "M035",
+   "answer": "14",
+   "confidence": 5,
+   "difficulty_ms_regional": 1,
+   "flags": [
+    {
+     "flag": "wrong_level",
+     "reason": "Trivial"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Generic arithmetic."
+  },
+  {
+   "id": "M036",
+   "answer": "Volume",
+   "confidence": 4,
+   "difficulty_ms_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Clean law-to-property item. Constant pressure is not stated."
+  },
+  {
+   "id": "M037",
+   "answer": "Exothermic",
+   "confidence": 5,
+   "difficulty_ms_regional": 1,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Clean definitional tossup."
+  },
+  {
+   "id": "M038",
+   "answer": "W) A horizontal line",
+   "confidence": 5,
+   "difficulty_ms_regional": 2,
+   "flags": [
+    {
+     "flag": "style",
+     "reason": "'A graph...graphed' is awkward"
+    }
+   ],
+   "source_guess": "DOE",
+   "guess_reason": "Awkward wording and a physics concept filed under math; DOE-like."
+  },
+  {
+   "id": "M039",
+   "answer": "12",
+   "confidence": 5,
+   "difficulty_ms_regional": 1,
+   "flags": [
+    {
+     "flag": "wrong_level",
+     "reason": "Trivial"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Generic arithmetic."
+  },
+  {
+   "id": "M040",
+   "answer": "2.7 (27/10)",
+   "confidence": 5,
+   "difficulty_ms_regional": 3,
+   "flags": [
+    {
+     "flag": "unclear_aloud",
+     "reason": "x/3 and one-half are hard to hear"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Clean linear equation."
+  },
+  {
+   "id": "M041",
+   "answer": "P-waves",
+   "confidence": 5,
+   "difficulty_ms_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Short, textbook."
+  },
+  {
+   "id": "M042",
+   "answer": "W) Hollow bones",
+   "confidence": 3,
+   "difficulty_ms_regional": 2,
+   "flags": [
+    {
+     "flag": "multiple_defensible",
+     "reason": "Smooth feathers (streamlined, flight feathers) is also a real flight adaptation"
+    }
+   ],
+   "source_guess": "DOE",
+   "guess_reason": "Ambiguous distractor and loose phrasing are human."
+  },
+  {
+   "id": "M043",
+   "answer": "2 (phytoplankton)",
+   "confidence": 4,
+   "difficulty_ms_regional": 4,
+   "flags": [],
+   "source_guess": "DOE",
+   "guess_reason": "Defines gross/net production in the stem and a numbered list with 'by name or number' is a DOE form."
+  },
+  {
+   "id": "M044",
+   "answer": "Y) Malleability",
+   "confidence": 5,
+   "difficulty_ms_regional": 1,
+   "flags": [
+    {
+     "flag": "wrong_level",
+     "reason": "Trivial"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Generic textbook."
+  },
+  {
+   "id": "M045",
+   "answer": "X) 60",
+   "confidence": 4,
+   "difficulty_ms_regional": 2,
+   "flags": [],
+   "source_guess": "DOE",
+   "guess_reason": "Short, bare choices 50/60/70/80 is a DOE habit."
+  },
+  {
+   "id": "M046",
+   "answer": "X) Ceres",
+   "confidence": 5,
+   "difficulty_ms_regional": 2,
+   "flags": [],
+   "source_guess": "DOE",
+   "guess_reason": "Pronunciation guide on 'Io' plus the mix of asteroid, moon and dwarf planet."
+  },
+  {
+   "id": "M047",
+   "answer": "Z) The troposphere is heated mainly from below by Earth's surface",
+   "confidence": 5,
+   "difficulty_ms_regional": 3,
+   "flags": [
+    {
+     "flag": "style",
+     "reason": "'main reason' framing with sentence-length choices"
+    },
+    {
+     "flag": "giveaway",
+     "reason": "Correct choice is most precise"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Strawman distractors."
+  },
+  {
+   "id": "M048",
+   "answer": "39",
+   "confidence": 5,
+   "difficulty_ms_regional": 2,
+   "flags": [],
+   "source_guess": "DOE",
+   "guess_reason": "Dog chromosome number is a fact the LLM might choose; weak guess, DOE-like specificity."
+  },
+  {
+   "id": "M049",
+   "answer": "X) It stays the same",
+   "confidence": 5,
+   "difficulty_ms_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Clean projectile concept item."
+  },
+  {
+   "id": "M050",
+   "answer": "W) Heat from inside Earth",
+   "confidence": 5,
+   "difficulty_ms_regional": 1,
+   "flags": [
+    {
+     "flag": "style",
+     "reason": "National-lab preface"
+    },
+    {
+     "flag": "giveaway",
+     "reason": "'geo-thermal' gives it away"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Lab preface."
+  },
+  {
+   "id": "M051",
+   "answer": "Algae (green algae or cyanobacteria)",
+   "confidence": 4,
+   "difficulty_ms_regional": 2,
+   "flags": [
+    {
+     "flag": "multiple_defensible",
+     "reason": "Lichen photobionts are green algae or cyanobacteria"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Textbook; weak guess."
+  },
+  {
+   "id": "M052",
+   "answer": "Y) Air trapped between the feathers conducts heat poorly",
+   "confidence": 5,
+   "difficulty_ms_regional": 2,
+   "flags": [
+    {
+     "flag": "style",
+     "reason": "Sentence-length choices"
+    },
+    {
+     "flag": "giveaway",
+     "reason": "Correct choice is most precise; others are absurd"
+    }
+   ],
+   "source_guess": "new",
+   "guess_reason": "Strawman distractors."
+  },
+  {
+   "id": "M053",
+   "answer": "50 square centimeters",
+   "confidence": 5,
+   "difficulty_ms_regional": 2,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Clean arithmetic."
+  },
+  {
+   "id": "M054",
+   "answer": "250 watts",
+   "confidence": 5,
+   "difficulty_ms_regional": 3,
+   "flags": [],
+   "source_guess": "new",
+   "guess_reason": "Clean round numbers."
+  }
+ ]
+}
