@@ -1,8 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { buildReading, readingDurationMs } from '../lib/reading';
-import { bracketKind, MAX_PHRASE_MS, MAX_RATE, MIN_PHRASE_MS, MIN_RATE, rateFor, speechChunks, spokenFor, spokenText } from './speech';
+import { buildReading } from '../lib/reading';
+import { bracketKind, speechPieces, spokenFor, spokenText } from './speech';
 
-const say = (stem: string, choices?: Record<'W' | 'X' | 'Y' | 'Z', string>) => speechChunks(buildReading({ stem, choices }), 180).map((c) => c.say);
+/** What is said for a question, line by line (the stem, then each answer choice). */
+const say = (stem: string, choices?: Record<'W' | 'X' | 'Y' | 'Z', string>) => {
+  const lines: string[] = [];
+  let line: string[] = [];
+  for (const piece of speechPieces(buildReading({ stem, choices }).text)) {
+    if (piece.say) line.push(piece.say);
+    if (piece.lineEnd && line.length) {
+      lines.push(line.join(' '));
+      line = [];
+    }
+  }
+  if (line.length) lines.push(line.join(' '));
+  return lines;
+};
 const sayAll = (stem: string) => say(stem).join(' ');
 
 describe('brackets in DOE questions', () => {
@@ -233,65 +246,5 @@ describe('a recording of a question', () => {
     expect(spokenFor({ stem: 'Most of the energy is lost as:', choices })).toBe('Most of the energy is lost as: W, heat. X, light. Y, sound. Z, motion.');
     expect(spokenFor({ stem: 'Most of the energy is lost as', choices })).toBe('Most of the energy is lost as: W, heat. X, light. Y, sound. Z, motion.');
     expect(spokenFor({ stem: 'Which is lost most?', choices })).toBe('Which is lost most? W, heat. X, light. Y, sound. Z, motion.');
-  });
-});
-
-describe('phrases', () => {
-  it('end at punctuation once they last a moment, not at an initial', () => {
-    expect(say('Bacteria in the species E. coli live in the gut. Which vitamin do they make there?')).toEqual([
-      'Bacteria in the species E. coli live in the gut.',
-      'Which vitamin do they make there?',
-    ]);
-    // "Yes," alone is too short to be a phrase of its own: each phrase costs the voice a moment to start.
-    expect(say('Yes, the gut bacteria make it. Which vitamin is it?')).toEqual(['Yes, the gut bacteria make it.', 'Which vitamin is it?']);
-  });
-
-  it('split a long sentence at its commas, and within a long stretch with none', () => {
-    expect(
-      say(
-        'An aqueous solution in which the concentration of hydroxide ions is greater than that of hydrogen ions, at 25 degrees Celsius and one atmosphere of pressure, is called what?',
-      ),
-    ).toEqual([
-      'An aqueous solution in which the concentration',
-      'of hydroxide ions is greater than that of hydrogen ions,',
-      'at 25 degrees Celsius and one atmosphere of pressure,',
-      'is called what?',
-    ]);
-  });
-});
-
-describe('phrases on the timeline', () => {
-  const stem =
-    'An aqueous solution in which the concentration of OH⁻ ions is greater than that of H⁺ ions, at 25 degrees and one atmosphere of pressure, is called what?';
-  const reading = buildReading({ stem, choices: { W: 'basic', X: 'acidic', Y: 'neutral', Z: 'in equilibrium' } });
-  const chunks = speechChunks(reading, 200);
-
-  it('covers the whole reading, in order, from its start to its end', () => {
-    expect(chunks[0]!.startMs).toBe(0);
-    expect(chunks[chunks.length - 1]!.endMs).toBeCloseTo(readingDurationMs(reading, 200), 6);
-    for (let i = 1; i < chunks.length; i++) {
-      expect(chunks[i]!.startMs).toBeGreaterThanOrEqual(chunks[i - 1]!.endMs);
-      expect(chunks[i]!.start).toBeGreaterThanOrEqual(chunks[i - 1]!.end);
-    }
-  });
-
-  it('keeps phrases short, but long enough to be worth starting, and ends one at each answer choice', () => {
-    for (const c of chunks) expect(c.endMs - c.startMs).toBeLessThanOrEqual(MAX_PHRASE_MS + 600);
-    for (const c of chunks.slice(0, -5)) expect(c.endMs - c.startMs).toBeGreaterThanOrEqual(MIN_PHRASE_MS);
-    expect(chunks.slice(-4).map((c) => c.say)).toEqual(['W, basic', 'X, acidic', 'Y, neutral', 'Z, in equilibrium']);
-    // The pause before each choice is part of the timeline, so a choice starts after a gap.
-    const w = chunks[chunks.length - 4]!;
-    expect(w.startMs).toBeGreaterThan(chunks[chunks.length - 5]!.endMs);
-  });
-});
-
-describe('speaking rate', () => {
-  it('fits a phrase into its time, within what voices can do', () => {
-    // 30 characters in 2 seconds, from a voice that says 15 a second: its normal rate.
-    expect(rateFor('a'.repeat(30), 2000, 15)).toBeCloseTo(1, 6);
-    expect(rateFor('a'.repeat(30), 1000, 15)).toBeCloseTo(2, 6);
-    expect(rateFor('a'.repeat(30), 100, 15)).toBe(MAX_RATE);
-    expect(rateFor('a'.repeat(3), 5000, 15)).toBe(MIN_RATE);
-    expect(rateFor('anything', 0, 15)).toBe(MAX_RATE);
   });
 });

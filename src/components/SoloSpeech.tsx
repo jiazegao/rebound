@@ -1,43 +1,22 @@
 /**
  * Solo practice read aloud (Practice → Solo practice, "Read aloud"): each question is said instead of shown, and its
- * text appears with the answer. Signed in, when the server has Rebound's voice (docs/SERVER.md, "Read aloud"), each
- * question plays from its recording, made on the server the first time anyone hears it; otherwise this device's own
- * voice reads it (src/lib/speech.ts). Either way a question is read on a timeline that starts when it does, so the
- * page knows when the reading ends (the buzzers' window opens) and whether a buzz interrupted it. With no voice at
- * all, the question shows as text, as in the other mode.
+ * text appears with the answer. It plays from its recording in Rebound's voice (src/lib/voice.ts), fetched a few
+ * questions ahead, on a timeline that starts when the question does, so the page knows when the reading ends (the
+ * buzzers' window opens) and whether a buzz interrupted it. A question with no recording (a team's own packet, say),
+ * or one that cannot be fetched (offline), shows as text, as in the other mode. Signing in is not needed.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { playbackRate } from '../core/speech';
 import type { Question } from '../core/schema';
-import { fetchRecording, recordQuestion, speechEnabled } from '../lib/api';
-import { useSession } from '../lib/cloud';
-import { buildReading, readingDurationMs, wpmFor } from '../lib/reading';
+import { buildReading, readingDurationMs } from '../lib/reading';
 import { RecordedReader } from '../lib/recorded';
-import {
-  browserSpeech,
-  builtInVoicesOnly,
-  chooseVoice,
-  distinctVoices,
-  englishVoices,
-  loadVoices,
-  QuestionSpeaker,
-  SAMPLE,
-  savedPace,
-  savedVoice,
-  savePace,
-  saveVoice,
-  speakSample,
-  unlockSpeech,
-  voiceLabel,
-  type VoiceLike,
-} from '../lib/speech';
-import type { VoiceStatus } from './MatchSpeech';
+import { fetchRecording, loadVoiceIndex, lookupRecording, recordingUrl, type VoiceIndex } from '../lib/voice';
 import { Notice } from './ui';
 
 /** How solo practice questions are read: shown letter by letter, or said aloud. */
 export type ReadingChoice = 'text' | 'speech';
 
-/** Where this device remembers the choice (like the voice: it depends on the device and its sound). */
+/** Where this device remembers the choice (it depends on the device and its sound). */
 const READING_KEY = 'rebound-solo-reading';
 
 export function savedReading(): ReadingChoice {
@@ -56,12 +35,17 @@ export function saveReading(choice: ReadingChoice): void {
   }
 }
 
-/** How one question is read: from its recording, with this device's voice, or (with neither) shown as text. */
+/** Why a question read aloud shows as text: it has no recording, or Rebound's voice cannot be reached now. */
+export type TextReason = 'unrecorded' | 'unreachable';
+
+/** How one question is read: from its recording, or (with none) shown as text. */
 export interface ReadingPlan {
-  voice: 'recorded' | 'device' | 'text';
+  voice: 'recorded' | 'text';
   /** How long the reading lasts, in ms: the recording at its playback speed, or the text at the reading speed. */
   durationMs: number;
+  /** The recording's address and how fast it plays. */
   audio?: { key: string; rate: number };
+  why?: TextReason;
 }
 
 /** A question being read: how, and when its reading started (this device's clock). */
@@ -73,36 +57,29 @@ export interface SoloReading {
 }
 
 export interface SoloSpeech {
-  /** Rebound's voice reads the questions (signed in, and the server has it); null while that is being checked. */
-  recorded: boolean | null;
-  /** This device's own voice. */
-  status: VoiceStatus;
-  voices: VoiceLike[];
-  voice: VoiceLike | null;
-  setVoice: (voiceURI: string) => void;
+  /** Rebound's voice can be reached (its index of recordings loaded); null while that is being checked. */
+  available: boolean | null;
   /** Plays the sample line at a reading speed. */
   sample: (wpm: number) => void;
-  /** Lets the page speak and play from now on: call it from a click or a tap (Start, Play a sample). */
+  /** Lets the page play from now on: call it from a click or a tap (Start, Play a sample). */
   prime: () => void;
-  /** The browser is waiting for a tap before it plays or speaks. */
+  /** The browser is waiting for a tap before it plays. */
   blocked: boolean;
   allow: () => void;
-  /** The question being read cannot be heard after all (its recording failed, and the device has no voice). */
+  /** The question being read cannot be heard after all (its recording would not play): it shows as text. */
   unheard: boolean;
-  /** Has these questions recorded (or found) ahead, a few at a time, so each is ready when its turn comes. */
+  /** Fetches these questions' recordings ahead, so each is here when its turn comes. */
   prepare: (questions: Question[]) => void;
   /** How a question will be read at `wpm`: it waits (a few seconds at most) for the question's recording. */
   plan: (q: Question, wpm: number) => Promise<ReadingPlan>;
-  /** Reads a question from its start; null stops ("finish": a voice still talking says the last words). */
+  /** Reads a question from its start; null stops ("finish": a recording still playing says the last words). */
   read: (reading: SoloReading | null, end?: 'stop' | 'finish') => void;
 }
 
-/** Recordings asked for at once. */
-const AT_ONCE = 2;
-/** How long a question waits for its recording (made, then fetched) before this device reads it instead. */
+/** How long a question waits for its recording before it shows as text instead. */
 const WAIT_MS = 8000;
 
-type Recording = { key: string; ms: number };
+type Found = { url: string; ms: number } | TextReason;
 
 const within = <T,>(work: Promise<T>, ms: number, otherwise: T): Promise<T> =>
   Promise.race([work, new Promise<T>((resolve) => setTimeout(() => resolve(otherwise), ms))]);
@@ -112,119 +89,39 @@ async function until(ready: () => boolean, ms: number): Promise<void> {
 }
 
 export function useSoloSpeech(enabled: boolean): SoloSpeech {
-  const signedIn = !!useSession().user;
-  const platform = useMemo(() => (enabled ? browserSpeech() : null), [enabled]);
-  const [status, setStatus] = useState<VoiceStatus>('checking');
-  const [voices, setVoices] = useState<VoiceLike[]>([]);
-  const [voice, setVoiceState] = useState<VoiceLike | null>(null);
-  const [recorded, setRecorded] = useState<boolean | null>(null);
+  const [available, setAvailable] = useState<boolean | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [unheard, setUnheard] = useState(false);
-  const speaker = useRef<QuestionSpeaker | null>(null);
+  const voice = useRef<VoiceIndex | null>(null);
   const player = useRef<RecordedReader | null>(null);
-  const recordings = useRef(new Map<string, Promise<Recording | null>>());
-  const waiting = useRef<Array<{ q: Question; done: (r: Recording | null) => void }>>([]);
-  const asking = useRef(0);
+  const found = useRef(new Map<string, Promise<Found>>());
   const active = useRef<SoloReading | null>(null);
-  const failedVoices = useRef(new Set<string>());
-  const current = useRef<VoiceLike | null>(null);
-  current.current = voice;
-  const now = useRef({ status, recorded });
-  now.current = { status, recorded };
+  const now = useRef(available);
+  now.current = available;
 
-  // This device's own voices (for questions without a recording, and when Rebound's voice is not there).
+  // Rebound's voice: its index says where the recordings are.
   useEffect(() => {
     if (!enabled) return;
-    if (!platform) {
-      setStatus('none');
-      return;
-    }
     let live = true;
-    void loadVoices(platform).then((loaded) => {
+    void loadVoiceIndex().then((index) => {
       if (!live) return;
-      const all = distinctVoices(loaded, savedVoice());
-      const english = englishVoices(all);
-      setVoices(english.length ? english : all);
-      const chosen = chooseVoice(all, savedVoice());
-      setVoiceState(chosen);
-      setStatus(chosen ? 'ready' : 'none');
+      voice.current = index;
+      setAvailable(!!index && typeof Audio !== 'undefined');
     });
     return () => {
       live = false;
     };
-  }, [enabled, platform]);
+  }, [enabled]);
 
   useEffect(() => {
-    if (!platform || status !== 'ready') return;
-    const s = new QuestionSpeaker(
-      platform,
-      voice,
-      () => Date.now(),
-      () => setBlocked(true),
-      () => {
-        // The voice keeps failing: try the next one; with none left, the question shows as text.
-        const gone = current.current;
-        if (gone) failedVoices.current.add(gone.voiceURI);
-        const next = voices.find((v) => !failedVoices.current.has(v.voiceURI));
-        if (!next) {
-          setStatus('none');
-          setUnheard(true);
-          return;
-        }
-        setVoiceState(next);
-        s.setVoice(next, savedPace(next));
-        s.unblock();
-      },
-      savedPace(voice),
-      (cps) => savePace(current.current, cps),
-    );
-    speaker.current = s;
-    return () => {
-      s.stop();
-      speaker.current = null;
-    };
-    // The voice changes through setVoice, without a new speaker.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [platform, status]);
-
-  // Rebound's voice: for a signed-in player, when the server has it.
-  useEffect(() => {
-    if (!enabled) return;
-    if (!signedIn) {
-      setRecorded(false);
-      return;
-    }
-    let live = true;
-    setRecorded(null);
-    speechEnabled().then(
-      (on) => live && setRecorded(on),
-      () => live && setRecorded(false),
-    );
-    return () => {
-      live = false;
-    };
-  }, [enabled, signedIn]);
-
-  /** A question whose recording would not play: this device's voice reads the rest of it, or it shows as text. */
-  const fallBack = (r: SoloReading) => {
-    const s = speaker.current;
-    if (!s) {
-      setUnheard(true);
-      return;
-    }
-    const reading = buildReading(r.q);
-    s.follow({ text: reading.text, startedAt: r.startedAt, wpm: wpmFor(reading, r.plan.durationMs) });
-  };
-
-  useEffect(() => {
-    if (!recorded || typeof Audio === 'undefined') return;
+    if (!available) return;
     const r = new RecordedReader(
       new Audio(),
       fetchRecording,
       () => Date.now(),
       () => setBlocked(true),
-      (key) => {
-        if (active.current?.plan.audio?.key === key) fallBack(active.current);
+      (url) => {
+        if (active.current?.plan.audio?.key === url) setUnheard(true);
       },
     );
     player.current = r;
@@ -232,110 +129,73 @@ export function useSoloSpeech(enabled: boolean): SoloSpeech {
       r.stop();
       player.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recorded]);
+  }, [available]);
 
-  const pump = () => {
-    while (asking.current < AT_ONCE && waiting.current.length) {
-      const { q, done } = waiting.current.shift()!;
-      asking.current += 1;
-      recordQuestion(q)
-        .then(
-          (r) => (r.enabled && r.key && r.ms ? { key: r.key, ms: r.ms } : null),
-          () => null,
-        )
-        .then((rec) => {
-          if (rec) player.current?.prefetch([rec.key]);
-          done(rec);
-        })
-        .finally(() => {
-          asking.current -= 1;
-          pump();
-        });
+  /** A question's recording (its address and length), or why there is none. */
+  const recording = (q: Question): Promise<Found> => {
+    let f = found.current.get(q.id);
+    if (!f) {
+      f = lookupRecording(q).then(
+        (r) => (typeof r === 'string' ? r : voice.current ? { url: recordingUrl(voice.current, r), ms: r.ms } : 'unreachable'),
+        () => 'unreachable' as const,
+      );
+      // An unreachable one is looked for again next time.
+      void f.then((r) => r === 'unreachable' && found.current.delete(q.id));
+      found.current.set(q.id, f);
     }
-  };
-
-  const recording = (q: Question): Promise<Recording | null> => {
-    let made = recordings.current.get(q.id);
-    if (!made) {
-      made = new Promise((done) => waiting.current.push({ q, done }));
-      recordings.current.set(q.id, made);
-      pump();
-    }
-    return made;
+    return f;
   };
 
   return {
-    recorded,
-    status,
-    voices,
-    voice,
-    setVoice: (voiceURI) => {
-      const next = voices.find((v) => v.voiceURI === voiceURI) ?? null;
-      if (!next) return;
-      saveVoice(voiceURI);
-      setVoiceState(next);
-      speaker.current?.setVoice(next, savedPace(next));
-    },
+    available,
     sample: (wpm) => {
       const p = player.current;
-      if (now.current.recorded && p) {
-        // Unlock the player during the click: the recording arrives after it.
-        p.prime();
-        void recordQuestion({ stem: SAMPLE })
-          .then((r) => {
-            if (!r.key) throw new Error('No recording');
-            return p.playOnce(r.key, playbackRate(wpm));
-          })
-          .catch(() => platform && speakSample(platform, voice));
-        return;
-      }
-      if (platform) speakSample(platform, voice);
+      const index = voice.current;
+      if (!p || !index) return;
+      // Unlock the player during the click: the recording arrives after it.
+      p.prime();
+      void p.playOnce(recordingUrl(index, index.sample), playbackRate(wpm)).catch(() => {});
     },
-    prime: () => {
-      player.current?.prime();
-      if (platform && now.current.status === 'ready') unlockSpeech(platform);
-    },
+    prime: () => player.current?.prime(),
     blocked,
     allow: () => {
       setBlocked(false);
-      if (platform) unlockSpeech(platform);
       player.current?.unblock();
-      speaker.current?.unblock();
     },
     unheard,
     prepare: (questions) => {
-      if (now.current.recorded) for (const q of questions) void recording(q);
+      if (!now.current) return;
+      for (const q of questions) {
+        void recording(q).then((r) => {
+          if (typeof r !== 'string') player.current?.prefetch([r.url]);
+        });
+      }
     },
     plan: async (q, wpm) => {
-      await until(() => now.current.status !== 'checking' && now.current.recorded !== null, 4000);
-      const own: ReadingPlan = { voice: now.current.status === 'ready' ? 'device' : 'text', durationMs: readingDurationMs(buildReading(q), wpm) };
-      if (!now.current.recorded) return own;
-      const rec = await within(recording(q), WAIT_MS, null);
+      await until(() => now.current !== null, 4000);
+      const asText = (why: TextReason): ReadingPlan => ({ voice: 'text', durationMs: readingDurationMs(buildReading(q), wpm), why });
+      if (!now.current) return asText('unreachable');
+      const r = await within(recording(q), WAIT_MS, 'unreachable' as const);
+      if (typeof r === 'string') return asText(r);
       const p = player.current;
-      if (!rec || !p) return own;
+      if (!p) return asText('unreachable');
       const here = await within(
-        p.ready(rec.key).then(
+        p.ready(r.url).then(
           () => true,
           () => false,
         ),
         WAIT_MS,
         false,
       );
-      if (!here) return own;
+      if (!here) return asText('unreachable');
       const rate = playbackRate(wpm);
-      return { voice: 'recorded', durationMs: rec.ms / rate, audio: { key: rec.key, rate } };
+      return { voice: 'recorded', durationMs: r.ms / rate, audio: { key: r.url, rate } };
     },
     read: (r, end = 'stop') => {
       if (!r) {
         active.current = null;
-        if (end === 'finish') {
-          speaker.current?.follow(null);
-          player.current?.follow(null);
-        } else {
-          speaker.current?.stop();
-          player.current?.stop();
-        }
+        if (end === 'finish') player.current?.follow(null);
+        else player.current?.stop();
         return;
       }
       const was = active.current;
@@ -343,22 +203,24 @@ export function useSoloSpeech(enabled: boolean): SoloSpeech {
       active.current = r;
       setUnheard(false);
       if (r.plan.voice === 'recorded' && r.plan.audio && player.current) {
-        speaker.current?.stop();
         player.current.follow({ key: r.plan.audio.key, startedAt: r.startedAt, rate: r.plan.audio.rate });
-      } else if (r.plan.voice === 'device' && speaker.current) {
-        player.current?.stop();
-        speaker.current.follow({ text: buildReading(r.q).text, startedAt: r.startedAt, wpm: r.wpm });
-      } else if (r.plan.voice !== 'text') setUnheard(true);
+      } else player.current?.stop();
     },
   };
 }
 
-/** The setup's sound check for solo practice read aloud: which voice reads, and a sample to try it. */
-export function SoloSoundCheck({ speech, wpm }: { speech: SoloSpeech; wpm: number }) {
+/** The setup's sound check for solo practice read aloud: whether Rebound's voice can be reached, and a sample. */
+export function SoloSoundCheck({ speech, wpm, teamPacket }: { speech: SoloSpeech; wpm: number; teamPacket: boolean }) {
   return (
     <div className="card stack">
       <h3 style={{ margin: 0 }}>Read aloud</h3>
-      {speech.recorded ? (
+      {speech.available === null ? (
+        <p className="small muted" style={{ margin: 0 }}>
+          Looking for Rebound’s voice…
+        </p>
+      ) : !speech.available ? (
+        <Notice kind="warn">Rebound’s voice can’t be reached right now (are you offline?), so you will see each question as text instead.</Notice>
+      ) : (
         <>
           <p className="small" style={{ margin: 0 }}>
             Rebound’s voice reads each question, and its text appears with the answer. Turn your sound on, and try it:
@@ -368,43 +230,20 @@ export function SoloSoundCheck({ speech, wpm }: { speech: SoloSpeech; wpm: numbe
               Play a sample
             </button>
           </div>
-        </>
-      ) : speech.recorded === null || speech.status === 'checking' ? (
-        <p className="small muted" style={{ margin: 0 }}>
-          Looking for a voice…
-        </p>
-      ) : speech.status === 'none' ? (
-        <Notice kind="warn">This device has no voice for reading aloud, so you will see each question as text instead.</Notice>
-      ) : (
-        <>
-          <p className="small" style={{ margin: 0 }}>
-            Each question is read aloud with this device’s voice, and its text appears with the answer. Turn your sound on, and try it:
-          </p>
-          <div className="row">
-            {speech.voices.length > 1 && (
-              <label className="row small" style={{ gap: '0.4rem' }}>
-                Voice
-                <select value={speech.voice?.voiceURI ?? ''} onChange={(e) => speech.setVoice(e.target.value)}>
-                  {speech.voices.map((v) => (
-                    <option key={v.voiceURI} value={v.voiceURI}>
-                      {voiceLabel(v)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            <button className="btn btn-small" onClick={() => speech.sample(wpm)}>
-              Play a sample
-            </button>
-          </div>
-          {builtInVoicesOnly() && (
+          {teamPacket && (
             <p className="small muted" style={{ margin: 0 }}>
-              iPads and iPhones let websites use only their built-in voices, so voices downloaded in Settings (such as Premium ones) don’t
-              appear here.
+              A team’s own packet has no recordings, so its questions show as text.
             </p>
           )}
         </>
       )}
     </div>
   );
+}
+
+/** Why a question read aloud shows as text, said on the play screen. */
+export function textReason(why: TextReason | undefined): string {
+  return why === 'unrecorded'
+    ? 'This question has no recording, so it shows as text.'
+    : 'Rebound’s voice can’t be reached right now, so this question shows as text.';
 }

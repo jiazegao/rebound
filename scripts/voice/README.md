@@ -54,9 +54,10 @@ Another voice: export again with `--voice`, for example `--voice kokoro:am_micha
 `--voice kokoro:bf_emma` (British). `af_heart`, the default, is rated Kokoro's best. A speed goes after the voice:
 `--voice kokoro:af_heart@0.9` is 10% slower. The voice and speed are part of each recording's name, so changing
 either makes a new set. Counted the way the site counts reading speed (6 characters a word), `af_heart` at speed 1
-says about 150 words a minute over typical questions; the site expects its recorded voice to say about 160
-(`NATURAL_WPM` in `src/core/speech.ts`). `am_fenrir` and `bf_emma` are about 10% quicker than `af_heart`, and
-`am_michael` about 7% slower.
+says 150 words a minute over the library (`NATURAL_WPM` in `src/core/speech.ts`, which sets how fast the recordings
+play for a chosen reading speed). `am_fenrir` and `bf_emma` are about 10% quicker than `af_heart`, and `am_michael`
+about 7% slower. The site plays one voice, `RECORDED_VOICE` in `src/core/speech.ts`: changing it means recording and
+publishing the whole library again.
 
 ## 3. Fixing a word
 

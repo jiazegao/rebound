@@ -29,8 +29,7 @@ plan is enough for a school.
 | `UserServer` | user id | profile, sessions (hashed), the user's collections, rooms the user's sessions joined, AI usage and explanation cache |
 | `Team` | team id | settings, members (role and squad, plus a copy of each member's name, subjects and graduation year), the current join secret, team collections, the list of rooms its members opened, pending answer deliveries |
 | `RoomServer` | room id | one reader room or one online match: its members, sides, published state, buzzers, the match, pending result deliveries |
-| `Registry` | `"global"` | daily caps on new teams (open sign-up), and the characters sent each month to record questions |
-| `VoiceCache` | `"voice-<first character of the key>"` (16 objects) | recordings in Rebound's voice for matches read aloud, by the hash of voice and words |
+| `Registry` | `"global"` | daily caps on new teams (open sign-up) |
 
 The Worker checks every request's session with the caller's `UserServer`, then sends the request on, with the
 caller's identity, to the object that owns what it is about. Only the Worker builds requests to the objects, and it
@@ -116,9 +115,6 @@ captain.
 | `POST /api/rooms` | user | `{ name, match? }` → 201 `{ roomId }` (the caller hosts it; with `match`, an online match: see Match rooms) |
 | `DELETE /api/rooms/:id` | user | → `{ ok: true }`: the host cancels a match that has not started (see Match rooms); a room already closed counts as cancelled |
 | `GET /api/rooms/:id/ws?user=&session=&key=` | user | WebSocket upgrade, with a room key (see Rooms) |
-| `GET /api/speech` | user | → `{ enabled }`: whether Rebound's voice is set up (see Solo practice read aloud) |
-| `POST /api/speech` | user | `{ stem, choices? }` → `{ enabled, key, ms }`: a question's recording for solo practice, made the first time anyone asks for it; `key` is null when it cannot be made now (the device reads that question) |
-| `GET /api/speech/:key` | user | a recording in Rebound's voice for a match or solo practice read aloud (`audio/mpeg`, cacheable for good); 404 when there is none |
 | `GET /api/ai` | user | → `{ enabled: false }`, or `{ enabled: true, model, dailyLimit, usedToday }` |
 | `POST /api/ai/draft` | user | `{ passage, source, subject, kind?: "tossup"\|"bonus"\|"either", count?: 1–5 }` → `{ drafts, model, dailyLimit, usedToday }` |
 | `POST /api/ai/explain` | user | `{ stem, answer, choices?: { W, X, Y, Z }, subject? }` → `{ explanation, answerLooksWrong, model, cached, dailyLimit, usedToday }` |
@@ -291,9 +287,10 @@ A room created with `match` has no reader: the server runs the game itself (`ser
 (the user who created it) plays like anyone else and also starts, pauses and ends it, or cancels it before it starts.
 Anyone signed in can play. `match` is `{ format: "teams"|"ffa", mode?: "text"|"speech", presetId, wpm, teamNames?,
 packet: { setId, setTitle, roundId, roundLabel, sourceUrl? }, pairs: { tossup, bonus? }[], tossupCount? }`, with each
-question's `id, subject, format, stem, choices?, answerLetter?, answer, accept, reject, answerRaw, figure` (at most
-40 pairs; free-for-all games use toss-ups only). The server keeps the questions and sends a question's text only
-when its reading starts, and its answer only when it is over or a close call is being decided.
+question's `id, subject, format, stem, choices?, answerLetter?, answer, accept, reject, answerRaw, figure, audio?` (at
+most 40 pairs; free-for-all games use toss-ups only; `audio`: see Read aloud). The server keeps the questions and sends
+a question's text only when its reading starts, and its answer only when it is over or a close call is being
+decided.
 
 - **teams**: two sides under the rules preset, through the shared rules engine: interrupts and re-reads,
   rebounds, the game clock and halftime. A side's captain (the one chosen in the lobby, or its first player) types
@@ -319,30 +316,28 @@ when its reading starts, and its answer only when it is over or a close call is 
 - **Cancelling**: until it starts, the host can cancel the match (`DELETE /api/rooms/:id`). Everyone connected is
   closed with code 4005, the room's storage is deleted at once, it leaves its team's list, and its link then closes
   with 4004. Once started, a match is ended instead (`end`), and its scores so far stand.
-- **Read aloud** (`mode: "speech"`, at 100 to 300 words a minute; `"text"`, the default, takes 60 to 600): the
-  question is said aloud on every device, and nothing of it shows until it is over. The words to say come from
-  `src/core/speech.ts`: pronunciation guides are skipped, DOE's reading guides ("[y equals x squared]") are said in
-  place of the math they describe, and other symbols are said in words. A toss-up answered right goes straight to
-  its bonus, so its text comes with its answer in `match.previous.text`.
-  - **Rebound's voice** (when the Worker has `GOOGLE_TTS_API_KEY`; see server/README.md): when the match is made, the
-    room has each question recorded as one passage by Google Cloud Text-to-Speech (`tts.ts`), a few at a time, and
-    `match.voice` shows `{ state: "preparing", done, total, rate }`; `start` is refused until it is `"ready"`. A
-    recording is kept in `VoiceCache` under the hash of its voice and words, so a question is recorded once and
-    reused by every later match. The reading lasts as long as its recording at the match's playback speed
-    (`rate`: the reading speed over the voice's natural 160 words a minute, 0.75 to 1.6), and `reading.audio`
-    gives `{ key, rate }`. Every device fetches the recordings (`GET /api/speech/:key`; `match.voice.keys` once
-    ready, to fetch them all ahead) and plays each in step with the server's clock (`src/lib/recorded.ts`): from
-    the start of the reading, stopped for an interrupt, on from there or again for a re-read. `match.voice.sample`
-    is a sample line for the lobby. Characters sent to Google are counted per UTC month in `Registry` and capped
-    at `TTS_MONTHLY_CHARS` (default 900,000, under Google's free million for Chirp 3 HD voices); a question that
-    cannot be recorded (the cap, or Google failing) gets `null`, and devices read it themselves.
-  - **The devices' own voices** (without Rebound's voice, or for a question without a recording): each device
-    says the question with its own voice (`src/lib/speech.ts`), phrase by phrase (ending at punctuation once a
-    phrase lasts 1.2 seconds on the timeline, at each answer choice, and by 4 seconds), each phrase starting at its
-    place on the reading's timeline and said at the speed that fits its time. Each device learns how fast its voice
-    speaks and how long it takes to start a phrase, so devices with different voices say each phrase at about the same
-    moment. A device with no voice that works says so (`voice`), shows the text revealed in step instead, and the
-    member list marks that player `readsText`.
+- **Read aloud** (`mode: "speech"`, at 120 to 240 words a minute; `"text"`, the default, takes 60 to 600; an older
+  page's 100 to 300 is taken and kept within 120 to 240): each question plays from its recording in Rebound's voice
+  on every device at the same moment, and nothing of it shows until it is over. A toss-up answered right goes
+  straight to its bonus, so its text comes with its answer in `match.previous.text`.
+  - **The recordings** are made on a computer with Kokoro and served as MP3 files by two small Cloudflare Workers
+    (`scripts/voice/README.md`); the site's index of them is `public/data/voice/` (`src/lib/voice.ts`). Each
+    recording is named by `audioKey(RECORDED_VOICE, spokenFor(question))` from `src/core/speech.ts`: the words to say
+    (pronunciation guides skipped, DOE's reading guides said in place of the math they describe, other symbols in
+    words), hashed with the voice. The host's page looks each question up and sends its recording with the match,
+    `audio: { key, ms, v }` (its name, its length at normal speed in ms, the file's fingerprint). The server keeps a
+    recording only when `key` is the name of that question's own words, so a recording always says the question on
+    screen; it never fetches the files.
+  - **Playing**: `match.voice` is `{ rate, recorded, total, recordings: { key, v }[] }`: the playback speed (the
+    reading speed over the voice's own 150 words a minute, 0.8 to 1.6), how many of the match's questions have a
+    recording, and each recording for every device to fetch ahead in the lobby (a match can start at once). A
+    reading with a recording lasts as long as it at that speed, and `reading.audio` gives `{ key, v, rate }`; every
+    device fetches `https://<voice Worker>/<key>.mp3?v=<v>` and plays it in step with the server's clock
+    (`src/lib/recorded.ts`): from the start of the reading, stopped for an interrupt, on from there or again for a
+    re-read.
+  - **Text instead**: a question without a recording (a team's own packet, say) is revealed as text at the reading
+    speed for everyone. A device that cannot fetch or play the recordings says so (`voice`), shows the text revealed
+    in step instead, and the member list marks that player `readsText`.
 
 Extra messages in match rooms (`publish`, `open` and `close` are refused there; `answer` goes to the server, not
 to a reader):
@@ -352,7 +347,7 @@ to a reader):
 | client → server | `start`, `pause`, `resume`, `end` | – | the host (`resume` also starts the second half at halftime) |
 | client → server | `answer` | `text` (≤ 200 characters) | the player who won the buzz, or the bonus side's captain |
 | client → server | `ruling` | `accept: boolean` | an opponent, during a close call |
-| client → server | `voice` | `ok: boolean` | each device in a match read aloud, once it knows whether it has a voice (again after reconnecting); a member is `readsText` when every connection of theirs said `false` |
+| client → server | `voice` | `ok: boolean` | each device in a match read aloud, once it knows whether it can play the recordings (again after reconnecting); a member is `readsText` when every connection of theirs said `false` |
 | server → client | `state` | the match's view: `label`, `text`, `reading { startedAt, wpm, pausedAt? }`, `window`, `scores`, `status`, `answer`, `match { format, mode, status, paused, answering, review, standings, clock, previous, gameId }` | whenever it changes |
 | server → client | `result` | `result: { memberId, playerId, questionId, subject, kind, correct, interrupt, latencyMs, t }` | each judged free-for-all answer (for display; the server records it) |
 | server → client | `match_over` | `format`, `game` (the team match's game record, or null), `heard` (question ids), `players` | once, at the end, after the answers were written |
@@ -361,17 +356,12 @@ to a reader):
 
 Solo practice can read its questions aloud instead of showing them ("How questions are read", a choice remembered on
 the device; `src/components/SoloSpeech.tsx`): the question's text appears with its answer, the buzzers open when the
-reading ends, and a buzz during it is an interrupt that stops the voice.
-
-- **Rebound's voice** (signed in, when the Worker has it): the site asks `POST /api/speech` for each question a
-  little ahead (the one being read, its bonus and the next two toss-ups) and plays the recording at the reading
-  speed's playback rate, on the device's own clock; the reading lasts as long as the recording. Recordings are the
-  same ones matches use (`VoiceCache`), so a question is recorded once for everyone. Solo practice may use 80% of the
-  month's characters, so matches always have some left, and each player at most 300 new recordings a UTC day
-  (`RECORDINGS_PER_DAY` in `user.ts`; recordings already made are free). Past either, `key` is null.
-- **The device's own voice** (signed out, without Rebound's voice, or for a question without a recording): the
-  device says the question on the text's timeline at the reading speed, as in a match (`src/lib/speech.ts`). With no
-  voice that works, the question shows as text.
+reading ends, and a buzz during it is an interrupt that stops the recording. The server takes no part: the page finds
+each question's recording in the index (`public/data/voice/`), fetches it from its voice Worker a little ahead (the
+one being read, its bonus and the next two toss-ups), and plays it at the reading speed's playback rate on the
+device's own clock; the reading lasts as long as the recording. Signing in is not needed. A question without a
+recording (a team's own packet), or one that cannot be fetched in time (offline), shows as text, and the page says
+why.
 
 ## AI help (optional)
 

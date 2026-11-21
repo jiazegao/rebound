@@ -1,6 +1,6 @@
 /**
- * Reading a question aloud (online matches in speech mode): what to say, and when. It works on the text the reveal
- * uses (src/lib/reading.ts), so the spoken question keeps the server's timeline, the same one text players see.
+ * Reading a question aloud: the words Rebound's recorded voice says for it (scripts/voice records them), and the
+ * recording's name. It works on the text the reveal uses (src/lib/reading.ts).
  *
  * - Pronunciation guides ("[SU-doe-POH-dee-ah]") are skipped: the voice says the word itself.
  * - Reading guides, the notes DOE writes for moderators ("y = √x² − 3x [y equals the square root of x squared
@@ -9,9 +9,10 @@
  *   π "pi", √ "the square root of", 25 – 9 "25 minus 9", 125/343 "125 over 343", 5! "5 factorial", and so on.
  * - The brackets of math are said, as DOE's guides say them: (x + 5)² "open parenthesis x plus 5 close parenthesis
  *   squared", (6 + 3i)(4 + i) with "times" between the two.
- * - The question is said in short phrases, each with its place on the timeline, so every device stays in step.
+ * A change here changes the words of the questions it touches, and so the names of their recordings: they must be
+ * recorded and published again (scripts/voice/README.md), which src/lib/voice.test.ts checks.
  */
-import { buildReading, msPerChar, type Reading } from '../lib/reading';
+import { buildReading } from '../lib/reading';
 
 /* ---------------- brackets ---------------- */
 
@@ -633,7 +634,7 @@ export function spokenQuestion(text: string): string {
 
 /**
  * What a recorded voice says for a question: the reading's text (its stem, then a line per answer choice) as one
- * passage. The server records it (server/src/tts.ts), and so does scripts/voice for recordings made elsewhere.
+ * passage. scripts/voice records it, and the site and the server name the recording by it (audioKey).
  */
 export function spokenFor(question: { stem: string; choices?: Record<'W' | 'X' | 'Y' | 'Z', string> }): string {
   return spokenQuestion(buildReading(question).text);
@@ -657,95 +658,6 @@ export async function audioKey(voice: string, spoken: string): Promise<string> {
     .slice(0, 40);
 }
 
-/* ---------------- phrases on the timeline ---------------- */
-
-export interface SpeechChunk {
-  /** What to say. */
-  say: string;
-  /** When to start and finish saying it, in ms after the reading started (the server's timeline). */
-  startMs: number;
-  endMs: number;
-  /** Characters [start, end) of the reading's text it covers. */
-  start: number;
-  end: number;
-}
-
-/**
- * Each phrase starts at its own place on the timeline, so short phrases keep devices in step; but a voice takes a
- * moment to start each one, so a phrase ends at punctuation only once it lasts this long on the timeline (about four
- * words at 200 words a minute)...
- */
-export const MIN_PHRASE_MS = 1200;
-/** ...and at the latest after this long, even within a sentence. Each answer choice is its own phrase too. */
-export const MAX_PHRASE_MS = 4000;
-
-/**
- * The reading as phrases to say, each with its start and end on the reading's timeline (the time the reveal would
- * take to show those characters at `wpm`).
- */
-export function speechChunks(reading: Reading, wpm: number): SpeechChunk[] {
-  const per = msPerChar(wpm);
-  const time = (index: number) => (index <= 0 ? 0 : reading.cumulative[Math.min(index, reading.cumulative.length) - 1]!) * per;
-  const chunks: SpeechChunk[] = [];
-  let group: Piece[] = [];
-  const flush = () => {
-    const said = group.filter((p) => p.say);
-    if (said.length) {
-      const start = group[0]!.start;
-      const end = group[group.length - 1]!.end;
-      chunks.push({ say: said.map((p) => p.say).join(' '), startMs: time(start), endMs: time(end), start, end });
-    }
-    group = [];
-  };
-  for (const piece of speechPieces(reading.text)) {
-    group.push(piece);
-    const lasts = time(piece.end) - time(group[0]!.start);
-    if (piece.lineEnd || (piece.pause && lasts >= MIN_PHRASE_MS)) flush();
-    else if (lasts >= MAX_PHRASE_MS) {
-      // A long stretch with no punctuation: break it before a word that starts a new part ("than", "which", "of"),
-      // as a reader would take a breath, if there is one far enough in.
-      let at = group.length;
-      for (let i = group.length - 1; i > 0; i--) {
-        if (time(group[i]!.start) - time(group[0]!.start) < MIN_PHRASE_MS) break;
-        if (BREAK_BEFORE.test(group[i]!.say.split(' ')[0]!)) {
-          at = i;
-          break;
-        }
-      }
-      const rest = group.slice(at);
-      group = group.slice(0, at);
-      flush();
-      group = rest;
-    }
-  }
-  flush();
-  return chunks;
-}
-
-/** Words a phrase can start with when a long stretch with no punctuation is broken up. */
-const BREAK_BEFORE =
-  /^(than|that|which|who|whom|whose|where|when|while|whereas|because|since|although|though|if|unless|until|of|in|on|at|for|with|without|by|from|into|onto|through|during|between|among|about|to|and|or|but|as|so|after|before)$/i;
-
-/* ---------------- how fast to say a phrase ---------------- */
-
-/** The slowest and fastest a voice is asked to speak (1 is its normal pace); beyond them most voices distort. */
-export const MIN_RATE = 0.6;
-export const MAX_RATE = 2.2;
-
-/**
- * The speaking rate that fits `say` into `ms`, for a voice that says `charsPerSecond` characters a second at its
- * normal rate.
- */
-export function rateFor(say: string, ms: number, charsPerSecond: number): number {
-  return rateForChars(say.length, ms, charsPerSecond);
-}
-
-export function rateForChars(chars: number, ms: number, charsPerSecond: number): number {
-  if (ms <= 0) return MAX_RATE;
-  const rate = chars / (ms / 1000) / charsPerSecond;
-  return Math.min(MAX_RATE, Math.max(MIN_RATE, rate));
-}
-
 /* ---------------- reading speeds read aloud ---------------- */
 
 /**
@@ -757,8 +669,11 @@ export const NATURAL_WPM = 150;
 /** Recordings play at most this much slower or faster than the voice's own pace (the pitch is kept). */
 export const MIN_PLAYBACK_RATE = 0.75;
 export const MAX_PLAYBACK_RATE = 1.6;
-/** Read aloud: the reading speeds the recordings can play at (115 is 0.77 times the voice's pace, 240 is 1.6 times). */
-export const MIN_SPEECH_WPM = 115;
+/**
+ * Read aloud: the reading speeds the recordings can play at (120 is 0.8 times the voice's pace, 240 is 1.6 times).
+ * Both are whole tens, as the speed inputs step by 10 from their lowest.
+ */
+export const MIN_SPEECH_WPM = 120;
 export const MAX_SPEECH_WPM = 240;
 
 /** How fast recordings play for a reading speed of `wpm` (pitch is kept). */

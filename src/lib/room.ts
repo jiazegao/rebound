@@ -16,7 +16,7 @@ export interface RoomMember {
   side: Side | null;
   captain: boolean;
   connected: boolean;
-  /** A match read aloud: this member's device has no voice, so they see the text instead. */
+  /** A match read aloud: this member's device cannot play Rebound's voice, so they see the text instead. */
   readsText?: boolean;
 }
 
@@ -49,10 +49,10 @@ export interface MatchInfo {
   /** Team matches: the game record's id, once finished. */
   gameId?: string;
   /**
-   * A match read aloud with Rebound's voice: how far the recordings are ('preparing' until each question is
-   * recorded), the lobby's sample, and once ready every recording, to fetch ahead.
+   * A match read aloud: how fast the recordings play, how many of its questions have one (the others show as text),
+   * and each recording (its name and fingerprint), to fetch ahead.
    */
-  voice?: { state: 'preparing' | 'ready'; done: number; total: number; rate: number; sample?: string; keys?: string[] };
+  voice?: { rate: number; recorded: number; total: number; recordings: Array<{ key: string; v: string }> };
 }
 
 /** One judged answer in a free-for-all (the server also writes it to the player's account). */
@@ -86,9 +86,9 @@ export interface RoomView {
   text?: string;
   /**
    * Text reveal: when the reading started (server time) and how fast it runs; `pausedAt` stops it there. `audio`: in a
-   * match read aloud with Rebound's voice, the question's recording and how fast it plays.
+   * match read aloud, the question's recording (its name and fingerprint) and how fast it plays.
    */
-  reading?: { startedAt: number; wpm: number; pausedAt?: number; audio?: { key: string; rate: number } };
+  reading?: { startedAt: number; wpm: number; pausedAt?: number; audio?: { key: string; v: string; rate: number } };
   /** An answer window: when it opened (server time) and how long it lasts. */
   window?: { openedAt: number; seconds: number };
   teams: [string, string];
@@ -350,7 +350,7 @@ export class RoomClient {
   // Players
   buzz = () => this.send({ type: 'buzz' });
   chooseSide = (side: Side | null) => this.send({ type: 'side', side });
-  /** Whether this device can read questions aloud (matches read aloud); the room shows who reads the text instead. */
+  /** Whether this device can play the recordings (matches read aloud); the room shows who reads the text instead. */
   voice = (ok: boolean) => this.send({ type: 'voice', ok });
   chat = (text: string) => this.send({ type: 'chat', text: text.slice(0, 500) });
   answer = (text: string) => this.send({ type: 'answer', text: text.slice(0, 200) });

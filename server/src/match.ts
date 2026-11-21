@@ -320,7 +320,7 @@ export function parseMatchSetup(value: unknown): MatchSetup {
     const [shownLow, shownHigh] = mode === 'speech' ? [MIN_SPEECH_WPM, MAX_SPEECH_WPM] : [MIN_WPM, MAX_WPM];
     throw new HttpError(400, `Choose a reading speed of ${shownLow} to ${shownHigh} words per minute${mode === 'speech' ? ' to read aloud' : ''}.`);
   }
-  // Read aloud, the recordings play at most this much slower or faster than the voice's own pace.
+  // Read aloud, the recordings play at most this much slower or faster than the voice's own pace (120 to 240).
   const speed = mode === 'speech' ? Math.min(MAX_SPEECH_WPM, Math.max(MIN_SPEECH_WPM, wpm)) : wpm;
   const names = Array.isArray(o.teamNames) ? o.teamNames : ['Team A', 'Team B'];
   const teamNames = [cleanLine(names[0], 40) ?? 'Team A', cleanLine(names[1], 40) ?? 'Team B'] as [string, string];

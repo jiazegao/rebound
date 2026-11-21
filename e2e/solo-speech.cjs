@@ -3,58 +3,21 @@
  *
  *   node e2e/solo-speech.cjs                # SERVER_URL / BASE_URL / SHOTS_DIR as for the other tests
  *
- * It tests whichever voice the server has:
- *
- * - Rebound's recorded voice, when the server runs with DEV_TTS_FAKE=1 (npx wrangler dev --var DEV_TTS_FAKE:1),
- *   which records silent stand-ins instead of calling Google; a stand-in for the audio element's play() and pause()
- *   records what it is told.
- * - Otherwise the device's own voice: a pretend one that says nothing out loud but takes the time a voice would and
- *   records each phrase it is asked to say.
- *
- * Either way nothing of a question shows while it is read, the buzzers open when the reading ends, a buzz during the
- * reading is an interrupt and stops the voice, and the question's text shows with its answer.
+ * Rebound's recorded voice is a stand-in (e2e/voice.cjs): the site's index of recordings and silent MP3s from the voice
+ * Workers' addresses, served to the page with no network. A stand-in for the audio element's play() and pause()
+ * records what it is told. Nothing of a question shows while it is read, the buzzers open when the reading ends, a
+ * buzz during the reading is an interrupt and stops the recording, the question's text shows with its answer, and a
+ * question with no recording shows as text and says why.
  *
  * Uses the small fixture question set, like the other tests.
  */
 const { chromium } = require('playwright');
 const path = require('path');
 const A = require('./accounts.cjs');
+const V = require('./voice.cjs');
 
 const { BASE } = A;
 const SHOTS = process.env.SHOTS_DIR || '';
-
-/** A pretend voice (runs in the page): 15 characters a second at its normal rate; records what it is asked to say. */
-function pretendVoice() {
-  const said = [];
-  let timers = [];
-  window.__cancels = 0;
-  const voice = { name: 'Test Voice', lang: 'en-US', voiceURI: 'test-voice', localService: true, default: true };
-  const synth = {
-    getVoices: () => [voice],
-    addEventListener() {},
-    removeEventListener() {},
-    speak(u) {
-      if (u.volume === 0) return;
-      said.push({ text: u.text, rate: u.rate, at: Date.now() });
-      const ms = (u.text.length / (15 * (u.rate || 1))) * 1000;
-      timers.push(setTimeout(() => u.onstart && u.onstart({}), 80));
-      timers.push(setTimeout(() => u.onend && u.onend({}), 80 + ms));
-    },
-    cancel() {
-      window.__cancels += 1;
-      for (const t of timers) clearTimeout(t);
-      timers = [];
-    },
-  };
-  class Utterance {
-    constructor(text) {
-      Object.assign(this, { text, rate: 1, volume: 1, lang: '', voice: null, onstart: null, onend: null, onerror: null });
-    }
-  }
-  Object.defineProperty(window, 'speechSynthesis', { value: synth, configurable: true });
-  Object.defineProperty(window, 'SpeechSynthesisUtterance', { value: Utterance, configurable: true, writable: true });
-  window.__said = said;
-}
 
 /** Records what the page's audio elements are told to play and when they are paused (runs in the page). */
 function recordPlays() {
@@ -105,58 +68,57 @@ async function main() {
   try {
     const sol = await A.signUp('Sol');
     accounts.push(sol);
+    // The second bonus has no recording: it shows as text.
+    const voice = V.standInVoice({ unrecorded: ['doe-hs-99-r01-b02'] });
     const ctx = await A.signedInContext(browser, sol);
-    await ctx.addInitScript(pretendVoice);
     await ctx.addInitScript(recordPlays);
+    const served = await V.useStandInVoice(ctx, voice);
     const page = await ctx.newPage();
     A.watchErrors(page, 'Sol', errors);
     await fixtures(page);
     const shot = async (name) => {
       if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `${name}.png`), fullPage: true });
     };
-    const said = () => page.evaluate(() => window.__said.map((s) => s.text));
     const plays = () => page.evaluate(() => window.__played.filter((p) => p.src === 'blob:'));
-    let recorded = false;
-    /** How many times the voice has started something: phrases said, or recordings played. */
-    const voiced = async () => (recorded ? (await plays()).length : (await said()).length);
+    /** How many times a recording has started playing. */
+    const voiced = async () => (await plays()).length;
 
-    await step('the setup offers reading aloud, with a voice to try', async () => {
+    await step('the setup offers reading aloud, with Rebound’s voice to try', async () => {
       await page.goto(`${BASE}#/try`);
       await page.getByRole('heading', { name: 'Solo practice', level: 1 }).waitFor({ timeout: 15000 });
       await page.getByRole('radio', { name: /Read aloud/ }).check();
-      await page.getByText(/Rebound’s voice reads each question|read aloud with this device’s voice/).waitFor({ timeout: 10000 });
-      recorded = (await page.getByText('Rebound’s voice reads each question').count()) > 0;
-      console.log(`\n  (testing ${recorded ? 'Rebound’s recorded voice' : 'the device’s own voice'})`);
+      await page.getByText('Rebound’s voice reads each question').waitFor({ timeout: 10000 });
       await page.getByRole('button', { name: 'Play a sample' }).click();
-      if (recorded) await page.waitForFunction(() => window.__played.some((p) => p.src === 'blob:' && p.ok === true), null, { timeout: 10000 });
-      else await page.waitForFunction(() => window.__said.some((s) => /organelle/.test(s.text)), null, { timeout: 5000 });
+      await page.waitForFunction(() => window.__played.some((p) => p.src === 'blob:' && p.ok === true), null, { timeout: 10000 });
+      if (!served.some((u) => u.includes(voice.index.sample.key))) throw new Error(`the sample came from: ${served.join(', ')}`);
       await shot('solo-speech-1-setup');
     });
 
     await step('a toss-up is heard, not shown; the buzzers open when it ends, and its text comes with the answer', async () => {
       await page.locator('#set').selectOption('doe-hs-99');
       await page.locator('#round').selectOption('doe-hs-99-r01');
-      await page.locator('#wpm').fill('300');
+      await page.locator('#wpm').fill('240');
       const before = await voiced();
       await page.getByRole('button', { name: 'Start' }).click();
       await page.getByText('Listening to the question…').waitFor({ timeout: 15000 });
       await shot('solo-speech-2-listening');
-      await page.waitForFunction(
-        ([n, rec]) => (rec ? window.__played.filter((p) => p.src === 'blob:').length : window.__said.length) > n,
-        [before, recorded],
-        { timeout: 10000 },
-      );
+      await page.waitForFunction((n) => window.__played.filter((p) => p.src === 'blob:').length > n, before, { timeout: 10000 });
       for (let i = 0; i < 4; i++) {
         if (await page.getByText(/observable|most common term/).count()) throw new Error('the toss-up shows while it is read');
         await page.waitForTimeout(300);
       }
-      if (recorded) {
-        // 300 words a minute against the voice's natural 160: the fastest playback, 1.6.
-        const p = (await plays()).filter((x) => x.ok === true);
-        if (!p.some((x) => Math.abs(x.rate - 1.6) < 0.01)) throw new Error(`plays: ${JSON.stringify(p)}`);
-      } else {
-        const phrases = await said();
-        if (!phrases.some((t) => /most common term/.test(t))) throw new Error(`said: ${JSON.stringify(phrases)}`);
+      // 240 words a minute against the voice's own 150: the fastest playback, 1.6.
+      const p = (await plays()).filter((x) => x.ok === true);
+      if (!p.some((x) => Math.abs(x.rate - 1.6) < 0.01)) throw new Error(`plays: ${JSON.stringify(p)}`);
+      // Each recording comes from its Worker, by the first character of its name, with its fingerprint.
+      const urls = served.filter((u) => !u.includes(voice.index.sample.key));
+      if (!urls.length || !urls.every((u) => /^https:\/\/voice-[12]\.rebound\.test\/[0-9a-f]{40}\.mp3\?v=[0-9a-f]{8}$/.test(u))) {
+        throw new Error(`fetched: ${urls.join(', ')}`);
+      }
+      for (const u of urls) {
+        const key = /\/([0-9a-f]{40})\.mp3/.exec(u)[1];
+        const host = parseInt(key[0], 16) < 8 ? 'voice-1' : 'voice-2';
+        if (!u.includes(host)) throw new Error(`${key} came from the wrong Worker: ${u}`);
       }
       await page.getByText('Time to buzz').waitFor({ timeout: 20000 });
       if (await page.getByText(/observable/).count()) throw new Error('the toss-up shows once its reading is over');
@@ -168,7 +130,7 @@ async function main() {
       await shot('solo-speech-3-answer');
     });
 
-    await step('the bonus is read aloud too, and can be answered while it is read, which stops the voice', async () => {
+    await step('the bonus is read aloud too, and can be answered while it is read, which stops the recording', async () => {
       await page.keyboard.press('Space');
       await page.getByText('Listening to the question…').waitFor({ timeout: 15000 });
       await page.locator('#answer').waitFor();
@@ -179,35 +141,36 @@ async function main() {
       await page.getByText(/virus that attacks bacteria/).waitFor({ timeout: 5000 });
       const after = await voiced();
       await page.waitForTimeout(1500);
-      if ((await voiced()) !== after) throw new Error('the voice went on after the bonus was answered');
+      if ((await voiced()) !== after) throw new Error('the recording went on after the bonus was answered');
     });
 
-    await step('a buzz during the reading is an interrupt, and stops the voice', async () => {
+    await step('a buzz during the reading is an interrupt, and stops the recording', async () => {
       const before = await voiced();
       const pausedBefore = await page.evaluate(() => window.__paused);
-      const cancelsBefore = await page.evaluate(() => window.__cancels);
       await page.keyboard.press('Space');
       await page.getByText('Listening to the question…').waitFor({ timeout: 15000 });
-      await page.waitForFunction(
-        ([n, rec]) => (rec ? window.__played.filter((p) => p.src === 'blob:').length : window.__said.length) > n,
-        [before, recorded],
-        { timeout: 10000 },
-      );
+      await page.waitForFunction((n) => window.__played.filter((p) => p.src === 'blob:').length > n, before, { timeout: 10000 });
       await page.waitForTimeout(400);
       await page.keyboard.press('Space');
       await page.getByText(/^Interrupt/).waitFor({ timeout: 5000 });
-      if (recorded) {
-        await page.waitForFunction((n) => window.__paused > n, pausedBefore, { timeout: 3000 });
-      } else {
-        await page.waitForFunction((n) => window.__cancels > n, cancelsBefore, { timeout: 3000 });
-        const spoken = (await said()).length;
-        await page.waitForTimeout(1500);
-        if ((await said()).length !== spoken) throw new Error('the voice went on after the buzz');
-      }
+      await page.waitForFunction((n) => window.__paused > n, pausedBefore, { timeout: 3000 });
       await page.locator('#answer').fill('W');
       await page.keyboard.press('Enter');
       await page.getByText(/aqueous solution/).waitFor({ timeout: 5000 });
       await shot('solo-speech-4-interrupt');
+    });
+
+    await step('a question with no recording shows as text, and says why', async () => {
+      // The interrupt was right (W, basic): its bonus, which has no recording, comes next.
+      const before = await voiced();
+      await page.keyboard.press('Space');
+      await page.getByText('This question has no recording, so it shows as text.').waitFor({ timeout: 15000 });
+      await page.getByText(/cuprous oxide/).waitFor({ timeout: 10000 });
+      if ((await voiced()) !== before) throw new Error('a recording played for a question that has none');
+      await shot('solo-speech-5-unrecorded');
+      await page.locator('#answer').fill('144');
+      await page.keyboard.press('Enter');
+      await page.getByText(/ANSWER/).first().waitFor({ timeout: 5000 });
     });
 
     await step('Stop shows the summary so far, and keeps the answer just judged', async () => {

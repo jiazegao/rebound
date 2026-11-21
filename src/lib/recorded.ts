@@ -1,9 +1,10 @@
 /**
  * Playing Rebound's recorded voice in a match read aloud (docs/SERVER.md, "Read aloud"), and in solo practice on the
- * device's own clock: each question was recorded once on the server, and every device plays the recording from the
- * moment the server starts the reading, at the match's playback speed (the pitch is kept). The server times the reading by the recording, so the voice never has
- * to hurry or slow down; this only keeps the player in step with the server's clock (it starts late joiners at the
- * right place, stops for an interrupt, goes on after one, and starts again for a re-read).
+ * device's own clock: every device plays a question's recording (fetched from its address, src/lib/voice.ts) from the
+ * moment the reading starts, at the playback speed (the pitch is kept). The reading is timed by the recording, so the
+ * voice never has to hurry or slow down; this only keeps the player in step with the clock (it starts late joiners at
+ * the right place, stops for an interrupt, goes on after one, and starts again for a re-read). A recording is
+ * identified by its address.
  *
  * The audio element and the fetch are passed in, so tests can use pretend ones.
  */

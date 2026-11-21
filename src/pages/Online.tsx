@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Intro, LoadError, Loading, Notice, PageHeader } from '../components/ui';
 import { currentPresets, DEFAULT_PRESET_ID } from '../core/rules/presets';
 import { LETTERS, type Question, type Round } from '../core/schema';
+import { MAX_SPEECH_WPM, MIN_SPEECH_WPM } from '../core/speech';
 import { dateTimeText } from '../lib/format';
 import { setGroups, setLabel, useAsync, useIndex, useSet, useTeamLevel } from '../lib/library';
 import { cancelRoom, createRoom, listRooms, type RoomListing } from '../lib/api';
@@ -9,6 +10,7 @@ import { useSession } from '../lib/cloud';
 import { packetRound, packetRounds } from '../lib/packets';
 import { href, navigate } from '../lib/router';
 import { useData } from '../lib/store';
+import { recordingFor, type PublishedRecording } from '../lib/voice';
 
 /** The most questions one match carries (server/src/match.ts, MAX_MATCH_PAIRS). */
 const MAX_PAIRS = 40;
@@ -157,11 +159,11 @@ function NewMatch() {
   const [teamNames, setTeamNames] = useState<[string, string]>(['Team A', 'Team B']);
   const [mode, setMode] = useState<'text' | 'speech'>('text');
   const [wpm, setWpm] = useState(data.settings.readingWpm || 200);
-  // A voice keeps to 100 to 300 words a minute; text can go from 60 to 600.
-  const [lowest, highest] = mode === 'speech' ? [100, 300] : [60, 600];
+  // Read aloud, the recordings play at 120 to 240 words a minute; text can go from 60 to 600.
+  const [lowest, highest] = mode === 'speech' ? [MIN_SPEECH_WPM, MAX_SPEECH_WPM] : [60, 600];
   const chooseMode = (next: 'text' | 'speech') => {
     setMode(next);
-    if (next === 'speech') setWpm((w) => Math.max(100, Math.min(300, w)));
+    if (next === 'speech') setWpm((w) => Math.max(MIN_SPEECH_WPM, Math.min(MAX_SPEECH_WPM, w)));
   };
   const [count, setCount] = useState(20);
   const [busy, setBusy] = useState(false);
@@ -184,6 +186,22 @@ function NewMatch() {
   );
   const pairs = useMemo(() => (round.data ? matchPairs(round.data) : []), [round.data]);
   const presets = currentPresets();
+  // Read aloud: each question's recording in Rebound's voice, sent with the match (one without shows as text).
+  const played = useMemo(() => (format === 'ffa' ? pairs.slice(0, Math.min(count, pairs.length)) : pairs), [format, pairs, count]);
+  const recordings = useAsync<Map<string, PublishedRecording | null>>(
+    mode === 'speech' && round.data ? `voice|${source}|${round.data.id}|${pairs.length}` : null,
+    async () => {
+      const questions = pairs.flatMap((p) => ('bonus' in p && p.bonus ? [p.tossup, p.bonus] : [p.tossup]));
+      const found = await Promise.all(questions.map((q) => recordingFor(q)));
+      return new Map(questions.map((q, i) => [q.id, found[i] ?? null]));
+    },
+  );
+  const playedQuestions = played.flatMap((p) => (format === 'teams' && 'bonus' in p && p.bonus ? [p.tossup, p.bonus] : [p.tossup]));
+  const recorded = recordings.data ? playedQuestions.filter((q) => recordings.data!.get(q.id)).length : 0;
+  const withRecording = <Q extends { id: string }>(q: Q) => {
+    const r = mode === 'speech' ? recordings.data?.get(q.id) : null;
+    return r ? { ...q, audio: r } : q;
+  };
 
   const packetInfo = () => {
     if (source === 'doe' && set.data && round.data) {
@@ -211,7 +229,7 @@ function NewMatch() {
             wpm,
             teamNames,
             packet: info,
-            pairs,
+            pairs: pairs.map((p) => ('bonus' in p && p.bonus ? { tossup: withRecording(p.tossup), bonus: withRecording(p.bonus) } : { tossup: withRecording(p.tossup) })),
             tossupCount: Math.min(count, pairs.length),
           });
           navigate(`/room/${roomId}`);
@@ -361,7 +379,11 @@ function NewMatch() {
         <div className="field">
           <label htmlFor="om-wpm">Reading speed (words a minute)</label>
           <input id="om-wpm" type="number" min={lowest} max={highest} step={10} value={wpm} onChange={(e) => setWpm(Math.max(lowest, Math.min(highest, Number(e.target.value) || 200)))} />
-          {mode === 'speech' && <span className="small muted">100 to 300; about 180 sounds like a moderator.</span>}
+          {mode === 'speech' && (
+            <span className="small muted">
+              {MIN_SPEECH_WPM} to {MAX_SPEECH_WPM}; about 180 sounds like a moderator.
+            </span>
+          )}
         </div>
       </div>
 
@@ -374,9 +396,20 @@ function NewMatch() {
           {round.data.pairs.length > pairs.length && ' Questions whose answers could not be read from the PDF are left out.'}
         </p>
       )}
+      {mode === 'speech' && round.data && (
+        <p className="small muted" style={{ margin: 0 }} aria-live="polite">
+          {recordings.loading
+            ? 'Finding the questions’ recordings…'
+            : recorded === playedQuestions.length
+              ? `Rebound’s voice reads all ${recorded} questions.`
+              : recorded === 0
+                ? 'This round has no recordings (a team’s own packet, say), so its questions show as text.'
+                : `Rebound’s voice reads ${recorded} of the ${playedQuestions.length} questions; the others show as text.`}
+        </p>
+      )}
       {error && <Notice kind="error">{error}</Notice>}
       <div>
-        <button className="btn btn-primary" type="submit" disabled={busy || pairs.length === 0}>
+        <button className="btn btn-primary" type="submit" disabled={busy || pairs.length === 0 || (mode === 'speech' && recordings.loading)}>
           {busy ? 'Starting…' : 'Open the match'}
         </button>
       </div>
