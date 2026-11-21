@@ -43,6 +43,49 @@ describe('multiple choice (Rule 3-7)', () => {
     expect(verdict(q, 'X-rays')).toBe('correct');
     expect(verdict(q, 'X')).toBe('incorrect');
   });
+  it('reads a letter on its own as the letter, even when a choice normalises to that letter', () => {
+    // "|x|" normalises to "x".
+    const q: JudgeInput = {
+      ...mc,
+      stem: 'Which of the following functions is odd?',
+      choices: { W: 'x² + 1', X: 'x³ – x', Y: '|x|', Z: 'cos x' },
+      answerLetter: 'X',
+      answer: 'x³ – x',
+    };
+    for (const r of ['X', 'x', '(X)', 'X)']) expect(verdict(q, r), r).toBe('correct');
+    expect(judgeAnswer(q, 'Y').reason).toBe('The answer is X) x³ – x.');
+    // Anything else is still matched against the choices' text, and a letter with text needs both right.
+    expect(judgeAnswer(q, '|x|').reason).toBe('That is choice Y. The answer is X) x³ – x.');
+    expect(verdict(q, 'x³ – x')).toBe('correct');
+    expect(verdict(q, 'X) x³ – x')).toBe('correct');
+    expect(judgeAnswer(q, 'X) |x|').reason).toMatch(/both must be right/);
+  });
+  it('does not take a wrong letter for a choice that reads as that letter (doe-ms-01-r16-t09 as imported)', () => {
+    // Two choices lost their formatting in the import from DOE's PDF, leaving both as "x".
+    const q: JudgeInput = {
+      ...mc,
+      stem: 'Which of the following expressions is NOT a monomial:',
+      choices: { W: '3x²y', X: '1/2 x', Y: 'x', Z: 'x' },
+      answerLetter: 'Y',
+      answer: 'x',
+    };
+    for (const r of ['W', 'X', 'x', 'Z']) expect(verdict(q, r), r).toBe('incorrect');
+    expect(verdict(q, 'Y')).toBe('correct');
+    expect(verdict(q, 'Y) x')).toBe('correct');
+  });
+  it('reads a letter on its own as the letter when a choice is exactly a letter', () => {
+    const q: JudgeInput = {
+      ...mc,
+      stem: 'What is the chemical symbol for tungsten?',
+      choices: { W: 'T', X: 'Tu', Y: 'W', Z: 'Tn' },
+      answerLetter: 'Y',
+      answer: 'W',
+    };
+    expect(judgeAnswer(q, 'W').reason).toBe('The answer is Y) W.');
+    expect(verdict(q, 'Y')).toBe('correct');
+    expect(verdict(q, 'Y) W')).toBe('correct');
+    expect(verdict(q, 'W) W')).toBe('incorrect');
+  });
   it('treats an empty answer as incorrect', () => {
     expect(verdict(mc, '   ')).toBe('incorrect');
   });

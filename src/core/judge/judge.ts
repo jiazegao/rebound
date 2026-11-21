@@ -285,6 +285,17 @@ function judgeMultipleChoice(q: JudgeInput, response: string): JudgeResult {
   const choices = q.choices;
   const plain = toPlain(response).trim();
 
+  // A letter, optionally followed by the choice text: "X", "(x)", "X) x³ – x".
+  const m = /^\(?([wxyz])\)?(?:\s*[).:,-]\s*|\s+|$)(.*)$/i.exec(plain);
+  const given = m && (m[1].toUpperCase() as Letter);
+  const rest = m ? m[2].trim() : '';
+
+  // A letter on its own is the letter. Read it before any choice's text, which can read as a letter too:
+  // "|x|" normalises to "x", and tungsten's symbol is "W".
+  if (given && !rest && letter) {
+    return given === letter ? correct() : incorrect(`The answer is ${letter}${choices ? `) ${choices[letter]}` : ''}.`);
+  }
+
   // The whole response is the text of a choice: exact characters first, then normalised.
   const raw = (x: string) => toPlain(x).toLowerCase().replace(/\s+/g, ' ').trim();
   if (choices) {
@@ -302,12 +313,8 @@ function judgeMultipleChoice(q: JudgeInput, response: string): JudgeResult {
     return textMatches(plain, q.answer) ? correct() : incorrect('Not the answer.');
   }
 
-  // A letter, optionally followed by the choice text.
-  const m = /^\(?([wxyz])\)?(?:\s*[).:,-]\s*|\s+|$)(.*)$/i.exec(plain);
-  if (m && letter) {
-    const given = m[1].toUpperCase() as Letter;
-    const rest = m[2].trim();
-    if (!rest) return given === letter ? correct() : incorrect(`The answer is ${letter}${choices ? `) ${choices[letter]}` : ''}.`);
+  // A letter and the choice text: if you give both, both must be right (Rule 3-7).
+  if (given && letter) {
     const textOk = choices ? textMatches(rest, choices[letter]) : textMatches(rest, q.answer);
     if (given === letter && textOk) return correct();
     if (given === letter) {
