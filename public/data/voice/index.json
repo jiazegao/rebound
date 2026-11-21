@@ -1,0 +1,50 @@
+{
+  "voice": "kokoro:af_heart",
+  "hosts": [
+    "https://rebound-voice-1.hanjian.workers.dev",
+    "https://rebound-voice-2.hanjian.workers.dev"
+  ],
+  "recordings": 23573,
+  "questions": 23720,
+  "sample": {
+    "key": "a097258203f87b74b2192a7f8aaa08e5d4b1c546",
+    "ms": 5928,
+    "v": "cdf78791"
+  },
+  "sets": {
+    "doe-hs-01": 850,
+    "doe-hs-02": 750,
+    "doe-hs-03": 848,
+    "doe-hs-04": 849,
+    "doe-hs-05": 750,
+    "doe-hs-06": 750,
+    "doe-hs-07": 850,
+    "doe-hs-08": 782,
+    "doe-hs-09": 782,
+    "doe-hs-10": 782,
+    "doe-hs-11": 782,
+    "doe-hs-12": 782,
+    "doe-hs-13": 414,
+    "doe-hs-14": 368,
+    "doe-hs-15": 782,
+    "doe-hs-16": 360,
+    "doe-hs-17": 540,
+    "doe-ms-01": 900,
+    "doe-ms-02": 459,
+    "doe-ms-03": 748,
+    "doe-ms-04": 850,
+    "doe-ms-05": 800,
+    "doe-ms-06": 850,
+    "doe-ms-07": 750,
+    "doe-ms-08": 782,
+    "doe-ms-09": 782,
+    "doe-ms-10": 782,
+    "doe-ms-11": 782,
+    "doe-ms-12": 782,
+    "doe-ms-13": 782,
+    "doe-ms-14": 782,
+    "doe-ms-15": 300,
+    "doe-ms-16": 324,
+    "doe-ms-finals": 200
+  }
+}
