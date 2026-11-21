@@ -748,13 +748,18 @@ export function rateForChars(chars: number, ms: number, charsPerSecond: number):
 
 /* ---------------- reading speeds read aloud ---------------- */
 
-/** Read aloud: the speeds a device's voice can keep to (from its slowest to its fastest pace). */
-export const MIN_SPEECH_WPM = 100;
-export const MAX_SPEECH_WPM = 300;
-/** Rebound's recorded voice speaks at about this many words a minute; the reading speed sets its playback. */
-export const NATURAL_WPM = 160;
+/**
+ * Rebound's recorded voice says the library at this many words a minute, counted as the site counts reading speed
+ * (6 characters a word of the text on screen): 76 hours of recordings for 4.1 million characters. The reading speed
+ * read aloud sets how fast the recordings play.
+ */
+export const NATURAL_WPM = 150;
+/** Recordings play at most this much slower or faster than the voice's own pace (the pitch is kept). */
 export const MIN_PLAYBACK_RATE = 0.75;
 export const MAX_PLAYBACK_RATE = 1.6;
+/** Read aloud: the reading speeds the recordings can play at (115 is 0.77 times the voice's pace, 240 is 1.6 times). */
+export const MIN_SPEECH_WPM = 115;
+export const MAX_SPEECH_WPM = 240;
 
 /** How fast recordings play for a reading speed of `wpm` (pitch is kept). */
 export function playbackRate(wpm: number): number {

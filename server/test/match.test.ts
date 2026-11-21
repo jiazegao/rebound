@@ -370,7 +370,11 @@ describe('free-for-all', () => {
     expect(parseMatchSetup(body).mode).toBe('text');
     expect(parseMatchSetup({ ...body, mode: 'speech' }).mode).toBe('speech');
     expect(() => parseMatchSetup({ ...body, mode: 'radio' })).toThrow('Choose how questions are read');
-    expect(() => parseMatchSetup({ ...body, mode: 'speech', wpm: 400 })).toThrow('Choose a reading speed of 100 to 300 words per minute to read aloud.');
+    expect(() => parseMatchSetup({ ...body, mode: 'speech', wpm: 400 })).toThrow('Choose a reading speed of 115 to 240 words per minute to read aloud.');
+    // An older page could still ask for 100 to 300: taken, within what the recordings can play.
+    expect(parseMatchSetup({ ...body, mode: 'speech', wpm: 300 }).wpm).toBe(240);
+    expect(parseMatchSetup({ ...body, mode: 'speech', wpm: 100 }).wpm).toBe(115);
+    expect(() => parseMatchSetup({ ...body, mode: 'speech', wpm: 99 })).toThrow('Choose a reading speed of 115 to 240 words per minute to read aloud.');
     expect(parseMatchSetup({ ...body, wpm: 400 }).wpm).toBe(400);
     // The view says which, so players' devices know whether to show the text or say it.
     const d = new MatchDirector(newMatchData(parseMatchSetup({ ...body, mode: 'speech' })));

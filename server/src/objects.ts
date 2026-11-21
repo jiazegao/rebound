@@ -9,7 +9,6 @@ export const roomObject = (env: Env, roomId: string) => env.ROOM.get(env.ROOM.id
 export const directoryObject = (env: Env) => env.DIRECTORY.get(env.DIRECTORY.idFromName('global'));
 export const registryObject = (env: Env) => env.REGISTRY.get(env.REGISTRY.idFromName('global'));
 /** The recordings for matches read aloud, shared by sixteen objects by the first character of the key. */
-export const voiceObject = (env: Env, key: string) => env.VOICE.get(env.VOICE.idFromName(`voice-${key[0]}`));
 
 /** Whether a SQLite table exists (fresh objects have none until they hold something). */
 export function hasTable(sql: SqlStorage, name: string): boolean {
