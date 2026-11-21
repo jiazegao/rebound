@@ -10,16 +10,17 @@
  *           spread over the subjects: generate these first and listen to them.
  * --out     Where to write the list (one JSON object a line, after a first "meta" line).
  *
- * A recording's name is the server's (src/core/speech.ts, audioKey): a hash of the voice and the words. The same
- * question in the same voice always has the same name, so the server finds it; new words or another voice make a
- * new one. Questions with the same words share one recording.
+ * A recording's name is the site's (src/core/speech.ts, audioKey): a hash of the voice and the words. The same
+ * question in the same voice always has the same name, so the site and the server find it; new words or another voice
+ * make a new one. Questions with the same words share one recording. The whole list (no --sample) also has the line
+ * played to try the voice, under the id "sample".
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { webcrypto } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import type { LibraryIndex, Question, QuestionSet } from '../../src/core/schema';
-import { audioKey, spokenFor } from '../../src/core/speech';
+import { audioKey, RECORDED_VOICE, spokenFor, VOICE_SAMPLE } from '../../src/core/speech';
 import { buildReading } from '../../src/lib/reading';
 
 // The recording's name is hashed with Web Crypto, which older versions of Node keep out of the global scope.
@@ -33,7 +34,7 @@ function option(name: string, fallback: string): string {
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback;
 }
 
-const voice = option('voice', 'kokoro:af_heart');
+const voice = option('voice', RECORDED_VOICE);
 const level = option('level', 'all');
 const sample = Number(option('sample', '0'));
 const out = option('out', join('voice', 'jobs.jsonl'));
@@ -96,11 +97,20 @@ for (const { q } of chosen) {
   else jobs.set(key, { key, text, ids: [q.id] });
 }
 
+// The whole list also has the line played to try the voice ("Play a sample"), under the id "sample".
+if (sample === 0) {
+  const text = spokenFor({ stem: VOICE_SAMPLE });
+  const key = await audioKey(voice, text);
+  const job = jobs.get(key);
+  if (job) job.ids.push('sample');
+  else jobs.set(key, { key, text, ids: ['sample'] });
+}
+
 const chars = [...jobs.values()].reduce((n, j) => n + j.text.length, 0);
 const meta = { voice, level, sample: sample || null, questions: chosen.length, recordings: jobs.size, chars, created: new Date().toISOString() };
 mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, [JSON.stringify({ meta }), ...[...jobs.values()].map((j) => JSON.stringify(j))].join('\n') + '\n');
 console.log(
-  `${out}: ${jobs.size.toLocaleString()} recordings for ${chosen.length.toLocaleString()} questions from ${files.length} sets, ` +
+  `${out}: ${jobs.size.toLocaleString()} recordings for ${chosen.length.toLocaleString()} questions from ${files.length} sets${sample === 0 ? ' and the sample line' : ''}, ` +
     `${chars.toLocaleString()} characters (about ${(chars / 16 / 3600).toFixed(1)} hours of speech), voice ${voice}.`,
 );

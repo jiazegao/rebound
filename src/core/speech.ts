@@ -639,6 +639,15 @@ export function spokenFor(question: { stem: string; choices?: Record<'W' | 'X' |
   return spokenQuestion(buildReading(question).text);
 }
 
+/**
+ * Rebound's recorded voice (scripts/voice): Kokoro's af_heart, recorded on a computer and published with
+ * scripts/voice/publish.py. It is part of every recording's name, so another voice is a new set of recordings.
+ */
+export const RECORDED_VOICE = 'kokoro:af_heart';
+
+/** The line played to try the voice ("Play a sample"), recorded and published with the questions. */
+export const VOICE_SAMPLE = 'Toss-up 1. Biology. Short answer. What organelle makes most of the energy a cell uses?';
+
 /** A recording's name: the voice and the words, hashed (40 hex characters), so the same words in the same voice are one recording. */
 export async function audioKey(voice: string, spoken: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${voice}|${spoken}`));

@@ -6,6 +6,7 @@ Rebound's voice, made on your own computer with Kokoro (an open text-to-speech m
   python scripts/voice/kokoro_voice.py check    [voice/jobs.jsonl] [--out voice/audio] [--model small.en] [--shard 1/3]
   python scripts/voice/kokoro_voice.py try      "Words to hear" [--voice kokoro:af_heart] [--play]
   python scripts/voice/kokoro_voice.py words    [voice/jobs.jsonl] [--out voice/words] [--top 300]
+  python scripts/voice/kokoro_voice.py publish  [--out voice/audio] [--hosts 2] [--account ID] [--dry-run]
 
 generate  Records each question listed by scripts/voice/export-library.ts as <name>.mp3 (mono, 24 kHz), skipping
           those already made, so it can be stopped and started again. For a list of up to 500 (a sample), it also
@@ -17,6 +18,8 @@ try       Says a line, prints the phonemes Kokoro reads, and saves it as voice/t
           (scripts/voice/pronunciations.tsv).
 words     Lists the words Kokoro has to guess (not in its dictionary), most used first, and says each one alone:
           words.html to hear them, words.tsv for the whole list. Those are the likeliest to come out wrong.
+publish   Puts the recordings online for the site (scripts/voice/publish.py): checks every one the library needs is
+          made, uploads them to two small Cloudflare Workers, and writes the site's index (public/data/voice).
 
 Needs Python 3.10 to 3.12, PyTorch, and scripts/voice/requirements.txt.
 """
@@ -1059,12 +1062,17 @@ def main(argv: list[str] | None = None) -> None:
     w.add_argument('--kbps', type=int, default=48)
     w.add_argument('--lexicon', help='pronunciation fixes (scripts/voice/pronunciations.tsv)')
 
+    from publish import add_arguments as publish_arguments, publish
+
+    pub = commands.add_parser('publish', help='put the recordings online for the site (scripts/voice/publish.py)')
+    publish_arguments(pub)
+
     args = parser.parse_args(argv)
     # A Windows console that is not set to UTF-8 should show a ? for a phoneme, not stop the run.
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, 'reconfigure'):
             stream.reconfigure(errors='replace')
-    {'generate': generate, 'check': check, 'try': try_line, 'words': guessed_words}[args.command](args)
+    {'generate': generate, 'check': check, 'try': try_line, 'words': guessed_words, 'publish': publish}[args.command](args)
 
 
 if __name__ == '__main__':
