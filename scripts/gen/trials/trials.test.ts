@@ -18,7 +18,7 @@ if (BANK_DIR !== bank) throw new Error('The bank folder was fixed before this te
 
 const { seeded, separation, shuffled, trialArgs } = await import('./common');
 const { anchorsFor, known, rate, sampleDoe, solve } = await import('./doe');
-const { judgeTrial } = await import('./judge');
+const { items: judgeItems, judgeTrial, secondReading } = await import('./judge');
 
 describe('the trials’ arithmetic', () => {
   it('draws the same random numbers for the same seed', () => {
@@ -142,7 +142,7 @@ describe.skipIf(!libraryBuilt())('a trial run without the API', () => {
   it('scores a judge that calls everything the same as the first question listed', async () => {
     const api = fake((user) => {
       const first = /<library>\n\[([^\]]+)\]/.exec(user)?.[1] ?? '';
-      return { relation: first ? 'same' : 'new', match: first, reason: 'test' };
+      return { tests: 'test', closest: first ? [{ id: first, tests: 'test', compare: 'test', relation: 'same' }] : [] };
     });
     const summary = await judgeTrial(trialArgs({ model: 'claude-haiku-5-5', mode: 'live' }, ['--limit', '70']), api);
     expect(summary.repeats.drafts).toBe(55);
@@ -155,5 +155,21 @@ describe.skipIf(!libraryBuilt())('a trial run without the API', () => {
     expect(summary.repeats.namedTheMatch).toBeGreaterThan(10);
     expect(summary.repeats.namedTheMatch).toBeLessThan(55);
     expect(summary.results.filter((r) => r.label === 'same').every((r) => r.searchFoundIt)).toBe(true);
+    // Against the second reading: three of the 55 are set aside as arguable, and a judge that throws everything away keeps nothing.
+    expect(summary.afterSecondReading.repeats.pilotLabelled).toEqual({ drafts: 52, thrownAway: 52 });
+    expect(summary.afterSecondReading.different.kept).toBe(0);
   }, 60_000);
+
+  it('has a second reading that matches the drafts it names', () => {
+    const all = judgeItems();
+    const reread = secondReading();
+    expect(reread.size).toBe(22);
+    for (const [n, r] of reread) {
+      expect(all[n - 1]!.id, `entry ${n}`).toBe(r.id);
+      expect(all[n - 1]!.label, `entry ${n}`).toBe(r.was);
+      // What it was read beside is a real library question.
+      expect(library.some((x) => x.question.id === r.with), r.with).toBe(true);
+    }
+    expect([...reread.values()].filter((r) => r.now === 'repeat')).toHaveLength(13);
+  });
 });

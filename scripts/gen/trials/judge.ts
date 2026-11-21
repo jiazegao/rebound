@@ -9,6 +9,8 @@
  *
  * The checkers read only the closest few library questions for each draft, so a "different" draft the judge
  * throws away may be a repeat they missed: the summary lists every one with the judge's reason, to be read.
+ * They were read, once: data/eval/judge-second-reading.json holds the drafts whose label that reading changed
+ * to "repeat" or set aside as arguable, and the summary gives the score against those labels as well.
  */
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -30,8 +32,25 @@ interface Item {
   draft: Query;
 }
 
-function items(): Item[] {
-  const read = <T,>(file: string) => JSON.parse(readFileSync(path.join(DATA_DIR, 'eval', file), 'utf8')) as T;
+const read = <T,>(file: string) => JSON.parse(readFileSync(path.join(DATA_DIR, 'eval', file), 'utf8')) as T;
+
+export interface SecondReading {
+  /** The draft's place in the trial's list, from 1. */
+  n: number;
+  id: string;
+  was: Item['label'];
+  now: 'repeat' | 'arguable';
+  /** The library question it was read beside. */
+  with: string;
+  why: string;
+}
+
+/** The labels a second reading changed, by the draft's place in the list. */
+export function secondReading(): Map<number, SecondReading> {
+  return new Map(read<{ readings: SecondReading[] }>('judge-second-reading.json').readings.map((r) => [r.n, r]));
+}
+
+export function items(): Item[] {
   const pairs = read<{ pairs: Array<{ id: string; group: string; label: 'same' | 'template'; stem: string; choices?: Record<string, string>; answer: string; matches: string[] }> }>('duplicate-pairs.json').pairs;
   const final = read<{ questions: Array<{ id: string; label: Item['label']; stem: string; choices?: Record<string, string>; answer: string }> }>('pilot-final.json').questions;
   const out: Item[] = pairs.map((p) => ({ id: p.id, label: p.label, matches: p.matches, draft: { stem: p.stem, answer: p.answer, ...(p.choices ? { choices: p.choices } : {}) } }));
@@ -67,6 +86,18 @@ export async function judgeTrial(args: TrialArgs, api?: ModelApi) {
   const same = of('same');
   const template = of('template');
   const different = of('different');
+  // The same score against the labels as the second reading left them.
+  const reread = secondReading();
+  for (const [n, r] of reread) {
+    const row = results[n - 1];
+    if (row && (row.id !== r.id || row.label !== r.was)) throw new Error(`The second reading's entry ${n} (${r.id}, ${r.was}) does not match the trial's draft ${row.id} (${row.label}).`);
+  }
+  const now = (r: (typeof results)[number]) => reread.get(r.n)?.now ?? (r.label === 'same' ? 'repeat' : 'different');
+  const repeatsNow = results.filter((r) => now(r) === 'repeat');
+  const differentNow = results.filter((r) => now(r) === 'different');
+  // A repeat the judge itself led the second reading to is caught by construction: the fair measure of what
+  // it catches is over the repeats the pilot had already labelled.
+  const labelledRepeats = repeatsNow.filter((r) => r.label === 'same');
   const summary = {
     about: 'The duplicate judge on the drafts the November 2026 pilot labelled (scripts/gen/trials/judge.ts). A draft is thrown away when the judge calls it "same" or "reversed".',
     model: args.model,
@@ -75,6 +106,14 @@ export async function judgeTrial(args: TrialArgs, api?: ModelApi) {
     repeats: { drafts: same.length, thrownAway: thrownAway(same), namedTheMatch: same.filter((r) => r.namedTheMatch).length, relations: count(same), bar: 'at least 52 of 55 thrown away' },
     templates: { drafts: template.length, thrownAway: thrownAway(template), relations: count(template) },
     different: { drafts: different.length, kept: different.length - thrownAway(different), relations: count(different), bar: 'at least four in five kept' },
+    afterSecondReading: {
+      note: 'Against data/eval/judge-second-reading.json: drafts the pilot called different that a second reading found to repeat a library question count as repeats, and arguable ones are left out. "pilotLabelled" is over the repeats the pilot had labelled itself, which is the fair measure of what the judge catches: the others were found with the judge\'s help.',
+      repeats: { drafts: repeatsNow.length, thrownAway: thrownAway(repeatsNow), pilotLabelled: { drafts: labelledRepeats.length, thrownAway: thrownAway(labelledRepeats) } },
+      different: { drafts: differentNow.length, kept: differentNow.length - thrownAway(differentNow) },
+      arguable: results.filter((r) => now(r) === 'arguable').length,
+      missedRepeats: repeatsNow.filter((r) => !r.relation || !isRepeat(r.relation)).map((r) => ({ n: r.n, id: r.id, relation: r.relation, match: r.match, reason: r.reason })),
+      wronglyThrownAway: differentNow.filter((r) => r.relation && isRepeat(r.relation)).map((r) => ({ n: r.n, id: r.id, relation: r.relation, match: r.match, reason: r.reason })),
+    },
     calls: perCall(requests.map((r) => replies.get(r.id)).filter((r) => !!r)),
     missedRepeats: same.filter((r) => !r.relation || !isRepeat(r.relation)),
     thrownAwayThoughLabelledDifferent: [...different, ...template].filter((r) => r.relation && isRepeat(r.relation)),
@@ -83,6 +122,8 @@ export async function judgeTrial(args: TrialArgs, api?: ModelApi) {
   console.log(`\nRepeats thrown away: ${summary.repeats.thrownAway} of ${same.length} (the judge named the pilot's match for ${summary.repeats.namedTheMatch}).`);
   console.log(`Template drafts: ${JSON.stringify(summary.templates.relations)}`);
   console.log(`Different drafts kept: ${summary.different.kept} of ${different.length}. ${JSON.stringify(summary.different.relations)}`);
+  const a = summary.afterSecondReading;
+  console.log(`After the second reading of the labels: repeats thrown away ${a.repeats.thrownAway} of ${a.repeats.drafts} (${a.repeats.pilotLabelled.thrownAway} of the ${a.repeats.pilotLabelled.drafts} the pilot labelled); different drafts kept ${a.different.kept} of ${a.different.drafts}; ${a.arguable} arguable left out.`);
   for (const r of summary.missedRepeats) console.log(`  missed   ${r.id}: ${r.relation ?? 'no judgment'}. ${r.reason}`);
   for (const r of summary.thrownAwayThoughLabelledDifferent) console.log(`  rejected ${r.id} (${r.label}): ${r.relation} with ${r.match}. ${r.reason}`);
   if (!args.limit) console.log(`Summary: ${path.relative(process.cwd(), writeSummary(`judge.${args.model}`, summary))}`);

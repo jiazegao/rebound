@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { NO_USAGE, toParams, type ModelReply } from '../llm';
 import type { QuestionText } from '../types';
-import { draftText, isRepeat, JUDGE_PROMPT, judgeRequest, readJudgment } from './judge';
+import { draftText, isRepeat, JUDGE_PROMPT, JUDGE_SCHEMA, judgeRequest, readJudgment } from './judge';
 import { rateRequest, readRating } from './rate';
 import { asRead, asReadWithAnswer, onOneLine, promptVersion } from './show';
 import { compare, readSolution, solveRequest, unacceptedAnswers, type Solution } from './solve';
@@ -53,11 +53,25 @@ describe('the duplicate judge', () => {
     expect(judgeRequest('i-1', idea, [], 'claude-haiku-5-5').user).toContain('(the search found nothing)');
   });
 
-  it('reads the relation, and keeps a match only when it is on the list', () => {
-    expect(readJudgment(reply({ relation: 'same', match: '[doe-hs-03-r08-b06]', reason: 'Both ask for the partners in a lichen.' }), library)).toEqual({ relation: 'same', match: 'doe-hs-03-r08-b06', reason: 'Both ask for the partners in a lichen.' });
-    expect(readJudgment(reply({ relation: 'related', match: 'doe-hs-99-r01-t01', reason: 'x' }), library)?.match).toBe('');
-    expect(readJudgment(reply({ relation: 'new', match: 'doe-hs-03-r08-b06', reason: 'x' }), library)?.match).toBe('');
-    expect(readJudgment(reply({ relation: 'identical', match: '', reason: 'x' }), library)).toBeNull();
+  it('takes the closest relation among the library questions the judge compared, with its comparison as the reason', () => {
+    const j = readJudgment(reply({ tests: 'The partners in a lichen.', closest: [{ id: 'doe-hs-99-r01-t01', tests: 'A moss.', compare: 'Only the topic is shared.', relation: 'related' }, { id: '[doe-hs-03-r08-b06]', tests: 'The two partners in a lichen.', compare: 'Both ask for the partners in a lichen.', relation: 'same' }] }), library)!;
+    expect(j.relation).toBe('same');
+    expect(j.match).toBe('doe-hs-03-r08-b06');
+    expect(j.reason).toBe('Both ask for the partners in a lichen.');
+    expect(j.tests).toBe('The partners in a lichen.');
+    // A question the judge names that is not on the list keeps its relation and loses its id.
+    expect(j.closest).toEqual([{ id: '', tests: 'A moss.', compare: 'Only the topic is shared.', relation: 'related' }, { id: 'doe-hs-03-r08-b06', tests: 'The two partners in a lichen.', compare: 'Both ask for the partners in a lichen.', relation: 'same' }]);
+    expect(readJudgment(reply({ tests: 'x', closest: [{ id: 'not-on-the-list', tests: 'y', compare: 'c', relation: 'reversed' }] }), library)).toMatchObject({ relation: 'reversed', match: '' });
+  });
+
+  it('asks for the comparison before the relation, so the relation follows from it', () => {
+    expect(Object.keys(JUDGE_SCHEMA.properties.closest.items.properties)).toEqual(['id', 'tests', 'compare', 'relation']);
+  });
+
+  it('calls a draft new when the judge found nothing close, and refuses a reply it cannot read', () => {
+    expect(readJudgment(reply({ tests: 'x', closest: [] }), library)).toMatchObject({ relation: 'new', match: '', closest: [], reason: 'Nothing the search found is close.' });
+    expect(readJudgment(reply({ tests: 'x', closest: [{ id: 'doe-hs-03-r08-b06', tests: 'y', compare: 'c', relation: 'identical' }] }), library)).toBeNull();
+    expect(readJudgment(reply({ tests: 'x' }), library)).toBeNull();
     expect(readJudgment(reply(undefined, { outcome: 'refused' }), library)).toBeNull();
   });
 

@@ -102,7 +102,7 @@ export function scripted(script: Script = {}): (user: string, system: string) =>
       const first = /<library>\n\[([^\]]+)\]/.exec(user)?.[1] ?? '';
       const idea = /Answer: Answer (\d) of slot (\S+)/.exec(user);
       const relation = idea ? (script.idea ?? ((_s: string, n: number) => (n === 1 ? 'same' : n === 2 ? 'related' : 'new')))(idea[2]!, Number(idea[1])) : (script.textRepeats ?? none).has(slotIn(user)) ? 'same' : 'new';
-      return { relation, match: relation === 'new' ? '' : first, reason: 'By rule.' };
+      return { tests: 'By rule.', closest: relation === 'new' ? [] : [{ id: first, tests: 'By rule.', compare: 'By rule.', relation }] };
     }
     if (system.includes('you write the question out in full')) {
       const line = /<slot>\n(.+)/.exec(user)![1]!;

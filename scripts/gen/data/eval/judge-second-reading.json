@@ -1,0 +1,182 @@
+{
+ "about": "A second reading of the pilot's labels, made on 21 November 2026 after the duplicate judge's first two runs. Where a judge disagreed with a label, the draft was read again beside the library question the judge named. 'repeat': the draft repeats that library question, which the pilot's checkers had not found (they read only the closest few). 'arguable': careful readers could differ, so it is left out of both bars. Drafts not listed keep the pilot's label. The reading was done by the model that built the pipeline, with the judges' reasons in view, so it leans toward the judges: a person should spot-check it. 'n' is the draft's place in the trial's list (scripts/gen/trials/judge.ts). A fixed test set: add to it, do not edit.",
+ "read": "2026-11-21",
+ "readings": [
+  {
+   "n": 4,
+   "id": "pilot-gen-hs-r01-t10",
+   "was": "same",
+   "now": "arguable",
+   "with": "doe-ms-15-r08-t14",
+   "why": "The same answer (cobalt) in the same setting (Argonne's lithium-ion cathodes with manganese), reached from a different clue: the letters of NMC, where the library question uses vitamin B12."
+  },
+  {
+   "n": 20,
+   "id": "pilot-gen-ms-r01-t16",
+   "was": "same",
+   "now": "arguable",
+   "with": "doe-ms-08-r05-t17",
+   "why": "The same question (which of these is a fossil fuel) with a different right answer: natural gas, where the library question has crude oil. A repeat of the question, a template by its answer."
+  },
+  {
+   "n": 56,
+   "id": "pilot-gen-ms-r01-t12",
+   "was": "template",
+   "now": "arguable",
+   "with": "doe-ms-14-r07-t06",
+   "why": "The law of reflection with 35 degrees where the library has 30. A template by its number, but the working is only to say the number back."
+  },
+  {
+   "n": 59,
+   "id": "pilot-gen-ms-r01-t16",
+   "was": "template",
+   "now": "repeat",
+   "with": "doe-ms-09-r07-t03",
+   "why": "Asks what geothermal energy comes from (heat inside Earth); the library asks for the name of the heat energy trapped in Earth's interior. One fact from the other end."
+  },
+  {
+   "n": 64,
+   "id": "pilot-gen-hs-r01-t01",
+   "was": "different",
+   "now": "arguable",
+   "with": "doe-ms-03-r10-b25",
+   "why": "The library pairs epinephrine with the adrenal gland; the draft asks which hormone the adrenal medulla secretes, with two hormones of the adrenal cortex among the wrong choices, so it needs a finer fact."
+  },
+  {
+   "n": 70,
+   "id": "pilot-gen-hs-r01-t04",
+   "was": "different",
+   "now": "repeat",
+   "with": "doe-hs-13-r07-b11",
+   "why": "Perovskite is calcium titanate: the library gives the composition and asks for the name, the draft gives the name and asks for the composition, both in a solar-cell setting."
+  },
+  {
+   "n": 81,
+   "id": "pilot-gen-hs-r01-b09",
+   "was": "different",
+   "now": "repeat",
+   "with": "doe-hs-01-r11-t19",
+   "why": "Radiation fog and the calm, clear, cooling conditions that form it: the library gives the conditions and asks for the fog, the draft gives the fog and asks for the conditions."
+  },
+  {
+   "n": 88,
+   "id": "pilot-gen-hs-r01-t14",
+   "was": "different",
+   "now": "arguable",
+   "with": "doe-hs-06-r07-t03",
+   "why": "The same question (which element has the greatest electron affinity) with a different key: the draft says chlorine, the library fluorine."
+  },
+  {
+   "n": 92,
+   "id": "pilot-gen-hs-r01-t16",
+   "was": "different",
+   "now": "repeat",
+   "with": "doe-ms-10-r17-t01",
+   "why": "Water is a neutron moderator: the library asks which substance is a moderator, the draft what role water plays."
+  },
+  {
+   "n": 96,
+   "id": "pilot-gen-ms-r01-t01",
+   "was": "different",
+   "now": "repeat",
+   "with": "doe-ms-11-r05-b09",
+   "why": "Both ask for the vessel that carries oxygen-poor blood from the heart to the lungs."
+  },
+  {
+   "n": 97,
+   "id": "pilot-gen-ms-r01-t02",
+   "was": "different",
+   "now": "arguable",
+   "with": "doe-ms-finals-r04-t10",
+   "why": "The library asks which of four is a mixture (air); the draft asks which of four is a pure substance (distilled water), with air among the wrong choices. The same sorting from the other side, with two choices shared."
+  },
+  {
+   "n": 100,
+   "id": "pilot-gen-ms-r01-b03",
+   "was": "different",
+   "now": "repeat",
+   "with": "doe-ms-03-r11-t16",
+   "why": "Both ask why coasts have milder temperatures than inland places at the same latitude, with the same answer and the same wrong choice about waves and friction."
+  },
+  {
+   "n": 101,
+   "id": "pilot-gen-ms-r01-t04",
+   "was": "different",
+   "now": "repeat",
+   "with": "doe-ms-12-r11-t23",
+   "why": "The library question's own stem says that solar panels turn radiant energy into electrical energy, which is what the draft asks."
+  },
+  {
+   "n": 107,
+   "id": "pilot-gen-ms-r01-b07",
+   "was": "different",
+   "now": "arguable",
+   "with": "doe-ms-04-r04-t11",
+   "why": "Both turn on what a secondary consumer is, in different food chains: the library asks for the role of the second eater in a three-step chain, the draft for the organism in that role in a four-step one."
+  },
+  {
+   "n": 110,
+   "id": "pilot-gen-ms-r01-b09",
+   "was": "different",
+   "now": "repeat",
+   "with": "doe-ms-16-r02-t11",
+   "why": "Both ask which seismic wave reaches a distant seismograph first."
+  },
+  {
+   "n": 117,
+   "id": "pilot-gen-ms-r01-b14",
+   "was": "different",
+   "now": "repeat",
+   "with": "doe-hs-03-r02-b08",
+   "why": "Both count the atoms in aluminum sulfate: the library asks for each element's count, the draft for their total."
+  },
+  {
+   "n": 123,
+   "id": "pilot-gen-ms-r01-t18",
+   "was": "different",
+   "now": "repeat",
+   "with": "doe-hs-04-r04-t03",
+   "why": "The library question turns on horizontal speed staying constant in projectile motion, and lists it as a constant; the draft asks what happens to the horizontal speed of a ball that rolls off a table."
+  },
+  {
+   "n": 41,
+   "id": "pilot-gen-ms-r01-t13-candidate-1",
+   "was": "same",
+   "now": "arguable",
+   "with": "doe-ms-12-r02-t02",
+   "why": "The library asks where a plant cell stores water, and elsewhere for its largest organelle; the draft asks for the large, water-filled organelle that presses on the cell wall and keeps the plant firm. The pilot's writer dropped it as a repeat; both judges call the firmness a different fact."
+  },
+  {
+   "n": 58,
+   "id": "pilot-gen-ms-r01-t08",
+   "was": "template",
+   "now": "repeat",
+   "with": "doe-ms-05-r07-b18",
+   "why": "The library question's own stem says metals are malleable, shiny and conducting, and its answer (brittle, dull, insulating) is the draft's three wrong choices."
+  },
+  {
+   "n": 65,
+   "id": "pilot-gen-hs-r01-b01",
+   "was": "different",
+   "now": "repeat",
+   "with": "doe-hs-12-r03-b03",
+   "why": "Bundle-sheath cells packed around the veins, paired with C4 photosynthesis: the library gives the cells and asks for the pathway, the draft gives the pathway and asks for the cells."
+  },
+  {
+   "n": 99,
+   "id": "pilot-gen-ms-r01-t03",
+   "was": "different",
+   "now": "repeat",
+   "with": "doe-ms-03-r08-t24",
+   "why": "The library asks which sea floor is the youngest (the mid-ocean ridge); the draft asks how the age of the sea floor changes moving away from the ridge. One fact from the other end."
+  },
+  {
+   "n": 111,
+   "id": "pilot-gen-ms-r01-b10",
+   "was": "different",
+   "now": "arguable",
+   "with": "doe-hs-06-r09-t10",
+   "why": "Ions crossing between the electrodes through the electrolyte: the library asks it of a fuel cell, the draft of a lithium-ion battery."
+  }
+ ]
+}
