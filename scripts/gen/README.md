@@ -6,8 +6,8 @@ them before a person signs them off. The plan itself is
 [docs/QUESTION-PIPELINE.md](https://github.com/jiazegao/rebound/blob/research/question-writing/docs/QUESTION-PIPELINE.md)
 on the `research/question-writing` branch.
 
-This folder holds the plan's first stage: the parts that are plain code and need no model. Nothing here
-writes a question yet, and nothing here changes the site.
+This folder holds the plan's first stage, the parts that are plain code and need no model, and the start of
+its second, the steps a model does. Nothing here writes a question yet, and nothing here changes the site.
 
 | Part | File | What it does |
 |---|---|---|
@@ -18,6 +18,9 @@ writes a question yet, and nothing here changes the site.
 | Source lists | `sources.ts`, `data/sources.json` | The sites a model may read when checking a fact, and the sites it may never use |
 | Ledger | `ledger.ts`, `types.ts` | One record per question the pipeline writes, from idea to play |
 | Fixed test sets | `data/eval/` | The matches and faults Rebound's November 2026 pilot found by hand |
+| Model calls | `llm.ts`, `key.ts` | The one door to the Claude API: what each call may see, what it cost, and a spending limit |
+| Model steps | `steps/` | The prompt, reply format and reading of each step a model does: so far the duplicate judge, the blind solver and the difficulty rater |
+| Trials | `trials/` → `data/trials/` | Each model step run on a fixed test set and scored. They cost money, so they are run by hand |
 
 ## Commands
 
@@ -28,6 +31,13 @@ npm run gen:check -- old-packet.nsb.json --old   # leave out the "nothing out of
 npm run gen:check -- --doe                  # DOE's own 2019–22 questions through the same checks
 npm run gen:search -- --stem "A lichen is a partnership between a fungus and what other organism?" --answer "ALGAE"
 npm run gen:profile                         # rebuild data/style-profile.json after the library changes
+
+npm run gen:key                             # is the Claude API key there, and does it work? (one tiny paid call)
+npm run gen:trial:judge -- --limit 20       # the duplicate judge on the pilot's labelled drafts (paid)
+npm run gen:trial:doe -- --sample           # the make-up of the DOE sample (free)
+npm run gen:trial:doe -- --solve --limit 40 --mode live   # the blind solver on DOE's questions (paid)
+npm run gen:trial:doe -- --rate             # the difficulty rater (paid)
+npm run gen:trial:doe -- --known            # the solver on keys known to be wrong (paid)
 ```
 
 ## House-style checks
@@ -123,6 +133,43 @@ This repository is public, and a question read before it is played is spoiled. S
 rounds live outside it: in `private-data/gen/` (ignored by git), or wherever the `REBOUND_BANK` environment
 variable points.
 
+## Model calls, the key and the spending limit
+
+Every model step builds requests for `llm.ts` and reads its replies; nothing else here talks to the network.
+A request holds only what its step may see: the blind solver's has the question as a moderator reads it and
+nothing else, so the solver cannot be shown the answer by accident.
+
+- **The key** is read from the `ANTHROPIC_API_KEY` environment variable. It is never printed or written to a
+  file. `npm run gen:key` says whether it is there and whether it works.
+- **Every call is recorded** with its model, tokens and cost in `private-data/gen/spend.jsonl`. Costs are
+  worked out from the prices in `llm.ts`, read from Anthropic's price list on the date given there; a model
+  with no recorded price is refused.
+- **Nothing is sent past the limit.** A trial stops when the recorded spending reaches its limit: $40 for
+  the whole of stage B unless `--budget` says otherwise. A batch is not sent unless its forecast fits. The
+  limit set on the Claude Console account is the backstop.
+- **Batches** cost half and usually finish within the hour. A batch's id is saved before anything else, and
+  replies are saved as they arrive, so a run that is stopped or repeated never pays for the same answer twice.
+  A changed prompt starts a new folder of replies; an unchanged one reuses what it has.
+
+Inside a Claude Code cloud session the `ANTHROPIC_BASE_URL` variable points at the session's own service, so
+`llm.ts` sets the API's address itself. A key added to a cloud environment reaches a session when it starts,
+or when it next wakes after being idle.
+
+## Trials
+
+A trial runs one model step on a fixed test set and writes a summary to `data/trials/`. The scoring of each
+is tested against a stand-in for the API (`trials/trials.test.ts`), so it is known to work before money is
+spent. Use `--limit` first: a small run shows what a call really costs.
+
+| Trial | Test set | What it must show |
+|---|---|---|
+| `trials/judge.ts` | The pilot's 55 drafts that repeat a library question, 13 that reuse a method, and 56 its checkers found different | At least 52 of the 55 thrown away, and at least four in five of the different ones kept |
+| `trials/doe.ts --solve` | 1,200 DOE questions of 2014–22: 50 for each level, category and tier | How often a solver with only the question disagrees with a right key, and what it flags |
+| `trials/doe.ts --rate` | A quarter of that sample, with four DOE questions of each tier shown as anchors | Whether the rater can tell DOE's rounds 11 and later from its rounds 1–10 |
+| `trials/doe.ts --known` | Seven answer letters DOE misprinted and two keys the pilot disputed | Whether the solver catches them |
+
+No trial has been run yet: they wait for the key.
+
 ## Tests
 
 `npm test` runs them with the rest. The ones that read the library are skipped when `public/data/doe` has not
@@ -130,6 +177,6 @@ been built.
 
 ## What comes next
 
-Stage B of the plan adds the model steps (ideas, writing, the duplicate judge, blind solvers, source checks,
-difficulty rating), each tested on these fixed sets and on a sample of DOE's own questions before it is
-trusted. It needs a Claude API key, kept as a secret of the machine that runs it and never in this repository.
+The rest of stage B: running the trials above, then the steps still to be written (ideas, writing,
+recomputing numeric answers in code, checking facts against sources, and the second look that settles a
+disagreement), each with its own trial, and a comparison of writer models by questions kept per dollar.
