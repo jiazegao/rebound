@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'no
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { ask, askAll, askBatch, BudgetError, claudeApi, costOf, forecast, KeyError, lastJsonObject, needsWorkspace, NO_USAGE, rememberWorkspace, run, savedReplies, Spend, tally, toParams, toReply, WORKSPACE_VARIABLE, workspaceId, type BatchResult, type ModelApi, type ModelRequest } from './llm';
+import { ask, askAll, askBatch, BudgetError, claudeApi, costOf, forecast, KeyError, lastJsonObject, needsWorkspace, NO_USAGE, run, savedReplies, Spend, tally, toParams, toReply, type BatchResult, type ModelApi, type ModelRequest } from './llm';
 
 const dir = mkdtempSync(path.join(tmpdir(), 'rebound-llm-'));
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
@@ -275,26 +275,6 @@ describe('the key and its workspace', () => {
     const headers = (api: ReturnType<typeof claudeApi>) => (api.client as unknown as { _options: { defaultHeaders?: Record<string, string> } })._options.defaultHeaders;
     expect(headers(claudeApi('sk-ant-test', 'wrkspc_test'))).toEqual({ 'anthropic-workspace-id': 'wrkspc_test' });
     expect(headers(claudeApi('sk-ant-test', null))).toBeUndefined();
-  });
-
-  it('reads the workspace from the variable first, then from where the key check remembered it', () => {
-    const before = process.env[WORKSPACE_VARIABLE];
-    delete process.env[WORKSPACE_VARIABLE];
-    try {
-      const remembered = file('workspace.json');
-      expect(workspaceId(remembered)).toBeNull();
-      rememberWorkspace({ id: 'wrkspc_remembered', name: 'Default' }, remembered);
-      expect(workspaceId(remembered)).toBe('wrkspc_remembered');
-      expect(JSON.parse(readFileSync(remembered, 'utf8'))).toMatchObject({ id: 'wrkspc_remembered', name: 'Default' });
-      process.env[WORKSPACE_VARIABLE] = ' wrkspc_named ';
-      expect(workspaceId(remembered)).toBe('wrkspc_named');
-      writeFileSync(remembered, 'not json');
-      delete process.env[WORKSPACE_VARIABLE];
-      expect(workspaceId(remembered)).toBeNull();
-    } finally {
-      if (before === undefined) delete process.env[WORKSPACE_VARIABLE];
-      else process.env[WORKSPACE_VARIABLE] = before;
-    }
   });
 
   it('knows the API’s request for a workspace, and stops a run with what to do about it', async () => {

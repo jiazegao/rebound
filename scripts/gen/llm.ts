@@ -22,7 +22,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { BANK_DIR } from './ledger';
 
 export const API_BASE = 'https://api.anthropic.com';
 /** Where the key is looked for, in this order. */
@@ -39,30 +38,11 @@ function keyFromEnvironment(): { key: string; variable: string } | null {
 
 /**
  * A key made for a whole organization, not for one workspace of it, must say with every request which
- * workspace the request is for. The workspace's id is read from this variable, or from the file where
- * `npm run gen:key` remembers the one it found. The id is no secret, but it names the account, so the file is
- * in the bank folder, outside the repository.
+ * workspace the request is for. The workspace's id is read from this variable, or from where
+ * `npm run gen:key` remembered the one it found (workspace.ts).
  */
 export const WORKSPACE_VARIABLE = 'REBOUND_ANTHROPIC_WORKSPACE_ID';
-export const WORKSPACE_FILE = path.join(BANK_DIR, 'workspace.json');
 const WORKSPACE_HEADER = 'anthropic-workspace-id';
-
-/** The workspace requests are made in, when one has been named or found. */
-export function workspaceId(file = WORKSPACE_FILE): string | null {
-  const named = process.env[WORKSPACE_VARIABLE]?.trim();
-  if (named) return named;
-  try {
-    const id = (JSON.parse(readFileSync(file, 'utf8')) as { id?: unknown }).id;
-    return typeof id === 'string' && id ? id : null;
-  } catch {
-    return null;
-  }
-}
-
-export function rememberWorkspace(workspace: { id: string; name: string }, file = WORKSPACE_FILE): void {
-  mkdirSync(path.dirname(file), { recursive: true });
-  writeFileSync(file, `${JSON.stringify({ ...workspace, found: new Date().toISOString().slice(0, 10) })}\n`);
-}
 
 /* ------------------------------------------------------------------ */
 /* Prices                                                              */
@@ -277,7 +257,7 @@ export function keyVariable(): string | null {
 }
 
 /** The Claude API, with the key from the environment and, for an organization's key, the workspace to use. */
-export function claudeApi(apiKey = keyFromEnvironment()?.key, workspace = workspaceId()): ModelApi & { client: Anthropic } {
+export function claudeApi(apiKey = keyFromEnvironment()?.key, workspace: string | null = process.env[WORKSPACE_VARIABLE]?.trim() || null): ModelApi & { client: Anthropic } {
   if (!apiKey) throw new KeyError(`No Claude API key: neither ${KEY_VARIABLES.join(' nor ')} is set in the environment.`);
   const client = new Anthropic({ apiKey, authToken: null, baseURL: API_BASE, maxRetries: 4, timeout: 15 * 60_000, ...(workspace ? { defaultHeaders: { [WORKSPACE_HEADER]: workspace } } : {}) });
   return {

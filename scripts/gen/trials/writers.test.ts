@@ -3,7 +3,6 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { libraryBuilt, loadLibrary } from '../library';
-import { costOf, NO_USAGE } from '../llm';
 import { scripted, STAND_IN_USAGE, standIn } from './standin';
 
 // The trial keeps its replies, its spending and the questions it writes in the bank folder: a throwaway one here.
@@ -11,6 +10,12 @@ const bank = mkdtempSync(path.join(tmpdir(), 'rebound-writers-'));
 process.env.REBOUND_BANK = bank;
 afterAll(() => rmSync(bank, { recursive: true, force: true }));
 
+// Nothing may have fixed the bank folder before the line above redirected it: a trial run here would then
+// write its stand-in replies and spending into the real one.
+const { BANK_DIR } = await import('../ledger');
+if (BANK_DIR !== bank) throw new Error('The bank folder was fixed before this test redirected it: a static import here loads ledger.ts.');
+
+const { costOf, NO_USAGE } = await import('../llm');
 const { trialArgs } = await import('./common');
 const { checkerFor, trialSlots, writersTrial } = await import('./writers');
 

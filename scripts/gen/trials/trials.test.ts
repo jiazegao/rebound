@@ -11,6 +11,11 @@ const bank = mkdtempSync(path.join(tmpdir(), 'rebound-trials-'));
 process.env.REBOUND_BANK = bank;
 afterAll(() => rmSync(bank, { recursive: true, force: true }));
 
+// Nothing may have fixed the bank folder before the line above redirected it: a trial run here would then
+// write its stand-in replies and spending into the real one.
+const { BANK_DIR } = await import('../ledger');
+if (BANK_DIR !== bank) throw new Error('The bank folder was fixed before this test redirected it: a static import here loads ledger.ts.');
+
 const { seeded, separation, shuffled, trialArgs } = await import('./common');
 const { anchorsFor, known, rate, sampleDoe, solve } = await import('./doe');
 const { judgeTrial } = await import('./judge');

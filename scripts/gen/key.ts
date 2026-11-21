@@ -9,12 +9,13 @@
  * not work.
  *
  * A key made for a whole organization must name a workspace with every request. When the API says so, this
- * finds the organization's workspace and remembers it for the other scripts (llm.ts, WORKSPACE_FILE).
+ * finds the organization's workspace and remembers it for the other scripts (workspace.ts).
  */
 import Anthropic from '@anthropic-ai/sdk';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ask, claudeApi, KEY_VARIABLES, KeyError, keyVariable, needsWorkspace, PRICES, rememberWorkspace, WORKSPACE_VARIABLE } from './llm';
+import { ask, KEY_VARIABLES, KeyError, keyVariable, needsWorkspace, PRICES, WORKSPACE_VARIABLE } from './llm';
+import { connect, rememberWorkspace } from './workspace';
 
 /**
  * The workspace an organization's key should use: the only one there is, or the organization's default one
@@ -53,7 +54,7 @@ export async function checkKey(log: (line: string) => void = console.log): Promi
   }
   log(`Found a key in ${variable}.`);
   try {
-    let api = claudeApi();
+    let api = connect();
     const available = new Set<string>();
     const listModels = async () => {
       for await (const model of api.client.models.list()) available.add(model.id);
@@ -74,7 +75,7 @@ export async function checkKey(log: (line: string) => void = console.log): Promi
       if (!workspace) return false;
       rememberWorkspace(workspace);
       log(`The key is for a whole organization, so each request names a workspace: using "${workspace.name}", remembered for the other scripts.`);
-      api = claudeApi();
+      api = connect();
       await listModels();
     }
     const wanted = Object.keys(PRICES);

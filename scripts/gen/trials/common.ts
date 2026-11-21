@@ -7,7 +7,8 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { BANK_DIR } from '../ledger';
 import { DATA_DIR } from '../library';
-import { BudgetError, claudeApi, KeyError, run, Spend, tally, type ModelApi, type ModelReply, type ModelRequest } from '../llm';
+import { BudgetError, KeyError, run, Spend, tally, type ModelApi, type ModelReply, type ModelRequest } from '../llm';
+import { connect } from '../workspace';
 
 /** The most the whole of stage B may spend, in dollars, unless --budget says otherwise. */
 export const STAGE_BUDGET = 40;
@@ -69,7 +70,7 @@ export function seedOf(text: string, base = 20261121): number {
  * Send a trial's requests and return the replies by request id. `name` names the folder the replies are kept
  * in: give it the prompt's version, so a changed prompt starts afresh and an unchanged one is not paid for twice.
  */
-export async function runTrial(name: string, requests: readonly ModelRequest[], args: TrialArgs, expectedOutputTokens: number, api: ModelApi = claudeApi()): Promise<Map<string, ModelReply>> {
+export async function runTrial(name: string, requests: readonly ModelRequest[], args: TrialArgs, expectedOutputTokens: number, api: ModelApi = connect()): Promise<Map<string, ModelReply>> {
   const spend = new Spend(SPEND_FILE, args.budget);
   const before = spend.total();
   console.log(`${name}: ${requests.length} requests, ${args.mode}. Spent so far: $${before.toFixed(2)} of the $${args.budget.toFixed(2)} limit.`);
