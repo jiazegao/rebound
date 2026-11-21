@@ -694,6 +694,14 @@ export const DOE_TEXT_FIXES: DoeTextFix[] = [
   },
   // Middle school
   {
+    id: 'doe-ms-01-r16-t09',
+    fixes: [
+      { field: 'Y', from: 'x', to: '√x' },
+      { field: 'answer', from: 'x', to: '√x' },
+    ],
+    reviewed: '2026-11-21',
+  },
+  {
     id: 'doe-ms-03-r03-b07',
     fixes: [
       { field: 'stem', from: '4/8! 14/12', to: '4/8 − 14/12' },

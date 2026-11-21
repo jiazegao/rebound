@@ -281,8 +281,8 @@ The hand-labelled samples in `scripts/doe/topic-eval.json` are high school quest
 
 | Flag | Questions | Meaning |
 |---|---|---|
-| possible-lost-formatting | 159 | an equation, special symbol or inline image may not have survived text extraction; check the PDF |
-| text-corrected | 29 | math symbols lost in text extraction were restored by a reviewed correction (DOE_TEXT_FIXES in src/core/importers/doeErrata.ts) |
+| possible-lost-formatting | 158 | an equation, special symbol or inline image may not have survived text extraction; check the PDF |
+| text-corrected | 30 | math symbols lost in text extraction were restored by a reviewed correction (DOE_TEXT_FIXES in src/core/importers/doeErrata.ts) |
 | number-mismatch | 12 | printed question number out of sequence |
 | type-unknown | 6 | Short Answer / Multiple Choice not printed (format guessed) |
 | type-mismatch | 6 | printed type contradicts the layout (format follows the layout) |
