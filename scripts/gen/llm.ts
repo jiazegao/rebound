@@ -22,6 +22,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { BANK_DIR } from './ledger';
 
 export const API_BASE = 'https://api.anthropic.com';
 /** Where the key is looked for, in this order. */
@@ -34,6 +35,33 @@ function keyFromEnvironment(): { key: string; variable: string } | null {
     if (key) return { key, variable };
   }
   return null;
+}
+
+/**
+ * A key made for a whole organization, not for one workspace of it, must say with every request which
+ * workspace the request is for. The workspace's id is read from this variable, or from the file where
+ * `npm run gen:key` remembers the one it found. The id is no secret, but it names the account, so the file is
+ * in the bank folder, outside the repository.
+ */
+export const WORKSPACE_VARIABLE = 'REBOUND_ANTHROPIC_WORKSPACE_ID';
+export const WORKSPACE_FILE = path.join(BANK_DIR, 'workspace.json');
+const WORKSPACE_HEADER = 'anthropic-workspace-id';
+
+/** The workspace requests are made in, when one has been named or found. */
+export function workspaceId(file = WORKSPACE_FILE): string | null {
+  const named = process.env[WORKSPACE_VARIABLE]?.trim();
+  if (named) return named;
+  try {
+    const id = (JSON.parse(readFileSync(file, 'utf8')) as { id?: unknown }).id;
+    return typeof id === 'string' && id ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+export function rememberWorkspace(workspace: { id: string; name: string }, file = WORKSPACE_FILE): void {
+  mkdirSync(path.dirname(file), { recursive: true });
+  writeFileSync(file, `${JSON.stringify({ ...workspace, found: new Date().toISOString().slice(0, 10) })}\n`);
 }
 
 /* ------------------------------------------------------------------ */
@@ -248,10 +276,10 @@ export function keyVariable(): string | null {
   return keyFromEnvironment()?.variable ?? null;
 }
 
-/** The Claude API, with the key from the environment. */
-export function claudeApi(apiKey = keyFromEnvironment()?.key): ModelApi & { client: Anthropic } {
+/** The Claude API, with the key from the environment and, for an organization's key, the workspace to use. */
+export function claudeApi(apiKey = keyFromEnvironment()?.key, workspace = workspaceId()): ModelApi & { client: Anthropic } {
   if (!apiKey) throw new KeyError(`No Claude API key: neither ${KEY_VARIABLES.join(' nor ')} is set in the environment.`);
-  const client = new Anthropic({ apiKey, authToken: null, baseURL: API_BASE, maxRetries: 4, timeout: 15 * 60_000 });
+  const client = new Anthropic({ apiKey, authToken: null, baseURL: API_BASE, maxRetries: 4, timeout: 15 * 60_000, ...(workspace ? { defaultHeaders: { [WORKSPACE_HEADER]: workspace } } : {}) });
   return {
     client,
     // Streamed and gathered, so a long search or a long reply cannot run into a request timeout.
@@ -273,8 +301,14 @@ export function claudeApi(apiKey = keyFromEnvironment()?.key): ModelApi & { clie
   };
 }
 
+/** Whether an error is the API asking which workspace an organization's key is being used for. */
+export function needsWorkspace(err: unknown): boolean {
+  return err instanceof Anthropic.BadRequestError && /not scoped to a workspace/i.test(err.message);
+}
+
 function explain(err: unknown): { note: string; fatal: boolean } {
   if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) return { note: 'The Claude API refused the key.', fatal: true };
+  if (needsWorkspace(err)) return { note: `The key is for a whole organization, so each request must name a workspace. Run "npm run gen:key" once, which finds it, or set ${WORKSPACE_VARIABLE}.`, fatal: true };
   if (err instanceof Anthropic.BadRequestError && /credit balance|billing/i.test(err.message)) return { note: `The account cannot pay for this call: ${err.message}`, fatal: true };
   if (err instanceof Anthropic.RateLimitError) return { note: 'The Claude API is limiting requests; this one was not answered after several tries.', fatal: false };
   if (err instanceof Anthropic.APIError) return { note: `The Claude API answered with an error (${err.status ?? 'no status'}): ${err.message}`, fatal: false };

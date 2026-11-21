@@ -158,6 +158,11 @@ nothing else, so the solver cannot be shown the answer by accident.
 - **The key** is read from the `REBOUND_ANTHROPIC_API_KEY` environment variable, or `ANTHROPIC_API_KEY` when
   that is not set. It is never printed or written to a file. `npm run gen:key` says whether it is there and
   whether it works.
+- **A key for a whole organization needs a workspace.** A key made for one workspace works as it is. One made
+  for the organization must name a workspace with every request: `npm run gen:key` finds it when the key may
+  list workspaces, and remembers it in the bank folder. When it may not, set `REBOUND_ANTHROPIC_WORKSPACE_ID`
+  to the workspace's ID from the Claude Console (Settings, Workspaces). The ID is no secret, but it names the
+  account, so it is kept out of this repository.
 - **Every call is recorded** with its model, tokens and cost in `private-data/gen/spend.jsonl`. Costs are
   worked out from the prices in `llm.ts`, read from Anthropic's price list on the date given there; a model
   with no recorded price is refused.
@@ -171,9 +176,10 @@ nothing else, so the solver cannot be shown the answer by accident.
 Two things differ inside a Claude Code cloud session. A variable called `ANTHROPIC_API_KEY`, saved on the
 cloud environment, is kept from the commands a session runs: on 21 November 2026 neither the session this was
 built in nor one started after the variable was saved could see it. (That name also controls Claude Code's own
-sign-in.) So save the key on the environment as `REBOUND_ANTHROPIC_API_KEY`. By Claude Code's documentation a
-variable reaches the sessions started after it was saved, so the trials then need a new session. And
-`ANTHROPIC_BASE_URL` points at the session's own service, so `llm.ts` sets the API's address itself.
+sign-in.) So save the key on the environment as `REBOUND_ANTHROPIC_API_KEY`. A variable reaches a session
+when it starts; a session that is already running gets it when its machine next restarts, which happens after
+it has been idle. And `ANTHROPIC_BASE_URL` points at the session's own service, so `llm.ts` sets the API's
+address itself.
 
 ## The round plan
 

@@ -1,9 +1,9 @@
-import type Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '@anthropic-ai/sdk';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { ask, askAll, askBatch, BudgetError, costOf, forecast, lastJsonObject, NO_USAGE, run, savedReplies, Spend, tally, toParams, toReply, type BatchResult, type ModelApi, type ModelRequest } from './llm';
+import { ask, askAll, askBatch, BudgetError, claudeApi, costOf, forecast, KeyError, lastJsonObject, needsWorkspace, NO_USAGE, rememberWorkspace, run, savedReplies, Spend, tally, toParams, toReply, WORKSPACE_VARIABLE, workspaceId, type BatchResult, type ModelApi, type ModelRequest } from './llm';
 
 const dir = mkdtempSync(path.join(tmpdir(), 'rebound-llm-'));
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
@@ -261,5 +261,47 @@ describe('a run', () => {
     // The file is a log: the failed try stays in it, and the later answer for the same request wins.
     expect(readFileSync(path.join(runDir, 'replies.jsonl'), 'utf8').trim().split('\n')).toHaveLength(4);
     expect(tally(second.values())).toMatchObject({ calls: 3, outcomes: { ok: 3, refused: 0, 'cut-off': 0, error: 0 } });
+  });
+});
+
+describe('the key and its workspace', () => {
+  const notScoped = new Anthropic.BadRequestError(400, { type: 'error', error: { type: 'invalid_request_error', message: 'This API key is not scoped to a workspace, so this request must include the anthropic-workspace-id header with the ID of the workspace to use.' } }, undefined, new Headers());
+
+  it('refuses to start without a key', () => {
+    expect(() => claudeApi('')).toThrow(KeyError);
+  });
+
+  it('sends the workspace with every request when one is given, and not otherwise', () => {
+    const headers = (api: ReturnType<typeof claudeApi>) => (api.client as unknown as { _options: { defaultHeaders?: Record<string, string> } })._options.defaultHeaders;
+    expect(headers(claudeApi('sk-ant-test', 'wrkspc_test'))).toEqual({ 'anthropic-workspace-id': 'wrkspc_test' });
+    expect(headers(claudeApi('sk-ant-test', null))).toBeUndefined();
+  });
+
+  it('reads the workspace from the variable first, then from where the key check remembered it', () => {
+    const before = process.env[WORKSPACE_VARIABLE];
+    delete process.env[WORKSPACE_VARIABLE];
+    try {
+      const remembered = file('workspace.json');
+      expect(workspaceId(remembered)).toBeNull();
+      rememberWorkspace({ id: 'wrkspc_remembered', name: 'Default' }, remembered);
+      expect(workspaceId(remembered)).toBe('wrkspc_remembered');
+      expect(JSON.parse(readFileSync(remembered, 'utf8'))).toMatchObject({ id: 'wrkspc_remembered', name: 'Default' });
+      process.env[WORKSPACE_VARIABLE] = ' wrkspc_named ';
+      expect(workspaceId(remembered)).toBe('wrkspc_named');
+      writeFileSync(remembered, 'not json');
+      delete process.env[WORKSPACE_VARIABLE];
+      expect(workspaceId(remembered)).toBeNull();
+    } finally {
+      if (before === undefined) delete process.env[WORKSPACE_VARIABLE];
+      else process.env[WORKSPACE_VARIABLE] = before;
+    }
+  });
+
+  it('knows the API’s request for a workspace, and stops a run with what to do about it', async () => {
+    expect(needsWorkspace(notScoped)).toBe(true);
+    expect(needsWorkspace(new Error('This API key is not scoped to a workspace'))).toBe(false);
+    const api: ModelApi = { create: async () => { throw notScoped; }, batchCreate: async () => '', batchEnded: async () => ({ ended: true, processing: 0 }), batchResults: async () => [] };
+    await expect(ask(api, request('w1'))).rejects.toThrow(/npm run gen:key/);
+    await expect(ask(api, request('w1'))).rejects.toBeInstanceOf(KeyError);
   });
 });
