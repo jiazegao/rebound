@@ -1,7 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AiExplain } from '../components/AiExplain';
 import { PlayBar, RevealingText, usePlayMode } from '../components/play';
-import { saveReading, savedReading, SoloSoundCheck, useSoloSpeech, type ReadingChoice, type ReadingPlan, type SoloSpeech } from '../components/SoloSpeech';
+import {
+  saveReading,
+  savedReading,
+  SoloSoundCheck,
+  textReason,
+  useSoloSpeech,
+  type ReadingChoice,
+  type ReadingPlan,
+  type SoloSpeech,
+  type TextReason,
+} from '../components/SoloSpeech';
 import { AnswerBox, Choices, Concepts, QuestionMeta, RichText } from '../components/QuestionView';
 import { Countdown, Intro, LoadError, Loading, Notice, PageHeader, useTicker } from '../components/ui';
 import { Verdict } from '../components/Verdict';
@@ -516,7 +526,7 @@ function Setup({
               Read aloud: you hear each question, and its text appears with the answer (turn your sound on)
             </label>
           </fieldset>
-          {speech && <SoloSoundCheck speech={speech} wpm={s.wpm} />}
+          {speech && <SoloSoundCheck speech={speech} wpm={s.wpm} teamPacket={!!s.packet} />}
           <div className="field">
             <label htmlFor="wpm">
               Reading speed: {s.wpm} words per minute (about {lettersPerMinute(s.wpm).toLocaleString()} letters per minute)
@@ -599,8 +609,8 @@ function Play({
   usePlayMode(true);
   const [index, setIndex] = useState(0);
   const [step, setStep] = useState<Step>(() => firstStep(items[0], aloud));
-  // Read aloud, but this question shows as text (the device has no voice, and there is no recording).
-  const [asText, setAsText] = useState(false);
+  // Read aloud, but this question shows as text: why (it has no recording, or the voice can't be reached).
+  const [asText, setAsText] = useState<TextReason | null>(null);
   const [tally, setTally] = useState<Tally>(emptyTally);
   const [response, setResponse] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -666,7 +676,7 @@ function Play({
     void speech.plan(q, wpm).then((plan) => {
       if (!live) return;
       const startedAt = Date.now() + LEAD_MS;
-      setAsText(plan.voice === 'text');
+      setAsText(plan.voice === 'text' ? (plan.why ?? 'unrecorded') : null);
       setStep(which === 'bonus' ? { kind: 'bonus_reading', startedAt, plan } : { kind: 'tossup_reading', startedAt, plan });
       if (which === 'bonus') setTimeout(() => inputRef.current?.focus(), 0);
     });
@@ -930,6 +940,11 @@ function Play({
       )}
 
       <div className="stack" style={{ marginTop: '1rem' }}>
+        {aloud && step.kind !== 'preparing' && step.kind !== 'tossup_result' && step.kind !== 'bonus_result' && (asText || speech?.unheard) && (
+          <p className="small muted" style={{ margin: 0 }}>
+            {asText ? textReason(asText) : 'This question’s recording wouldn’t play, so it shows as text.'}
+          </p>
+        )}
         {speech?.blocked && (
           <Notice kind="warn">
             Your browser is waiting for a tap before it plays sound.{' '}

@@ -20,7 +20,7 @@ import { judgeAnswer } from '../../src/core/judge/judge';
 import { applyEvent, currentWindow, replay, type EventInput, type MatchConfig, type MatchEvent, type MatchState, type TeamIdx } from '../../src/core/rules/engine';
 import { getPreset, PRESETS } from '../../src/core/rules/presets';
 import { LETTERS, SUBJECT_LABELS, type Letter, type Subject } from '../../src/core/schema';
-import { MAX_SPEECH_WPM, MIN_SPEECH_WPM } from '../../src/core/speech';
+import { audioKey, MAX_SPEECH_WPM, MIN_SPEECH_WPM, playbackRate, RECORDED_VOICE, spokenFor } from '../../src/core/speech';
 import { buildReading, readingDurationMs, wpmFor } from '../../src/lib/reading';
 import { HttpError } from './http';
 import { asObject, cleanLine, MAX_ID_LENGTH } from './validate';
@@ -73,6 +73,8 @@ export interface MatchQuestion {
   answerRaw: string;
   /** A visual question: each device shows the figure from its own data. */
   figure: boolean;
+  /** Its recording in Rebound's voice, as the host's device found it in the site's index (matches read aloud). */
+  audio?: Recording;
 }
 
 export interface MatchSetup {
@@ -139,27 +141,27 @@ export interface AnswerResult {
   t: number;
 }
 
-/** A question's recording in Rebound's voice (tts.ts, voice.ts): its key, and its length at normal speed in ms. */
+/**
+ * A question's recording in Rebound's voice (recorded with scripts/voice, served by the voice Workers): its name, its
+ * length at normal speed in ms, and the fingerprint its address ends with (`?v=`).
+ */
 export interface Recording {
   key: string;
   ms: number;
+  v: string;
 }
 
-/** Rebound's voice for a match read aloud: the questions are recorded in the lobby, then played on every device. */
+/** Rebound's voice for a match read aloud: each question's recording, played on every device in step. */
 export interface MatchVoice {
-  /** 'preparing': the room is having the questions recorded; the match can start once it is 'ready'. */
-  state: 'preparing' | 'ready';
-  /** Each question's recording by question id; null when it could not be made (devices read that one themselves). */
+  /** Each question's recording by question id; null for one without (it is shown as text). */
   items: Record<string, Recording | null>;
-  /** The line players can hear in the lobby. */
-  sample: Recording | null;
   /** How fast the recordings play (the host's reading speed against the voice's natural pace). */
   rate: number;
 }
 
 export interface MatchData {
   setup: MatchSetup;
-  /** A match read aloud with Rebound's voice (missing: each device reads with its own voice, or the text shows). */
+  /** A match read aloud: the questions' recordings (missing in a match shown as text). */
   voice?: MatchVoice;
   status: 'lobby' | 'playing' | 'finished';
   /** Pause before the next question (the host's call, or nobody connected). */
@@ -202,8 +204,8 @@ export interface MatchView {
   label: string;
   subject?: string;
   text?: string;
-  /** `audio`: the question's recording and its playback speed, in a match read aloud with Rebound's voice. */
-  reading?: { startedAt: number; wpm: number; pausedAt?: number; audio?: { key: string; rate: number } };
+  /** `audio`: the question's recording (its name and fingerprint) and its playback speed, in a match read aloud. */
+  reading?: { startedAt: number; wpm: number; pausedAt?: number; audio?: { key: string; v: string; rate: number } };
   window?: { openedAt: number; seconds: number };
   teams: [string, string];
   scores: [number, number];
@@ -224,8 +226,8 @@ export interface MatchView {
     clock?: { remainingMs: number; runningSince: number | null };
     previous?: { label: string; answer: string; text?: string };
     gameId?: string;
-    /** Rebound's voice: how far the recordings are, the lobby's sample, and (once ready) every recording to fetch ahead. */
-    voice?: { state: MatchVoice['state']; done: number; total: number; rate: number; sample?: string; keys?: string[] };
+    /** Read aloud: how fast the recordings play, how many of the questions have one, and each to fetch ahead. */
+    voice?: { rate: number; recorded: number; total: number; recordings: Array<{ key: string; v: string }> };
   };
 }
 
@@ -269,6 +271,7 @@ function question(v: unknown, kind: 'tossup' | 'bonus', where: string): MatchQue
   }
   const answer = str(o.answer, 500, `${where}'s answer`, true);
   if (!answer.trim() && !answerLetter) throw new HttpError(400, `${where} has no answer, so it cannot be judged. Choose another round.`);
+  const audio = recordingOf(o.audio);
   return {
     id,
     kind,
@@ -282,8 +285,25 @@ function question(v: unknown, kind: 'tossup' | 'bonus', where: string): MatchQue
     reject: strList(o.reject, `${where}'s rejected answers`),
     answerRaw: typeof o.answerRaw === 'string' && o.answerRaw.length <= 1000 ? o.answerRaw : answer,
     figure: o.figure === true,
+    ...(audio ? { audio } : {}),
   };
 }
+
+/** The longest recording a match takes (the library's longest is under a minute). */
+export const MAX_RECORDING_MS = 5 * 60_000;
+
+/** A question's recording as the host sent it, if it is well formed (otherwise the question is shown as text). */
+function recordingOf(v: unknown): Recording | undefined {
+  if (!v || typeof v !== 'object') return undefined;
+  const { key, ms, v: fingerprint } = v as Record<string, unknown>;
+  if (typeof key !== 'string' || !/^[0-9a-f]{40}$/.test(key)) return undefined;
+  if (typeof fingerprint !== 'string' || !/^[0-9a-f]{8}$/.test(fingerprint)) return undefined;
+  if (typeof ms !== 'number' || !Number.isInteger(ms) || ms < 200 || ms > MAX_RECORDING_MS) return undefined;
+  return { key, ms, v: fingerprint };
+}
+
+/** Reading speeds an older page could still send to read aloud (before the recorded voice): taken, then kept within reach. */
+const OLDER_SPEECH_WPM: [number, number] = [100, 300];
 
 /** Checks the match a user asked for (POST /api/rooms with `match`). Messages reach their screen. */
 export function parseMatchSetup(value: unknown): MatchSetup {
@@ -295,10 +315,13 @@ export function parseMatchSetup(value: unknown): MatchSetup {
   const mode = o.mode === undefined || o.mode === 'text' ? 'text' : o.mode === 'speech' ? 'speech' : null;
   if (!mode) throw new HttpError(400, 'Choose how questions are read: text or speech.');
   const wpm = o.wpm;
-  const [lowest, highest] = mode === 'speech' ? [MIN_SPEECH_WPM, MAX_SPEECH_WPM] : [MIN_WPM, MAX_WPM];
+  const [lowest, highest] = mode === 'speech' ? [Math.min(MIN_SPEECH_WPM, OLDER_SPEECH_WPM[0]), Math.max(MAX_SPEECH_WPM, OLDER_SPEECH_WPM[1])] : [MIN_WPM, MAX_WPM];
   if (typeof wpm !== 'number' || !Number.isFinite(wpm) || wpm < lowest || wpm > highest) {
-    throw new HttpError(400, `Choose a reading speed of ${lowest} to ${highest} words per minute${mode === 'speech' ? ' to read aloud' : ''}.`);
+    const [shownLow, shownHigh] = mode === 'speech' ? [MIN_SPEECH_WPM, MAX_SPEECH_WPM] : [MIN_WPM, MAX_WPM];
+    throw new HttpError(400, `Choose a reading speed of ${shownLow} to ${shownHigh} words per minute${mode === 'speech' ? ' to read aloud' : ''}.`);
   }
+  // Read aloud, the recordings play at most this much slower or faster than the voice's own pace (120 to 240).
+  const speed = mode === 'speech' ? Math.min(MAX_SPEECH_WPM, Math.max(MIN_SPEECH_WPM, wpm)) : wpm;
   const names = Array.isArray(o.teamNames) ? o.teamNames : ['Team A', 'Team B'];
   const teamNames = [cleanLine(names[0], 40) ?? 'Team A', cleanLine(names[1], 40) ?? 'Team B'] as [string, string];
   const p = asObject(o.packet, 'The round');
@@ -312,17 +335,36 @@ export function parseMatchSetup(value: unknown): MatchSetup {
   if (!Array.isArray(o.pairs) || o.pairs.length < 1 || o.pairs.length > MAX_MATCH_PAIRS) {
     throw new HttpError(400, `A match needs 1 to ${MAX_MATCH_PAIRS} toss-ups.`);
   }
+  // Recordings matter only to a match read aloud.
+  const kept = (q: MatchQuestion): MatchQuestion => {
+    if (mode === 'speech' || !q.audio) return q;
+    const { audio: _audio, ...rest } = q;
+    return rest;
+  };
   const pairs = o.pairs.map((raw, i) => {
     const pair = asObject(raw, `Pair ${i + 1}`);
-    const tossup = question(pair.tossup, 'tossup', `Toss-up ${i + 1}`);
-    const bonus = format === 'teams' && pair.bonus !== undefined && pair.bonus !== null ? question(pair.bonus, 'bonus', `Bonus ${i + 1}`) : undefined;
+    const tossup = kept(question(pair.tossup, 'tossup', `Toss-up ${i + 1}`));
+    const bonus = format === 'teams' && pair.bonus !== undefined && pair.bonus !== null ? kept(question(pair.bonus, 'bonus', `Bonus ${i + 1}`)) : undefined;
     return bonus ? { tossup, bonus } : { tossup };
   });
   const count = o.tossupCount === undefined ? pairs.length : o.tossupCount;
   if (typeof count !== 'number' || !Number.isInteger(count) || count < 1 || count > pairs.length) {
     throw new HttpError(400, `Choose 1 to ${pairs.length} toss-ups.`);
   }
-  return { format, mode, presetId: presetId ?? PRESETS[0]!.id, wpm: Math.round(wpm), teamNames, packet, pairs, tossupCount: count };
+  return { format, mode, presetId: presetId ?? PRESETS[0]!.id, wpm: Math.round(speed), teamNames, packet, pairs, tossupCount: count };
+}
+
+/**
+ * A match read aloud: each question's recording, kept only when its name is that of the question's own words in
+ * Rebound's voice (so a recording always says the question on screen). Null for a match shown as text.
+ */
+export async function matchVoice(setup: MatchSetup): Promise<MatchVoice | null> {
+  if (setup.mode !== 'speech') return null;
+  const items: Record<string, Recording | null> = {};
+  for (const q of matchQuestions(setup)) {
+    items[q.id] = q.audio && q.audio.key === (await audioKey(RECORDED_VOICE, spokenFor(q))) ? q.audio : null;
+  }
+  return { items, rate: playbackRate(setup.wpm) };
 }
 
 export function newMatchData(setup: MatchSetup): MatchData {
@@ -380,10 +422,6 @@ export class MatchDirector {
   start(players: MatchPlayer[], now: number): string | null {
     const d = this.data;
     if (d.status !== 'lobby') return 'The match has already started.';
-    if (d.voice?.state === 'preparing') {
-      const total = matchQuestions(d.setup).length;
-      return `The voice is still recording the questions (${Object.keys(d.voice.items).length} of ${total}). It takes a moment the first time a round is read.`;
-    }
     if (d.setup.format === 'teams') {
       if (!players.some((p) => p.side === 'A') || !players.some((p) => p.side === 'B')) return 'Each side needs at least one player.';
       // Each side's captain answers its bonuses: the chosen one, or the first to join.
@@ -1003,15 +1041,11 @@ export class MatchDirector {
     }
     if (d.gameId) match.gameId = d.gameId;
     if (d.voice) {
-      const items = Object.values(d.voice.items);
-      match.voice = {
-        state: d.voice.state,
-        done: items.length,
-        total: matchQuestions(d.setup).length,
-        rate: d.voice.rate,
-        ...(d.voice.sample ? { sample: d.voice.sample.key } : {}),
-        ...(d.voice.state === 'ready' ? { keys: items.filter((r): r is Recording => r !== null).map((r) => r.key) } : {}),
-      };
+      const recordings = matchQuestions(d.setup)
+        .map((q) => d.voice!.items[q.id] ?? null)
+        .filter((r): r is Recording => r !== null)
+        .map((r) => ({ key: r.key, v: r.v }));
+      match.voice = { rate: d.voice.rate, recorded: recordings.length, total: matchQuestions(d.setup).length, recordings };
     }
     const view: MatchView = { phase: s?.phase ?? (d.status === 'playing' ? 'ffa' : d.status), label: '', teams: d.setup.teamNames, scores, match };
 
@@ -1040,7 +1074,7 @@ export class MatchDirector {
             // With a recording, the text beside it (for a device that cannot play it) runs at the recording's pace.
             wpm: recording ? wpmFor(buildReading(question), q.reading.durationMs) : d.setup.wpm,
             ...(q.reading.pausedAt !== null ? { pausedAt: q.reading.pausedAt } : {}),
-            ...(recording ? { audio: { key: recording.key, rate: d.voice!.rate } } : {}),
+            ...(recording ? { audio: { key: recording.key, v: recording.v, rate: d.voice!.rate } } : {}),
           };
         }
         if (question.figure) view.figure = { questionId: question.id };
@@ -1078,10 +1112,11 @@ export class MatchDirector {
     return view;
   }
 
-  /** A question's recording, when the match has Rebound's voice and it could be made. */
+  /** A question's recording, in a match read aloud (null for one without: it is shown as text). */
   private recording(question: MatchQuestion): Recording | null {
-    const v = this.data.voice;
-    return v?.state === 'ready' ? (v.items[question.id] ?? null) : null;
+    const recording = this.data.voice?.items[question.id] ?? null;
+    // A recording from before fingerprints (none was ever made on the live server) is not played.
+    return recording && typeof recording.v === 'string' ? recording : null;
   }
 
   /** How long a question's reading takes: its recording at the match's playback speed, or the reading speed's time. */

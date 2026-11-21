@@ -1,57 +1,24 @@
 /*
- * Online matches read aloud, in two browsers against a local server (start both servers as e2e/accounts.cjs says):
+ * Online matches read aloud, in three browsers against a local server (start both servers as e2e/accounts.cjs says):
  *
  *   node e2e/speech.cjs                     # SERVER_URL / BASE_URL / SHOTS_DIR as for the other tests
  *
- * It tests whichever voice the server has:
- *
- * - Rebound's recorded voice, when the server runs with DEV_TTS_FAKE=1 (npx wrangler dev --var DEV_TTS_FAKE:1),
- *   which records silent stand-ins instead of calling Google. The lobby waits for the recordings; then both
- *   players' pages play each recording in step (a stand-in for the audio element's play() records what it is told),
- *   and nothing of the question shows until it is over.
- * - Otherwise the devices' own voices: the player's is a pretend one that says nothing out loud but takes the time a
- *   voice would and records each phrase it is asked to say; the host's device has none, so the host sees the text
- *   instead, and the player is told so.
+ * Rebound's recorded voice is a stand-in (e2e/voice.cjs): the site's index of recordings and silent MP3s from the voice
+ * Workers' addresses, served to the pages with no network. The host's page finds each question's recording and sends
+ * it with the match; the lobby needs no wait; both players' pages play each recording in step (a stand-in for the
+ * audio element's play() records what it is told), and nothing of the question shows until it is over. The first
+ * bonus has no recording, so it shows as text and says why. A third player's device cannot reach the voice: it shows
+ * the text, and the others see that.
  *
  * Uses the small fixture question set, like the other tests.
  */
 const { chromium } = require('playwright');
 const path = require('path');
 const A = require('./accounts.cjs');
+const V = require('./voice.cjs');
 
 const { BASE } = A;
 const SHOTS = process.env.SHOTS_DIR || '';
-
-/** A pretend voice (runs in the page): 15 characters a second at its normal rate; records what it is asked to say. */
-function pretendVoice() {
-  const said = [];
-  let timers = [];
-  const voice = { name: 'Test Voice', lang: 'en-US', voiceURI: 'test-voice', localService: true, default: true };
-  const synth = {
-    getVoices: () => [voice],
-    addEventListener() {},
-    removeEventListener() {},
-    speak(u) {
-      if (u.volume === 0) return;
-      said.push({ text: u.text, rate: u.rate, at: Date.now() });
-      const ms = (u.text.length / (15 * (u.rate || 1))) * 1000;
-      timers.push(setTimeout(() => u.onstart && u.onstart({}), 80));
-      timers.push(setTimeout(() => u.onend && u.onend({}), 80 + ms));
-    },
-    cancel() {
-      for (const t of timers) clearTimeout(t);
-      timers = [];
-    },
-  };
-  class Utterance {
-    constructor(text) {
-      Object.assign(this, { text, rate: 1, volume: 1, lang: '', voice: null, onstart: null, onend: null, onerror: null });
-    }
-  }
-  Object.defineProperty(window, 'speechSynthesis', { value: synth, configurable: true });
-  Object.defineProperty(window, 'SpeechSynthesisUtterance', { value: Utterance, configurable: true, writable: true });
-  window.__said = said;
-}
 
 /** Records what the page's audio elements are told to play (runs in the page). */
 function recordPlays() {
@@ -67,12 +34,6 @@ function recordPlays() {
     );
     return p;
   };
-}
-
-/** A device with speech synthesis but no voices at all (runs in the page). */
-function noVoice() {
-  const synth = { getVoices: () => [], addEventListener() {}, removeEventListener() {}, speak() {}, cancel() {} };
-  Object.defineProperty(window, 'speechSynthesis', { value: synth, configurable: true });
 }
 
 async function fixtures(page) {
@@ -104,37 +65,49 @@ async function main() {
   const shot = async (page, name) => {
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `${name}.png`), fullPage: true });
   };
-  const said = (page) => page.evaluate(() => window.__said.map((s) => s.text));
+  const plays = (page) => page.evaluate(() => window.__played.filter((p) => p.src === 'blob:'));
 
   const accounts = [];
   try {
     const hana = await A.signUp('Hana');
     const paul = await A.signUp('Paul');
-    accounts.push(hana, paul);
-    const open = async (account, voice) => {
+    const owen = await A.signUp('Owen');
+    accounts.push(hana, paul, owen);
+    // The first bonus has no recording: it shows as text for everyone.
+    const voice = V.standInVoice({ unrecorded: ['doe-hs-99-r01-b01'] });
+    const open = async (account, reachable = true) => {
       const ctx = await A.signedInContext(browser, account);
-      await ctx.addInitScript(voice);
       await ctx.addInitScript(recordPlays);
+      await V.useStandInVoice(ctx, voice, { reachable });
       const page = await ctx.newPage();
-      A.watchErrors(page, account.name, errors);
+      page.on('pageerror', (e) => errors.push(`${account.name} pageerror: ${e.message}`));
+      page.on('console', (m) => {
+        if (m.type() !== 'error') return;
+        // A device that cannot reach the voice: the browser reports the index it could not fetch, as expected.
+        if (!reachable && /\/data\/voice\/index\.json$/.test(m.location().url || '')) return;
+        errors.push(`${account.name} console: ${m.text()}`);
+      });
       page.on('dialog', (d) => d.accept());
       await fixtures(page);
       return page;
     };
-    const host = await open(hana, noVoice);
-    const player = await open(paul, pretendVoice);
+    const host = await open(hana);
+    const player = await open(paul);
+    // Owen's device cannot reach Rebound's voice (offline, or a network that blocks it).
+    const offline = await open(owen, false);
     let roomId = '';
 
-    await step('the host opens a team match read aloud from Play online', async () => {
+    await step('the host opens a team match read aloud from Play online, with each question’s recording', async () => {
       await host.goto(`${BASE}#/online`);
       await host.getByRole('heading', { name: 'Start an online match' }).waitFor({ timeout: 15000 });
       await host.getByRole('radio', { name: /Read aloud/ }).check();
-      // A voice keeps to 100–300 words a minute: a faster speed is brought into range.
+      // The recordings play at 120 to 240 words a minute: a faster speed is brought into range.
       await host.locator('#om-wpm').fill('600');
       await host.locator('#om-wpm').blur();
       const wpm = Number(await host.locator('#om-wpm').inputValue());
-      if (wpm !== 300) throw new Error(`the reading speed should stop at 300 for a match read aloud, is ${wpm}`);
+      if (wpm !== 240) throw new Error(`the reading speed should stop at 240 for a match read aloud, is ${wpm}`);
       await host.getByText(/toss-ups? from Round 1/).waitFor();
+      await host.getByText('Rebound’s voice reads 7 of the 8 questions; the others show as text.').waitFor({ timeout: 10000 });
       await host.getByRole('button', { name: 'Open the match' }).click();
       await host.getByText('Waiting for the host to start the match').waitFor({ timeout: 15000 });
       roomId = (/#\/room\/([a-z2-7]{16})/.exec(host.url()) ?? [])[1] ?? '';
@@ -142,36 +115,22 @@ async function main() {
       await host.getByRole('button', { name: 'Join Team A' }).click();
     });
 
-    const recorded = (await host.getByText('Rebound’s voice reads each question').count()) > 0;
-    console.log(`  (testing ${recorded ? 'Rebound’s recorded voice' : 'the devices’ own voices'})`);
-    if (recorded) await recordedVoice(host, player, roomId);
-    else await deviceVoices(host, player, roomId);
-  } finally {
-    // Close the pages first: a page whose account is gone would see its next request refused.
-    await browser.close();
-    const problems = await A.deleteAccounts(accounts);
-    if (problems.length) errors.push(`clean up: ${problems.join('; ')}`);
-  }
-  if (errors.length) {
-    console.log('\nBrowser errors:');
-    for (const e of errors) console.log(`  ${e}`);
-  }
-  if (failures || errors.length) process.exit(1);
-  console.log('\nAll checks passed.');
-
-  /** Rebound's recorded voice: recordings made in the lobby, played in step on every device. */
-  async function recordedVoice(host, player, roomId) {
-    const plays = (page) => page.evaluate(() => window.__played.filter((p) => p.src === 'blob:'));
-
-    await step('the lobby records the questions, then offers a sample and lets the host start', async () => {
-      await host.getByRole('button', { name: 'Play a sample' }).and(host.locator(':enabled')).waitFor({ timeout: 30000 });
-      await host.getByRole('button', { name: 'Start the match' }).and(host.locator(':enabled')).waitFor({ timeout: 10000 }).catch(() => {});
+    await step('the lobby needs no wait: it offers a sample at once, and says which questions show as text', async () => {
+      await host.getByText('7 of the 8 questions have a recording; the others show as text.').waitFor({ timeout: 10000 });
       await player.goto(`${BASE}#/room/${roomId}`);
       await player.getByRole('button', { name: 'Join Team B' }).click();
       await player.getByRole('button', { name: 'Play a sample' }).click();
       await player.waitForFunction(() => window.__played.some((p) => p.src === 'blob:' && p.ok === true), null, { timeout: 10000 });
       if (await player.getByText('(sees the text').count()) throw new Error('with Rebound’s voice, nobody needs the text');
       await shot(player, 'recorded-1-lobby');
+    });
+
+    await step('a device that cannot reach the voice says so, and the others see that it reads the text', async () => {
+      await offline.goto(`${BASE}#/room/${roomId}`);
+      await offline.getByText(/Rebound’s voice can’t be reached on this device/).waitFor({ timeout: 15000 });
+      await offline.getByRole('button', { name: 'Join Team B' }).click();
+      await host.getByText('(sees the text: Rebound’s voice can’t play on their device)').waitFor({ timeout: 10000 });
+      await host.getByRole('button', { name: 'Start the match' }).and(host.locator(':enabled')).waitFor({ timeout: 10000 });
     });
 
     await step('the toss-up’s recording plays on both devices at the match’s speed, with no text shown', async () => {
@@ -184,12 +143,16 @@ async function main() {
       }
       for (const page of [player, host]) {
         const played = (await plays(page)).filter((p) => p.ok === true);
-        // Wpm 300 against the voice's natural 160: the fastest playback, 1.6.
+        // 240 words a minute against the voice's own 150: the fastest playback, 1.6.
         if (!played.some((p) => Math.abs(p.rate - 1.6) < 0.01)) throw new Error(`plays: ${JSON.stringify(played)}`);
       }
+      // The device without the voice sees the text as it is read, and is told why.
+      await offline.getByText(/most common term/).waitFor({ timeout: 10000 });
+      await offline.getByText('This device can’t play this question’s recording, so you see it as text.').waitFor();
+      await player.getByText('Seeing the text instead (Rebound’s voice can’t play on their device): Owen.').waitFor();
     });
 
-    await step('once it is over, the toss-up’s text shows with its answer, and the bonus is recorded too', async () => {
+    await step('once it is over, the toss-up’s text shows with its answer; the bonus has no recording, so it shows as text', async () => {
       await player.getByText(/s left$/).waitFor({ timeout: 30000 });
       await player.getByRole('button', { name: /Buzz/ }).click();
       await player.getByLabel(/^Your answer/).fill('phenotype');
@@ -197,7 +160,8 @@ async function main() {
       await player.getByText(`Toss-up 1: ${TOSSUP}`).waitFor({ timeout: 10000 });
       await player.getByText('ANSWER: PHENOTYPE').waitFor();
       await player.getByLabel(/answer for the team/).waitFor({ timeout: 30000 });
-      if (await player.getByText(BONUS).count()) throw new Error('the bonus shows while it is read aloud');
+      await player.getByText(/virus that attacks/).waitFor({ timeout: 10000 });
+      await player.getByText('This question has no recording, so it shows as text.').waitFor();
       await player.getByLabel(/answer for the team/).fill('bacteriophage');
       await player.keyboard.press('Enter');
       await player.getByText(BONUS).waitFor({ timeout: 10000 });
@@ -205,66 +169,18 @@ async function main() {
       await host.getByRole('button', { name: 'End the match' }).click(); // the confirm is accepted
       await player.getByText('The match is over.').waitFor({ timeout: 10000 });
     });
+  } finally {
+    // Close the pages first: a page whose account is gone would see its next request refused.
+    await browser.close();
+    const problems = await A.deleteAccounts(accounts);
+    if (problems.length) errors.push(`clean up: ${problems.join('; ')}`);
   }
-
-  /** The devices' own voices: a pretend voice on the player's device, none on the host's. */
-  async function deviceVoices(host, player, roomId) {
-    await step('the host’s device has no voice: the lobby says the text will show instead', async () => {
-      await host.getByText('This device has no voice for reading aloud').waitFor({ timeout: 10000 });
-    });
-
-    await step('the player tries the voice in the lobby, joins, and sees that the host reads the text', async () => {
-      await player.goto(`${BASE}#/room/${roomId}`);
-      await player.getByRole('heading', { name: 'Read aloud' }).waitFor({ timeout: 15000 });
-      await player.getByRole('button', { name: 'Play a sample' }).click();
-      if (!(await said(player)).some((t) => t.startsWith('Toss-up 1. Biology.'))) throw new Error('the sample was not said');
-      await player.getByRole('button', { name: 'Join Team B' }).click();
-      await player.getByText('(sees the text: no voice on their device)').waitFor({ timeout: 10000 });
-      await shot(player, 'speech-1-lobby');
-    });
-
-    await step('the toss-up is read aloud on the player’s device, with no text shown, while the host sees the text', async () => {
-      await host.getByRole('button', { name: 'Start the match' }).click();
-      await player.getByText('Listening to the question…').waitFor({ timeout: 15000 });
-      await host.getByText(/What is the most common term/).waitFor({ timeout: 10000 });
-      await shot(player, 'speech-2-listening');
-      // While it is read, nothing of it shows on the player's screen.
-      for (let i = 0; i < 6; i++) {
-        if (await player.getByText(/observable|most common term/).count()) throw new Error('the question shows while it is read aloud');
-        await player.waitForTimeout(500);
-      }
-      await player.getByText(/s left$/).waitFor({ timeout: 20000 });
-      const spoken = (await said(player)).filter((t) => !t.startsWith('Toss-up 1. Biology.')).join(' ');
-      if (!spoken.startsWith(TOSSUP)) throw new Error(`the voice said: ${spoken}`);
-      await player.getByText('Seeing the text instead (no voice on their device): Hana.').waitFor();
-    });
-
-    await step('once the toss-up is over its text shows with the answer, and the bonus is read aloud too', async () => {
-      await player.getByRole('button', { name: /Buzz/ }).click();
-      await player.getByLabel(/^Your answer/).fill('phenotype');
-      await player.keyboard.press('Enter');
-      // The bonus begins at once; the toss-up's text and answer stay up meanwhile.
-      await player.getByText(`Toss-up 1: ${TOSSUP}`).waitFor({ timeout: 10000 });
-      await player.getByText('ANSWER: PHENOTYPE').waitFor();
-      await shot(player, 'speech-3-tossup-over');
-      await player.getByLabel(/answer for the team/).waitFor({ timeout: 20000 });
-      if (await player.getByText(BONUS).count()) throw new Error('the bonus shows while it is read aloud');
-      const spoken = (await said(player)).join(' ');
-      if (!spoken.includes(BONUS)) throw new Error(`the voice did not say the bonus: ${spoken}`);
-      await player.getByLabel(/answer for the team/).fill('bacteriophage');
-      await player.keyboard.press('Enter');
-      await player.getByText(BONUS).waitFor({ timeout: 10000 });
-      await player.getByText(/Correct: 10 points/).waitFor();
-      await shot(player, 'speech-4-bonus-over');
-    });
-
-    await step('the voice kept a pace a voice can (rates between 0.6 and 2.2)', async () => {
-      const rates = await player.evaluate(() => window.__said.map((s) => s.rate));
-      if (rates.some((r) => !(r >= 0.6 && r <= 2.2))) throw new Error(`rates: ${rates.join(', ')}`);
-      await host.getByRole('button', { name: 'End the match' }).click(); // the confirm is accepted
-      await player.getByText('The match is over.').waitFor({ timeout: 10000 });
-    });
+  if (errors.length) {
+    console.log('\nBrowser errors:');
+    for (const e of errors) console.log(`  ${e}`);
   }
+  if (failures || errors.length) process.exit(1);
+  console.log('\nAll checks passed.');
 }
 
 main().catch((err) => {

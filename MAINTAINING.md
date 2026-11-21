@@ -66,7 +66,6 @@ Cloudflare token in your shell) or deploy the previous commit.
 |---|---|---|
 | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | GitHub repository secrets (or your shell) | Deploying the server |
 | `RESEND_API_KEY` (optional) | A Cloudflare Worker secret: `npx wrangler secret put RESEND_API_KEY` in `server/` | Email sign-in links (server/README.md, "Email sign-in"; also needs `EMAIL_FROM`) |
-| `GOOGLE_TTS_API_KEY` (optional) | A Cloudflare Worker secret: `npx wrangler secret put GOOGLE_TTS_API_KEY` in `server/` | Rebound's voice for matches read aloud (server/README.md, "Optional: Rebound's voice"); the Google Cloud project's billing pays beyond the free allowance |
 | `ANTHROPIC_API_KEY` (optional) | A Cloudflare Worker secret: `npx wrangler secret put ANTHROPIC_API_KEY` in `server/` | AI help (server/README.md, "Optional: AI help") |
 
 The site itself has no secrets, and neither does Google sign-in (the client id is public; no client secret is
@@ -125,8 +124,11 @@ October 1 as a reminder if DOE's site refuses automated requests. The issue carr
   `EMAIL_DAILY_LIMIT` in all per day (`server/wrangler.toml`, under Resend's free 100). Google sign-in has no limit.
 - AI help (if on): the daily limit per player is `AI_DAILY_LIMIT` in `server/wrangler.toml`; spending shows in the
   Anthropic Console.
-- Rebound's voice (if on): characters sent to Google each month stop at `TTS_MONTHLY_CHARS` (`server/wrangler.toml`);
-  spending shows in the Google Cloud console under Billing, and the budget alert emails you first.
+- Rebound's voice: the recordings are files on two Cloudflare Workers (`rebound-voice-1` and `rebound-voice-2`), free
+  to serve with no daily limit; a free Worker holds 20,000 files, so a library past about 40,000 recordings needs
+  `publish --hosts 3`. After the library or how questions are said changes, the site's tests fail until the new
+  questions are recorded and published (scripts/voice/README.md): export, generate and publish on the computer that
+  has Kokoro, then commit `public/data/voice`.
 
 ## Handing over to the next captain
 

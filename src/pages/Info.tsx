@@ -1,6 +1,8 @@
 import { PageHeader } from '../components/ui';
 import { serverUrl } from '../lib/api';
+import { useAsync } from '../lib/library';
 import { href } from '../lib/router';
+import { loadVoiceIndex } from '../lib/voice';
 
 /** The server's host name, when this build has one (or one was entered on the sign-in page). */
 function serverHost(): string | null {
@@ -98,6 +100,9 @@ export function CoachesPage() {
 
 export function ItStaffPage() {
   const host = serverHost();
+  // The hosts that serve Rebound's recorded voice, from the site's index of the recordings.
+  const voice = useAsync('voice-index', loadVoiceIndex);
+  const voiceHosts = (voice.data?.hosts ?? []).map((h) => new URL(h).host);
   return (
     <div className="container narrow">
       <PageHeader title="For school IT staff">
@@ -138,10 +143,23 @@ export function ItStaffPage() {
           caches files from Rebound's own domain, never a player's data.
         </li>
         <li>
-          Online matches and solo practice can be read aloud (no microphone is used). Rebound's own voice is recorded audio that comes from
-          Rebound's server, like everything else. Where that is not set up, each device uses its own text-to-speech voice through the browser; some of those (Chrome's
-          "Google" voices, Edge's "Natural" ones) come from the browser maker's servers, and if they are blocked Rebound tries another voice, then
-          shows the questions as text.
+          Online matches and solo practice can be read aloud (no microphone is used). Rebound's voice is recordings, MP3 files served by Cloudflare
+          {voiceHosts.length > 0 ? (
+            <>
+              {' '}
+              from{' '}
+              {voiceHosts.map((h, i) => (
+                <span key={h}>
+                  {i > 0 && (i === voiceHosts.length - 1 ? ' and ' : ', ')}
+                  <code>{h}</code>
+                </span>
+              ))}
+            </>
+          ) : (
+            ' beside the server'
+          )}
+          ; allow {voiceHosts.length === 1 ? 'that host' : 'those hosts'} too. The requests carry nothing about a player. Where they are blocked, the
+          questions show as text.
         </li>
         <li>
           Links to official DOE question PDFs and rulebooks point to <code>science.osti.gov</code>; allowing it lets students open the originals.

@@ -3,10 +3,9 @@
  * their own WebSockets, real timers, and the results reaching each player's account (and the team's games).
  */
 import { evictDurableObject, runInDurableObject } from 'cloudflare:test';
-import { env, exports } from 'cloudflare:workers';
-import { afterEach, describe, expect, it } from 'vitest';
-import { BASE, SITE } from './helpers';
-import { setTtsTestOverrides, silentMp3 } from '../src/tts';
+import { env } from 'cloudflare:workers';
+import { describe, expect, it } from 'vitest';
+import { audioKey, RECORDED_VOICE, spokenFor } from '../../src/core/speech';
 import { allMyRecords, call, closedOnArrival, connect, createRoom, eventually, getRecords, makeTeam, signUp, teamWith, type Json, type RoomClient, type TestUser } from './helpers';
 
 const roomStub = (roomId: string) => env.ROOM.get(env.ROOM.idFromName(roomId));
@@ -352,180 +351,81 @@ describe('online matches', () => {
 });
 
 describe('Rebound’s recorded voice', () => {
-  afterEach(() => setTtsTestOverrides({}));
+  /** A question's recording as the host's device finds it in the site's index: named by the question's own words. */
+  const recordingOf = async (q: { stem: string; choices?: Record<'W' | 'X' | 'Y' | 'Z', string> }, ms: number, v = 'a1b2c3d4') => ({
+    key: await audioKey(RECORDED_VOICE, spokenFor(q)),
+    ms,
+    v,
+  });
+  const matchData = (roomId: string) =>
+    runInDurableObject(roomStub(roomId), (_i, state) => JSON.parse(state.storage.sql.exec<{ data: string }>('SELECT data FROM match').one().data));
 
-  /** A stand-in for Google: each recording lasts 70 ms a character (a slow, easy-to-measure voice). */
-  function fakeGoogle(options: { status?: number; hold?: Promise<void> } = {}) {
-    const calls: string[] = [];
-    const fetcher = (async (_url: string, init: RequestInit) => {
-      const text = (JSON.parse(String(init.body)) as { input: { text: string } }).input.text;
-      calls.push(text);
-      await options.hold;
-      if (options.status) return new Response('refused', { status: options.status });
-      let binary = '';
-      for (const byte of silentMp3(text.length * 70)) binary += String.fromCharCode(byte);
-      return Response.json({ audioContent: btoa(binary) });
-    }) as unknown as typeof fetch;
-    return { fetcher, calls };
-  }
-  /** The match's voice as the client last heard of it (from its welcome, or a later view), once `ready` if asked. */
-  const voiceOf = async (client: RoomClient, ready = true) => {
-    const wanted = (v: Json) => v?.match?.voice && (!ready || v.match.voice.state === 'ready');
-    const welcome = client.welcome.room.state;
-    return (wanted(welcome) ? welcome : await view(client, wanted, 10_000)).match.voice;
-  };
-  /** A request to the Worker itself (as the helpers' `call` does), for a raw response. */
-  const workerFetch = (path: string, init: RequestInit = {}) => exports.default.fetch(`${BASE}${path}`, init);
-
-  it('records each question once in the lobby, serves the recordings to players, and times the reading by them', async () => {
-    const google = fakeGoogle();
-    setTtsTestOverrides({ apiKey: 'test-key', fetch: google.fetcher });
+  it('plays each question’s recording from the match setup on every device, and times the reading by it', async () => {
     const { team, members: [ana] } = await teamWith('Cora Captain', 'Ana');
     const cora = team.captain;
-    const roomId = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 160, tossupCount: 2 });
+    const audio = await recordingOf(PAIRS[0]!.tossup, 1750);
+    // The second toss-up has no recording (a team's own packet, say): it is shown as text.
+    const pairs = [{ tossup: { ...PAIRS[0]!.tossup, audio } }, { tossup: PAIRS[1]!.tossup }];
+    const roomId = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 150, tossupCount: 2, pairs });
     const host = await connect(roomId, cora.token);
-    const voice = await voiceOf(host);
-    // Two toss-ups, and the lobby's sample line.
-    expect(voice).toMatchObject({ state: 'ready', done: 2, total: 2, rate: 1 });
-    expect(voice.keys).toHaveLength(2);
-    expect(google.calls).toHaveLength(3);
-    expect(google.calls[0]).toBe('What organelle makes ATP?');
+    // Nothing to wait for in the lobby: the room lists the recordings to fetch ahead at once.
+    expect(host.welcome.room.state.match.voice).toEqual({ rate: 1, recorded: 1, total: 2, recordings: [{ key: audio.key, v: 'a1b2c3d4' }] });
 
-    // Signed-in players fetch the recordings (MP3), which browsers may keep.
-    const res = await workerFetch(`/api/speech/${voice.keys[0]}`, { headers: { Authorization: `Bearer ${ana!.token}`, Origin: SITE } });
-    expect(res.status).toBe(200);
-    expect(res.headers.get('Content-Type')).toBe('audio/mpeg');
-    expect(res.headers.get('Cache-Control')).toContain('immutable');
-    expect(new Uint8Array(await res.arrayBuffer()).slice(0, 2)).toEqual(new Uint8Array([0xff, 0xfb]));
-    expect((await workerFetch(`/api/speech/${voice.keys[0]}`, { headers: { Origin: SITE } })).status).toBe(401);
-    expect((await workerFetch(`/api/speech/${'0'.repeat(40)}`, { headers: { Authorization: `Bearer ${ana!.token}`, Origin: SITE } })).status).toBe(404);
-
-    // The reading lasts as long as its recording (at the match's playback speed), and carries it.
     const a = await connect(roomId, ana!.token);
     await takeSide(a, 'A');
     host.send({ type: 'start' });
     const reading = await view(a, (v) => !!v.reading?.audio, 8000);
-    expect(reading.reading.audio).toEqual({ key: voice.keys[0], rate: 1 });
-    const ms = 'What organelle makes ATP?'.length * 70;
-    const roomData = await runInDurableObject(roomStub(roomId), (_i, state) => JSON.parse(state.storage.sql.exec<{ data: string }>('SELECT data FROM match').one().data));
-    expect(Math.abs(roomData.q.reading.durationMs - ms)).toBeLessThan(40);
-
-    // A second match with the same questions finds them recorded: Google is not asked again.
-    const again = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 200, tossupCount: 2 });
-    const host2 = await connect(again, cora.token);
-    expect((await voiceOf(host2)).rate).toBe(1.25);
-    expect(google.calls).toHaveLength(3);
+    expect(reading.reading.audio).toEqual({ key: audio.key, v: 'a1b2c3d4', rate: 1 });
+    expect((await matchData(roomId)).q.reading.durationMs).toBe(1750);
+    // The text beside it (for a device that cannot play it) runs at the recording's pace.
+    expect(reading.reading.wpm).toBeGreaterThan(0);
+    for (const c of [host, a]) c.close();
   });
 
-  it('records a question for solo practice when it is first asked for, once, and says when there is no voice', async () => {
+  it('plays the recordings at the host’s reading speed against the voice’s own pace', async () => {
     const cora = await signUp('Cora');
-    const auth = { Authorization: `Bearer ${cora.token}`, Origin: SITE };
-    const stem = 'Which organelle holds the cell’s DNA?';
-    // No voice set up: the device reads.
-    expect((await call('/api/speech', { token: cora.token })).body).toEqual({ enabled: false });
-    expect((await call('/api/speech', { token: cora.token, body: { stem } })).body).toEqual({ enabled: false });
-
-    const google = fakeGoogle();
-    setTtsTestOverrides({ apiKey: 'test-key', fetch: google.fetcher });
-    expect((await call('/api/speech', { token: cora.token })).body).toEqual({ enabled: true });
-    const first = await call('/api/speech', { token: cora.token, body: { stem } });
-    expect(first.body).toMatchObject({ enabled: true, key: expect.stringMatching(/^[0-9a-f]{40}$/) });
-    expect(Math.abs(first.body.ms - stem.length * 70)).toBeLessThan(40);
-    expect(google.calls).toEqual([stem]);
-    expect((await workerFetch(`/api/speech/${first.body.key}`, { headers: auth })).status).toBe(200);
-    // Asked again (by anyone), it is the same recording: Google is not asked again.
-    const ana = await signUp('Ana');
-    expect((await call('/api/speech', { token: ana.token, body: { stem } })).body).toEqual(first.body);
-    expect(google.calls).toHaveLength(1);
-    // A match with the question uses the same recording.
-    const roomId = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 160, tossupCount: 1, pairs: [{ tossup: { ...PAIRS[0]!.tossup, stem } }] });
+    const pairs = [{ tossup: { ...PAIRS[0]!.tossup, audio: await recordingOf(PAIRS[0]!.tossup, 3000) } }];
+    const roomId = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 225, tossupCount: 1, pairs });
     const host = await connect(roomId, cora.token);
-    expect((await voiceOf(host)).keys).toEqual([first.body.key]);
-
-    // Multiple choice: each choice is said with its letter.
-    await call('/api/speech', { token: cora.token, body: { stem: 'Which is a noble gas?', choices: { W: 'Neon', X: 'Iron', Y: 'Tin', Z: 'Lead' } } });
-    expect(google.calls[google.calls.length - 1]).toBe('Which is a noble gas? W, Neon. X, Iron. Y, Tin. Z, Lead.');
-
-    expect((await call('/api/speech', { token: cora.token, body: { stem: '  ' } })).status).toBe(400);
-    expect((await call('/api/speech', { token: cora.token, body: { stem: 'Which?', choices: { W: 'a', X: 'b', Y: 'c' } } })).status).toBe(400);
-    expect((await call('/api/speech', { body: { stem } })).status).toBe(401);
-    expect((await call('/api/speech', { method: 'PATCH', token: cora.token, body: {} })).status).toBe(405);
-    host.close();
-  });
-
-  it('keeps solo practice within its share of the month, and each player within a number a day', async () => {
-    const cora = await signUp('Cora');
-    const month = new Date().toISOString().slice(0, 7);
-    const registry = env.REGISTRY.get(env.REGISTRY.idFromName('global'));
-    const start = Number(await registry.ttsCharsUsed(month));
-    const google = fakeGoogle();
-    // Solo practice may use 80% of the month's characters: here 72 more, so matches keep the rest.
-    setTtsTestOverrides({ apiKey: 'test-key', fetch: google.fetcher, monthlyChars: Math.ceil((start + 72) / 0.8) });
-    const ask = (stem: string) => call('/api/speech', { token: cora.token, body: { stem } });
-    expect((await ask(`${'A'.repeat(30)}?`)).body.key).toMatch(/^[0-9a-f]{40}$/);
-    expect((await ask(`${'B'.repeat(40)}?`)).body.key).toMatch(/^[0-9a-f]{40}$/);
-    expect((await ask(`${'C'.repeat(20)}?`)).body).toEqual({ enabled: true, key: null, ms: null });
-    expect(google.calls).toHaveLength(2);
-    const roomId = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 160, tossupCount: 1, pairs: [{ tossup: { ...PAIRS[0]!.tossup, stem: 'Matches first?' } }] });
-    const host = await connect(roomId, cora.token);
-    expect((await voiceOf(host)).keys).toHaveLength(1);
-
-    // A player who has asked for the day's new recordings is read to by their device; kept ones still come.
-    setTtsTestOverrides({ apiKey: 'test-key', fetch: google.fetcher });
-    await runInDurableObject(env.USER.get(env.USER.idFromName(cora.id)), (_i, state) => {
-      state.storage.sql.exec('CREATE TABLE IF NOT EXISTS recordings_made (day TEXT PRIMARY KEY, count INTEGER NOT NULL)');
-      state.storage.sql.exec('INSERT OR REPLACE INTO recordings_made (day, count) VALUES (?, 300)', new Date().toISOString().slice(0, 10));
-    });
-    expect((await ask(`${'D'.repeat(20)}?`)).body).toEqual({ enabled: true, key: null, ms: null });
-    expect((await ask(`${'A'.repeat(30)}?`)).body.key).toMatch(/^[0-9a-f]{40}$/);
-    expect(google.calls).toHaveLength(3);
-    host.close();
-  });
-
-  it('holds the start until the questions are recorded', async () => {
-    let release = () => {};
-    const google = fakeGoogle({ hold: new Promise<void>((r) => (release = r)) });
-    setTtsTestOverrides({ apiKey: 'test-key', fetch: google.fetcher });
-    const cora = await signUp('Cora');
-    const roomId = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 160, tossupCount: 1, pairs: [{ tossup: { ...PAIRS[1]!.tossup, stem: 'A question only this test asks?' } }] });
-    const host = await connect(roomId, cora.token);
+    expect(host.welcome.room.state.match.voice.rate).toBe(1.5);
     await takeSide(host, 'A');
-    expect((await voiceOf(host, false)).state).toBe('preparing');
     host.send({ type: 'start' });
-    expect((await host.next('error')).message).toBe('The voice is still recording the questions (0 of 1). It takes a moment the first time a round is read.');
-    release();
-    await voiceOf(host);
-    host.send({ type: 'start' });
-    await view(host, (v) => v.label.startsWith('Toss-up 1'));
+    await view(host, (v) => !!v.reading?.audio, 8000);
+    expect((await matchData(roomId)).q.reading.durationMs).toBe(2000);
+    host.close();
   });
 
-  it('keeps within the monthly allowance, and gives back what a failed recording did not use', async () => {
+  it('keeps only recordings of the question’s own words, and well-formed ones', async () => {
     const cora = await signUp('Cora');
-    const month = new Date().toISOString().slice(0, 7);
-    const registry = env.REGISTRY.get(env.REGISTRY.idFromName('global'));
-    const used = async (): Promise<number> => Number(await registry.ttsCharsUsed(month));
-    const start = await used();
-    // Over the allowance: nothing is sent; devices read with their own voices.
-    const thrifty = fakeGoogle();
-    setTtsTestOverrides({ apiKey: 'test-key', fetch: thrifty.fetcher, monthlyChars: start + 5 });
-    const roomId = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 160, tossupCount: 1, pairs: [{ tossup: { ...PAIRS[0]!.tossup, stem: 'Over the allowance?' } }] });
+    const other = await recordingOf({ stem: 'Some other question?' }, 1500);
+    const pairs = [
+      { tossup: { ...PAIRS[0]!.tossup, audio: other } },
+      { tossup: { ...PAIRS[1]!.tossup, audio: { ...(await recordingOf(PAIRS[1]!.tossup, 1500)), ms: -5 } } },
+    ];
+    const roomId = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 150, tossupCount: 2, pairs });
     const host = await connect(roomId, cora.token);
-    expect(await voiceOf(host)).toMatchObject({ state: 'ready', done: 1, keys: [] });
-    expect(thrifty.calls).toEqual([]);
-    // Google fails: the characters are given back.
-    const failing = fakeGoogle({ status: 500 });
-    setTtsTestOverrides({ apiKey: 'test-key', fetch: failing.fetcher, monthlyChars: 1_000_000 });
-    const room2 = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 160, tossupCount: 1, pairs: [{ tossup: { ...PAIRS[0]!.tossup, stem: 'Google is down?' } }] });
-    const host2 = await connect(room2, cora.token);
-    expect(await voiceOf(host2)).toMatchObject({ state: 'ready', keys: [] });
-    expect(failing.calls.length).toBeGreaterThan(0);
-    expect(await used()).toBe(start);
+    expect(host.welcome.room.state.match.voice).toEqual({ rate: 1, recorded: 0, total: 2, recordings: [] });
+    const data = await matchData(roomId);
+    expect(data.voice.items).toEqual({ t1: null, t2: null });
+    expect(data.setup.pairs[1].tossup.audio).toBeUndefined();
+    host.close();
   });
 
-  it('is not used without a key: a match read aloud then has each device read with its own voice', async () => {
+  it('is not part of a match shown as text', async () => {
     const cora = await signUp('Cora');
-    const roomId = await matchRoom(cora.token, { format: 'ffa', mode: 'speech', wpm: 160, tossupCount: 1 });
+    const pairs = [{ tossup: { ...PAIRS[0]!.tossup, audio: await recordingOf(PAIRS[0]!.tossup, 1500) } }];
+    const roomId = await matchRoom(cora.token, { format: 'ffa', mode: 'text', wpm: 300, tossupCount: 1, pairs });
     const host = await connect(roomId, cora.token);
     expect(host.welcome.room.state.match.voice).toBeUndefined();
+    const data = await matchData(roomId);
+    expect(data.voice).toBeUndefined();
+    expect(data.setup.pairs[0].tossup.audio).toBeUndefined();
+    host.close();
+  });
+
+  it('serves no recordings itself: they come from the voice Workers', async () => {
+    const cora = await signUp('Cora');
+    expect((await call('/api/speech', { token: cora.token })).status).toBe(404);
+    expect((await call(`/api/speech/${'0'.repeat(40)}`, { token: cora.token })).status).toBe(404);
   });
 });

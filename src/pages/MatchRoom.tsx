@@ -157,11 +157,13 @@ export function MatchRoom({ client, snapshot, roomId }: { client: RoomClient; sn
               <RevealedText view={view} serverNow={serverNow} />
             )}
             {match.mode === 'speech' && !speech.aloud && !view.answer && view.text && (
-              <p className="small muted">This device can’t read this question aloud, so you see it as text.</p>
+              <p className="small muted">
+                {speech.unrecorded ? 'This question has no recording, so it shows as text.' : 'This device can’t play this question’s recording, so you see it as text.'}
+              </p>
             )}
             {match.mode === 'speech' && speech.blocked && (
               <button className="btn btn-primary" onClick={speech.allow}>
-                Turn on the voice
+                Turn on the sound
               </button>
             )}
             {view.status && <p className="status-line">{view.status}</p>}
@@ -235,7 +237,7 @@ export function MatchRoom({ client, snapshot, roomId }: { client: RoomClient; sn
             )}
 
             {match.mode === 'speech' && readsText.length > 0 && match.status === 'playing' && (
-              <p className="small muted">Seeing the text instead (no voice on their device): {readsText.map((m) => m.name).join(', ')}.</p>
+              <p className="small muted">Seeing the text instead (Rebound’s voice can’t play on their device): {readsText.map((m) => m.name).join(', ')}.</p>
             )}
             {!side && match.status === 'playing' && <p className="small muted">You are watching this match.</p>}
 
@@ -397,8 +399,6 @@ function Lobby({ client, snapshot, isHost, roomId, speech }: { client: RoomClien
   const bySide = (s: Side | null) => snapshot.members.filter((m) => m.side === s);
   const players = snapshot.members.filter((m) => m.side !== null);
   const ready = match.format === 'teams' ? bySide('A').length > 0 && bySide('B').length > 0 : players.length > 0;
-  // Rebound's voice records the questions first (quick when they were recorded before).
-  const recording = match.voice?.state === 'preparing';
   const link = `${location.origin}${location.pathname}#/room/${roomId}`;
 
   const join = (s: Side | null) => {
@@ -414,7 +414,7 @@ function Lobby({ client, snapshot, isHost, roomId, speech }: { client: RoomClien
   useEffect(() => {
     if (joinsByItself) client.chooseSide('A');
   }, [joinsByItself, client]);
-  const readsText = (m: RoomMember) => speech && m.readsText && <span className="small muted"> (sees the text: no voice on their device)</span>;
+  const readsText = (m: RoomMember) => speech && m.readsText && <span className="small muted"> (sees the text: Rebound’s voice can’t play on their device)</span>;
 
   const cancel = async () => {
     if (!confirm('Cancel this match? It closes for everyone in it, and its link stops working.')) return;
@@ -524,15 +524,10 @@ function Lobby({ client, snapshot, isHost, roomId, speech }: { client: RoomClien
       {isHost ? (
         <>
           <div className="row">
-            <button className="btn btn-primary btn-big" disabled={!ready || recording || cancelling} onClick={() => client.start()}>
+            <button className="btn btn-primary btn-big" disabled={!ready || cancelling} onClick={() => client.start()}>
               Start the match
             </button>
             {!ready && <span className="small muted">{match.format === 'teams' ? 'Each side needs at least one player.' : 'Someone needs to join the game.'}</span>}
-            {ready && recording && (
-              <span className="small muted">
-                Recording the questions ({match.voice!.done} of {match.voice!.total}); the match can start once they are ready.
-              </span>
-            )}
           </div>
           {cancelError && <Notice kind="error">{cancelError}</Notice>}
           <div className="row">

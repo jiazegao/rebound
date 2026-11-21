@@ -1,17 +1,15 @@
 # Rebound's voice, made on your own computer
 
 These scripts record every question in the library with [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M), an
-open text-to-speech model (Apache 2.0) that runs on your own graphics card, instead of Google's voice. Each question
-becomes one MP3 named the way the server names recordings (a hash of the voice and the words the server says, from
-`server/src/tts.ts`), so once they are uploaded the server can find them. The whole library is about 23,600
-recordings, 70 hours of speech and 1.5 GB.
+open text-to-speech model (Apache 2.0) that runs on your own graphics card, and put the recordings online: they are
+Rebound's voice for solo practice and online matches read aloud. Each question becomes one MP3 named by a hash of the
+voice and the words the site says for it (`src/core/speech.ts`), so the site finds each question's recording. The
+whole library is about 23,600 recordings, 76 hours of speech and 1.65 GB.
 
-- `export-library.ts` lists the questions with the exact words the server reads (pronunciation guides left out, math
+- `export-library.ts` lists the questions with the exact words the site reads (pronunciation guides left out, math
   and chemistry said in words) and each recording's name.
-- `kokoro_voice.py` records them (`generate`), listens back with Whisper to find mistakes (`check`), and says a line
-  so you can fix how a word comes out (`try`).
-
-Uploading the recordings and having matches and solo practice play them is the next step; it is not built yet.
+- `kokoro_voice.py` records them (`generate`), listens back with Whisper to find mistakes (`check`), says a line so
+  you can fix how a word comes out (`try`), and puts the recordings online (`publish`, in `publish.py`).
 
 The commands below are for PowerShell on Windows, run from your clone of this repository (after `npm ci`).
 
@@ -56,9 +54,10 @@ Another voice: export again with `--voice`, for example `--voice kokoro:am_micha
 `--voice kokoro:bf_emma` (British). `af_heart`, the default, is rated Kokoro's best. A speed goes after the voice:
 `--voice kokoro:af_heart@0.9` is 10% slower. The voice and speed are part of each recording's name, so changing
 either makes a new set. Counted the way the site counts reading speed (6 characters a word), `af_heart` at speed 1
-says about 150 words a minute over typical questions; the site expects its recorded voice to say about 160
-(`NATURAL_WPM` in `src/core/speech.ts`). `am_fenrir` and `bf_emma` are about 10% quicker than `af_heart`, and
-`am_michael` about 7% slower.
+says 150 words a minute over the library (`NATURAL_WPM` in `src/core/speech.ts`, which sets how fast the recordings
+play for a chosen reading speed). `am_fenrir` and `bf_emma` are about 10% quicker than `af_heart`, and `am_michael`
+about 7% slower. The site plays one voice, `RECORDED_VOICE` in `src/core/speech.ts`: changing it means recording and
+publishing the whole library again.
 
 ## 3. Fixing a word
 
@@ -163,5 +162,43 @@ On an RTX 5070 Ti, Whisper takes about 0.4 seconds a recording: about 2½ hours 
 (`heard.jsonl`), so stop it any time and run it again to go on; a recording made again since is heard again. To go
 faster, run `check --shard 1/3`, `check --shard 2/3` and `check --shard 3/3` in separate windows (under 2 hours), then
 `check` once more to make the list from all three.
+
+## 6. Publish
+
+The recordings are served by two small Cloudflare Workers that only hold files, `rebound-voice-1` (names starting 0
+to 7) and `rebound-voice-2` (8 to f): a Worker on Cloudflare's free plan holds up to 20,000 files, and serving them
+is free, with no daily limit. Once, set up wrangler and sign in to the Cloudflare account that runs Rebound's server:
+
+```powershell
+cd server; npm ci; npx wrangler login; cd ..
+```
+
+Then, each time:
+
+```powershell
+python scripts/voice/kokoro_voice.py publish --dry-run
+python scripts/voice/kokoro_voice.py publish
+```
+
+`publish` first runs the export itself, so it always publishes what the site needs now; if a recording is missing
+(the library or how a question is said changed since `generate`), it stops and says so: export, generate, and
+publish again. It measures every recording (its length as a browser plays it, and a fingerprint of the file), puts
+each Worker together in `voice/publish` (links to the recordings, so no extra space), uploads them (only files that are
+new or changed), fetches a few back to check them, and writes the site's index, `public/data/voice`: `index.json`
+(the voice, the Workers' addresses and the sample line) and one file per set, each recording's length in ms and
+fingerprint. `--dry-run` stops before uploading. Then commit the index; the site plays a question from its
+recording only once the index on the live site lists it:
+
+```powershell
+git add public/data/voice
+git commit -m "Rebound's voice: the published recordings"
+```
+
+A question that has no recording, such as a team's own packets, is shown as text. The first upload sends 1.65 GB.
+With more than one Cloudflare account, add `--account <account ID>` (`npx wrangler whoami` lists them). The tests of
+`publish.py` run with `python -m unittest discover -s scripts/voice -p "test_*.py"`.
+
+The site's tests check that every question in the library is in the index (`src/lib/voice.test.ts`): after a change to
+the library or to how questions are said, export, generate and publish again before it goes live.
 
 The generated files stay out of git (`voice/` is ignored).
