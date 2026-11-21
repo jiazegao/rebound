@@ -16,7 +16,8 @@ export async function checkKey(log: (line: string) => void = console.log): Promi
   const variable = keyVariable();
   if (!variable) {
     log(`No key: neither ${KEY_VARIABLES.join(' nor ')} is set in this session.`);
-    log('In a Claude Code cloud session, a variable added to the environment reaches the sessions started after it was added, not one that was already running.');
+    log(`In a Claude Code cloud session, save the key on the environment as ${KEY_VARIABLES[0]}: a variable called ${KEY_VARIABLES[1]} is kept from the commands a session runs.`);
+    log('A variable reaches the sessions started after it was saved, not one that was already running.');
     return false;
   }
   log(`Found a key in ${variable}.`);

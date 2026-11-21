@@ -168,12 +168,12 @@ nothing else, so the solver cannot be shown the answer by accident.
   replies are saved as they arrive, so a run that is stopped or repeated never pays for the same answer twice.
   A changed prompt starts a new folder of replies; an unchanged one reuses what it has.
 
-Two things differ inside a Claude Code cloud session. A variable added to the cloud environment reaches the
-sessions started after it was added: the session this was built in was already running when the key was
-added, and never received it, even after its machine restarted. The second name, `REBOUND_ANTHROPIC_API_KEY`,
-is there in case `ANTHROPIC_API_KEY`, which also controls Claude Code's own sign-in, is kept from the commands
-a session runs. And `ANTHROPIC_BASE_URL` points at the session's own service, so `llm.ts` sets the API's
-address itself.
+Two things differ inside a Claude Code cloud session. A variable called `ANTHROPIC_API_KEY`, saved on the
+cloud environment, is kept from the commands a session runs: on 21 November 2026 neither the session this was
+built in nor one started after the variable was saved could see it. (That name also controls Claude Code's own
+sign-in.) So save the key on the environment as `REBOUND_ANTHROPIC_API_KEY`. By Claude Code's documentation a
+variable reaches the sessions started after it was saved, so the trials then need a new session. And
+`ANTHROPIC_BASE_URL` points at the session's own service, so `llm.ts` sets the API's address itself.
 
 ## The round plan
 

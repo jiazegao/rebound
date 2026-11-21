@@ -13,10 +13,11 @@
  * run that is interrupted picks the batch up again instead of paying for it twice.
  *
  * The key is read from the REBOUND_ANTHROPIC_API_KEY environment variable, or ANTHROPIC_API_KEY when that is
- * not set, and is never printed or written anywhere. The first name is there in case ANTHROPIC_API_KEY, the
- * name that also controls Claude Code's own sign-in, is kept from the commands a Claude Code cloud session
- * runs. The address is fixed for a like reason: inside such a session ANTHROPIC_BASE_URL points at the
- * session's own service, which the SDK would otherwise pick up.
+ * not set, and is never printed or written anywhere. The first name is there because a variable called
+ * ANTHROPIC_API_KEY, saved on a Claude Code cloud environment, is kept from the commands its sessions run:
+ * on 21 November 2026 a session started after the variable was saved could not see it. (That name also
+ * controls Claude Code's own sign-in.) The address is fixed for a like reason: inside such a session
+ * ANTHROPIC_BASE_URL points at the session's own service, which the SDK would otherwise pick up.
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
