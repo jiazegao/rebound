@@ -233,8 +233,9 @@ scripts/studio/      builds public/data/doe/fingerprints.json for the writing st
 scripts/rules/       the fall check for next season's rulebook (run by .github/workflows/rules-watch.yml)
 scripts/icons/       renders the app icons with Playwright
 scripts/visual/      builds the public-domain photo set for the Visual lab
-scripts/gen/         the question pipeline's foundations: DOE's style in numbers, house-style checks, library search
-                     for duplicates, the national lab table, source lists and the question ledger (see its README.md)
+scripts/gen/         the question pipeline: DOE's style in numbers, house-style checks, library search for
+                     duplicates, the national lab table, source lists, the question ledger, the round plan, and
+                     the steps a model does with the trials that measure them (see its README.md)
 e2e/                 browser tests (the smoke test, the team-server test with several accounts, matches read aloud,
                      middle school), the accounts helper they share, a stand-in for the recorded voice, and a small
                      fixture question set

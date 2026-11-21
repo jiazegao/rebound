@@ -21,7 +21,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CORE_SUBJECTS, type CoreSubject, type Level, type Question, type QuestionKind } from '../../../src/core/schema';
 import { DOE_ERRATA } from '../../../src/core/importers/doeErrata';
-import { loadLibrary, type LibraryQuestion } from '../library';
+import { eligible, loadLibrary, tierOf, type LibraryQuestion } from '../library';
 import type { ModelApi, ModelReply } from '../llm';
 import { plain } from '../text';
 import type { Tier } from '../types';
@@ -38,23 +38,7 @@ export interface SampleItem {
   question: Question;
 }
 
-/** The first season sampled: the 23-pair era and after, the style closest to today's. */
-export const SAMPLE_FROM_YEAR = 2014;
 export const SAMPLE_SEED = 20261121;
-
-const NEEDS_A_FIGURE = /\b(shown|pictured|figure|diagram|illustrated|image|graph (below|above|shown))\b/i;
-
-/** Questions a model can fairly be asked: complete, unflagged, in a current category, needing no picture. */
-export function eligible(library: readonly LibraryQuestion[], fromYear = SAMPLE_FROM_YEAR): LibraryQuestion[] {
-  return library.filter((x) => {
-    const q = x.question;
-    if ((x.year ?? 0) < fromYear || !(CORE_SUBJECTS as string[]).includes(q.subject)) return false;
-    if (q.flags?.length || q.visual || q.figure || NEEDS_A_FIGURE.test(q.stem) || !q.stem.trim() || !q.answer.trim()) return false;
-    return q.format === 'short_answer' || (!!q.choices && !!q.answerLetter);
-  });
-}
-
-export const tierOf = (round: number): Tier => (round <= 10 ? 'early' : 'late');
 
 /** The sample: `perCell` questions for each level, category and tier, half toss-ups and half bonuses. */
 export function sampleDoe(library: readonly LibraryQuestion[], perCell = 50, seed = SAMPLE_SEED): SampleItem[] {

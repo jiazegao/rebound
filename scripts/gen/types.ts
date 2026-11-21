@@ -42,6 +42,19 @@ export interface Idea {
   method?: string;
 }
 
+/** A dated item from a national lab's news page: what an Energy question is written from (step 2). */
+export interface NewsItem {
+  id: string;
+  /** The lab's current name, as the lab table has it. */
+  lab: string;
+  /** When the lab published it, "YYYY-MM-DD". */
+  date: string;
+  url: string;
+  title: string;
+  /** Two sentences on the research. */
+  summary: string;
+}
+
 /** Where a fact comes from. */
 export interface SourceRef {
   title: string;

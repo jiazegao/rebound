@@ -13,8 +13,13 @@
  * together ("lichens" with "lichen") was tried and did not help: it moved one more pair into the top 10 and
  * pushed another out of the top 20.
  *
- * `nearCopies` is that fingerprint check plus shared three-word runs, for drafts that are close to word for
- * word: those need no judge.
+ * `nearCopies` is for drafts that are close to word for word, which need no judge: 60% of three-word runs
+ * shared with a library question, or the studio's fingerprint match together with 30%. The plan proposed 30%
+ * alone. Measured, that is far too low: it called one in five of DOE's own 2019–22 questions a copy of another
+ * library question, most of them different questions that share a stock phrase ("…is an example of what class
+ * of…"), and it rejected three of the pilot's final questions that its checkers had passed. From 60% up, the
+ * pairs are the same sentence with a number or a name changed. A fingerprint match alone is not enough either:
+ * among the pilot's drafts it paired a question about a prism with one about planets.
  *
  *   npx tsx scripts/gen/search.ts --stem "…" --answer "…" [--choices "a|b|c|d"] [--top 20]   (npm run gen:search --)
  */
@@ -58,7 +63,9 @@ export interface SearchIndex {
 /** How many of each list `neighbours` takes: the depth the pilot's pairs were measured at. */
 export const TOP = 20;
 /** A draft sharing this much of its three-word runs with a question is a near copy. */
-export const NEAR_COPY_SHARED = 0.3;
+export const NEAR_COPY_SHARED = 0.6;
+/** A fingerprint match counts as a near copy only with this much of the three-word runs shared as well. */
+export const NEAR_COPY_WITH_FINGERPRINT = 0.3;
 /** BM25's two standard settings: how fast repeats of a word stop counting, and how much length is evened out. */
 const K1 = 1.2;
 const B = 0.75;
@@ -172,8 +179,8 @@ function sharedRuns(a: Set<string>, text: string): number {
 }
 
 /**
- * Questions the draft all but copies: a fingerprint within the studio's 9 bits, or 30% of three-word runs
- * shared. These are rejected without asking a judge.
+ * Questions the draft all but copies: 60% of three-word runs shared, or a fingerprint within the studio's
+ * 9 bits together with 30%. These are rejected without asking a judge.
  */
 export function nearCopies(index: SearchIndex, q: Query): NearCopy[] {
   const text = questionText(q);
@@ -190,7 +197,7 @@ export function nearCopies(index: SearchIndex, q: Query): NearCopy[] {
     const e = index.entries[i]!;
     const bits = hamming(fingerprint, e.fingerprint);
     const shared = sharedRuns(runs, questionText(e.item));
-    if ((longEnough && bits <= NEAR_DUPLICATE_BITS) || shared >= NEAR_COPY_SHARED) out.push({ id: e.item.id, bits, shared: Math.round(1000 * shared) / 1000 });
+    if (shared >= NEAR_COPY_SHARED || (longEnough && bits <= NEAR_DUPLICATE_BITS && shared >= NEAR_COPY_WITH_FINGERPRINT)) out.push({ id: e.item.id, bits, shared: Math.round(1000 * shared) / 1000 });
   }
   return out.sort((a, b) => b.shared - a.shared || a.bits - b.bits || a.id.localeCompare(b.id));
 }

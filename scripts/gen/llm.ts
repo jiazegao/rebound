@@ -12,16 +12,28 @@
  * half and usually finishes within an hour. A batch's id is written to a file before anything else, so a
  * run that is interrupted picks the batch up again instead of paying for it twice.
  *
- * The key is read from the ANTHROPIC_API_KEY environment variable and is never printed or written anywhere.
- * The address is fixed: inside a Claude Code session ANTHROPIC_BASE_URL points at the session's own service,
- * which the SDK would otherwise pick up.
+ * The key is read from the REBOUND_ANTHROPIC_API_KEY environment variable, or ANTHROPIC_API_KEY when that is
+ * not set, and is never printed or written anywhere. The first name is there in case ANTHROPIC_API_KEY, the
+ * name that also controls Claude Code's own sign-in, is kept from the commands a Claude Code cloud session
+ * runs. The address is fixed for a like reason: inside such a session ANTHROPIC_BASE_URL points at the
+ * session's own service, which the SDK would otherwise pick up.
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 export const API_BASE = 'https://api.anthropic.com';
-export const KEY_VARIABLE = 'ANTHROPIC_API_KEY';
+/** Where the key is looked for, in this order. */
+export const KEY_VARIABLES = ['REBOUND_ANTHROPIC_API_KEY', 'ANTHROPIC_API_KEY'] as const;
+
+/** The key and the variable it came from, or null. */
+function keyFromEnvironment(): { key: string; variable: string } | null {
+  for (const variable of KEY_VARIABLES) {
+    const key = process.env[variable]?.trim();
+    if (key) return { key, variable };
+  }
+  return null;
+}
 
 /* ------------------------------------------------------------------ */
 /* Prices                                                              */
@@ -230,13 +242,14 @@ export interface ModelApi {
 /** The key was refused, or the account cannot pay: nothing more should be sent. */
 export class KeyError extends Error {}
 
-export function hasKey(): boolean {
-  return !!process.env[KEY_VARIABLE]?.trim();
+/** The name of the variable the key was found in, or null when there is no key. */
+export function keyVariable(): string | null {
+  return keyFromEnvironment()?.variable ?? null;
 }
 
 /** The Claude API, with the key from the environment. */
-export function claudeApi(apiKey = process.env[KEY_VARIABLE]?.trim()): ModelApi & { client: Anthropic } {
-  if (!apiKey) throw new KeyError(`No Claude API key: the ${KEY_VARIABLE} environment variable is not set.`);
+export function claudeApi(apiKey = keyFromEnvironment()?.key): ModelApi & { client: Anthropic } {
+  if (!apiKey) throw new KeyError(`No Claude API key: neither ${KEY_VARIABLES.join(' nor ')} is set in the environment.`);
   const client = new Anthropic({ apiKey, authToken: null, baseURL: API_BASE, maxRetries: 4, timeout: 15 * 60_000 });
   return {
     client,

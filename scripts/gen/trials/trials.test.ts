@@ -1,11 +1,10 @@
-import type Anthropic from '@anthropic-ai/sdk';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { libraryBuilt, loadLibrary } from '../library';
-import type { BatchResult, ModelApi } from '../llm';
+import { eligible, libraryBuilt, loadLibrary, tierOf } from '../library';
 import { asRead, asReadWithAnswer } from '../steps/show';
+import { standIn as fake } from './standin';
 
 // The trials keep their replies and their record of spending in the bank folder: a throwaway one here.
 const bank = mkdtempSync(path.join(tmpdir(), 'rebound-trials-'));
@@ -13,46 +12,8 @@ process.env.REBOUND_BANK = bank;
 afterAll(() => rmSync(bank, { recursive: true, force: true }));
 
 const { seeded, separation, shuffled, trialArgs } = await import('./common');
-const { anchorsFor, eligible, known, rate, sampleDoe, solve, tierOf } = await import('./doe');
+const { anchorsFor, known, rate, sampleDoe, solve } = await import('./doe');
 const { judgeTrial } = await import('./judge');
-
-type Params = Anthropic.MessageCreateParamsNonStreaming;
-
-/** A stand-in for the API that answers each request from its own text. */
-function fake(answer: (user: string, system: string) => unknown): ModelApi & { calls: number } {
-  const message = (params: Params): Anthropic.Message =>
-    ({
-      id: 'msg',
-      type: 'message',
-      role: 'assistant',
-      model: params.model,
-      content: [{ type: 'text', text: JSON.stringify(answer(String(params.messages[0]!.content), (params.system as Array<{ text: string }>)[0]!.text)), citations: null }],
-      stop_reason: 'end_turn',
-      stop_sequence: null,
-      stop_details: null,
-      usage: { input_tokens: 100, output_tokens: 400, output_tokens_details: { thinking_tokens: 250 }, cache_creation_input_tokens: 0, cache_read_input_tokens: 700, server_tool_use: null },
-    }) as unknown as Anthropic.Message;
-  let batch: Array<{ custom_id: string; params: Params }> = [];
-  const api = {
-    calls: 0,
-    async create(params: Params) {
-      api.calls += 1;
-      return message(params);
-    },
-    async batchCreate(requests: Array<{ custom_id: string; params: Params }>) {
-      batch = requests;
-      api.calls += requests.length;
-      return 'batch_1';
-    },
-    async batchEnded() {
-      return { ended: true, processing: 0 };
-    },
-    async batchResults(): Promise<BatchResult[]> {
-      return batch.map((r) => ({ id: r.custom_id, message: message(r.params) }));
-    },
-  };
-  return api;
-}
 
 describe('the trials’ arithmetic', () => {
   it('draws the same random numbers for the same seed', () => {

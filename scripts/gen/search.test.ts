@@ -80,6 +80,35 @@ describe('near copies', () => {
     expect(nearCopies(index, copy).map((c) => c.id)).toEqual(['a']);
     expect(nearCopies(index, { stem: 'Seismic S waves cannot pass through which layer of Earth?', answer: 'OUTER CORE' })).toEqual([]);
   });
+
+  it('does not call a different question a copy for sharing a stock phrase', () => {
+    // "What is the … most abundant gas in Earth’s atmosphere?" is asked of nitrogen and of argon: two questions.
+    expect(nearCopies(index, { stem: 'What is the second most abundant gas in Earth’s atmosphere?', answer: 'OXYGEN' })).toEqual([]);
+  });
+});
+
+// The pilot's drafts against the real library: what the near-copy rule may reject without a judge, and what it may not.
+describe.skipIf(!libraryBuilt())('near copies among the pilot’s drafts', () => {
+  const read = <T,>(file: string) => JSON.parse(readFileSync(path.join(DATA_DIR, 'eval', file), 'utf8')) as T;
+  const index = buildIndex(loadLibrary().map((x) => x.question));
+  const query = (d: { stem: string; answer: string; choices?: Record<string, string> }): Query => ({ stem: d.stem, answer: d.answer, ...(d.choices ? { choices: d.choices } : {}) });
+
+  it('rejects none of the final questions the pilot’s checkers passed', () => {
+    const { questions } = read<{ questions: Array<{ id: string; label: string; stem: string; answer: string; choices?: Record<string, string> }> }>('pilot-final.json');
+    const kept = questions.filter((d) => d.label !== 'same');
+    expect(kept.length).toBeGreaterThan(60);
+    // At the plan's 30%, three of these were rejected: two calculations with other numbers, and the angle sum of another polygon.
+    expect(kept.filter((d) => nearCopies(index, query(d)).length > 0).map((d) => d.id)).toEqual([]);
+  });
+
+  it('still catches the drafts that repeat a library question nearly word for word', () => {
+    const { pairs } = read<{ pairs: Array<{ id: string; label: string; stem: string; answer: string; choices?: Record<string, string>; matches: string[] }> }>('duplicate-pairs.json');
+    const caught = pairs.filter((p) => nearCopies(index, query(p)).length > 0);
+    expect(caught.every((p) => p.label === 'same')).toBe(true);
+    expect(caught.map((p) => p.stem)).toEqual(expect.arrayContaining(['Which of the following elements is a metalloid?']));
+    // Every one it catches is caught for the library question the pilot matched it with.
+    for (const p of caught) expect(nearCopies(index, query(p)).some((c) => p.matches.includes(c.id)), p.id).toBe(true);
+  });
 });
 
 interface LabelledPair {

@@ -21,8 +21,11 @@
     "gen:check": "tsx scripts/gen/check.ts",
     "gen:search": "tsx scripts/gen/search.ts",
     "gen:key": "tsx scripts/gen/key.ts",
+    "gen:plan": "tsx scripts/gen/plan.ts",
     "gen:trial:judge": "tsx scripts/gen/trials/judge.ts",
-    "gen:trial:doe": "tsx scripts/gen/trials/doe.ts"
+    "gen:trial:doe": "tsx scripts/gen/trials/doe.ts",
+    "gen:trial:checks": "tsx scripts/gen/trials/checks.ts",
+    "gen:trial:writers": "tsx scripts/gen/trials/writers.ts"
   },
   "dependencies": {
     "docx": "^9.14.0",

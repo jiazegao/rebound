@@ -3,20 +3,23 @@
  *
  *   npx tsx scripts/gen/key.ts        (npm run gen:key)
  *
- * It looks for the key in the ANTHROPIC_API_KEY environment variable, asks the API which models the key can
- * use (free), and makes one very small paid call, to show that the account can pay. It prints what it found
- * and never the key itself. Exits with 1 when the key is missing or does not work.
+ * It looks for the key in the REBOUND_ANTHROPIC_API_KEY environment variable (then ANTHROPIC_API_KEY), asks
+ * the API which models the key can use (free), and makes one very small paid call, to show that the account
+ * can pay. It prints what it found and never the key itself. Exits with 1 when the key is missing or does
+ * not work.
  */
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ask, claudeApi, hasKey, KEY_VARIABLE, KeyError, PRICES } from './llm';
+import { ask, claudeApi, KEY_VARIABLES, KeyError, keyVariable, PRICES } from './llm';
 
 export async function checkKey(log: (line: string) => void = console.log): Promise<boolean> {
-  if (!hasKey()) {
-    log(`No key: the ${KEY_VARIABLE} environment variable is not set in this session.`);
-    log('In a Claude Code cloud session, a variable added to the environment reaches a session when it starts, or when it next wakes after being idle.');
+  const variable = keyVariable();
+  if (!variable) {
+    log(`No key: neither ${KEY_VARIABLES.join(' nor ')} is set in this session.`);
+    log('In a Claude Code cloud session, a variable added to the environment reaches the sessions started after it was added, not one that was already running.');
     return false;
   }
+  log(`Found a key in ${variable}.`);
   try {
     const api = claudeApi();
     const available = new Set<string>();
