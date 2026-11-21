@@ -72,6 +72,7 @@ describe('symbols in words', () => {
     ['log₂ 8', 'log base 2 of 8'],
     ['−2√5 and i√2', 'negative 2 times the square root of 5 and i times the square root of 2'],
     ['⁴√81', 'the fourth root of 81'],
+    ['cos θ = −√3/2 and Z) –√x', 'cos theta equals the negative square root of 3 over 2 and Z) the negative square root of x'],
     ['x/y and mg/Q', 'x over y and mg over Q'],
     ['a DC/DC converter, UV/Vis, the K/T boundary', 'a DC to DC converter, UV Vis, the K T boundary'],
     ['6.5°C/km and 150 km/s', '6.5 degrees Celsius per km and 150 km per s'],
@@ -164,6 +165,13 @@ describe('what is said', () => {
     // A guide that reads across a comma reads the math before the comma too.
     expect(sayAll('Given f(x) = tanx/secx, find f’(2π/3) [Given f of x equals tangent of x over secant of x, find f prime of 2 pi over 3].')).toBe(
       'Given f of x equals tangent of x over secant of x, find f prime of 2 pi over 3.',
+    );
+    // A matrix written in rows is read by its guide across its commas and semicolons.
+    expect(sayAll('the inverse of the 2 by 2 matrix (3, 1; 5, 2) [row 1: 3, 1; row 2: 5, 2].')).toBe(
+      'the inverse of the 2 by 2 matrix row 1: 3, 1; row 2: 5, 2.',
+    );
+    expect(sayAll('equal to 3(−2, 1; 0, 5) − (4, 0; −4, 1) [3 times the 2 by 2 matrix with row 1: -2, 1, and row 2: 0, 5 minus the 2 by 2 matrix row 1: 4, 0, and row 2: negative 4, 1]')).toBe(
+      'equal to 3 times the 2 by 2 matrix with row 1: negative 2, 1, and row 2: 0, 5 minus the 2 by 2 matrix row 1: 4, 0, and row 2: negative 4, 1',
     );
   });
 

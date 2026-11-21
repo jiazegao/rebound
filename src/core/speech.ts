@@ -149,6 +149,9 @@ const WORDS: Array<[RegExp, string | ((...groups: string[]) => string)]> = [
   [/[°º]\s?C\b/gu, ' degrees Celsius'],
   [/[°º]\s?F\b/gu, ' degrees Fahrenheit'],
   [/[°º]/gu, ' degrees'],
+  // A minus sign right before a root is its sign, as DOE's guides say it: "cos θ = −√3/2" is "cos theta equals the
+  // negative square root of 3 over 2".
+  [/(^|[\s(=])[−–]√/gu, '$1the negative square root of '],
   // A root multiplied by what is written right before it: "−2√5" is "negative 2 times the square root of 5".
   [/(?<=[\w)²³])√/gu, ' times the square root of '],
   [/√/gu, ' the square root of '],
@@ -445,8 +448,10 @@ function squashed(text: string): string {
  */
 function readByGuide(raw: string, guide: string, first: boolean): boolean {
   // A comma ends the math a guide reads, unless the guide reads across one ("Given f(x) = tanx/secx, find f′(2π/3)
-  // [Given f of x equals tangent of x over secant of x, find f prime of 2 pi over 3]").
-  const token = raw.endsWith(',') && guide.includes(',') ? raw.slice(0, -1) : raw;
+  // [Given f of x equals tangent of x over secant of x, find f prime of 2 pi over 3]"); a matrix written in rows,
+  // "(3, 1; 5, 2) [row 1: 3, 1; row 2: 5, 2]", is read across its commas and semicolons.
+  const matrix = /[,;]$/.test(raw) && /\b(?:matri(?:x|ces)|rows?)\b/i.test(guide);
+  const token = (raw.endsWith(',') && guide.includes(',')) || matrix ? raw.slice(0, -1) : raw;
   if (/[:;,.?]$/.test(token) || (/!$/.test(token) && !(FACTORIAL.test(token) && /factorial/i.test(guide))) || /^[WXYZ]\)$/.test(token)) return false;
   if (GENOTYPE.test(token) && SIZES.test(guide)) return true;
   const operator = OPERATORS.find(([op]) => op.test(token));
