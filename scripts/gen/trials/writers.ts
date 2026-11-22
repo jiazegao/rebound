@@ -23,15 +23,18 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { CoreSubject, Level } from '../../../src/core/schema';
-import { ideaGroups, makeDrafts, type FlowResult, type SlotRun, type Stage } from '../flow';
+import { ideaGroups, makeDrafts, otherAnswersToAsk, solverDoubts, type FlowResult, type SlotRun, type Stage } from '../flow';
 import { loadLabs } from '../labs';
 import { BANK_DIR } from '../ledger';
 import { loadLibrary, topicsById, type LibraryQuestion } from '../library';
-import type { ModelApi } from '../llm';
+import type { ModelApi, ModelReply } from '../llm';
 import { loadTopicCounts, planRound } from '../plan';
 import { loadProfile } from '../profile';
 import { buildIndex } from '../search';
+import { MATCH_PROMPT, matchRequest, readMatch } from '../steps/match';
+import { RATE_PROMPT, rateRequest, readRating, type Anchors } from '../steps/rate';
 import { asReadWithAnswer } from '../steps/show';
+import { compare, readSolution, SOLVE_PROMPT, solveRequest } from '../steps/solve';
 import { median, wordCount } from '../text';
 import type { Slot, Tier } from '../types';
 import { runTrial, trial, trialArgs, writeSummary, type TrialArgs } from './common';
@@ -126,6 +129,49 @@ function details(result: FlowResult) {
   }));
 }
 
+/**
+ * One checker's view of every writer's questions. The flow gives each writer's questions to a checker that is
+ * not the writer, so two writers are checked by two models, and their figures cannot be set side by side. Here
+ * the same model solves and rates all of them, its own writing included, so that the sets can be compared on
+ * one scale. A model checking its own questions shares its own blind spots: this is a measurement, never a check.
+ */
+export async function oneCheckersView(checker: string, results: ReadonlyMap<string, FlowResult>, anchorsOf: (slot: Slot) => Anchors, name: (stage: string, writer: string, model: string, prompt: string) => string, args: TrialArgs, api?: ModelApi) {
+  const sets = [];
+  for (const [writer, result] of results) {
+    const through = result.runs.filter((r) => r.outcome !== 'ended');
+    let doubted: number;
+    let ratings: number[];
+    let cost = 0;
+    if (checkerFor(writer) === checker) {
+      // The flow already had this model check these questions.
+      doubted = through.filter((r) => r.doubts.length > 0).length;
+      ratings = through.map((r) => r.rating).filter((x): x is number => typeof x === 'number');
+    } else {
+      const question = (r: SlotRun) => r.written!.draft.question;
+      const solveRequests = through.map((r) => solveRequest(`solve-${r.slot.id}`, question(r), r.slot.level, checker));
+      const solveReplies = await runTrial(name('view-solve', writer, checker, SOLVE_PROMPT), solveRequests, args, 900, api);
+      const solutions = new Map(through.map((r) => [r.slot.id, solveReplies.get(`solve-${r.slot.id}`) ? readSolution(solveReplies.get(`solve-${r.slot.id}`)!) : null]));
+      const disputed = through.filter((r) => solutions.get(r.slot.id) && question(r).format === 'short_answer' && compare(question(r), solutions.get(r.slot.id)!) !== 'agrees');
+      const asked = through.flatMap((r) => (solutions.get(r.slot.id) ? otherAnswersToAsk(question(r), solutions.get(r.slot.id)!).map((answer, i) => ({ r, answer, id: `other-${r.slot.id}-${i + 1}` })) : []));
+      const matchRequests = [...disputed.map((r) => matchRequest(`match-${r.slot.id}`, question(r), solutions.get(r.slot.id)!.answer, r.slot.level, IDEA_JUDGE)), ...asked.map((a) => matchRequest(a.id, question(a.r), a.answer, a.r.slot.level, IDEA_JUDGE))];
+      const matchReplies = matchRequests.length ? await runTrial(name('view-match', writer, IDEA_JUDGE, `${MATCH_PROMPT}-${checker}`), matchRequests, args, 150, api) : new Map<string, ModelReply>();
+      const ruling = (id: string) => (matchReplies.get(id) ? readMatch(matchReplies.get(id)!) : null);
+      doubted = through.filter((r) => {
+        const solution = solutions.get(r.slot.id);
+        if (!solution) return true;
+        const others = question(r).format === 'short_answer' ? asked.filter((a) => a.r === r && ruling(a.id)?.verdict !== 'accept').map((a) => a.answer) : undefined;
+        return solverDoubts(r.slot, question(r), solution, ruling(`match-${r.slot.id}`), others).length > 0;
+      }).length;
+      const rateRequests = through.map((r) => rateRequest(`rate-${r.slot.id}`, question(r), r.slot.level, anchorsOf(r.slot), checker));
+      const rateReplies = await runTrial(name('view-rate', writer, checker, RATE_PROMPT), rateRequests, args, 300, api);
+      ratings = through.map((r) => (rateReplies.get(`rate-${r.slot.id}`) ? readRating(rateReplies.get(`rate-${r.slot.id}`)!)?.score : undefined)).filter((x): x is number => typeof x === 'number');
+      for (const reply of [...solveRequests.map((q) => solveReplies.get(q.id)), ...matchRequests.map((q) => matchReplies.get(q.id)), ...rateRequests.map((q) => rateReplies.get(q.id))]) cost += reply?.cost ?? 0;
+    }
+    sets.push({ writer, itsOwnWriting: writer === checker, questions: through.length, withADoubt: doubted, withADoubtShare: share(doubted, through.length), meanRating: mean(ratings), costOfThisView: dollars(cost) });
+  }
+  return { checker, sets };
+}
+
 export interface WritersOptions {
   level: Level;
   tier: Tier;
@@ -149,6 +195,8 @@ export async function writersTrial(library: LibraryQuestion[], options: WritersO
   };
   console.log(`${slots.length} ${options.level} ${options.tier}-round slots without Energy, in ${ideaGroups(slots).length} idea requests, for each of ${options.writers.join(' and ')}.`);
   const scores = [];
+  const results = new Map<string, FlowResult>();
+  const name = (stage: string, writer: string, model: string, prompt: string) => `writers-${options.level}-${options.tier}-${slots.length}-${writer}-${stage}-${model}-${prompt}`.toLowerCase();
   for (const writer of options.writers) {
     const checker = checkerFor(writer);
     const result = await makeDrafts(slots, { writer, ideaJudge: IDEA_JUDGE, matcher: IDEA_JUDGE, checker }, {
@@ -159,8 +207,9 @@ export async function writersTrial(library: LibraryQuestion[], options: WritersO
       checks,
       anchors: anchorsOf,
       salt: `writers/${options.level}/${options.tier}`,
-      send: (stage, model, prompt, requests, expected) => runTrial(`writers-${options.level}-${options.tier}-${slots.length}-${writer}-${stage}-${model}-${prompt}`.toLowerCase(), requests, args, expected, api),
+      send: (stage, model, prompt, requests, expected) => runTrial(name(stage, writer, model, prompt), requests, args, expected, api),
     });
+    results.set(writer, result);
     const s = score(writer, checker, result);
     scores.push(s);
     const file = path.join(BANK_DIR, 'trials', `writers-${options.level}-${options.tier}-${slots.length}-${writer}.json`.toLowerCase());
@@ -170,8 +219,17 @@ export async function writersTrial(library: LibraryQuestion[], options: WritersO
     console.log(`  Cost $${s.cost.total.toFixed(2)} ($${s.cost.writing.toFixed(2)} writing, $${s.cost.checking.toFixed(2)} checking): $${s.cost.perPassed ?? '—'} a clean question, ${s.cost.passedPerDollar ?? '—'} clean questions a dollar. Mean difficulty rating of the clean ones: ${s.difficulty.passed ?? '—'}.`);
     console.log(`  The questions are in ${file}`);
   }
+  // Each checker's view of both sets, so that they can be compared on one scale.
+  const views = [];
+  if (options.writers.length > 1) {
+    for (const checker of new Set(options.writers.map(checkerFor))) {
+      const view = await oneCheckersView(checker, results, anchorsOf, name, args, api);
+      views.push(view);
+      console.log(`\nAs ${checker} sees them: ${view.sets.map((v) => `${v.writer}'s questions${v.itsOwnWriting ? ' (its own)' : ''}: ${v.withADoubt} of ${v.questions} with a doubt, mean rating ${v.meanRating ?? '—'}`).join('; ')}.`);
+    }
+  }
   const summary = {
-    about: 'Two writers on the same slots (scripts/gen/trials/writers.ts), each through ideas, the idea screen, writing, the house-style checks with one repair, the text screen, one blind solver and the difficulty rating. "passed" came through with no doubt raised; "toSecondLook" came through with one for the second look to settle. A checker is never the writer\'s own model, so the two set-ups are checked by different models. The questions themselves are unreleased and are not in this file.',
+    about: 'Two writers on the same slots (scripts/gen/trials/writers.ts), each through ideas, the idea screen, writing, the house-style checks with one repair, the text screen, one blind solver and the difficulty rating. "passed" came through with no doubt raised; "toSecondLook" came through with one for the second look to settle. A checker is never the writer\'s own model, so the two set-ups are checked by different models: "oneCheckersView" has each checker solve and rate both sets, its own writing included, so that they can be compared on one scale. The questions themselves are unreleased and are not in this file.',
     level: options.level,
     tier: options.tier,
     slots: slots.length,
@@ -179,6 +237,7 @@ export async function writersTrial(library: LibraryQuestion[], options: WritersO
     run: new Date().toISOString().slice(0, 10),
     mode: args.mode,
     writers: scores,
+    oneCheckersView: views,
   };
   if (!args.limit) console.log(`\nSummary: ${path.relative(process.cwd(), writeSummary(`writers.${options.level}-${options.tier}`.toLowerCase(), summary))}`);
   return summary;

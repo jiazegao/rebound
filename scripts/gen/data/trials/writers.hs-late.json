@@ -1,0 +1,309 @@
+{
+ "about": "Two writers on the same slots (scripts/gen/trials/writers.ts), each through ideas, the idea screen, writing, the house-style checks with one repair, the text screen, one blind solver and the difficulty rating. \"passed\" came through with no doubt raised; \"toSecondLook\" came through with one for the second look to settle. A checker is never the writer's own model, so the two set-ups are checked by different models: \"oneCheckersView\" has each checker solve and rate both sets, its own writing included, so that they can be compared on one scale. The questions themselves are unreleased and are not in this file.",
+ "level": "HS",
+ "tier": "late",
+ "slots": 60,
+ "ideaJudge": "claude-haiku-5-5",
+ "run": "2026-11-22",
+ "mode": "live",
+ "writers": [
+  {
+   "writer": "claude-opus-5-5",
+   "checker": "claude-sonnet-5-5",
+   "slots": 60,
+   "ideas": {
+    "proposed": 180,
+    "byRelation": {
+     "related": 127,
+     "same": 14,
+     "template": 30,
+     "reversed": 7,
+     "new": 2
+    },
+    "repeats": 0.117,
+    "slotsWithNoIdeaLeft": 1
+   },
+   "written": 59,
+   "style": {
+    "passedFirstTime": 59,
+    "repaired": 0,
+    "failedTwice": 0,
+    "notWritten": 0
+   },
+   "textScreen": {
+    "repeats": 0,
+    "relationsOfTheRest": {
+     "template": 5,
+     "related": 53,
+     "new": 1
+    }
+   },
+   "solver": {
+    "unanswered": 0,
+    "passed": 51,
+    "toSecondLook": 8
+   },
+   "passed": 51,
+   "passedShare": 0.85,
+   "passedBySubject": {
+    "biology": 11,
+    "chemistry": 9,
+    "earth_space": 10,
+    "math": 12,
+    "physics": 9
+   },
+   "difficulty": {
+    "ratedBy": "claude-sonnet-5-5",
+    "passed": 3.12,
+    "through": 3.1
+   },
+   "stemWordsMedian": {
+    "tossup": 21,
+    "bonus": 31
+   },
+   "cost": {
+    "total": 4.3904,
+    "writing": 3.3465,
+    "checking": 1.0439,
+    "perSlot": 0.0732,
+    "perPassed": 0.0861,
+    "passedPerDollar": 11.62,
+    "stages": {
+     "ideas": {
+      "model": "claude-opus-5-5",
+      "calls": 44,
+      "inputTokens": 146371,
+      "outputTokens": 74748,
+      "thinkingTokens": 40014,
+      "cost": 1.7521
+     },
+     "idea-screen": {
+      "model": "claude-haiku-5-5",
+      "calls": 180,
+      "inputTokens": 844082,
+      "outputTokens": 192992,
+      "thinkingTokens": 99015,
+      "cost": 0.1552
+     },
+     "write": {
+      "model": "claude-opus-5-5",
+      "calls": 59,
+      "inputTokens": 319110,
+      "outputTokens": 46811,
+      "thinkingTokens": 25807,
+      "cost": 1.5944
+     },
+     "text-screen": {
+      "model": "claude-sonnet-5-5",
+      "calls": 59,
+      "inputTokens": 255856,
+      "outputTokens": 25861,
+      "thinkingTokens": 0,
+      "cost": 0.6155
+     },
+     "solve": {
+      "model": "claude-sonnet-5-5",
+      "calls": 59,
+      "inputTokens": 106013,
+      "outputTokens": 9796,
+      "thinkingTokens": 2103,
+      "cost": 0.1444
+     },
+     "match": {
+      "model": "claude-haiku-5-5",
+      "calls": 9,
+      "inputTokens": 11914,
+      "outputTokens": 1775,
+      "thinkingTokens": 574,
+      "cost": 0.0013
+     },
+     "rate": {
+      "model": "claude-sonnet-5-5",
+      "calls": 59,
+      "inputTokens": 100208,
+      "outputTokens": 6580,
+      "thinkingTokens": 0,
+      "cost": 0.1276
+     }
+    }
+   }
+  },
+  {
+   "writer": "claude-sonnet-5-5",
+   "checker": "claude-opus-5-5",
+   "slots": 60,
+   "ideas": {
+    "proposed": 180,
+    "byRelation": {
+     "reversed": 13,
+     "related": 93,
+     "same": 41,
+     "template": 31,
+     "new": 2
+    },
+    "repeats": 0.3,
+    "slotsWithNoIdeaLeft": 2
+   },
+   "written": 58,
+   "style": {
+    "passedFirstTime": 54,
+    "repaired": 4,
+    "failedTwice": 0,
+    "notWritten": 0
+   },
+   "textScreen": {
+    "repeats": 1,
+    "relationsOfTheRest": {
+     "template": 10,
+     "related": 46,
+     "new": 1
+    }
+   },
+   "solver": {
+    "unanswered": 0,
+    "passed": 56,
+    "toSecondLook": 1
+   },
+   "passed": 56,
+   "passedShare": 0.933,
+   "passedBySubject": {
+    "biology": 12,
+    "chemistry": 11,
+    "earth_space": 10,
+    "math": 12,
+    "physics": 11
+   },
+   "difficulty": {
+    "ratedBy": "claude-opus-5-5",
+    "passed": 2.5,
+    "through": 2.53
+   },
+   "stemWordsMedian": {
+    "tossup": 24,
+    "bonus": 31.5
+   },
+   "cost": {
+    "total": 3.2241,
+    "writing": 1.1533,
+    "checking": 2.0708,
+    "perSlot": 0.0537,
+    "perPassed": 0.0576,
+    "passedPerDollar": 17.37,
+    "stages": {
+     "ideas": {
+      "model": "claude-sonnet-5-5",
+      "calls": 44,
+      "inputTokens": 146371,
+      "outputTokens": 35555,
+      "thinkingTokens": 0,
+      "cost": 0.5124
+     },
+     "idea-screen": {
+      "model": "claude-haiku-5-5",
+      "calls": 180,
+      "inputTokens": 841203,
+      "outputTokens": 207374,
+      "thinkingTokens": 110872,
+      "cost": 0.1621
+     },
+     "write": {
+      "model": "claude-sonnet-5-5",
+      "calls": 58,
+      "inputTokens": 310273,
+      "outputTokens": 27484,
+      "thinkingTokens": 7384,
+      "cost": 0.5923
+     },
+     "repair": {
+      "model": "claude-sonnet-5-5",
+      "calls": 4,
+      "inputTokens": 22720,
+      "outputTokens": 2726,
+      "thinkingTokens": 1377,
+      "cost": 0.0487
+     },
+     "text-screen": {
+      "model": "claude-opus-5-5",
+      "calls": 58,
+      "inputTokens": 268087,
+      "outputTokens": 29122,
+      "thinkingTokens": 2681,
+      "cost": 1.3511
+     },
+     "solve": {
+      "model": "claude-opus-5-5",
+      "calls": 57,
+      "inputTokens": 102393,
+      "outputTokens": 11202,
+      "thinkingTokens": 3423,
+      "cost": 0.3153
+     },
+     "match": {
+      "model": "claude-haiku-5-5",
+      "calls": 1,
+      "inputTokens": 1281,
+      "outputTokens": 113,
+      "thinkingTokens": 0,
+      "cost": 0.0001
+     },
+     "rate": {
+      "model": "claude-opus-5-5",
+      "calls": 57,
+      "inputTokens": 97378,
+      "outputTokens": 5931,
+      "thinkingTokens": 0,
+      "cost": 0.2422
+     }
+    }
+   }
+  }
+ ],
+ "oneCheckersView": [
+  {
+   "checker": "claude-sonnet-5-5",
+   "sets": [
+    {
+     "writer": "claude-opus-5-5",
+     "itsOwnWriting": false,
+     "questions": 59,
+     "withADoubt": 8,
+     "withADoubtShare": 0.136,
+     "meanRating": 3.1,
+     "costOfThisView": 0
+    },
+    {
+     "writer": "claude-sonnet-5-5",
+     "itsOwnWriting": true,
+     "questions": 57,
+     "withADoubt": 4,
+     "withADoubtShare": 0.07,
+     "meanRating": 2.58,
+     "costOfThisView": 0.2528
+    }
+   ]
+  },
+  {
+   "checker": "claude-opus-5-5",
+   "sets": [
+    {
+     "writer": "claude-opus-5-5",
+     "itsOwnWriting": true,
+     "questions": 59,
+     "withADoubt": 1,
+     "withADoubtShare": 0.017,
+     "meanRating": 3.27,
+     "costOfThisView": 0.4619
+    },
+    {
+     "writer": "claude-sonnet-5-5",
+     "itsOwnWriting": false,
+     "questions": 57,
+     "withADoubt": 1,
+     "withADoubtShare": 0.018,
+     "meanRating": 2.53,
+     "costOfThisView": 0
+    }
+   ]
+  }
+ ]
+}

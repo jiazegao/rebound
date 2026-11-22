@@ -149,6 +149,38 @@ export function chooseIdeas(ideas: ScreenedIdea[], taken: Set<string>): { chosen
   return { ...(picked[0] ? { chosen: picked[0] } : {}), ...(picked[1] ? { spare: picked[1] } : {}) };
 }
 
+/** How many of a solver's other answers are put to the matcher: a solver that lists more is listing forms. */
+export const OTHER_ANSWERS_ASKED = 3;
+
+/**
+ * The other answers of a solver that the matcher is asked about. A solver names "another answer that could be
+ * defended" for one DOE question in five, and a third of those are the answer line's own answer in other
+ * words. For a short answer, each one the answer checker refuses goes to the matcher, and only those it does
+ * not accept are counted. For multiple choice another answer is another choice, and is counted as it stands.
+ */
+export function otherAnswersToAsk(question: QuestionText, solution: Solution): string[] {
+  return question.format === 'short_answer' ? unacceptedAnswers(question, solution).slice(0, OTHER_ANSWERS_ASKED) : [];
+}
+
+/**
+ * The doubts a blind solver's reply raises about a question, each in a sentence the second look can be shown:
+ * an answer that is not the key's, another answer it thinks defensible, a fault it reports, or far too long
+ * a working for the time allowed. `others` are the other answers to count: by default every one the answer
+ * checker would mark wrong, and in the flow only those the matcher too finds different (`otherAnswersToAsk`).
+ */
+export function solverDoubts(slot: Pick<Slot, 'kind'>, question: QuestionText, solution: Solution, match: Match | null, others: readonly string[] = unacceptedAnswers(question, solution)): string[] {
+  const doubts: string[] = [];
+  const said = question.format === 'multiple_choice' ? `${solution.letter}) ${solution.answer}` : solution.answer;
+  const verdict = settled(compare(question, solution), match);
+  if (verdict === 'disagrees') doubts.push(`A solver who saw only the question answered ${said}, with confidence ${solution.confidence} of 5.`);
+  if (verdict === 'close') doubts.push(`A solver answered ${said}, which could not be matched to the answer line for certain.`);
+  for (const other of others) doubts.push(`A solver thought "${other}" could also be defended.`);
+  for (const p of solution.problems) doubts.push(`A solver reported a fault (${p.kind}): ${p.note}`);
+  const allowed = slot.kind === 'tossup' ? 5 : 20;
+  if (solution.seconds > 2 * allowed) doubts.push(`A solver thought it needs about ${Math.round(solution.seconds)} seconds; ${allowed} are allowed.`);
+  return doubts;
+}
+
 export async function makeDrafts(slots: readonly Slot[], models: FlowModels, ctx: FlowContext): Promise<FlowResult> {
   if (models.checker === models.writer) throw new Error('The checker must not be the writer’s model: a model shares its own blind spots.');
   if (new Set(slots.map((s) => s.id)).size !== slots.length) throw new Error('Two slots have the same id.');
@@ -275,22 +307,24 @@ export async function makeDrafts(slots: readonly Slot[], models: FlowModels, ctx
   const solved = screened.filter((r) => r.solution);
   // Where the answer checker does not accept a short answer, a small model says whether a judge would.
   const disputed = solved.filter((run) => run.written!.draft.question.format === 'short_answer' && compare(run.written!.draft.question, run.solution!) !== 'agrees');
-  const matchReplies = await send('match', models.matcher, MATCH_PROMPT, disputed.map((run) => matchRequest(`match-${run.slot.id}`, run.written!.draft.question, run.solution!.answer, run.slot.level, models.matcher)), 150);
+  // The same model says whether another answer the solver names is only the answer line's in other words.
+  const asked = solved.flatMap((run) => otherAnswersToAsk(run.written!.draft.question, run.solution!).map((answer, i) => ({ run, answer, id: `other-${run.slot.id}-${i + 1}` })));
+  const matchReplies = await send(
+    'match',
+    models.matcher,
+    MATCH_PROMPT,
+    [...disputed.map((run) => matchRequest(`match-${run.slot.id}`, run.written!.draft.question, run.solution!.answer, run.slot.level, models.matcher)), ...asked.map((a) => matchRequest(a.id, a.run.written!.draft.question, a.answer, a.run.slot.level, models.matcher))],
+    150,
+  );
   for (const run of disputed) {
     const reply = matchReplies.get(`match-${run.slot.id}`);
     run.match = reply ? readMatch(reply) : null;
   }
   for (const run of solved) {
     const question = run.written!.draft.question;
-    const solution = run.solution!;
-    const said = question.format === 'multiple_choice' ? `${solution.letter}) ${solution.answer}` : solution.answer;
-    const verdict = settled(compare(question, solution), run.match ?? null);
-    if (verdict === 'disagrees') run.doubts.push(`A solver who saw only the question answered ${said}, with confidence ${solution.confidence} of 5.`);
-    if (verdict === 'close') run.doubts.push(`A solver answered ${said}, which could not be matched to the answer line for certain.`);
-    for (const other of unacceptedAnswers(question, solution)) run.doubts.push(`A solver thought "${other}" could also be defended.`);
-    for (const p of solution.problems) run.doubts.push(`A solver reported a fault (${p.kind}): ${p.note}`);
-    const allowed = run.slot.kind === 'tossup' ? 5 : 20;
-    if (solution.seconds > 2 * allowed) run.doubts.push(`A solver thought it needs about ${Math.round(solution.seconds)} seconds; ${allowed} are allowed.`);
+    // An other answer stays a doubt unless the matcher accepts it as the answer line's own.
+    const others = question.format === 'short_answer' ? asked.filter((a) => a.run === run && (matchReplies.get(a.id) ? readMatch(matchReplies.get(a.id)!) : null)?.verdict !== 'accept').map((a) => a.answer) : unacceptedAnswers(question, run.solution!);
+    run.doubts.push(...solverDoubts(run.slot, question, run.solution!, run.match ?? null, others));
     run.outcome = run.doubts.length ? 'second-look' : 'passed';
   }
 

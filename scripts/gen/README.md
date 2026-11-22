@@ -313,7 +313,9 @@ used: an idea is cheap, and each slot has three.
 - It agrees with DOE's key on 96.2%, is close on 0.5% and disagrees on 3.3%: 95% to 97% in every level and tier.
 - By the answer checker alone the agreement was 89.7%. The matcher was asked about 109 answers and ruled 78
   the same answer, 25 a different one and 6 unsure.
-- It reports a fault in 12.2% (146 questions), nearly all of them "ambiguous".
+- It reports a fault in 12.2% (146 questions), nearly all of them "ambiguous", and names another answer that
+  could be defended for 20% (241). A third of those other answers are the answer line's own in other words:
+  of 290 put to the matcher, it took 90 as the same answer.
 - The 45 questions on which it does not agree (39 disagreements, 6 close) are listed in the summary. The 27
   high school ones were read one by one, and are of three kinds: questions that really are ambiguous or out
   of date, the solver's own mistakes, and what look like errors in DOE's keys. One key ranks phosphorus below
@@ -322,8 +324,10 @@ used: an idea is cheap, and each slot has three.
 - It caught all seven misprinted letters and both keys the pilot disputed (`doe-known.*.json`).
 - A tenth of a cent a question in a batch (0.12 cents), 0.28 cents live.
 
-So about one sound question in seven will reach the second look on one solver's word. That is the
-false-alarm rate to plan for.
+By the flow's own rule (an answer that is not the key's, another answer the matcher too finds different, a
+fault reported, or a working far too long), 21.6% of DOE's questions would reach the second look on this
+solver's word: 259 of 1,199, and much the same in every level and tier. That is the false-alarm rate to plan
+for with questions like DOE's. The questions the pipeline wrote drew fewer doubts (below).
 
 **The answer matcher** (`match.*.json`, Haiku 5.5). With DOE's own list hidden it refused 135 of 150 DO NOT
 ACCEPT entries, accepted 5 and was unsure of 10; it accepted 112 of 150 ACCEPT entries, some of which DOE
@@ -356,7 +360,86 @@ both disputed keys wrong. Of nine right keys with a made-up solver who chose ano
 and called one ambiguous; of five spot checks, it upheld four and called one ambiguous, proposing an ACCEPT
 entry. It overturned no right key. 4.5 cents a question.
 
-**The writer comparison** was still running when this was written; its result will be added here.
+**The writer comparison** (`writers.hs-late.json`): 60 slots of planned high school late rounds, Energy left
+out, filled once by each writer and taken through the flow.
+
+| | Opus 5.5 writes, Sonnet 5.5 checks | Sonnet 5.5 writes, Opus 5.5 checks |
+|---|---|---|
+| Ideas the idea screen threw away as repeats | 21 of 180 (12%) | 54 of 180 (30%) |
+| Slots left with no idea | 1 | 2 |
+| Questions written | 59 | 58 |
+| Passed the house-style checks first time, after one repair, never | 59, 0, 0 | 54, 4, 0 |
+| Thrown away by the text screen | 0 | 1 |
+| Came through clean | 51 | 56 |
+| Came through with a doubt for the second look | 8 | 1 |
+| Cost of the 60 slots | $4.39 | $3.22 |
+| of which writing, checking | $3.35, $1.04 | $1.15, $2.07 |
+| Clean questions a dollar | 11.6 | 17.4 |
+
+The pilot wrote its questions first and found 46% of them to repeat the library. Here the repeats are met as
+ideas, at a fraction of a cent each, and one finished question in 117 was thrown away by the text screen.
+
+The two columns were checked by different models, so they cannot be set side by side as they stand. Each
+checker was therefore also given the other set, its own writing included (a measurement, never a check):
+
+| | Opus's questions | Sonnet's questions | DOE's late rounds | DOE's early rounds |
+|---|---|---|---|---|
+| Sonnet as solver: with a doubt | 8 of 59 (14%) | 4 of 57 (7%) | 22% | 23% |
+| Opus as solver: with a doubt | 1 of 59 | 1 of 57 | | |
+| Sonnet as rater: mean | 3.10 | 2.58 | 2.64 | 2.19 |
+| Opus as rater: mean | 3.27 | 2.53 | 2.51 | 2.02 |
+| Sonnet as rater: share rated 1, 2, 3, 4, 5 | 0, 20, 49, 31, 0% | 9, 39, 40, 11, 2% | 5, 42, 38, 15, 0% | 27, 35, 30, 8, 0% |
+
+What this shows:
+
+- **The difference between the writers is level, not cost.** Both raters put Opus's questions half a point
+  to three quarters of a point above Sonnet's. Sonnet's have the mean and the spread of DOE's late rounds,
+  easy questions included. Opus's are harder than DOE's late rounds, with no easy question among them.
+- **Most of the gap in clean questions is the checker.** Opus as solver raises a doubt on about 2% of either
+  set, Sonnet on 7% to 14%. The doubts Sonnet raised on Opus's questions were read: most are real (an answer
+  line that should also take a named alternative, a toss-up calculation too long for five seconds), and in
+  one the solver was wrong and the key right.
+- **The pipeline's questions draw fewer doubts than DOE's own.** The same solver doubts one DOE question in
+  five. A writer told that a question must have exactly one defensible answer, and to say what to accept and
+  what to refuse, leaves fewer loose ends than DOE's writers did.
+- **Both follow the house style.** Median stems are 21 and 31 words (Opus) and 24 and 31.5 (Sonnet) for
+  toss-ups and bonuses, against 20 and 24.5 for DOE's rounds: the bonuses run long.
+
+### What a round costs
+
+Measured, at the prices in `llm.ts`, for calls made one at a time. A batch halves every line that uses no
+tool.
+
+| Step | Model | A call | A slot of a round |
+|---|---|---|---|
+| Ideas | Opus 5.5 | 4.0 cents for a topic's slots | 2.9 cents |
+| | Sonnet 5.5 | 1.2 cents | 0.9 cents |
+| Idea screen | Haiku 5.5 | 0.09 cents | 0.26 cents, for three ideas |
+| Writing | Opus 5.5 | 2.7 cents | 2.7 cents |
+| | Sonnet 5.5 | 1.0 cent | 1.0 cent, and a repair for one in fifteen |
+| Text screen | Sonnet 5.5 | 1.0 cent | 1.0 cent |
+| | Opus 5.5 | 2.3 cents | 2.3 cents |
+| Blind solve | Sonnet 5.5 | 0.24 cents | 0.24 cents |
+| | Opus 5.5 | 0.55 cents | 0.55 cents |
+| Answer match | Haiku 5.5 | 0.01 to 0.03 cents | next to nothing |
+| Rating | Sonnet 5.5 | 0.22 cents | 0.22 cents |
+| | Opus 5.5 | 0.42 cents | 0.42 cents |
+| Recompute | Sonnet 5.5, with code | 0.6 cents | 0.2 cents: numeric questions only |
+| Source check | Sonnet 5.5, with search | 4.5 cents | 3.2 cents: fact questions only |
+| Second look | Opus 5.5, with search or code | 4.5 cents | about 1 cent: a doubted question, and one in ten of the rest |
+
+Through the rating, a slot cost 7.3 cents with Opus writing and Sonnet checking, and 5.4 cents the other way
+round. Adding the steps the flow does not run yet, at the rates above:
+
+- **Opus writes, Sonnet checks:** about 11.7 cents a slot, $5.40 for a 46-question round, and about $3.70
+  with batches.
+- **Sonnet writes, Opus checks:** about 9.3 cents a slot, $4.30 a round, if Sonnet still runs the source
+  check and the recomputation, which work from pages and from code rather than from memory. If every check
+  must be Opus's, about 12.6 cents a slot, $5.80 a round.
+
+The source check is the largest single part, a quarter to a third of the whole. The plan's guess was $7.30 a
+round, or $5.30 with batches. Two things are not in these figures: a second solver from another company, and
+the slots that have to be filled twice.
 
 ## Tests
 

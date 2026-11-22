@@ -21,6 +21,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CORE_SUBJECTS, type CoreSubject, type Level, type Question, type QuestionKind } from '../../../src/core/schema';
 import { DOE_ERRATA } from '../../../src/core/importers/doeErrata';
+import { otherAnswersToAsk, solverDoubts } from '../flow';
 import { eligible, loadLibrary, tierOf, type LibraryQuestion } from '../library';
 import type { ModelApi, ModelReply } from '../llm';
 import { plain } from '../text';
@@ -98,6 +99,11 @@ export async function solve(sample: SampleItem[], args: TrialArgs, api?: ModelAp
   const matchRequests = disputed.map((x) => matchRequest(`m-${x.s.id}`, x.s.question, x.solution!.answer, x.s.level, MATCHER));
   const matchReplies = matchRequests.length ? await runTrial(`doe-match-${MATCHER}-${MATCH_PROMPT}-on-${args.model}-${SOLVE_PROMPT}`, matchRequests, args, 150, api) : new Map<string, ModelReply>();
   const matches = new Map<string, Match | null>(disputed.map((x) => [x.s.id, matchReplies.get(`m-${x.s.id}`) ? readMatch(matchReplies.get(`m-${x.s.id}`)!) : null]));
+  // As in the flow: another answer the solver names counts only if the matcher too finds it a different answer.
+  const asked = solved.flatMap((x) => (x.solution ? otherAnswersToAsk(x.s.question, x.solution).map((answer, i) => ({ x, answer, id: `o-${x.s.id}-${i + 1}` })) : []));
+  const otherReplies = asked.length ? await runTrial(`doe-others-${MATCHER}-${MATCH_PROMPT}-on-${args.model}-${SOLVE_PROMPT}`, asked.map((a) => matchRequest(a.id, a.x.s.question, a.answer, a.x.s.level, MATCHER)), args, 150, api) : new Map<string, ModelReply>();
+  const stillOther = (x: (typeof solved)[number]) => (x.s.question.format === 'short_answer' ? asked.filter((a) => a.x === x && (otherReplies.get(a.id) ? readMatch(otherReplies.get(a.id)!) : null)?.verdict !== 'accept').map((a) => a.answer) : unacceptedAnswers(x.s.question, x.solution!));
+  const doubts = new Map(solved.filter((x) => x.solution).map((x) => [x.s.id, solverDoubts(x.s, x.s.question, x.solution!, matches.get(x.s.id) ?? null, stillOther(x))]));
   const rows = solved.map(({ s, reply, solution, checker }) => ({
     id: s.id,
     level: s.level,
@@ -119,6 +125,8 @@ export async function solve(sample: SampleItem[], args: TrialArgs, api?: ModelAp
     problems: solution?.problems ?? [],
     remarks: solution?.remarks.length ?? 0,
     otherAnswers: solution ? unacceptedAnswers(s.question, solution) : [],
+    /** What the flow would send to the second look for, in its own sentences. */
+    doubts: doubts.get(s.id) ?? [],
   }));
   const answered = rows.filter((r) => r.verdict);
   const byChecker = (v: string) => share(answered.filter((r) => r.checker === v).length, answered.length);
@@ -145,7 +153,13 @@ export async function solve(sample: SampleItem[], args: TrialArgs, api?: ModelAp
     byKind: groups((r) => r.kind),
     byConfidence: groups((r) => `confidence ${r.confidence}`),
     flagged: { questions: flagged.length, share: share(flagged.length, answered.length), kinds: problemKinds, amongDisagreements: share(flagged.filter((r) => r.verdict === 'disagrees').length, answered.filter((r) => r.verdict === 'disagrees').length) },
-    secondAnswers: { questions: answered.filter((r) => r.otherAnswers.length).length, share: share(answered.filter((r) => r.otherAnswers.length).length, answered.length) },
+    secondAnswers: { questions: answered.filter((r) => r.otherAnswers.length).length, share: share(answered.filter((r) => r.otherAnswers.length).length, answered.length), askedOfTheMatcher: asked.length, foundToBeTheSameAnswer: asked.filter((a) => (otherReplies.get(a.id) ? readMatch(otherReplies.get(a.id)!) : null)?.verdict === 'accept').length },
+    doubted: {
+      note: 'Questions the flow would send to the second look on this solver\'s word: an answer that is not the key\'s, another answer the matcher too finds different, a fault reported, or a working far too long for the time allowed. DOE\'s questions are sound nearly always, so this is the false-alarm rate to plan for.',
+      questions: answered.filter((r) => r.doubts.length).length,
+      share: share(answered.filter((r) => r.doubts.length).length, answered.length),
+      byTier: Object.fromEntries([...new Set(answered.map((r) => `${r.level} ${r.tier}`))].sort().map((k) => [k, share(answered.filter((r) => `${r.level} ${r.tier}` === k && r.doubts.length).length, answered.filter((r) => `${r.level} ${r.tier}` === k).length)])),
+    },
     difficulty: {
       note: 'The solver\'s own 1–5 rating, made without seeing the answer. "separation" is the chance that a late-round question is rated harder than an early-round one (ties count half): 0.5 is no better than a coin.',
       HS: { early: mean(difficulty('HS', 'early')), late: mean(difficulty('HS', 'late')), separation: Math.round(1000 * separation(difficulty('HS', 'early'), difficulty('HS', 'late'))) / 1000 },
@@ -159,6 +173,7 @@ export async function solve(sample: SampleItem[], args: TrialArgs, api?: ModelAp
   console.log(`By the answer checker alone: ${(100 * summary.byTheAnswerCheckerAlone.agrees).toFixed(1)}% agree. The matcher was asked about ${disputed.length}: ${summary.matcher.accepted} the same answer, ${summary.matcher.rejected} a different one, ${summary.matcher.unsure} unsure.`);
   console.log(`By tier: ${Object.entries(summary.byTier).map(([k, v]) => `${k} ${(100 * v.agrees).toFixed(0)}%`).join(', ')}`);
   console.log(`Flagged a problem in ${flagged.length} (${(100 * summary.flagged.share).toFixed(1)}%): ${JSON.stringify(problemKinds)}`);
+  console.log(`Named another answer for ${summary.secondAnswers.questions}; of ${asked.length} put to the matcher, ${summary.secondAnswers.foundToBeTheSameAnswer} were the same answer. Would go to the second look: ${summary.doubted.questions} (${(100 * summary.doubted.share).toFixed(1)}%).`);
   console.log(`Difficulty, early against late: HS ${summary.difficulty.HS.early} / ${summary.difficulty.HS.late} (separation ${summary.difficulty.HS.separation}); MS ${summary.difficulty.MS.early} / ${summary.difficulty.MS.late} (${summary.difficulty.MS.separation}).`);
   console.log(`Per call: ${JSON.stringify(summary.calls.meanTokens)}, $${summary.calls.costPerCall}.`);
   if (!args.limit) console.log(`Summary: ${path.relative(process.cwd(), writeSummary(`doe-solve.${args.model}`, summary))}`);

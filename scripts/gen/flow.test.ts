@@ -141,6 +141,19 @@ describe.skipIf(!libraryBuilt())('the flow from slots to checked drafts', () => 
     expect(by.b02!.rating).toBeUndefined();
   }, 60_000);
 
+  it('counts another answer the solver names only when the matcher too finds it different', async () => {
+    const { send, asked } = sender({ solverAlso: new Set(['b01', 't03']) });
+    const { runs } = await makeDrafts(slots, models, { ...base, send });
+    const by = Object.fromEntries(runs.map((r) => [r.slot.id, r]));
+    // Each of the two named two other answers: the key in other words, which the matcher accepts, and a different one.
+    expect(asked.match!.map((r) => r.id)).toEqual(['other-b01-1', 'other-b01-2', 'other-t03-1', 'other-t03-2']);
+    expect(asked.match![0]!.user).toContain('<player_answer>\nZEDB01 (as it is also written)\n</player_answer>');
+    expect(by.b01!.doubts).toEqual(['A solver thought "something different" could also be defended.']);
+    expect(by.b01!.outcome).toBe('second-look');
+    expect(by.t03!.doubts).toHaveLength(1);
+    expect(runs.filter((r) => r.outcome === 'passed')).toHaveLength(6);
+  }, 60_000);
+
   it('refuses a checker that is the writer’s own model, and slots that share an id', async () => {
     const { send } = sender({});
     await expect(makeDrafts(slots, { ...models, checker: 'claude-opus-5-5' }, { ...base, send })).rejects.toThrow(/writer’s model/);

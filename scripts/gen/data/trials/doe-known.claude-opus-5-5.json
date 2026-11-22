@@ -1,0 +1,127 @@
+{
+ "about": "The blind solver on keys known to be wrong (scripts/gen/trials/doe.ts --known): seven answer letters DOE misprinted, which Rebound corrected, and two keys the November 2026 pilot disputed against sources.",
+ "model": "claude-opus-5-5",
+ "prompt": "7e36c7f4",
+ "run": "2026-11-22",
+ "caught": 9,
+ "of": 9,
+ "calls": {
+  "calls": 9,
+  "outcomes": {
+   "ok": 9,
+   "refused": 0,
+   "cut-off": 0,
+   "error": 0
+  },
+  "batch": false,
+  "meanTokens": {
+   "input": 97,
+   "cacheRead": 942,
+   "cacheWrite": 754,
+   "output": 218,
+   "thinking": 70
+  },
+  "searches": 0,
+  "cost": 0.0784,
+  "costPerCall": 0.008715
+ },
+ "results": [
+  {
+   "id": "doe-hs-01-r05-t20",
+   "kind": "misprinted letter",
+   "printed": "W",
+   "key": "W) MERCURY-OXIDE CELLS",
+   "answer": "X) mercury-oxide cells",
+   "caught": true,
+   "otherAnswers": [],
+   "problems": []
+  },
+  {
+   "id": "doe-hs-01-r10-t19",
+   "kind": "misprinted letter",
+   "printed": "W",
+   "key": "W) WINDS",
+   "answer": "Z) winds",
+   "caught": true,
+   "otherAnswers": [],
+   "problems": []
+  },
+  {
+   "id": "doe-ms-01-r07-t07",
+   "kind": "misprinted letter",
+   "printed": "X",
+   "key": "X) BRAIDED",
+   "answer": "Y) braided",
+   "caught": true,
+   "otherAnswers": [],
+   "problems": []
+  },
+  {
+   "id": "doe-ms-01-r18-t07",
+   "kind": "misprinted letter",
+   "printed": "X",
+   "key": "X) LAVA DOMES",
+   "answer": "W) lava domes",
+   "caught": true,
+   "otherAnswers": [],
+   "problems": []
+  },
+  {
+   "id": "doe-ms-06-r08-b08",
+   "kind": "misprinted letter",
+   "printed": "X",
+   "key": "X) 50%",
+   "answer": "W) 50%",
+   "caught": true,
+   "otherAnswers": [],
+   "problems": []
+  },
+  {
+   "id": "doe-ms-08-r17-t17",
+   "kind": "misprinted letter",
+   "printed": "Y",
+   "key": "Y) 2.5",
+   "answer": "X) 2.5",
+   "caught": true,
+   "otherAnswers": [],
+   "problems": []
+  },
+  {
+   "id": "doe-ms-16-r02-b17",
+   "kind": "misprinted letter",
+   "printed": "W",
+   "key": "W) CARBON DIOXIDE",
+   "answer": "X) Carbon dioxide",
+   "caught": true,
+   "otherAnswers": [],
+   "problems": []
+  },
+  {
+   "id": "doe-hs-03-r15-t21",
+   "kind": "disputed key",
+   "printed": "",
+   "key": "ULTRAVIOLET (ACCEPT: UV)",
+   "answer": "Visible light",
+   "caught": true,
+   "otherAnswers": [
+    "Radio"
+   ],
+   "problems": [
+    {
+     "kind": "ambiguous",
+     "note": "\"Most commonly detected\" is vague. Supernova events are found mainly by optical surveys, but supernova remnants are most often catalogued in radio, so a judge could face a defensible radio answer."
+    }
+   ]
+  },
+  {
+   "id": "doe-hs-01-r11-b23",
+   "kind": "disputed key",
+   "printed": "",
+   "key": "NEUTROPHIL; BASOPHIL",
+   "answer": "neutrophil, basophil, macrophage",
+   "caught": true,
+   "otherAnswers": [],
+   "problems": []
+  }
+ ]
+}

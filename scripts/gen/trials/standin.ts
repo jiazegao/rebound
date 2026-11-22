@@ -81,6 +81,8 @@ export interface Script {
   solverWrong?: ReadonlySet<string>;
   /** Slots where the solver reports a fault in the question. */
   solverFlags?: ReadonlySet<string>;
+  /** Short-answer slots where the solver also names two other answers: the key in other words, and a different one. */
+  solverAlso?: ReadonlySet<string>;
   /** The difficulty score the rater gives. */
   rating?: number;
 }
@@ -126,10 +128,16 @@ export function scripted(script: Script = {}): (user: string, system: string) =>
       if (user.includes('Rank the following')) return { answer: wrong ? '1, 2, 3' : '2, 3, 1', letter: '', ...more };
       const right = /^([WXYZ])\) Rightname$/m.exec(user)?.[1];
       if (right) return wrong ? { answer: 'Wrongname', letter: /^([WXYZ])\) Wrongname$/m.exec(user)![1], ...more } : { answer: 'Rightname', letter: right, ...more };
-      return { answer: wrong ? 'something else' : `ZED${slot.toUpperCase()}`, letter: '', ...more };
+      const also = (script.solverAlso ?? none).has(slot) ? [`ZED${slot.toUpperCase()} (as it is also written)`, 'something different'] : [];
+      return { answer: wrong ? 'something else' : `ZED${slot.toUpperCase()}`, letter: '', ...more, otherAnswers: also };
     }
-    // The matcher is only ever asked about an answer the checker refused: by rule, it is a different answer.
-    if (system.includes('You help judge answers')) return { compare: 'By rule.', verdict: 'reject' };
+    // The matcher is only ever asked about an answer the checker refused. By rule it is the same answer when
+    // it holds the answer line's own word, and a different one otherwise.
+    if (system.includes('You help judge answers')) {
+      const key = (/^ANSWER: (.+)$/m.exec(user)?.[1] ?? '').replace(/ \((ACCEPT|DO NOT ACCEPT):.*$/, '').trim();
+      const said = /<player_answer>\n([\s\S]*?)\n<\/player_answer>/.exec(user)?.[1] ?? '';
+      return { compare: 'By rule.', verdict: key && said.includes(key) ? 'accept' : 'reject' };
+    }
     if (system.includes('You rate how hard a question is')) return { score: script.rating ?? 4, reason: 'By rule.' };
     throw new Error(`The scripted pipeline does not know this step: ${system.slice(0, 60)}`);
   };

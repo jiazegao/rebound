@@ -79,6 +79,17 @@ describe.skipIf(!libraryBuilt())('the writer comparison without the API', () => 
     expect(summary.writers[0]!.cost.writing).toBeGreaterThan(summary.writers[1]!.cost.writing);
     expect(summary.writers[0]!.cost.checking).toBeLessThan(summary.writers[1]!.cost.checking);
 
+    // Each checker's view of both sets: the one it checked in the flow, and its own writing, solved and rated afresh.
+    expect(summary.oneCheckersView.map((v) => v.checker)).toEqual(['claude-sonnet-5-5', 'claude-opus-5-5']);
+    for (const view of summary.oneCheckersView) {
+      expect(view.sets.map((v) => [v.writer, v.itsOwnWriting])).toEqual([['claude-opus-5-5', view.checker === 'claude-opus-5-5'], ['claude-sonnet-5-5', view.checker === 'claude-sonnet-5-5']]);
+      for (const set of view.sets) {
+        // Fourteen questions came through; the scripted solver is wrong on one of them whoever it is.
+        expect(set).toMatchObject({ questions: 14, withADoubt: 1, meanRating: 4 });
+        expect(set.costOfThisView > 0).toBe(set.itsOwnWriting);
+      }
+    }
+
     // The questions go to the bank folder, and nothing of them is in the summary.
     const file = path.join(bank, 'trials', 'writers-hs-late-16-claude-opus-5-5.json');
     expect(existsSync(file)).toBe(true);
