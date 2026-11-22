@@ -6,9 +6,9 @@ them before a person signs them off. The plan itself is
 [docs/QUESTION-PIPELINE.md](https://github.com/jiazegao/rebound/blob/research/question-writing/docs/QUESTION-PIPELINE.md)
 on the `research/question-writing` branch.
 
-This folder holds the plan's first stage, the parts that are plain code and need no model, and most of its
-second: every step a model does, and the trials that measure each one. No trial has been run yet, so no
-question has been written by it, and nothing here changes the site.
+This folder holds the plan's first stage, the parts that are plain code and need no model, and its second:
+every step a model does, and the trials that measured each one on 21 and 22 November 2026 (the results are
+under "Trials"). No round has been made by it yet, and nothing here changes the site.
 
 | Part | File | What it does |
 |---|---|---|
@@ -205,7 +205,8 @@ are spread evenly whatever is written.
 | 4. Write | `steps/write.ts` | Opus 5.5 | The slot, the idea, DOE's house style, the library questions near the idea | The question as data, with its reasons |
 | 5. Repair | `steps/write.ts` | Opus 5.5 | The same, the draft, and what the code checks found | The question again, once |
 | 6. Screen the text | `steps/judge.ts` | Sonnet 5.5 | The finished question and what search found for it | The same five classes |
-| 7. Blind solve | `steps/solve.ts` | Sonnet 5.5 | The question as read, and nothing else | An answer, other defensible answers, faults, seconds, difficulty |
+| 7. Blind solve | `steps/solve.ts` | Sonnet 5.5 | The question as read, and nothing else | An answer, other defensible answers, faults, remarks, seconds, difficulty |
+| 7. Match the answer | `steps/match.ts` | Haiku 5.5 | The question, its answer line, and a solver's short answer that the answer checker did not accept | Whether a judge would take it: accept, reject or unsure |
 | 7. Recompute | `steps/compute.ts` | Sonnet 5.5, with code | A numeric question as read | The answer worked in code, and whether the values given can all be true |
 | 7. Source | `steps/source.ts` | Sonnet 5.5, with search | The question and its answer line | Supported, contradicted or not found, with the search tool's own citation |
 | 7. Second look | `steps/second.ts` | Opus 5.5, with search or code | The question, its answer line and what the checks found | Key right, key wrong or ambiguous, and a fix for an ambiguous one |
@@ -217,7 +218,9 @@ A checker never sees the writer's reasons, and is never the writer's own model.
 words for where each event's questions come from; a few DOE questions of that level, tier and category; and
 the answers the library already uses in the topic.
 
-Three things differ from the plan:
+### Where the steps differ from the plan
+
+Some of this was decided when the steps were written, and the rest when they met real replies.
 
 - **The writer has no code tool.** Its calls can then go in a half-price batch. Every numeric key is worked
   again in code at step 7, blind, which is where a wrong one is caught either way.
@@ -225,6 +228,28 @@ Three things differ from the plan:
   JSON object or two fixed lines, read from the end of the text.
 - **Energy questions wait for the news collector.** The idea and writing steps take a lab news item, and
   the collector that gathers them is not built yet.
+- **A judgment comes after its reasons.** A model writes the fields of its reply in order. Sonnet 5.5 did no
+  thinking on the judge's task, and when the relation came first it twice named one relation and then argued
+  for another. The judge now names up to three library questions and, for each, what it tests, the comparison
+  and only then the relation; the verdict is the closest of those, worked out in code. The rater and the
+  matcher give their sentence before their verdict for the same reason.
+- **The solver is not asked to show its working.** A reply format that asked for it was refused by the API
+  for 20 of 48 DOE questions, as an attempt to extract the model's reasoning, which Anthropic's terms
+  restrict. The solver thinks privately instead, at high effort.
+- **The solver tells faults from remarks.** Asked for "anything wrong", it reported a fault in 27% of DOE's
+  own questions, mostly matters of wording. It now lists only what could change the right answer or make a
+  question unusable, and puts the rest under remarks, which the reviewer sees and which raise no doubt.
+- **Answers are matched by a model when the answer checker cannot.** Rebound's answer checker is strict about
+  form, as it must be for players, and by its count a solver agreed with 89.7% of DOE's keys. Most of the
+  rest were right answers in other words ("Sodium (Na+)", "Bremsstrahlung" for BREMSSTRAHLUNG RADIATION). So
+  a short answer the checker refuses goes to `steps/match.ts`, which rules on sameness only: a different
+  answer that is also right is still a rejection there, and a matter for the second look.
+- **The source check uses the plain search tool.** With the newer one the model reads results through code,
+  and its replies carried no citations at all. The plain tool attaches the page's own words to what the model
+  says of it, and a verdict of "supported" counts only with such a citation from an allowed site.
+- **The recomputation must run code.** Told to "use" the code tool, the model worked the simpler questions in
+  its head, and said so. The prompt now requires a run, and each reply records whether there was one.
+- **The rater checks a round, not a question.** See its result below.
 
 ## The flow
 
@@ -253,12 +278,81 @@ Use `--limit` first: a small run shows what a call really costs, and writes no s
 | `trials/checks.ts --second` | The same wrong and disputed keys with what a solver said; right keys with a solver who was wrong; spot checks | Whether the second look overturns a wrong key and upholds a right one |
 | `trials/writers.ts` | 60 slots of planned late rounds, Energy left out, filled by Opus 5.5 and by Sonnet 5.5 | Questions that come through per dollar, for each writer's whole set-up |
 
+| `trials/match.ts` | 150 ACCEPT entries and 150 DO NOT ACCEPT entries from DOE's answer lines, each put to the matcher with its own list hidden | That it refuses the near misses DOE refuses |
+
 The writer comparison checks each writer's drafts with a different model, since a checker is never the
 writer's own: Sonnet checks what Opus wrote, and Opus checks what Sonnet wrote. So it compares two whole
 set-ups, which is the choice to be made, and is not a like-for-like test of the writers alone. The questions
 it writes are unreleased: they are kept in the bank folder, and the summary has counts and costs only.
 
-No trial has been run yet: they wait for the key.
+### Results, 21 and 22 November 2026
+
+Each summary in `data/trials/` has the full figures and every question's result.
+
+**The duplicate judge** (`judge.*.json`). The pilot's labels turned out to be wrong in places: its checkers
+had read only the closest few library questions, and the judges found real repeats among the drafts they had
+called different. Every disagreement was read again beside the library question
+(`data/eval/judge-second-reading.json`: 13 repeats the pilot missed, 9 set aside as arguable). That reading
+was done by the model that built the pipeline, with the judges' reasons in view, so a person should
+spot-check it.
+
+| | Sonnet 5.5 (text screen) | Haiku 5.5 (idea screen) | Bar |
+|---|---|---|---|
+| The pilot's 55 repeats thrown away | 53 | 53 | 52 |
+| The pilot's 56 "different" drafts kept | 45 | 39 | 45 |
+| After the second reading: the pilot's repeats thrown away | 52 of 52 | 51 of 52 | |
+| After the second reading: all repeats thrown away | 62 of 65 | 61 of 65 | |
+| After the second reading: clearly different drafts kept | 50 of 50 | 46 of 50 | |
+| Cost of a judgment | 1.05 cents | 0.09 cents | |
+
+Sonnet meets both bars. Haiku catches as much and is harsher on new drafts, which costs little where it is
+used: an idea is cheap, and each slot has three.
+
+**The blind solver on DOE's questions** (`doe-solve.*.json`, Sonnet 5.5, 1,199 of 1,200 answered).
+
+- It agrees with DOE's key on 96.2%, is close on 0.5% and disagrees on 3.3%: 95% to 97% in every level and tier.
+- By the answer checker alone the agreement was 89.7%. The matcher was asked about 109 answers and ruled 78
+  the same answer, 25 a different one and 6 unsure.
+- It reports a fault in 12.2% (146 questions), nearly all of them "ambiguous".
+- The 45 questions on which it does not agree (39 disagreements, 6 close) are listed in the summary. The 27
+  high school ones were read one by one, and are of three kinds: questions that really are ambiguous or out
+  of date, the solver's own mistakes, and what look like errors in DOE's keys. One key ranks phosphorus below
+  sulfur in first ionization energy; another gives benzoic acid the largest retention factor on silica with
+  hexane. A person should review the list before any of it is called an erratum.
+- It caught all seven misprinted letters and both keys the pilot disputed (`doe-known.*.json`).
+- A tenth of a cent a question in a batch (0.12 cents), 0.28 cents live.
+
+So about one sound question in seven will reach the second look on one solver's word. That is the
+false-alarm rate to plan for.
+
+**The answer matcher** (`match.*.json`, Haiku 5.5). With DOE's own list hidden it refused 135 of 150 DO NOT
+ACCEPT entries, accepted 5 and was unsure of 10; it accepted 112 of 150 ACCEPT entries, some of which DOE
+takes out of leniency. Sonnet 5.5 did no better at fifteen times the price. A hundredth of a cent a ruling.
+In the pipeline the matcher sees both lists.
+
+**The difficulty rater** (`doe-rate.*.json`, Sonnet 5.5, 336 questions, four DOE questions of each tier shown).
+Early rounds average 2.19 and late rounds 2.64 at high school, 2.24 and 2.68 at middle school. A late-round
+question is rated harder than an early-round one 63% of the time. That cannot accept or reject one question.
+It can check a round: the average of 46 ratings has a standard error of about 0.14, and the two tiers are
+0.45 apart. The solver's own rating, made without anchors, separates the tiers less (59% and 56%). A tenth
+of a cent a rating in a batch.
+
+**Recomputing in code** (`compute.*.json`, Sonnet 5.5, 60 numeric questions). 58 agree with the key, one is
+the key's value in another form, and one disagrees: a question whose key the solver also doubted. Code was
+run for all 60. It also reported four questions whose wording can be read two ways, among them "f minus g
+times h" read aloud. 0.6 cents a question.
+
+**The source check** (`source.*.json`, Sonnet 5.5 with search). All 40 right keys were supported with a
+citation from an allowed site, and none contradicted. All seven misprinted keys and both disputed keys were
+contradicted. Of the pilot's five questions that name a renamed lab, it noticed the new name in one: that
+stays the lab table's job. 4.5 cents a question, most of it the search results the model reads.
+
+**The second look** (`second.*.json`, Opus 5.5 with search or code). It ruled all seven misprinted keys and
+both disputed keys wrong. Of nine right keys with a made-up solver who chose another choice, it upheld eight
+and called one ambiguous; of five spot checks, it upheld four and called one ambiguous, proposing an ACCEPT
+entry. It overturned no right key. 4.5 cents a question.
+
+**The writer comparison** was still running when this was written; its result will be added here.
 
 ## Tests
 
