@@ -337,6 +337,10 @@ It can check a round: the average of 46 ratings has a standard error of about 0.
 0.45 apart. The solver's own rating, made without anchors, separates the tiers less (59% and 56%). A tenth
 of a cent a rating in a batch.
 
+Opus 5.5 rates the same 336 questions a little lower and separates the tiers as well: 2.02 and 2.51 at high
+school, 1.98 and 2.46 at middle school, 62% and 63%. A rating therefore means something only beside the same
+rater's figures for DOE's own questions.
+
 **Recomputing in code** (`compute.*.json`, Sonnet 5.5, 60 numeric questions). 58 agree with the key, one is
 the key's value in another form, and one disagrees: a question whose key the solver also doubted. Code was
 run for all 60. It also reported four questions whose wording can be read two ways, among them "f minus g
