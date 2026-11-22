@@ -329,6 +329,12 @@ fault reported, or a working far too long), 21.6% of DOE's questions would reach
 solver's word: 259 of 1,199, and much the same in every level and tier. That is the false-alarm rate to plan
 for with questions like DOE's. The questions the pipeline wrote drew fewer doubts (below).
 
+Opus 5.5 is the quieter solver. On 240 of the same questions it agrees with DOE's key on 97.1%, reports a
+fault in 4.6% and would send 8.3% to the second look, against Sonnet's 21.6%. It is not quieter by missing
+things: it caught the same nine wrong and disputed keys, and on those 240 questions every key Sonnet
+disagreed with, Opus disagreed with too. It costs twice as much a question (0.26 cents in a batch) and saves
+more than that in second looks.
+
 **The answer matcher** (`match.*.json`, Haiku 5.5). With DOE's own list hidden it refused 135 of 150 DO NOT
 ACCEPT entries, accepted 5 and was unsure of 10; it accepted 112 of 150 ACCEPT entries, some of which DOE
 takes out of leniency. Sonnet 5.5 did no better at fifteen times the price. A hundredth of a cent a ruling.
@@ -448,7 +454,16 @@ been built.
 
 ## What comes next
 
-The rest of stage B is running the trials above, changing a prompt where a step misses its bar, and replacing
-the plan's cost table with measured numbers. Stage C then joins the steps into one run that makes two
-late-tier rounds end to end: the news collector for Energy, the second solver, the assembly of a round and the
-ledger.
+Stage B is done: every step has been measured, and the plan's cost table is replaced by the one above. What
+the trials leave open:
+
+- **Which model writes.** Sonnet's questions match DOE's late rounds and cost less to write; Opus's are
+  harder and repeat the library less often as ideas. Stage C makes two late-tier rounds in any case, so one
+  can be made each way and the blind test can tell them apart.
+- **The rater** checks a round's average and spread, not a single question.
+- **The second reading of the judge's test set**, and **the list of DOE keys the solver disagrees with**,
+  each want a person's eye.
+
+Stage C joins the steps into one run that makes two late-tier rounds end to end: the news collector for
+Energy, the second solver, the recomputation, the source check and the second look in the flow, the assembly
+of a round, and the ledger.
