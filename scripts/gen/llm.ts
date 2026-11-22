@@ -142,6 +142,8 @@ export interface ModelReply {
   /** The parsed reply, when a schema was asked for and the reply was whole. */
   json?: unknown;
   citations: Citation[];
+  /** How many times the model ran code in the sandbox: a step that must compute in code checks this. */
+  codeRuns: number;
   usage: Usage;
   batch: boolean;
   /** Dollars. */
@@ -161,7 +163,10 @@ export function toParams(request: ModelRequest): Params {
   if (request.code && request.search) throw new Error(`Request ${request.id} asks for both code and web search; give a step one tool.`);
   priceOf(request.model);
   const tools: NonNullable<Params['tools']> = [];
-  if (request.search) tools.push({ type: 'web_search_20260209', name: 'web_search', allowed_domains: request.search.domains, max_uses: request.search.maxUses });
+  // The plain search tool, on purpose. With the newer one (web_search_20260209) the model reads the results
+  // through code, and its reply then carries no citations (seen on 21 November 2026): the page's own words,
+  // attached by the tool, are what the source check exists to keep.
+  if (request.search) tools.push({ type: 'web_search_20250305', name: 'web_search', allowed_domains: request.search.domains, max_uses: request.search.maxUses });
   if (request.code) tools.push({ type: 'code_execution_20260120', name: 'code_execution' });
   return {
     model: request.model,
@@ -200,8 +205,16 @@ export function lastJsonObject(text: string): unknown {
   return undefined;
 }
 
-/** The pipeline's reply for an API message. `usage` is the total when the message took more than one call. */
-export function toReply(request: ModelRequest, message: Anthropic.Message, batch: boolean, usage = usageOf(message), now = new Date()): ModelReply {
+/** How many times a message ran code in the sandbox. */
+export function codeRunsIn(message: Anthropic.Message): number {
+  return message.content.filter((b) => b.type === 'server_tool_use' && /code_execution/.test(b.name)).length;
+}
+
+/**
+ * The pipeline's reply for an API message. `usage` and `codeRuns` are the totals when the message took more
+ * than one call.
+ */
+export function toReply(request: ModelRequest, message: Anthropic.Message, batch: boolean, usage = usageOf(message), now = new Date(), codeRuns = codeRunsIn(message)): ModelReply {
   const text = message.content.map((b) => (b.type === 'text' ? b.text : '')).join('');
   const citations: Citation[] = [];
   for (const block of message.content) {
@@ -210,7 +223,7 @@ export function toReply(request: ModelRequest, message: Anthropic.Message, batch
       if (c.type === 'web_search_result_location') citations.push({ url: c.url, title: c.title ?? '', quote: c.cited_text });
     }
   }
-  const reply: ModelReply = { id: request.id, step: request.step, model: request.model, at: now.toISOString(), outcome: 'ok', text, citations, usage, batch, cost: costOf(request.model, usage, batch) };
+  const reply: ModelReply = { id: request.id, step: request.step, model: request.model, at: now.toISOString(), outcome: 'ok', text, citations, codeRuns, usage, batch, cost: costOf(request.model, usage, batch) };
   if (message.stop_reason === 'refusal') {
     const details = message.stop_details;
     return { ...reply, outcome: 'refused', note: details ? [details.category, details.explanation].filter(Boolean).join(': ') || 'declined' : 'declined' };
@@ -227,7 +240,7 @@ export function toReply(request: ModelRequest, message: Anthropic.Message, batch
   return reply;
 }
 
-const failed = (request: ModelRequest, batch: boolean, note: string): ModelReply => ({ id: request.id, step: request.step, model: request.model, at: new Date().toISOString(), outcome: 'error', text: '', citations: [], usage: NO_USAGE, batch, cost: 0, note });
+const failed = (request: ModelRequest, batch: boolean, note: string): ModelReply => ({ id: request.id, step: request.step, model: request.model, at: new Date().toISOString(), outcome: 'error', text: '', citations: [], codeRuns: 0, usage: NO_USAGE, batch, cost: 0, note });
 
 /* ------------------------------------------------------------------ */
 /* The API, and a stand-in for tests                                   */
@@ -370,11 +383,13 @@ export async function ask(api: ModelApi, request: ModelRequest): Promise<ModelRe
   try {
     let message = await api.create(params);
     usage = addUsage(usage, usageOf(message));
+    let codeRuns = codeRunsIn(message);
     for (let i = 0; message.stop_reason === 'pause_turn' && i < MAX_CONTINUES; i++) {
       message = await api.create({ ...params, messages: [...params.messages, { role: 'assistant', content: message.content as Anthropic.ContentBlockParam[] }] });
       usage = addUsage(usage, usageOf(message));
+      codeRuns += codeRunsIn(message);
     }
-    return toReply(request, message, false, usage);
+    return toReply(request, message, false, usage, new Date(), codeRuns);
   } catch (err) {
     const { note, fatal } = explain(err);
     if (fatal) throw new KeyError(note);

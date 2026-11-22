@@ -62,8 +62,10 @@ describe.skipIf(!libraryBuilt())('the writer comparison without the API', () => 
       expect(w.passed).toBe(13);
       expect(w.difficulty).toMatchObject({ ratedBy: w.checker, passed: 4, through: 4 });
       const calls = Object.values(w.cost.stages).reduce((a, s) => a + s.calls, 0);
-      // Ideas (one request a topic group), 48 idea screens, 16 drafts, 1 repair, 15 text screens, 14 solves, 14 ratings.
-      expect(calls - w.cost.stages.ideas!.calls).toBe(48 + 16 + 1 + 15 + 14 + 14);
+      // Ideas (one request a topic group), 48 idea screens, 16 drafts, 1 repair, 15 text screens, 14 solves, 14 ratings,
+      // and a match for the one wrong answer if it was a short answer.
+      expect(calls - w.cost.stages.ideas!.calls - (w.cost.stages.match?.calls ?? 0)).toBe(48 + 16 + 1 + 15 + 14 + 14);
+      expect(w.cost.stages.match?.calls ?? 0).toBeLessThanOrEqual(1);
       expect(w.cost.total).toBeCloseTo(Object.values(w.cost.stages).reduce((a, s) => a + s.cost, 0), 3);
       expect(w.cost.writing + w.cost.checking).toBeCloseTo(w.cost.total, 3);
       expect(w.cost.passedPerDollar).toBeCloseTo(13 / w.cost.total, 0);

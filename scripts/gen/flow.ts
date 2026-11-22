@@ -3,7 +3,7 @@
  * stage sends every slot's request together, so a stage can go as one batch, and what a stage finds decides
  * what the next one asks.
  *
- *   ideas → idea screen → write → house-style checks (one repair) → text screen → blind solve → rating
+ *   ideas → idea screen → write → house-style checks (one repair) → text screen → blind solve → answer match → rating
  *
  * A slot's draft either falls out at a stage, with the reason, or comes through. One that comes through with
  * a doubt on it (the solver gave another form of the answer, named a second answer, or reported a fault) is
@@ -22,6 +22,7 @@ import { ideaQuery, IDEAS_PROMPT, ideasRequest, readIdeas } from './steps/ideas'
 import { isRepeat, JUDGE_PROMPT, judgeRequest, readJudgment, type Judgment, type Listed, type Relation } from './steps/judge';
 import { RATE_PROMPT, rateRequest, readRating, type Anchors } from './steps/rate';
 import { onOneLine } from './steps/show';
+import { MATCH_PROMPT, matchRequest, readMatch, settled, type Match } from './steps/match';
 import { compare, readSolution, SOLVE_PROMPT, solveRequest, unacceptedAnswers, type Solution } from './steps/solve';
 import { readWritten, repairRequest, WRITE_PROMPT, writeRequest, type WriteContext, type Written } from './steps/write';
 import { plain } from './text';
@@ -32,11 +33,13 @@ export interface FlowModels {
   writer: string;
   /** Screens the ideas: a small model, since the text screen catches what it misses. */
   ideaJudge: string;
+  /** Rules on whether a solver's answer is the answer line's, where the answer checker cannot tell: a small model. */
+  matcher: string;
   /** Screens the finished text, solves blind and rates. Never the writer's model. */
   checker: string;
 }
 
-export type Stage = 'ideas' | 'idea-screen' | 'write' | 'repair' | 'text-screen' | 'solve' | 'rate';
+export type Stage = 'ideas' | 'idea-screen' | 'write' | 'repair' | 'text-screen' | 'solve' | 'match' | 'rate';
 
 export interface FlowContext {
   library: readonly LibraryQuestion[];
@@ -82,6 +85,8 @@ export interface SlotRun {
   findings: Finding[];
   judgment?: Judgment | null;
   solution?: Solution | null;
+  /** The matcher's ruling, when the answer checker did not accept the solver's short answer. */
+  match?: Match | null;
   rating?: number | null;
   /** 'passed': through every stage clean. 'second-look': through, with a doubt to settle. 'ended': fell out. */
   outcome: 'passed' | 'second-look' | 'ended';
@@ -261,17 +266,27 @@ export async function makeDrafts(slots: readonly Slot[], models: FlowModels, ctx
   const solveReplies = await send('solve', models.checker, SOLVE_PROMPT, screened.map((run) => solveRequest(`solve-${run.slot.id}`, run.written!.draft.question, run.slot.level, models.checker)), 900);
   for (const run of screened) {
     const reply = solveReplies.get(`solve-${run.slot.id}`);
+    run.solution = reply ? readSolution(reply) : null;
+    if (run.solution) continue;
+    // A solver that gave no answer has not found a fault: the question goes on, with the doubt recorded.
+    run.doubts.push(`A solver gave no answer (${failed(reply)}).`);
+    run.outcome = 'second-look';
+  }
+  const solved = screened.filter((r) => r.solution);
+  // Where the answer checker does not accept a short answer, a small model says whether a judge would.
+  const disputed = solved.filter((run) => run.written!.draft.question.format === 'short_answer' && compare(run.written!.draft.question, run.solution!) !== 'agrees');
+  const matchReplies = await send('match', models.matcher, MATCH_PROMPT, disputed.map((run) => matchRequest(`match-${run.slot.id}`, run.written!.draft.question, run.solution!.answer, run.slot.level, models.matcher)), 150);
+  for (const run of disputed) {
+    const reply = matchReplies.get(`match-${run.slot.id}`);
+    run.match = reply ? readMatch(reply) : null;
+  }
+  for (const run of solved) {
     const question = run.written!.draft.question;
-    const solution = reply ? readSolution(reply) : null;
-    run.solution = solution;
-    if (!solution) {
-      end(run, 'solve', `No answer (${failed(reply)}).`);
-      continue;
-    }
+    const solution = run.solution!;
     const said = question.format === 'multiple_choice' ? `${solution.letter}) ${solution.answer}` : solution.answer;
-    const verdict = compare(question, solution);
+    const verdict = settled(compare(question, solution), run.match ?? null);
     if (verdict === 'disagrees') run.doubts.push(`A solver who saw only the question answered ${said}, with confidence ${solution.confidence} of 5.`);
-    if (verdict === 'close') run.doubts.push(`A solver answered ${said}, which the answer checker could not match to the answer line for certain.`);
+    if (verdict === 'close') run.doubts.push(`A solver answered ${said}, which could not be matched to the answer line for certain.`);
     for (const other of unacceptedAnswers(question, solution)) run.doubts.push(`A solver thought "${other}" could also be defended.`);
     for (const p of solution.problems) run.doubts.push(`A solver reported a fault (${p.kind}): ${p.note}`);
     const allowed = run.slot.kind === 'tossup' ? 5 : 20;

@@ -98,7 +98,7 @@ export async function computeTrial(sample: readonly SampleItem[], args: TrialArg
     const reply = replies.get(s.id);
     const c = reply ? readComputation(reply) : null;
     const allowed = s.kind === 'tossup' ? 5 : 20;
-    return { id: s.id, level: s.level, subject: s.subject, kind: s.kind, format: s.question.format, outcome: reply?.outcome ?? 'none', verdict: c ? computationAgrees(s.question, c) : null, key: s.question.answerRaw, answer: c ? (c.letter ? `${c.letter}) ${c.answer}` : c.answer) : '', consistent: c?.consistent ?? null, problems: c?.problems ?? [], seconds: c?.seconds ?? null, overTime: c ? c.seconds > allowed : null };
+    return { id: s.id, level: s.level, subject: s.subject, kind: s.kind, format: s.question.format, outcome: reply?.outcome ?? 'none', verdict: c ? computationAgrees(s.question, c) : null, key: s.question.answerRaw, answer: c ? (c.letter ? `${c.letter}) ${c.answer}` : c.answer) : '', consistent: c?.consistent ?? null, problems: c?.problems ?? [], seconds: c?.seconds ?? null, overTime: c ? c.seconds > allowed : null, ranCode: c?.ranCode ?? null };
   });
   const read = rows.filter((r) => r.verdict);
   const count = (v: string) => read.filter((r) => r.verdict === v).length;
@@ -112,6 +112,7 @@ export async function computeTrial(sample: readonly SampleItem[], args: TrialArg
     agrees: share(count('agrees'), read.length),
     close: share(count('close'), read.length),
     disagrees: share(count('disagrees'), read.length),
+    ranCode: read.filter((r) => r.ranCode).length,
     calledInconsistent: read.filter((r) => r.consistent === false).length,
     withProblems: read.filter((r) => r.problems.length).length,
     overTheTimeAllowed: { tossups: read.filter((r) => r.kind === 'tossup' && r.overTime).length, ofTossups: read.filter((r) => r.kind === 'tossup').length, bonuses: read.filter((r) => r.kind === 'bonus' && r.overTime).length, ofBonuses: read.filter((r) => r.kind === 'bonus').length },
@@ -120,7 +121,7 @@ export async function computeTrial(sample: readonly SampleItem[], args: TrialArg
     results: rows,
   };
   console.log(`\nRead ${read.length} of ${chosen.length}. Agrees with DOE's key: ${count('agrees')}; same value in another form: ${count('close')}; disagrees: ${count('disagrees')}.`);
-  console.log(`Called inconsistent: ${summary.calledInconsistent}. Over the time allowed: ${summary.overTheTimeAllowed.tossups} of ${summary.overTheTimeAllowed.ofTossups} toss-ups, ${summary.overTheTimeAllowed.bonuses} of ${summary.overTheTimeAllowed.ofBonuses} bonuses.`);
+  console.log(`Ran code: ${summary.ranCode} of ${read.length}. Called inconsistent: ${summary.calledInconsistent}. Over the time allowed: ${summary.overTheTimeAllowed.tossups} of ${summary.overTheTimeAllowed.ofTossups} toss-ups, ${summary.overTheTimeAllowed.bonuses} of ${summary.overTheTimeAllowed.ofBonuses} bonuses.`);
   for (const r of summary.disagreements) console.log(`  ${r.verdict}  ${r.id}: key ${r.key}; computed ${r.answer}`);
   console.log(`Per call: ${JSON.stringify(summary.calls.meanTokens)}, $${summary.calls.costPerCall}.`);
   if (!args.limit) console.log(`Summary: ${path.relative(process.cwd(), writeSummary(`compute.${args.model}`, summary))}`);

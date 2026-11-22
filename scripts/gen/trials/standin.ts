@@ -13,6 +13,8 @@ export class Said {
     readonly text: string,
     readonly citations: Citation[] = [],
     readonly searches = 0,
+    /** How many times it "ran code" before answering. */
+    readonly codeRuns = 0,
   ) {}
 }
 
@@ -33,7 +35,7 @@ export function standIn(answer: (user: string, system: string, params: Params) =
       type: 'message',
       role: 'assistant',
       model: params.model,
-      content: [{ type: 'text', text: said.text, citations: citations.length ? citations : null }],
+      content: [...Array.from({ length: said.codeRuns }, (_, i) => ({ type: 'server_tool_use', id: `srvtoolu_${i}`, name: 'bash_code_execution', input: {} })), { type: 'text', text: said.text, citations: citations.length ? citations : null }],
       stop_reason: 'end_turn',
       stop_sequence: null,
       stop_details: null,
@@ -119,13 +121,15 @@ export function scripted(script: Script = {}): (user: string, system: string) =>
       const slot = slotIn(user);
       const wrong = (script.solverWrong ?? none).has(slot);
       const problems = (script.solverFlags ?? none).has(slot) ? [{ kind: 'ambiguous', note: 'Two readings.' }] : [];
-      const more = { confidence: wrong ? 3 : 5, otherAnswers: [], problems, seconds: 4, difficulty: 3 };
+      const more = { confidence: wrong ? 3 : 5, otherAnswers: [], problems, remarks: [], seconds: 4, difficulty: 3 };
       if (user.includes('Identify all')) return { answer: wrong ? '2' : '1, 3', letter: '', ...more };
       if (user.includes('Rank the following')) return { answer: wrong ? '1, 2, 3' : '2, 3, 1', letter: '', ...more };
       const right = /^([WXYZ])\) Rightname$/m.exec(user)?.[1];
       if (right) return wrong ? { answer: 'Wrongname', letter: /^([WXYZ])\) Wrongname$/m.exec(user)![1], ...more } : { answer: 'Rightname', letter: right, ...more };
       return { answer: wrong ? 'something else' : `ZED${slot.toUpperCase()}`, letter: '', ...more };
     }
+    // The matcher is only ever asked about an answer the checker refused: by rule, it is a different answer.
+    if (system.includes('You help judge answers')) return { compare: 'By rule.', verdict: 'reject' };
     if (system.includes('You rate how hard a question is')) return { score: script.rating ?? 4, reason: 'By rule.' };
     throw new Error(`The scripted pipeline does not know this step: ${system.slice(0, 60)}`);
   };

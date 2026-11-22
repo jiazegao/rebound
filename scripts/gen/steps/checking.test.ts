@@ -11,7 +11,7 @@ import { readSourceCheck, SOURCE_PROMPT, SOURCE_SEARCHES, sourceRequest } from '
 const lists = loadSources();
 const labs = loadLabs();
 
-const said = (text: string, citations: Citation[] = [], more: Partial<ModelReply> = {}): ModelReply => ({ id: 'x', step: 'test', model: 'claude-sonnet-5-5', at: '2026-11-21T00:00:00.000Z', outcome: 'ok', text, citations, usage: NO_USAGE, batch: false, cost: 0, ...more });
+const said = (text: string, citations: Citation[] = [], more: Partial<ModelReply> = {}): ModelReply => ({ id: 'x', step: 'test', model: 'claude-sonnet-5-5', at: '2026-11-21T00:00:00.000Z', outcome: 'ok', text, citations, codeRuns: 0, usage: NO_USAGE, batch: false, cost: 0, ...more });
 
 const car: QuestionText = { kind: 'bonus', subject: 'physics', format: 'short_answer', stem: 'A car starting at rest undergoes a constant acceleration of 16 meters per second squared. In meters per second, what is the speed of the car after it has traveled half a meter?', answer: '4', accept: [], reject: [] };
 const half: QuestionText = { kind: 'tossup', subject: 'math', format: 'short_answer', stem: 'What is the probability that a fair coin lands heads?', answer: '1/2', accept: [], reject: [] };
@@ -19,7 +19,7 @@ const dam: QuestionText = { kind: 'bonus', subject: 'physics', format: 'multiple
 const helicase: QuestionText = { kind: 'tossup', subject: 'biology', format: 'short_answer', stem: 'What enzyme unwinds the DNA double helix at the replication fork?', answer: 'HELICASE', accept: [], reject: [] };
 
 describe('recomputing a numeric answer', () => {
-  const computed = (more: Partial<Computation>): Computation => ({ answer: '', letter: '', value: null, consistent: true, problems: [], seconds: 10, ...more });
+  const computed = (more: Partial<Computation>): Computation => ({ answer: '', letter: '', value: null, consistent: true, problems: [], seconds: 10, ranCode: true, ...more });
 
   it('is given the question as read, and the code tool', () => {
     const r = computeRequest('rb-hs-000002', car, 'HS', 'claude-sonnet-5-5');
@@ -34,9 +34,11 @@ describe('recomputing a numeric answer', () => {
 
   it('reads the JSON object the reply ends with', () => {
     const c = readComputation(said('v² = 2ad = 2 × 16 × 0.5 = 16, so v = 4.\n\n{"answer": "4", "letter": "", "value": 4, "consistent": true, "problems": [], "seconds": 12}'));
-    expect(c).toEqual({ answer: '4', letter: '', value: 4, consistent: true, problems: [], seconds: 12 });
+    // No code was run for this reply, and it says so.
+    expect(c).toEqual({ answer: '4', letter: '', value: 4, consistent: true, problems: [], seconds: 12, ranCode: false });
+    expect(readComputation(said('{"answer": "4"}', [], { codeRuns: 2 }))!.ranCode).toBe(true);
     const odd = readComputation(said('{"answer": " 40 ", "letter": "Y", "value": "39.6", "consistent": false, "problems": ["The depth is given as a water level.", ""], "seconds": -3}'))!;
-    expect(odd).toEqual({ answer: '40', letter: 'Y', value: null, consistent: false, problems: ['The depth is given as a water level.'], seconds: 0 });
+    expect(odd).toEqual({ answer: '40', letter: 'Y', value: null, consistent: false, problems: ['The depth is given as a water level.'], seconds: 0, ranCode: false });
     expect(readComputation(said('I could not set this up.'))).toBeNull();
     expect(readComputation(said('{"answer": ""}'))).toBeNull();
     expect(readComputation(said('{"answer": "4"}', [], { outcome: 'error' }))).toBeNull();
@@ -50,6 +52,10 @@ describe('recomputing a numeric answer', () => {
     // Equal in value, not in form: never a plain disagreement.
     expect(computationAgrees(half, computed({ answer: '0.5', value: 0.5 }))).not.toBe('disagrees');
     expect(computationAgrees(half, computed({ answer: 'one half', value: 0.5 }))).not.toBe('disagrees');
+    // A percentage worked out as a fraction is the same value too.
+    const carnot = { ...half, stem: 'What is the efficiency of a Carnot engine between 500 kelvin and 200 kelvin?', answer: '60%' };
+    expect(computationAgrees(carnot, computed({ answer: '3/5', value: 0.6 }))).toBe('close');
+    expect(computationAgrees(carnot, computed({ answer: '2/5', value: 0.4 }))).toBe('disagrees');
     expect(computationAgrees(dam, computed({ answer: '40', letter: 'Y', value: 39.6 }))).toBe('agrees');
     expect(computationAgrees(dam, computed({ answer: '30', letter: 'X', value: 30 }))).toBe('disagrees');
   });
@@ -67,7 +73,8 @@ describe('the source check', () => {
     expect(r.search!.domains).toEqual(expect.arrayContaining(['nih.gov', 'wikipedia.org', 'ornl.gov']));
     expect(r.search!.domains).not.toContain('openstax.org');
     const tool = toParams(r).tools![0] as { type: string; allowed_domains: string[]; max_uses: number };
-    expect(tool.type).toBe('web_search_20260209');
+    // The plain search tool: the newer one's replies carry no citations.
+    expect(tool.type).toBe('web_search_20250305');
     expect(tool.max_uses).toBe(SOURCE_SEARCHES);
     expect(SOURCE_PROMPT).toMatch(/^[0-9a-f]{8}$/);
   });

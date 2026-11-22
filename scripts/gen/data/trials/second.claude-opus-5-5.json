@@ -1,0 +1,476 @@
+{
+ "about": "The second look (scripts/gen/trials/checks.ts --second): does it overturn a wrong key and uphold a right one? Wrong keys are the answer letters DOE misprinted, shown as printed, each with the answer a solver gave; disputed keys are the two the November 2026 pilot questioned; \"right key, wrong solver\" is a DOE question with a made-up solver who chose another choice; spot checks have no finding at all.",
+ "model": "claude-opus-5-5",
+ "prompt": "3035e6f2",
+ "run": "2026-11-21",
+ "wrongKeys": {
+  "questions": 7,
+  "keyRight": 0,
+  "keyWrong": 7,
+  "ambiguous": 0,
+  "unread": 0
+ },
+ "disputedKeys": {
+  "questions": 2,
+  "keyRight": 0,
+  "keyWrong": 2,
+  "ambiguous": 0,
+  "unread": 0
+ },
+ "rightKeysWithAWrongSolver": {
+  "questions": 9,
+  "keyRight": 8,
+  "keyWrong": 0,
+  "ambiguous": 1,
+  "unread": 0
+ },
+ "spotChecks": {
+  "questions": 5,
+  "keyRight": 4,
+  "keyWrong": 0,
+  "ambiguous": 1,
+  "unread": 0
+ },
+ "calls": {
+  "calls": 23,
+  "outcomes": {
+   "ok": 23,
+   "refused": 0,
+   "cut-off": 0,
+   "error": 0
+  },
+  "batch": false,
+  "meanTokens": {
+   "input": 249,
+   "cacheRead": 4260,
+   "cacheWrite": 4702,
+   "output": 761,
+   "thinking": 207
+  },
+  "searches": 10,
+  "cost": 1.0333,
+  "costPerCall": 0.044927
+ },
+ "results": [
+  {
+   "id": "wrong-doe-hs-01-r05-t20",
+   "group": "misprinted letter",
+   "outcome": "ok",
+   "expected": "key wrong",
+   "ruling": "key wrong",
+   "key": "W) MERCURY-OXIDE CELLS",
+   "answer": "X) MERCURY-OXIDE CELLS",
+   "reason": "The US 1996 Battery Act banned mercuric-oxide button cells outright and restricted all other mercuric-oxide batteries, making them nearly obsolete; NiCd cells only became subject to labeling and recycling rules and are still sold.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": [
+    "https://archive.epa.gov/epawaste/hazard/web/pdf/battery.pdf",
+    "https://archive.epa.gov/epawaste/hazard/web/pdf/battery.pdf",
+    "https://pubs.usgs.gov/sir/2013/5137/pdf/sir2013-5137.pdf",
+    "https://en.wikipedia.org/wiki/Mercury-Containing_and_Rechargeable_Battery_Management_Act",
+    "https://en.wikipedia.org/wiki/Mercury-Containing_and_Rechargeable_Battery_Management_Act"
+   ]
+  },
+  {
+   "id": "wrong-doe-hs-01-r10-t19",
+   "group": "misprinted letter",
+   "outcome": "ok",
+   "expected": "key wrong",
+   "ruling": "key wrong",
+   "key": "W) WINDS",
+   "answer": "Z) WINDS",
+   "reason": "'Aeolian' means wind-driven, so aeolian sandstones form from sand that wind transported and deposited. River currents produce fluvial deposits, not aeolian ones.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": []
+  },
+  {
+   "id": "wrong-doe-ms-01-r07-t07",
+   "group": "misprinted letter",
+   "outcome": "ok",
+   "expected": "key wrong",
+   "ruling": "key wrong",
+   "key": "X) BRAIDED",
+   "answer": "Y) BRAIDED",
+   "reason": "Glacial meltwater streams with high bed load and easily eroded banks form braided channel patterns; an oxbow is a cut-off meander lake, not a stream pattern.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": []
+  },
+  {
+   "id": "wrong-doe-ms-01-r18-t07",
+   "group": "misprinted letter",
+   "outcome": "ok",
+   "expected": "key wrong",
+   "ruling": "key wrong",
+   "key": "X) LAVA DOMES",
+   "answer": "W) LAVA DOMES",
+   "reason": "The USGS compares lava-dome growth at Mount St. Helens to squeezing a tube of toothpaste, and several dacite domes have formed in the crater since 1980 (1980 domes, 1980–86, 2004–08). No cinder cone has formed there.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": [
+    "https://pubs.usgs.gov/gip/msh/subsequent.html",
+    "https://pubs.usgs.gov/gip/msh/subsequent.html",
+    "https://www.usgs.gov/media/images/lava-dome-growing-within-mount-st-helens-crater-reaches-34-m",
+    "https://www.usgs.gov/media/images/crater-and-dome-view-mount-stsince-dec-1980-eruptions-moun",
+    "https://www.usgs.gov/media/images/lava-domes-within-mount-st-helens-crater-seen-nw-19"
+   ]
+  },
+  {
+   "id": "wrong-doe-ms-06-r08-b08",
+   "group": "misprinted letter",
+   "outcome": "ok",
+   "expected": "key wrong",
+   "ruling": "key wrong",
+   "key": "X) 50%",
+   "answer": "W) 50%",
+   "reason": "Basaltic (mafic) lava contains about 45–52% silica, so about 50%; 60% is the usual figure for andesitic lava.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": []
+  },
+  {
+   "id": "wrong-doe-ms-08-r17-t17",
+   "group": "misprinted letter",
+   "outcome": "ok",
+   "expected": "key wrong",
+   "ruling": "key wrong",
+   "key": "Y) 2.5",
+   "answer": "X) 2.5",
+   "reason": "A difference of one magnitude means a brightness ratio of 100^(1/5), about 2.512, which rounds to 2.5. The keyed 3.2 is the square root of 10, which matches a difference of 1.25 magnitudes.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": []
+  },
+  {
+   "id": "wrong-doe-ms-16-r02-b17",
+   "group": "misprinted letter",
+   "outcome": "ok",
+   "expected": "key wrong",
+   "ruling": "key wrong",
+   "key": "W) CARBON DIOXIDE",
+   "answer": "X) Carbon dioxide",
+   "reason": "NASA sources say Mars's seasonal polar caps are mainly carbon dioxide frost (dry ice), not carbon monoxide. Water ice makes up the permanent caps, which the word 'seasonal' rules out.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": [
+    "https://mars.nasa.gov/resources/5265/seasonal-processes-omega-sublimation/",
+    "https://mars.nasa.gov/resources/5265/seasonal-processes-omega-sublimation/",
+    "https://mars.nasa.gov/resources/5265/seasonal-processes-omega-sublimation/",
+    "https://www.jpl.nasa.gov/videos/mars-dry-ice-and-dunes/",
+    "https://en.wikipedia.org/wiki/Martian_polar_ice_caps"
+   ]
+  },
+  {
+   "id": "disputed-doe-hs-03-r15-t21",
+   "group": "disputed key",
+   "outcome": "ok",
+   "expected": "key wrong",
+   "ruling": "key wrong",
+   "key": "ULTRAVIOLET (ACCEPT: UV)",
+   "answer": "VISIBLE (ACCEPT: OPTICAL, VISIBLE LIGHT)",
+   "reason": "Nearly all supernovae are discovered by ground-based optical surveys (ZTF, ATLAS, ASAS-SN, Pan-STARRS) and amateurs, not in the ultraviolet; the solver's answer of visible/optical is correct.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": [
+    "https://par.nsf.gov/servlets/purl/10653571"
+   ]
+  },
+  {
+   "id": "disputed-doe-hs-01-r11-b23",
+   "group": "disputed key",
+   "outcome": "ok",
+   "expected": "key wrong",
+   "ruling": "key wrong",
+   "key": "NEUTROPHIL; BASOPHIL",
+   "answer": "NEUTROPHIL; BASOPHIL; MACROPHAGE",
+   "reason": "Macrophages come from monocytes and are standardly classified as white blood cells (leukocytes), so the key wrongly leaves them out; only the melanocyte is not a leukocyte.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": [
+    "https://en.wikipedia.org/wiki/Macrophage",
+    "https://aidsinfo.nih.gov/understanding-hiv-aids/glossary/439/macrophage",
+    "https://simple.wikipedia.org/wiki/Macrophage",
+    "https://en.wikipedia.org/wiki/Monocyte"
+   ]
+  },
+  {
+   "id": "alarm-doe-hs-11-r05-t01",
+   "group": "right key, wrong solver",
+   "outcome": "ok",
+   "expected": "key right",
+   "ruling": "key right",
+   "key": "Z) IODINE",
+   "answer": "Z) IODINE",
+   "reason": "Iodine deficiency is the classic cause of goiter. Sodium, chlorine and potassium are major minerals, not trace elements, and their deficiency does not cause goiter; the solver likely confused iodine with the salt used to carry it.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": []
+  },
+  {
+   "id": "alarm-doe-hs-17-r09-t17",
+   "group": "right key, wrong solver",
+   "outcome": "ok",
+   "expected": "key right",
+   "ruling": "key right",
+   "key": "X) ALWAYS SPONTANEOUS",
+   "answer": "X) ALWAYS SPONTANEOUS",
+   "reason": "With ΔH < 0 and ΔS > 0, ΔG = ΔH − TΔS is negative at every temperature. The solver's answer Y applies when ΔH < 0 and ΔS < 0, not here.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": []
+  },
+  {
+   "id": "alarm-doe-hs-16-r10-t16",
+   "group": "right key, wrong solver",
+   "outcome": "ok",
+   "expected": "key right",
+   "ruling": "key right",
+   "key": "Z) PRESENCE OF DIFFERENTIAL PRESSURE",
+   "answer": "Z) PRESENCE OF DIFFERENTIAL PRESSURE",
+   "reason": "Foliation comes from minerals lining up under directed (differential) stress. Temperature controls metamorphic grade, not whether foliation forms; high-temperature contact metamorphism without directed stress gives non-foliated hornfels.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": []
+  },
+  {
+   "id": "alarm-doe-hs-09-r04-t18",
+   "group": "right key, wrong solver",
+   "outcome": "ok",
+   "expected": "key right",
+   "ruling": "ambiguous",
+   "key": "Z) VOLTAGE",
+   "answer": "Z) Voltage",
+   "reason": "Voltage drops by IR along a line with constant current, so Z is right. But X) Energy is also defensible, because electrical energy is lost as I²R heat over long distances, and that loss is the same effect as the voltage drop.",
+   "fix": {
+    "stem": "In electricity transmission, at consistent current and resistance per unit length, which of the following, measured at a point on the line, changes with distance from the generator? W) Resistance per unit length X) Current Y) Charge Z) Voltage",
+    "accept": [],
+    "reject": []
+   },
+   "sources": []
+  },
+  {
+   "id": "alarm-doe-hs-15-r12-b10",
+   "group": "right key, wrong solver",
+   "outcome": "ok",
+   "expected": "key right",
+   "ruling": "key right",
+   "key": "Z) 16 SINE 5 DEGREES",
+   "answer": "Z) 16 sine 5 degrees",
+   "reason": "Side = 2R sin(180°/n) = 16 sin 5° ≈ 1.395; W (≈7.88) is nearly the radius and impossible for a 36-gon side, and X (≈1.389) differs by a factor of cos 5°.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": []
+  },
+  {
+   "id": "alarm-doe-ms-14-r16-t17",
+   "group": "right key, wrong solver",
+   "outcome": "ok",
+   "expected": "key right",
+   "ruling": "key right",
+   "key": "W) HUNTINGTON’S DISEASE",
+   "answer": "W) Huntington's disease",
+   "reason": "Huntington's disease is autosomal dominant, while sickle-cell disease and Tay-Sachs are autosomal recessive and hemophilia A is X-linked recessive. The solver's choice X probably confuses codominance of the sickle allele at the protein level with dominant inheritance of the disease.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": []
+  },
+  {
+   "id": "alarm-doe-ms-12-r08-t09",
+   "group": "right key, wrong solver",
+   "outcome": "ok",
+   "expected": "key right",
+   "ruling": "key right",
+   "key": "W) HEATING AND COMPACTION OF SEDIMENT",
+   "answer": "W) HEATING AND COMPACTION OF SEDIMENT",
+   "reason": "Diagenesis is the set of physical and chemical changes, including compaction and mild burial heating, that sediment goes through after deposition. Nitrogen fixation (X) is a nitrogen-cycle process unrelated to diagenesis, so the solver was wrong.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": [
+    "https://en.wikipedia.org/wiki/Diagenesis",
+    "https://en.wikipedia.org/wiki/Sedimentary_rock",
+    "https://en.wikipedia.org/wiki/Shale",
+    "https://en.wikipedia.org/wiki/Diagenesis"
+   ]
+  },
+  {
+   "id": "alarm-doe-ms-09-r17-b05",
+   "group": "right key, wrong solver",
+   "outcome": "ok",
+   "expected": "key right",
+   "ruling": "key right",
+   "key": "Y) SPHALERITE",
+   "answer": "Y) SPHALERITE",
+   "reason": "Sphalerite (ZnS) is the main ore of zinc. Chalcocite and malachite are copper ores, and dolomite, CaMg(CO3)2, has no zinc; it only hosts some zinc deposits, so the solver's choice of Z is wrong.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": [
+    "https://en.wikipedia.org/wiki/Sphalerite",
+    "https://en.wikipedia.org/wiki/Sphalerite",
+    "https://minerals.usgs.gov/minerals/pubs/commodity/zinc/720494.pdf"
+   ]
+  },
+  {
+   "id": "alarm-doe-ms-12-r15-b07",
+   "group": "right key, wrong solver",
+   "outcome": "ok",
+   "expected": "key right",
+   "ruling": "key right",
+   "key": "W) X-RAY",
+   "answer": "W) X-ray",
+   "reason": "Bragg coherent diffraction imaging at Argonne's Advanced Photon Source uses coherent hard X-rays (about 9 keV, about 0.14 nm), since Bragg diffraction needs wavelengths close to the spacing between atoms. Ultraviolet wavelengths are far too long, so the solver's choice X is wrong.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": [
+    "https://www.anl.gov/article/a-highpressure-nanoimaging-breakthrough"
+   ]
+  },
+  {
+   "id": "spot-doe-hs-09-r03-t01",
+   "group": "spot check",
+   "outcome": "ok",
+   "expected": "key right",
+   "ruling": "key right",
+   "key": "PHENOTYPE",
+   "answer": "PHENOTYPE",
+   "reason": "Phenotype is the standard term for the composite of an organism's observable characteristics and traits; no other term fits this definition.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": []
+  },
+  {
+   "id": "spot-doe-hs-11-r14-t18",
+   "group": "spot check",
+   "outcome": "ok",
+   "expected": "key right",
+   "ruling": "key right",
+   "key": "ONE",
+   "answer": "ONE",
+   "reason": "Biotite, like all micas, has a single perfect basal cleavage on {001}, so it has one cleavage plane/direction.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": [
+    "https://en.wikipedia.org/wiki/Biotite",
+    "https://en.wikipedia.org/wiki/Biotite",
+    "https://en.wikipedia.org/wiki/Cleavage_(crystal)",
+    "https://en.wikipedia.org/wiki/Cleavage_(crystal)",
+    "https://en.wikipedia.org/wiki/Mineral"
+   ]
+  },
+  {
+   "id": "spot-doe-hs-15-r03-t04",
+   "group": "spot check",
+   "outcome": "ok",
+   "expected": "key right",
+   "ruling": "key right",
+   "key": "ACCELERATION",
+   "answer": "ACCELERATION",
+   "reason": "The slope of a velocity-versus-time graph is dv/dt, which by definition is acceleration (constant, since the function is linear). No other quantity a knowledgeable player might name fits.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": []
+  },
+  {
+   "id": "spot-doe-ms-11-r15-b21",
+   "group": "spot check",
+   "outcome": "ok",
+   "expected": "key right",
+   "ruling": "key right",
+   "key": "HYDROCHLORIC ACID (ACCEPT: HCL)",
+   "answer": "HYDROCHLORIC ACID (ACCEPT: HCL)",
+   "reason": "Parietal cells secrete hydrochloric acid, which gives the stomach its low pH. Asking for a 'specific acid' rules out the general term 'gastric acid,' so only one answer is correct.",
+   "fix": {
+    "stem": "",
+    "accept": [],
+    "reject": []
+   },
+   "sources": []
+  },
+  {
+   "id": "spot-doe-ms-08-r06-t21",
+   "group": "spot check",
+   "outcome": "ok",
+   "expected": "key right",
+   "ruling": "ambiguous",
+   "key": "ACIDIFICATION",
+   "answer": "ACIDIFICATION (ocean acidification)",
+   "reason": "Ocean acidification is the correct reason deep-ocean CO2 storage was abandoned, but the bare answer line could lead a judge to reject equivalent answers like 'decrease in pH' or 'formation of carbonic acid.'",
+   "fix": {
+    "stem": "",
+    "accept": [
+     "OCEAN ACIDIFICATION",
+     "DECREASE IN pH",
+     "LOWERING OF pH",
+     "INCREASED ACIDITY",
+     "FORMATION OF CARBONIC ACID"
+    ],
+    "reject": []
+   },
+   "sources": [
+    "https://hero.epa.gov/reference/6581706/",
+    "https://en.wikipedia.org/wiki/Direct_deep-sea_carbon_dioxide_injection",
+    "https://en.wikipedia.org/wiki/Direct_deep-sea_carbon_dioxide_injection"
+   ]
+  }
+ ]
+}

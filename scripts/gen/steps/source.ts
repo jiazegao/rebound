@@ -37,7 +37,7 @@ export const sourceSystem = (level: Level) => `You check facts in practice quest
 <how_to_check>
 1. Say in one sentence the claim that must be true for the answer line to be right. For "What enzyme unwinds DNA at the replication fork?" with the answer HELICASE, the claim is "Helicase is the enzyme that unwinds DNA at the replication fork."
 2. Search for it. You have at most ${SOURCE_SEARCHES} searches, and the search returns only pages from an approved list: U.S. science agencies, the national laboratories, and reference works. Search for the claim's own terms, not the question's wording.
-3. Judge only from what the pages say, not from what you remember. When you report what a page says, cite it, so that the passage can be shown to the person who reviews the question.
+3. Judge only from what the pages say, not from what you remember. When you report what a page says, cite it, so that the passage can be shown to the person who reviews the question. A statement about a page that carries no citation counts for nothing.
 4. Give a verdict:
    - supported: a page states the claim, or states facts from which it follows directly.
    - contradicted: a page states something that makes the answer line wrong, or that makes a different answer just as right.

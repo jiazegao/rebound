@@ -6,6 +6,9 @@
  *
  * A reply that uses the code tool cannot also be held to a JSON shape, so the model is told to end with a
  * JSON object, and that is read from the end of its text.
+ *
+ * Told only to "use" the tool, the model worked the simpler questions in its head and said so. The prompt
+ * now requires a run, and each reply records whether there was one.
  */
 import { parseNumber, sameValue } from '../../../src/core/judge/numbers';
 import { LETTERS, type Letter, type Level, type Question } from '../../../src/core/schema';
@@ -27,12 +30,14 @@ export interface Computation {
   problems: string[];
   /** Seconds a strong player needs by hand. */
   seconds: number;
+  /** Whether the model ran code at all. A reply that did not is a second blind solve, not a recomputation. */
+  ranCode: boolean;
 }
 
 export const computeSystem = (level: Level) => `You check calculation questions written for the National Science Bowl, a buzzer competition in science and mathematics for ${LEVEL_NAME[level]} teams. You are given one question exactly as a moderator would read it, without its answer line. Work out the answer, doing the arithmetic in code, and say whether the question's numbers make sense.
 
 <how_to_work>
-- Set the problem up yourself from the wording. Then use the code execution tool for every calculation: do not rely on arithmetic done in your head. Where the answer should be exact, compute it exactly (Python's fractions module, or sympy for radicals, pi and algebra), and print what you find.
+- Set the problem up yourself from the wording. Then run the calculation with the code execution tool, however simple it looks: this check exists because arithmetic done in the head goes wrong, and a reply that ran no code is thrown away. Where the answer should be exact, compute it exactly (Python's fractions module, or sympy for radicals, pi and algebra), and print what you find.
 - Unless the question gives other values: g is 9.8 meters per second squared, the speed of light is 3 × 10^8 meters per second, the speed of sound is 340 meters per second, absolute zero is −273 degrees Celsius, friction and air resistance are ignored, angles are in radians, and numbers given in the question are exact.
 - For a multiple-choice question, calculate first and then find the choice that matches. If no choice matches, or two do, say so.
 - Check what the question gives. Are the values physically possible, and possible together (a density no gas has, a triangle that cannot exist, a probability above 1, a speed above that of light)? Is anything a player needs left out? Can the wording be read two ways that lead to different answers? Does the question say how to round, if the exact answer is not a tidy number?
@@ -67,6 +72,7 @@ export function readComputation(reply: ModelReply): Computation | null {
     consistent: c.consistent !== false,
     problems: Array.isArray(c.problems) ? c.problems.filter((p): p is string => typeof p === 'string' && p.trim() !== '').map((p) => p.trim()) : [],
     seconds: typeof c.seconds === 'number' && c.seconds >= 0 ? c.seconds : 0,
+    ranCode: (reply.codeRuns ?? 0) > 0,
   };
 }
 
@@ -75,9 +81,12 @@ export function readComputation(reply: ModelReply): Computation | null {
  * values are equal and only the form differs (the key says 1/2 and the computation 0.5), which a person settles.
  */
 export function computationAgrees(question: Asked | QuestionText, c: Computation): 'agrees' | 'close' | 'disagrees' {
-  const verdict = compare(question, { answer: c.answer, letter: c.letter, confidence: 5, otherAnswers: [], problems: [], seconds: c.seconds, difficulty: 3 });
+  const verdict = compare(question, { answer: c.answer, letter: c.letter, confidence: 5, otherAnswers: [], problems: [], remarks: [], seconds: c.seconds, difficulty: 3 });
   if (verdict !== 'disagrees' || question.format === 'multiple_choice') return verdict;
-  const key = parseNumber(question.answer);
+  // The value is what a recomputation checks: 3/5 for a key of 60% is the key's value in another form.
+  const percent = /%|percent/i.test(question.answer);
+  const key = parseNumber(question.answer.replace(/%|percent/gi, ' ').trim());
   const mine = c.value ?? parseNumber(c.answer)?.value ?? null;
-  return key && mine !== null && sameValue(key.value, mine) ? 'close' : 'disagrees';
+  if (!key || mine === null) return 'disagrees';
+  return sameValue(key.value, mine) || (percent && sameValue(key.value, mine * 100)) ? 'close' : 'disagrees';
 }

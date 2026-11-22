@@ -66,7 +66,8 @@ describe.skipIf(!libraryBuilt())('a checks trial without the API', () => {
       const q = byText.get(user)!.question;
       const wrong = n++ % 8 === 0;
       const letter = q.format === 'multiple_choice' ? (wrong ? (q.answerLetter === 'W' ? 'X' : 'W') : q.answerLetter) : '';
-      return new Said(`Set up and computed.\n${JSON.stringify({ answer: wrong ? '123456789' : q.format === 'multiple_choice' ? q.choices![q.answerLetter!] : q.answer, letter, value: null, consistent: !wrong, problems: wrong ? ['The values cannot both hold.'] : [], seconds: 30 })}`);
+      // Every third reply works it out without running code.
+      return new Said(`Set up and computed.\n${JSON.stringify({ answer: wrong ? '123456789' : q.format === 'multiple_choice' ? q.choices![q.answerLetter!] : q.answer, letter, value: null, consistent: !wrong, problems: wrong ? ['The values cannot both hold.'] : [], seconds: 30 })}`, [], 0, n % 3 === 0 ? 0 : 1);
     });
     const summary = await computeTrial(sample, args(24), api);
     expect(api.calls).toBe(24);
@@ -76,6 +77,7 @@ describe.skipIf(!libraryBuilt())('a checks trial without the API', () => {
     expect(summary.disagrees).toBeCloseTo(3 / 24, 3);
     expect(summary.agrees + summary.close).toBeCloseTo(21 / 24, 3);
     expect(summary.calledInconsistent).toBe(3);
+    expect(summary.ranCode).toBe(16);
     // Thirty seconds is over the time allowed for a toss-up and for a bonus.
     expect(summary.overTheTimeAllowed.tossups).toBe(summary.overTheTimeAllowed.ofTossups);
     expect(summary.overTheTimeAllowed.bonuses).toBe(summary.overTheTimeAllowed.ofBonuses);
@@ -86,7 +88,7 @@ describe.skipIf(!libraryBuilt())('a checks trial without the API', () => {
     const page = { url: 'https://www.usgs.gov/faqs/example', title: 'USGS', quote: 'words from the page' };
     let fromMemory = 0;
     const api = standIn((user, _system, params) => {
-      expect((params.tools![0] as { type: string }).type).toBe('web_search_20260209');
+      expect((params.tools![0] as { type: string }).type).toBe('web_search_20250305');
       if (/ANSWER: W\) RIVER CURRENTS/.test(user)) return new Said('The page says wind forms them.\nCLAIM: Aeolian sandstones are formed by river currents.\nVERDICT: contradicted', [page], 2);
       if (/National Renewable Energy Laboratory/.test(user)) return new Said('The laboratory is now the National Laboratory of the Rockies.\nCLAIM: x\nVERDICT: supported', [page], 1);
       // Supported, but now and then with no page to show for it.

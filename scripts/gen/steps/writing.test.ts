@@ -10,7 +10,7 @@ import { levelExamples, slotLine, stemLengths, takenAnswers, tierBrief } from '.
 import { ideaQuery, IDEAS_PER_SLOT, IDEAS_PROMPT, ideasRequest, readIdeas } from './ideas';
 import { readWritten, repairRequest, WRITE_PROMPT, writeRequest, type WriteContext } from './write';
 
-const reply = (json: unknown, more: Partial<ModelReply> = {}): ModelReply => ({ id: 'x', step: 'test', model: 'claude-opus-5-5', at: '2026-11-21T00:00:00.000Z', outcome: 'ok', text: JSON.stringify(json), json, citations: [], usage: NO_USAGE, batch: false, cost: 0, ...more });
+const reply = (json: unknown, more: Partial<ModelReply> = {}): ModelReply => ({ id: 'x', step: 'test', model: 'claude-opus-5-5', at: '2026-11-21T00:00:00.000Z', outcome: 'ok', text: JSON.stringify(json), json, citations: [], codeRuns: 0, usage: NO_USAGE, batch: false, cost: 0, ...more });
 
 const tossup: Slot = { id: 't07', level: 'HS', tier: 'late', kind: 'tossup', subject: 'biology', form: 'multiple_choice', skill: 'application', topic: 'biology.genetics', letter: 'Y' };
 const bonus: Slot = { id: 'b12', level: 'HS', tier: 'late', kind: 'bonus', subject: 'biology', form: 'short_answer', skill: 'recall', topic: 'biology.genetics' };

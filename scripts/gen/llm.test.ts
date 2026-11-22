@@ -110,7 +110,7 @@ describe('a request', () => {
 
   it('can search allowed sites or run code, but not both, and not search with a JSON reply', () => {
     const search = toParams(request('q-1', { schema: undefined, search: { domains: ['nasa.gov', 'nlr.gov'], maxUses: 2 } }));
-    expect(search.tools).toEqual([{ type: 'web_search_20260209', name: 'web_search', allowed_domains: ['nasa.gov', 'nlr.gov'], max_uses: 2 }]);
+    expect(search.tools).toEqual([{ type: 'web_search_20250305', name: 'web_search', allowed_domains: ['nasa.gov', 'nlr.gov'], max_uses: 2 }]);
     expect(search.output_config).toEqual({ effort: 'medium' });
     expect(toParams(request('q-1', { code: true })).tools).toEqual([{ type: 'code_execution_20260120', name: 'code_execution' }]);
     expect(() => toParams(request('q-1', { search: { domains: ['nasa.gov'], maxUses: 1 } }))).toThrow(/one or the other/);
@@ -147,6 +147,13 @@ describe('a reply', () => {
     expect(r.citations).toEqual([{ url: 'https://science.nasa.gov/moon/lunar-craters/', title: 'Lunar Craters', quote: 'Earth’s craters are erased by erosion' }]);
     expect(r.usage.searches).toBe(1);
     expect(r.json).toBeUndefined();
+  });
+
+  it('counts how many times the model ran code', () => {
+    const ran = message('{"answer":"4"}');
+    (ran.content as unknown[]).unshift({ type: 'server_tool_use', id: 'srvtoolu_1', name: 'bash_code_execution', input: {} }, { type: 'server_tool_use', id: 'srvtoolu_2', name: 'web_search', input: {} });
+    expect(toReply(request('q-1', { schema: undefined, code: true }), ran, false).codeRuns).toBe(1);
+    expect(toReply(request('q-1'), message('{"answer":"4"}'), false).codeRuns).toBe(0);
   });
 
   it('can end with a JSON object when no schema could be asked for', () => {

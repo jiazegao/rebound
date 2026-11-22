@@ -24,6 +24,7 @@
     "gen:plan": "tsx scripts/gen/plan.ts",
     "gen:trial:judge": "tsx scripts/gen/trials/judge.ts",
     "gen:trial:doe": "tsx scripts/gen/trials/doe.ts",
+    "gen:trial:match": "tsx scripts/gen/trials/match.ts",
     "gen:trial:checks": "tsx scripts/gen/trials/checks.ts",
     "gen:trial:writers": "tsx scripts/gen/trials/writers.ts"
   },

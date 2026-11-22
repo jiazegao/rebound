@@ -26,6 +26,7 @@ import type { ModelApi, ModelReply } from '../llm';
 import { plain } from '../text';
 import type { Tier } from '../types';
 import { RATE_PROMPT, rateRequest, readRating, type Anchors } from '../steps/rate';
+import { MATCH_PROMPT, matchRequest, readMatch, settled, type Match } from '../steps/match';
 import { compare, readSolution, SOLVE_PROMPT, solveRequest, unacceptedAnswers } from '../steps/solve';
 import { perCall, runTrial, seeded, seedOf, separation, shuffled, trial, trialArgs, writeSummary, type TrialArgs } from './common';
 
@@ -79,33 +80,49 @@ function makeUp(sample: readonly SampleItem[]) {
   return { questions: sample.length, byLevelAndTier: by((s) => `${s.level} ${s.tier}`), bySubject: by((s) => s.subject), byKind: by((s) => s.kind), byFormat: by((s) => s.question.format) };
 }
 
+/** The small model that rules on whether a solver's answer is the answer line's, when the answer checker cannot tell. */
+export const MATCHER = 'claude-haiku-5-5';
+
 /* ---------------- --solve ---------------- */
 
 export async function solve(sample: SampleItem[], args: TrialArgs, api?: ModelApi) {
   const requests = sample.map((s) => solveRequest(s.id, s.question, s.level, args.model));
   const replies = await runTrial(`doe-solve-${args.model}-${SOLVE_PROMPT}`, requests, args, 700, api);
-  const rows = sample.map((s) => {
+  const solved = sample.map((s) => {
     const reply = replies.get(s.id);
     const solution = reply ? readSolution(reply) : null;
-    return {
-      id: s.id,
-      level: s.level,
-      tier: s.tier,
-      subject: s.subject,
-      kind: s.kind,
-      format: s.question.format,
-      outcome: reply?.outcome ?? 'none',
-      verdict: solution ? compare(s.question, solution) : null,
-      answer: solution ? (s.question.format === 'multiple_choice' ? `${solution.letter}) ${solution.answer}` : solution.answer) : '',
-      key: s.question.answerRaw,
-      confidence: solution?.confidence ?? null,
-      difficulty: solution?.difficulty ?? null,
-      seconds: solution?.seconds ?? null,
-      problems: solution?.problems ?? [],
-      otherAnswers: solution ? unacceptedAnswers(s.question, solution) : [],
-    };
+    return { s, reply, solution, checker: solution ? compare(s.question, solution) : null };
   });
+  // Where the answer checker does not accept a short answer, a small model says whether a judge would.
+  const disputed = solved.filter((x) => x.solution && x.checker !== 'agrees' && x.s.question.format === 'short_answer');
+  const matchRequests = disputed.map((x) => matchRequest(`m-${x.s.id}`, x.s.question, x.solution!.answer, x.s.level, MATCHER));
+  const matchReplies = matchRequests.length ? await runTrial(`doe-match-${MATCHER}-${MATCH_PROMPT}-on-${args.model}-${SOLVE_PROMPT}`, matchRequests, args, 150, api) : new Map<string, ModelReply>();
+  const matches = new Map<string, Match | null>(disputed.map((x) => [x.s.id, matchReplies.get(`m-${x.s.id}`) ? readMatch(matchReplies.get(`m-${x.s.id}`)!) : null]));
+  const rows = solved.map(({ s, reply, solution, checker }) => ({
+    id: s.id,
+    level: s.level,
+    tier: s.tier,
+    subject: s.subject,
+    kind: s.kind,
+    format: s.question.format,
+    outcome: reply?.outcome ?? 'none',
+    /** What the answer checker alone said. */
+    checker,
+    /** The final verdict, after the matcher's ruling where the checker did not agree. */
+    verdict: checker ? settled(checker, matches.get(s.id) ?? null) : null,
+    match: matches.get(s.id) ?? undefined,
+    answer: solution ? (s.question.format === 'multiple_choice' ? `${solution.letter}) ${solution.answer}` : solution.answer) : '',
+    key: s.question.answerRaw,
+    confidence: solution?.confidence ?? null,
+    difficulty: solution?.difficulty ?? null,
+    seconds: solution?.seconds ?? null,
+    problems: solution?.problems ?? [],
+    remarks: solution?.remarks.length ?? 0,
+    otherAnswers: solution ? unacceptedAnswers(s.question, solution) : [],
+  }));
   const answered = rows.filter((r) => r.verdict);
+  const byChecker = (v: string) => share(answered.filter((r) => r.checker === v).length, answered.length);
+  const ruled = [...matches.values()];
   const rate = (rs: typeof rows) => ({ questions: rs.length, agrees: share(rs.filter((r) => r.verdict === 'agrees').length, rs.length), close: share(rs.filter((r) => r.verdict === 'close').length, rs.length), disagrees: share(rs.filter((r) => r.verdict === 'disagrees').length, rs.length) });
   const groups = <K extends string>(key: (r: (typeof rows)[number]) => K) => Object.fromEntries([...new Set(answered.map(key))].sort().map((k) => [k, rate(answered.filter((r) => key(r) === k))]));
   const difficulty = (level: Level, tier: Tier) => answered.filter((r) => r.level === level && r.tier === tier).map((r) => r.difficulty!);
@@ -120,6 +137,8 @@ export async function solve(sample: SampleItem[], args: TrialArgs, api?: ModelAp
     sample: makeUp(sample),
     answered: answered.length,
     all: rate(answered),
+    byTheAnswerCheckerAlone: { agrees: byChecker('agrees'), close: byChecker('close'), disagrees: byChecker('disagrees') },
+    matcher: { model: MATCHER, prompt: MATCH_PROMPT, asked: disputed.length, accepted: ruled.filter((m) => m?.verdict === 'accept').length, rejected: ruled.filter((m) => m?.verdict === 'reject').length, unsure: ruled.filter((m) => m?.verdict === 'unsure').length, unread: ruled.filter((m) => !m).length, calls: perCall(matchRequests.map((r) => matchReplies.get(r.id)).filter((r): r is ModelReply => !!r)) },
     byTier: groups((r) => `${r.level} ${r.tier}`),
     bySubject: groups((r) => r.subject),
     byFormat: groups((r) => r.format),
@@ -133,9 +152,11 @@ export async function solve(sample: SampleItem[], args: TrialArgs, api?: ModelAp
       MS: { early: mean(difficulty('MS', 'early')), late: mean(difficulty('MS', 'late')), separation: Math.round(1000 * separation(difficulty('MS', 'early'), difficulty('MS', 'late'))) / 1000 },
     },
     calls: perCall(sample.map((s) => replies.get(s.id)).filter((r): r is ModelReply => !!r)),
+    disagreements: rows.filter((r) => r.verdict && r.verdict !== 'agrees').map((r) => ({ id: r.id, verdict: r.verdict, key: r.key, answer: r.answer, why: r.match?.why ?? '' })),
     results: rows,
   };
   console.log(`\nAnswered ${answered.length} of ${sample.length}. Agrees with DOE's key: ${(100 * summary.all.agrees).toFixed(1)}%; close: ${(100 * summary.all.close).toFixed(1)}%; disagrees: ${(100 * summary.all.disagrees).toFixed(1)}%.`);
+  console.log(`By the answer checker alone: ${(100 * summary.byTheAnswerCheckerAlone.agrees).toFixed(1)}% agree. The matcher was asked about ${disputed.length}: ${summary.matcher.accepted} the same answer, ${summary.matcher.rejected} a different one, ${summary.matcher.unsure} unsure.`);
   console.log(`By tier: ${Object.entries(summary.byTier).map(([k, v]) => `${k} ${(100 * v.agrees).toFixed(0)}%`).join(', ')}`);
   console.log(`Flagged a problem in ${flagged.length} (${(100 * summary.flagged.share).toFixed(1)}%): ${JSON.stringify(problemKinds)}`);
   console.log(`Difficulty, early against late: HS ${summary.difficulty.HS.early} / ${summary.difficulty.HS.late} (separation ${summary.difficulty.HS.separation}); MS ${summary.difficulty.MS.early} / ${summary.difficulty.MS.late} (${summary.difficulty.MS.separation}).`);
@@ -209,12 +230,18 @@ export async function known(library: LibraryQuestion[], args: TrialArgs, api?: M
   ].filter((c) => byId.has(c.id));
   const requests = cases.map((c) => solveRequest(c.id, byId.get(c.id)!.question, byId.get(c.id)!.level, args.model));
   const replies = await runTrial(`doe-known-${args.model}-${SOLVE_PROMPT}`, requests, args, 700, api);
+  const solutions = new Map(cases.map((c) => [c.id, replies.get(c.id) ? readSolution(replies.get(c.id)!) : null]));
+  // The disputed keys are short answers: as in --solve, the matcher rules where the answer checker does not agree.
+  const disputed = cases.filter((c) => c.kind === 'disputed key' && solutions.get(c.id) && compare(byId.get(c.id)!.question, solutions.get(c.id)!) !== 'agrees');
+  const matchRequests = disputed.map((c) => matchRequest(`m-${c.id}`, byId.get(c.id)!.question, solutions.get(c.id)!.answer, byId.get(c.id)!.level, MATCHER));
+  const matchReplies = matchRequests.length ? await runTrial(`doe-known-match-${MATCHER}-${MATCH_PROMPT}-on-${args.model}-${SOLVE_PROMPT}`, matchRequests, args, 150, api) : new Map<string, ModelReply>();
   const rows = cases.map((c) => {
     const q = byId.get(c.id)!.question;
-    const solution = replies.get(c.id) ? readSolution(replies.get(c.id)!) : null;
+    const solution = solutions.get(c.id) ?? null;
+    const match = matchReplies.get(`m-${c.id}`) ? readMatch(matchReplies.get(`m-${c.id}`)!) : null;
     // A misprinted letter is caught when the solver gives the corrected letter, not the printed one;
-    // a disputed key when the solver disagrees with the key in the library.
-    const caught = !solution ? null : c.kind === 'misprinted letter' ? solution.letter === q.answerLetter && solution.letter !== c.printed : compare(q, solution) === 'disagrees';
+    // a disputed key when the solver's answer is not the key's, by the answer checker and then the matcher.
+    const caught = !solution ? null : c.kind === 'misprinted letter' ? solution.letter === q.answerLetter && solution.letter !== c.printed : settled(compare(q, solution), match) === 'disagrees';
     return { id: c.id, kind: c.kind, printed: c.printed, key: q.answerRaw, answer: solution ? (q.format === 'multiple_choice' ? `${solution.letter}) ${solution.answer}` : solution.answer) : '', caught, otherAnswers: solution?.otherAnswers ?? [], problems: solution?.problems ?? [] };
   });
   const summary = {

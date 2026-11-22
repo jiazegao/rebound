@@ -1,0 +1,887 @@
+{
+ "about": "The source check (scripts/gen/trials/checks.ts --source): a search of the allowed sites for support of an answer line. Right keys are DOE fact questions; wrong keys are the answer letters DOE misprinted, shown as printed; disputed keys are the two the November 2026 pilot questioned; the renamed-lab questions are the pilot's own, naming a lab by a name it gave up in December 2025.",
+ "model": "claude-sonnet-5-5",
+ "prompt": "387a148a",
+ "run": "2026-11-21",
+ "rightKeys": {
+  "questions": 40,
+  "supported": 40,
+  "contradicted": 0,
+  "notFound": 0,
+  "unread": 0
+ },
+ "wrongKeys": {
+  "questions": 7,
+  "supported": 0,
+  "contradicted": 7,
+  "notFound": 0,
+  "unread": 0
+ },
+ "disputedKeys": {
+  "questions": 2,
+  "supported": 0,
+  "contradicted": 2,
+  "notFound": 0,
+  "unread": 0
+ },
+ "renamedLab": {
+  "questions": 5,
+  "supported": 5,
+  "contradicted": 0,
+  "notFound": 0,
+  "unread": 0,
+  "noticedTheNewName": 1
+ },
+ "calls": {
+  "calls": 54,
+  "outcomes": {
+   "ok": 54,
+   "refused": 0,
+   "cut-off": 0,
+   "error": 0
+  },
+  "batch": false,
+  "meanTokens": {
+   "input": 195,
+   "cacheRead": 6971,
+   "cacheWrite": 10336,
+   "output": 644,
+   "thinking": 28
+  },
+  "searches": 64,
+  "cost": 2.4418,
+  "costPerCall": 0.045218
+ },
+ "results": [
+  {
+   "id": "right-doe-hs-09-r03-t01",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Phenotype is the term for the composite of an organism's observable characteristics and traits.",
+   "sources": [
+    "https://beta.nih.gov/genetics-glossary/Phenotype",
+    "https://beta.nih.gov/genetics-glossary/Phenotype",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC7751121/",
+    "https://en.wikipedia.org/wiki/Phenotypic_trait"
+   ],
+   "searches": 1,
+   "note": "Reliable pages support the answer line. The NIH genetics glossary says phenotype refers to an individual's observable traits, such as height, eye color and blood type. It adds that a person's phenotype is determined by both their genomic makeup (genotype) and environmental factors. A PMC article agrees: a phenotype is usually considered an observable characteristic or trait of an organism. Wikipedia says the phenotype encompasses all of the characteristics of an organism, which fits the \"composite\" wording. The contrasting term, genotype, is the genetic makeup, so no other answer fits equally "
+  },
+  {
+   "id": "right-doe-hs-08-r07-t10",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Gap junctions are the animal cell junctions that function like plant plasmodesmata, forming channels that connect the cytoplasm of adjacent cells.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Cell_junction",
+    "https://en.wikipedia.org/wiki/Cell_junction",
+    "https://en.wikipedia.org/wiki/Cell%E2%80%93cell_interaction",
+    "https://pubmed.ncbi.nlm.nih.gov/16666225/",
+    "https://en.wikipedia.org/wiki/Cell_junction",
+    "https://en.wikipedia.org/wiki/Cell%E2%80%93cell_interaction",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC4147083/"
+   ],
+   "searches": 1,
+   "note": "The pages support the answer line. Gap junctions are the animal cell junction that does the same job as plasmodesmata.\n\n- The Wikipedia article on cell junctions lists gap junctions as the communicating junction. It says plants have similar communication channels, called plasmodesmata. It also says the analogues of communicative cell junctions in plants are called plasmodesmata.\n- The Wikipedia article on cell–cell interaction says plasmodesmata are similar to gap junctions, connecting the cytosol of adjacent cells.\n- A PubMed abstract names both structures as specialized structures (plasmodes"
+  },
+  {
+   "id": "right-doe-hs-09-r14-t19",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Magnesium deficiency in plants causes chlorosis, a yellowing of the leaves.",
+   "sources": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC10628537/",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC4613352/",
+    "https://www.ars.usda.gov/ARSUserFiles/50820500/Publications/FertilityManagement/trifold%20geranium%20deficiency.pdf"
+   ],
+   "searches": 1,
+   "note": "Pages support the answer. Magnesium deficiency in plants causes chlorosis, which is yellowing of the leaves.\n\n- A PMC review says a key symptom of Mg²⁺ deficiency in plants is interveinal chlorosis, where the tissues between the leaf veins turn yellow, while the veins remain green.\n- Another PMC article says starch overaccumulation and chlorosis are the typical symptoms of Mg deficiency observed in various plant species.\n- A USDA ARS publication describes magnesium deficiency in lower, older leaves as chlorosis of greenish yellow to yellowish green developing along the leaf margins and tips.\n\n"
+  },
+  {
+   "id": "right-doe-hs-09-r16-t16",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Edinger-Westphal preganglionic parasympathetic neurons that control the pupillary reflex are cholinergic and release acetylcholine.",
+   "sources": [
+    "https://www.ncbi.nlm.nih.gov/sites/books/NBK11145/",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC8788436/",
+    "https://pubmed.ncbi.nlm.nih.gov/19645879/",
+    "https://pubmed.ncbi.nlm.nih.gov/19645879/",
+    "https://en.wikipedia.org/wiki/Edinger%E2%80%93Westphal_nucleus"
+   ],
+   "searches": 1,
+   "note": "The pages support the answer line, with one caveat about what \"Edinger-Westphal neurons\" means.\n\nThe pupil-controlling cells are the preganglionic parasympathetic neurons. The Edinger-Westphal nucleus contains the preganglionic parasympathetic neurons that send their axons via the oculomotor nerve to terminate on neurons in the ciliary ganglion. A 2021 review of the ocular autonomic system describes them as cholinergic: \"the cholinergic, preganglionic neurons supplying the CG are termed the Edinger-Westphal preganglionic (EWpg) population.\" A comparative study also finds that in humans the pre"
+  },
+  {
+   "id": "right-doe-hs-08-r10-t22",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Propane's petrochemical product is propylene, not cyclopropane, so \"propane with cyclopropane\" is the one mismatched pair among the four.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Propane",
+    "https://en.wikipedia.org/wiki/Propane",
+    "https://www.eia.gov/todayinenergy/detail.php?id=51938",
+    "https://www.eia.gov/todayinenergy/detail.php?id=51938"
+   ],
+   "searches": 2,
+   "note": "The answer line holds up. Propane's petrochemical is propylene, not cyclopropane, and the other three pairings are acceptable, though one is loose.\n\n**Y (propane with cyclopropane):** No page I found links propane to cyclopropane. The pages tie propane to propylene instead. Propane is described as a promising feedstock for the production of propylene. It is also used as a feedstock for base petrochemicals in steam cracking. A patent background says lesser amounts of propylene can be produced by feeding propane or butane to the steam cracking unit.\n\n**X (ethane with ethylene):** EIA states that"
+  },
+  {
+   "id": "right-doe-hs-14-r02-t16",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Benzene (C6H6) is a planar, conjugation-stabilized organic compound described by two (Kekulé) resonance structures.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Benzene",
+    "https://en.wikipedia.org/wiki/Benzene",
+    "https://en.wikipedia.org/wiki/Kekul%C3%A9_structure",
+    "https://en.wikipedia.org/wiki/Conjugated_system",
+    "https://en.wikipedia.org/wiki/Kekul%C3%A9_structure",
+    "https://en.wikipedia.org/wiki/Conjugated_system",
+    "https://en.wikipedia.org/wiki/Dewar_benzene"
+   ],
+   "searches": 1,
+   "note": "The pages support BENZENE as the answer.\n\n- Benzene is an organic compound with the formula C6H6. Benzene is an organic chemical compound with the molecular formula C_6H_6.\n- It is planar. X-ray diffraction reveals that benzene is a planar molecule with six-fold rotational symmetry.\n- It has two resonance structures. The model for benzene consists of two resonance forms, which corresponds to the double and single bonds superimposing to give rise to six one-and-a-half bonds. Another page says there are two equivalent conjugated contributing Lewis structures (the so-called Kekulé structures) tha"
+  },
+  {
+   "id": "right-doe-hs-11-r14-t01",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Hydrogenating an alkyne over a Lindlar catalyst (palladium poisoned with lead and quinoline) stops at the alkene stage and gives the cis-alkene as the major product.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Lindlar_catalyst",
+    "https://en.wikipedia.org/wiki/Lindlar_catalyst",
+    "https://en.wikipedia.org/wiki/Lindlar_catalyst",
+    "https://en.wikipedia.org/wiki/Semi-hydrogenation_of_alkynes",
+    "https://en.wikipedia.org/wiki/Alkene",
+    "https://en.wikipedia.org/wiki/Lindlar_catalyst"
+   ],
+   "searches": 1,
+   "note": "The pages support the answer line. A palladium catalyst poisoned with lead and quinoline is a Lindlar catalyst, and it hydrogenates an alkyne to the cis-alkene.\n\n- A Lindlar catalyst is a heterogeneous catalyst that hydrogenates alkynes to alkenes without further reduction to alkanes.\n- Lead deactivates the palladium sites, and quinoline further improves selectivity by preventing alkane formation. This rules out W (alkane).\n- The hydrogenation is stereospecific, occurring by syn addition to give the cis-alkene. Another page says Lindlar's catalyst gives the Z-alkene product exclusively. This r"
+  },
+  {
+   "id": "right-doe-hs-08-r12-b07",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "In K[Co(NH₃)₂Cl₄], the complex ion has a charge of −1 (balancing K⁺), and with neutral NH₃ and four Cl⁻ ligands, cobalt has an oxidation number of +3.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Oxidation_state",
+    "https://en.wikipedia.org/wiki/Oxidation_state"
+   ],
+   "searches": 1,
+   "note": "The answer line follows from a charge balance, and the search supports the rule that balance uses.\n\n- In a compound or ion, the sum of the oxidation states equals the total charge of the compound or ion. The same page says group 1 metals in compounds have an oxidation state of +1, which covers potassium.\n- The compound is neutral, so the K⁺ ion leaves the complex ion with a charge of −1.\n- Ammonia is a neutral ligand, so it adds 0. The four chloride ligands add 4 × (−1) = −4.\n- Cobalt must satisfy x + 0 − 4 = −1, so x = +3.\n\nThe search returned nothing that states the ligand charges directly ("
+  },
+  {
+   "id": "right-doe-hs-08-r05-t04",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Tornado-favorable conditions occur in the Appalachian Mountains, more so than in the Atlas, Alps or Andes.",
+   "sources": [
+    "https://www.nssl.noaa.gov/education/svrwx101/tornadoes/faq/",
+    "https://www.nssl.noaa.gov/education/svrwx101/tornadoes/faq/",
+    "https://www.spc.noaa.gov/publications/broyles/longtrak.pdf",
+    "https://repository.library.noaa.gov/view/noaa/63666/noaa_63666_DS1.pdf",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC5119788/",
+    "https://en.wikipedia.org/wiki/Tornadoes_in_the_United_States"
+   ],
+   "searches": 1,
+   "note": "The pages back the Appalachians as the best of the four choices. None of them says outright that conditions there are \"favorable\", and some point the other way.\n\n**Support**\n- NOAA's National Severe Storms Laboratory says tornadoes are possible whenever and wherever conditions are right. It also says high elevations in the Appalachians, Rockies, and Sierra Nevada have all experienced tornadoes.\n- A NOAA Storm Prediction Center study of long-track violent tornadoes found a high-frequency area extending from the lower Mississippi Valley eastward to the southern Appalachian Mountains and north-no"
+  },
+  {
+   "id": "right-doe-hs-09-r17-t09",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "The silicon-oxygen tetrahedron, the fundamental building block of silicates, has the formula SiO₄ and a charge of 4−.",
+   "sources": [
+    "https://ntrs.nasa.gov/api/citations/20240011783/downloads/Lunar_Regolith_Simulant_Users_Guide_Rev_A_28OCT.pdf",
+    "https://ntrs.nasa.gov/api/citations/20240011783/downloads/Lunar_Regolith_Simulant_Users_Guide_Rev_A_28OCT.pdf",
+    "https://www.nps.gov/subjects/geology/minerals.htm",
+    "https://en.wikipedia.org/wiki/Mineral"
+   ],
+   "searches": 1,
+   "note": "Pages from the approved list support the answer line.\n\n- NASA's Lunar Regolith Simulant User's Guide says the basic structural building block of all silicates is the silicon tetrahedron, (SiO4)4-, with one central silicon atom (Si4+) bound covalently to four oxygen atoms (O2-). It adds that the tetrahedron carries a net charge of -4.\n- The National Park Service says the chemical unit SiO4 is the fundamental building block of silicate minerals. It gives no charge.\n- Wikipedia's Mineral article says the base unit of a silicate mineral is the [SiO4]4− tetrahedron.\n\n\"SiO₄\" is the formula in the NP"
+  },
+  {
+   "id": "right-doe-hs-17-r14-t10",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Tektites are formed by shock metamorphism (hypervelocity meteorite impact).",
+   "sources": [
+    "https://gpsr.ars.usda.gov/short_remotesensing/Sect18/Sect18_3.html",
+    "https://gpsr.ars.usda.gov/short_remotesensing/Sect18/Sect18_3.html",
+    "https://en.wikipedia.org/wiki/Lechatelierite",
+    "https://en.wikipedia.org/wiki/Tektite",
+    "https://en.wikipedia.org/wiki/Tektite",
+    "https://astrobiology.nasa.gov/news/raining-tears-from-an-impact-event/"
+   ],
+   "searches": 1,
+   "note": "Pages support the answer line. Tektites form from impact-related shock melting, so the shock metamorphism answer holds.\n\n- A USDA remote-sensing tutorial on shock metamorphism says the majority opinion considers tektites to be formed by the high pressure range developed during impacts on terrestrial rocks. It also says tektites are almost certainly products of a terrestrial shock event.\n- Wikipedia's Lechatelierite article says that this glass forms under high pressure shock metamorphism during meteorite impact cratering and is a common component of a type of glassy ejecta called tektites.\n- T"
+  },
+  {
+   "id": "right-doe-hs-17-r02-t06",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Liquid water droplets in Arctic mixed-phase clouds at about –3 to –8 °C are supercooled, meaning liquid below the freezing point.",
+   "sources": [
+    "https://www.bnl.gov/newsroom/news.php?a=118763",
+    "https://www.bnl.gov/newsroom/news.php?a=118763",
+    "https://asr.science.energy.gov/news/program-news/post/13616",
+    "https://www.bnl.gov/newsroom/news.php?a=118763"
+   ],
+   "searches": 1,
+   "note": "The answer line holds up. The pages support SUPERCOOLED.\n\n- Brookhaven's news item defines the term. Supercooled water droplets are \"water that's still liquid below its freezing point.\"\n- The same item ties this to Arctic clouds. Mixed-phase clouds, which hold both supercooled liquid water and ice particles, \"can last for weeks on end in the Arctic.\"\n- The DOE Atmospheric System Research summary gives a matching temperature range. The measurements came from mixed-phase clouds at temperatures between zero and minus 10 °C. That range contains the question's –3 to –8 °C.\n- The Brookhaven study de"
+  },
+  {
+   "id": "right-doe-hs-16-r07-t14",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Radar reflectivity from raindrops is largely due to Rayleigh scattering, which applies when scattering particles are much smaller than the wavelength.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Weather_radar",
+    "https://ntrs.nasa.gov/api/citations/20180000191/downloads/20180000191.pdf",
+    "https://par.nsf.gov/servlets/purl/10379577",
+    "https://downloads.psl.noaa.gov/BLO/Air-Sea/Wband_radar/Tridon_et_al-2013-Geophysical_Research_Letters.pdf",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC3081171/"
+   ],
+   "searches": 2,
+   "note": "**Finding:** The answer line holds up. Several pages say that radar echoes from raindrops follow Rayleigh scattering, which applies to particles much smaller than the wavelength.\n\n- Wikipedia's weather radar article says weather radar wavelengths of 1–10 cm fall within the validity of Rayleigh scattering, which requires targets much smaller than the radar wavelength.\n- A NASA chapter on precipitation radar says for particles much smaller than the wavelength, the Rayleigh approximation holds. It applies this to raindrop reflectivity.\n- An NSF-hosted paper on polarimetric radar says that at S-ba"
+  },
+  {
+   "id": "right-doe-hs-10-r09-b12",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "A supercapacitor (ultracapacitor, or more broadly a capacitor) is the device that stores electrical energy as separated static charge, unlike a battery's chemical storage.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Supercapacitor",
+    "https://en.m.wikipedia.org/wiki/Capacitor_types",
+    "https://en.m.wikipedia.org/wiki/Capacitor_types"
+   ],
+   "searches": 1,
+   "note": "The pages support the answer line. Supercapacitors store electrical energy by separating charge, not through a chemical reaction.\n\n- Wikipedia's Supercapacitor page describes electrostatic storage of the electrical energy achieved by separation of charge in a Helmholtz double layer.\n- A patent background states that supercapacitors store energy by means of separation of charge rather than by the electro-chemical process inherent in a battery.\n- The same patent says supercapacitors are also designated by terms such as ultra capacitors. That supports accepting ULTRACAPACITOR.\n- A conventional ca"
+  },
+  {
+   "id": "right-doe-hs-12-r17-t09",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "PICA (phenolic impregnated carbon ablator) is a carbon-fiber-based heat shield material that protects by slowly ablating, and it is used by NASA and SpaceX.",
+   "sources": [
+    "https://ntrs.nasa.gov/api/citations/20120016878/downloads/20120016878.pdf",
+    "https://www.nasa.gov/image-article/phenolic-impregnated-carbon-ablator-pica-heat-shield-technology-used-by-spacex/"
+   ],
+   "searches": 1,
+   "note": "The pages support the answer line, with one caveat about how well \"carbon fiber\" describes PICA.\n\n- **What PICA is:** NASA describes PICA as a carbon fiber backbone impregnated with a phenolic polymer matrix (PICA comprises a FIBERFORM carbon fiber backbone impregnated with a highly cross-linked phenolic polymer matrix).\n- **How it works:** It is an ablative material. A NASA presentation says that (PICA has the advantages of low density (~0.27g/cm3) coupled with efficient ablative capability at high heat fluxes). The same material charrs and pyrolyzes as it rejects heat.\n- **Current use:** The"
+  },
+  {
+   "id": "right-doe-hs-17-r13-b06",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Iron is the element in santabarbaraite (an iron hydroxyphosphate mineral) that is found in the gumboot chiton's teeth, as studied at the Advanced Photon Source.",
+   "sources": [
+    "https://www.aps.anl.gov/APS-Science-Highlight/2021-06-01/a-rare-mineral-from-rocks-found-in-mollusk-teeth",
+    "https://www.aps.anl.gov/APS-Science-Highlight/2021-06-01/a-rare-mineral-from-rocks-found-in-mollusk-teeth",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC8202020/",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC8202020/",
+    "https://en.wikipedia.org/wiki/Santabarbaraite"
+   ],
+   "searches": 1,
+   "note": "The pages support the answer line. Iron is the element that santabarbaraite shares with the gumboot chiton's teeth.\n\n- The Advanced Photon Source (APS) science highlight calls santabarbaraite an iron mineral. It says the mineral had only been documented in rocks before this discovery. It reports the mineral dispersed throughout the chiton's upper stylus. The stylus is the structure that connects the tooth to the radula membrane.\n- A PMC paper describes the mineral chemically. It calls it an amorphous iron hydroxyphosphate present in the stylus. Its author affiliations include the Advanced Phot"
+  },
+  {
+   "id": "right-doe-hs-10-r12-t05",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "The equation x² + 10x + y² + 16 = 0 rewrites as (x+5)² + y² = 9, which is a circle with center (−5, 0) and radius 3.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Complete_the_square",
+    "https://en.wikipedia.org/wiki/Ellipse"
+   ],
+   "searches": 1,
+   "note": "The equation is a circle. Wikipedia's pages on completing the square and on the circle equation support this, and the algebra is short.\n\n- Wikipedia's \"Completing the square\" page gives, for a leading coefficient of 1, x²+bx+c=(x−h)²+k, with h=−(b/2) and k=c−h²=c−(b²)/4.\n- Here b = 10 and c = 16. So h = −5 and k = 16 − 25 = −9. That gives x² + 10x + 16 = (x+5)² − 9.\n- The equation x² + 10x + y² + 16 = 0 therefore becomes (x+5)² + y² = 9.\n- Wikipedia's \"Ellipse\" page gives the circle equation as (x−x∘)²+(y−y∘)²=r². The rewritten equation has this form, with center (−5, 0) and radius 3.\n- Ellips"
+  },
+  {
+   "id": "right-doe-hs-14-r05-t20",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "The line integral of an electric field along a path is a potential difference (voltage), whose SI unit is the volt.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Classical_electromagnetism",
+    "https://en.wikipedia.org/wiki/Voltage",
+    "https://en.wikipedia.org/wiki/Voltage",
+    "https://en.wikipedia.org/wiki/Electric_intensity"
+   ],
+   "searches": 1,
+   "note": "The pages support the answer line, VOLTS.\n\n- Wikipedia's \"Classical electromagnetism\" article says electric potential, also called voltage (the units for which are the volt), is defined by the line integral φ(r) = −∫C E·dl.\n- The \"Voltage\" article says that mathematically, this is expressed as the line integral of the electric field along that path. It also says that some authors use the word \"voltage\" to refer to the line integral of the electric field.\n- An arXiv textbook says that the quantity (V_a − V_b) represents the potential difference (also called voltage in electric-circuit theory) b"
+  },
+  {
+   "id": "right-doe-hs-11-r11-t20",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "A circuit made of a capacitor and an inductor (an LC circuit) acts as an electrical resonator, and RC, RL and two-capacitor circuits do not.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/LC_circuit",
+    "https://en.wikipedia.org/wiki/LC_circuit",
+    "https://en.wikipedia.org/wiki/LCR_circuit",
+    "https://en.wikipedia.org/wiki/LCR_circuit"
+   ],
+   "searches": 1,
+   "note": "The answer line is supported. An inductor and a capacitor together form an electrical resonator.\n\n- Wikipedia's LC circuit article describes a circuit of an inductor, represented by the letter L, and a capacitor, represented by the letter C, connected together. It adds that the circuit can act as an electrical resonator, an electrical analogue of a tuning fork.\n- An arXiv review says the simplest resonator is the LC circuit, consisting of a capacitor C connected in series with an inductor L.\n- The RLC circuit article explains the mechanism. Resonance happens because the impedances of the induc"
+  },
+  {
+   "id": "right-doe-ms-11-r10-t20",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Glycolysis occurs in the cytosol of the cell.",
+   "sources": [
+    "https://www.ncbi.nlm.nih.gov/books/NBK482303/",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC11793985/",
+    "https://en.wikipedia.org/wiki/Cellular_respiration",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC11793985/",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC4883961/"
+   ],
+   "searches": 1,
+   "note": "The answer line is supported. Several reliable pages say glycolysis occurs in the cytosol.\n\n- An NIH/NCBI StatPearls chapter says glycolysis occurs in the cytosol of the cell.\n- A peer-reviewed PMC article says glycolysis generally takes place in the cytosol of prokaryotic and eukaryotic cells.\n- Wikipedia's cellular respiration article says it takes place in the cytosol of cells in all living organisms.\n\nThe question has two minor weak points, and neither makes CYTOSOL wrong:\n- **Cytoplasm:** One patent page says glycolysis occurs in the cytoplasm (\"It occurs in the cytoplasm via many enzymes"
+  },
+  {
+   "id": "right-doe-ms-13-r06-t22",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Ribosomes are small particles made of RNA and protein that synthesize proteins by reading mRNA.",
+   "sources": [
+    "https://research.nih.gov/genetics-glossary/Ribosome",
+    "https://research.nih.gov/genetics-glossary/Ribosome",
+    "https://en.wikipedia.org/wiki/Ribosome",
+    "https://www.ncbi.nlm.nih.gov/books/NBK26829/"
+   ],
+   "searches": 1,
+   "note": "Reliable pages support the answer line.\n\n- The NIH genetics glossary says a ribosome is an intercellular structure made of both RNA and protein, and it is the site of protein synthesis in the cell. It adds that the ribosome reads the messenger RNA (mRNA) sequence and translates that genetic code into a specified string of amino acids.\n- Wikipedia describes ribosomes as minute particles consisting of RNA and associated proteins that function to synthesize proteins. This is close to the wording of the question.\n- Molecular Biology of the Cell (NCBI Bookshelf) says protein synthesis is performed "
+  },
+  {
+   "id": "right-doe-ms-11-r01-b04",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "When a cell's mitochondria fail, it can't respire aerobically and shifts to anaerobic glycolysis, which produces lactic acid.",
+   "sources": [
+    "https://www.ncbi.nlm.nih.gov/books/NBK546695/",
+    "https://www.ncbi.nlm.nih.gov/books/NBK546695/",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC7983055/",
+    "https://en.wikipedia.org/wiki/Lactic_acid"
+   ],
+   "searches": 1,
+   "note": "The pages support the answer line, with one caveat about the wording of the question.\n\nThe StatPearls entry says the citric acid cycle and electron transport chain enzymes are in the mitochondria. Cells that can't do oxidative phosphorylation rely on anaerobic glycolysis for ATP. It also says that lactic acid is the end product of anaerobic glycolysis. A patent page on mitochondrial dysfunction says when mitochondria fail and no ATP is available, lactic acid may persist. A PMC review links elevated circulating lactate to impaired mitochondrial activity or respiration.\n\nCaveat: the pages also s"
+  },
+  {
+   "id": "right-doe-ms-10-r12-t22",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Coral reefs are made predominantly of the mineral calcium carbonate.",
+   "sources": [
+    "https://oceanservice.noaa.gov/facts/coralmadeof.html",
+    "https://www.usgs.gov/programs/coastal-and-marine-hazards-and-resources-program/science/coral-reefs",
+    "https://oceanacidification.noaa.gov/ocean-acidification-research/ocean-acidification-biological-response/corals-2/"
+   ],
+   "searches": 1,
+   "note": "The answer line is supported. Several NOAA and USGS pages say coral reefs are built from calcium carbonate.\n\n- NOAA's Ocean Service says massive reef structures are formed when each individual stony coral polyp secretes a skeleton of calcium carbonate.\n- USGS says shallow water coral reefs are seafloor structures built from the calcium carbonate skeletons of marine organisms.\n- The NOAA Ocean Acidification Program says shallow water corals typically build reefs with their accumulating calcium carbonate skeletons, which may be made of either aragonite or calcite, two forms of calcium carbonate "
+  },
+  {
+   "id": "right-doe-ms-14-r15-b03",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Octopus (a cephalopod mollusc) is more closely related to slugs (gastropod molluscs) than jellyfish, earthworms (annelids) or beetles (arthropods) are.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Slugs",
+    "https://en.wikipedia.org/wiki/Octopus",
+    "https://en.wikipedia.org/wiki/Octopus",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC10649180/"
+   ],
+   "searches": 1,
+   "note": "The pages support the answer line. Slugs and octopuses are both mollusks, and the other three options are not.\n\n- A slug is a shell-less land gastropod mollusc. The Slug page lists its phylum as Mollusca and its class as Gastropoda (8-3).\n- An octopus is a soft-bodied, eight-limbed mollusc of the order Octopoda. It is grouped within the class Cephalopoda with squids, cuttlefish, and nautiloids.\n- A PMC review of invertebrates lists the groups separately. It names coelenterates (jellyfishes, anemones, corals), mollusks (snails, slugs, squid, octopi), echinoderms, and insects as distinct groups."
+  },
+  {
+   "id": "right-doe-ms-15-r01-t01",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "In Bohr's model, light emitted by burning (flame colors) is produced by electrons changing energy levels.",
+   "sources": [
+    "https://en.m.wikipedia.org/wiki/Flame_test",
+    "https://en.m.wikipedia.org/wiki/Flame_test",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12529943/"
+   ],
+   "searches": 1,
+   "note": "The pages support the answer line. The Bohr model attributes emitted light to electrons changing energy levels, and flame colors come from the same electron transitions.\n\n- A paper on Bohr's model says electrons can transition between energy levels by absorbing or emitting photons (light quanta) with specific energies.\n- Wikipedia's flame test article says the color of the flames is understood through the principles of atomic electron transition and photoemission. It adds that the energy of the excited state(s) and associated emitted photon is characteristic of the element.\n- A PMC article on "
+  },
+  {
+   "id": "right-doe-ms-16-r07-b07",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Born–Haber cycles apply Hess's law, which combines a series of reactions to determine an unknown enthalpy change.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Born%E2%80%93Haber_cycle",
+    "https://en.wikipedia.org/wiki/Hess's_law"
+   ],
+   "searches": 1,
+   "note": "Pages support the answer line. The Born–Haber cycle is an application of Hess's law.\n\n- The English Wikipedia article on the cycle says that a Born–Haber cycle applies Hess's law to calculate the lattice enthalpy.\n- The Hess's law article lists lattice energies of ionic substances, found by constructing Born–Haber cycles, as one use of the law.\n- That page's examples show Hess's law combining several reactions to get the enthalpy change of a reaction that can't be measured directly. This matches the question's description.\n\nBoth pages are Wikipedia, a reference work. I found nothing suggesting"
+  },
+  {
+   "id": "right-doe-ms-10-r14-t22",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Bond dissociation energy is the term for the amount of energy required to break a bond homolytically.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Bond_cleavage",
+    "https://en.wikipedia.org/wiki/Homolysis_(chemistry)",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC9174704/",
+    "https://en.wikipedia.org/wiki/Bond_energy_(chemistry)",
+    "https://en.wikipedia.org/wiki/Bond_energy_(chemistry)"
+   ],
+   "searches": 1,
+   "note": "The answer line holds up. Several reference pages define bond dissociation energy as the energy for homolytic bond cleavage.\n\n- The Wikipedia page on bond cleavage says the bond-dissociation energy of a bond is the amount of energy required to cleave the bond homolytically.\n- The Wikipedia page on homolysis says the same: the energy involved in this process is called bond dissociation energy (BDE).\n- A PMC article says bond dissociation energy (BDE) is defined as the enthalpy change of the homolytic cleavage of a specific bond.\n\nThe accepted alternative \"bond dissociation\" is a fair shortened "
+  },
+  {
+   "id": "right-doe-ms-11-r13-b02",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Combining oxygen with the iron +2 ion (Fe²⁺) gives FeO, which is named ferrous oxide (iron(II) oxide).",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Iron(II)_oxide",
+    "https://en.wikipedia.org/wiki/Iron(II)",
+    "https://en.wikipedia.org/wiki/Iron_compounds",
+    "https://en.wikipedia.org/wiki/Iron(II,III)_oxide"
+   ],
+   "searches": 1,
+   "note": "The answer line holds up. The pages I found support it.\n\n- Iron(II) oxide, also called ferrous oxide, is the inorganic compound with the formula FeO.\n- Iron(II) means iron in the +2 oxidation state. \"Ferrous\" is the adjective used for such compounds.\n- The iron compounds page lists ferrous (iron(II)) oxide as FeO. It lists ferric (iron(III)) oxide as Fe₂O₃.\n\nFe²⁺ combined with O²⁻ gives FeO, so FERROUS OXIDE is correct. The name \"iron(II) oxide\" means the same compound, so a team that gave it should get credit. The question would be more precise if it said that the answer is the 1:1 compound. "
+  },
+  {
+   "id": "right-doe-ms-13-r01-t15",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "\"Thermohaline conveyor\" (thermohaline circulation, the global conveyor belt) is the term oceanographers use for global ocean circulation, and \"density,\" \"isostatic,\" and \"carbonate\" conveyor are not.",
+   "sources": [
+    "https://oceanservice.noaa.gov/education/tutorial_currents/05conveyor2.html",
+    "https://oceanservice.noaa.gov/facts/conveyor.html",
+    "https://en.wikipedia.org/wiki/Thermohaline_circulation",
+    "https://oceanservice.noaa.gov/education/tutorial_currents/05conveyor1.html",
+    "https://en.wikipedia.org/wiki/Thermohaline_circulation"
+   ],
+   "searches": 1,
+   "note": "The pages support the answer line. They use \"thermohaline\" for the global ocean conveyor. They don't use \"density conveyor,\" \"isostatic conveyor,\" or \"carbonate conveyor\" for this.\n\n- NOAA's National Ocean Service says that thermohaline circulation drives a global-scale system of currents called the \"global conveyor belt.\"\n- A second NOAA page says the conveyor is driven by a combination of thermohaline currents (thermo = temperature; haline = salinity) in the deep ocean and wind-driven currents on the surface.\n- Reference works give the same naming. Wikipedia says the thermohaline circulation"
+  },
+  {
+   "id": "right-doe-ms-10-r01-b02",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "The main asteroid belt lies between the orbits of Mars and Jupiter.",
+   "sources": [
+    "https://science.nasa.gov/solar-system/asteroids/facts/",
+    "https://science.nasa.gov/asset/hubble/illustration-of-asteroid-belts/",
+    "https://en.wikipedia.org/wiki/Asteroid_belt"
+   ],
+   "searches": 1,
+   "note": "The answer line is supported. NASA's pages place the main asteroid belt between Mars and Jupiter.\n\n- NASA's Asteroid Facts page says the majority of known asteroids orbit within the asteroid belt between Mars and Jupiter.\n- A NASA Hubble illustration page says the main asteroid belt lies between Mars and Jupiter.\n- Wikipedia describes the belt as a torus-shaped region in the Solar System, centered on the Sun and roughly spanning the space between the orbits of the planets Jupiter and Mars.\n\nNothing in the results suggests the question is out of date."
+  },
+  {
+   "id": "right-doe-ms-11-r12-t15",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "On a meteorological map, lines connecting points of equal pressure are called isobars.",
+   "sources": [
+    "https://www.noaa.gov/jetstream/synoptic/origin-of-wind",
+    "https://www.grc.nasa.gov/www//k-12/Aero2000/studweb/1-2-4i2.html",
+    "https://www.noaa.gov/jetstream/analyze-appair-pressure-map",
+    "https://en.wikipedia.org/wiki/Isobar_(meteorology)"
+   ],
+   "searches": 1,
+   "note": "**Supported.** NOAA and NASA pages state that isobars are the lines of equal pressure on a weather map.\n\n- NOAA's JetStream page says lines called isobars usually surround the \"highs\" and \"lows\". \"Iso\" means \"equal\" and a \"bar\" is a unit of pressure, so an isobar means \"equal pressure\".\n- NASA Glenn says isobars are lines drawn on a weather map which connect weather stations with the same atmospheric pressure.\n- A NOAA lesson on drawing pressure maps tells students to connect identical sea-level pressure values. It says these lines are called isobars.\n\nA competing answer is unlikely. Wikipedia"
+  },
+  {
+   "id": "right-doe-ms-13-r16-b11",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Aten asteroids are Earth-crossing asteroids, meaning they cross Earth's orbit.",
+   "sources": [
+    "https://cneos.jpl.nasa.gov/faq/new.html",
+    "https://ntrs.nasa.gov/citations/19800040395"
+   ],
+   "searches": 1,
+   "note": "The answer line holds up. Aten asteroids are Earth-crossers.\n\nNASA's Center for Near Earth Object Studies (CNEOS) FAQ describes Atens as Earth-crossing NEAs with semi-major axes smaller than Earth's (named after asteroid 2062 Aten). A NASA Technical Reports Server abstract also lists them among asteroids that can intersect the orbit of the earth. An arXiv review agrees: Apollos and Atens do cross Earth's orbit, with the distinction being whether the orbital semimajor axis is larger or small than 1 AU.\n\nI found nothing showing the question is out of date. One NASA Technical Reports Server recor"
+  },
+  {
+   "id": "right-doe-ms-11-r09-t07",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Cast iron, being ferromagnetic, works well on an induction cooktop, while anodized aluminum, copper and non-magnetic stainless steel generally do not.",
+   "sources": [
+    "https://www1.eere.energy.gov/buildings/appliance_standards/pdfs/cooking_products_tp_nopr.pdf",
+    "https://www1.eere.energy.gov/buildings/appliance_standards/pdfs/cooking_products_tp_nopr.pdf",
+    "https://www.energy.gov/sites/prod/files/2014/11/f19/Conv_Cooking_Products_TP_SNOPR.pdf",
+    "https://en.wikipedia.org/wiki/Induction_cooking",
+    "https://en.wikipedia.org/wiki/Induction_cooking",
+    "https://en.wikipedia.org/wiki/Induction_cooking",
+    "https://en.wikipedia.org/wiki/Cooktop",
+    "https://en.wikipedia.org/wiki/Induction_cooking",
+    "https://impact.ornl.gov/en/publications/an-all-metal-compatible-induction-cooking-system-with-double-d-co/"
+   ],
+   "searches": 1,
+   "note": "The pages support the answer line. Cast iron is a ferromagnetic material, so it works on a standard induction cooktop. The other three options generally do not.\n\n- A DOE rulemaking notice says the cooking vessel must be made of a ferromagnetic material, such as steel or iron for induction to work properly. It adds that aluminum is not a ferromagnetic metal and does not heat up in the oscillating field. The same notice says aluminum is not compatible with induction cooking. This rules out choice X. It names aluminum generally and doesn't mention anodized aluminum specifically.\n- Wikipedia's ind"
+  },
+  {
+   "id": "right-doe-ms-14-r05-b01",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Fluorescein isothiocyanate is a fluorescent label whose light emission is used in fluorescence microscopy.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Fluorescein",
+    "https://pubmed.ncbi.nlm.nih.gov/786713/",
+    "https://pubmed.ncbi.nlm.nih.gov/30145901/"
+   ],
+   "searches": 1,
+   "note": "The general fact behind the answer is supported. I did not find a Berkeley Lab page, so the question's opening sentence is unchecked.\n\n- Wikipedia's fluorescein article says the isothiocyanate derivative of fluorescein is often used to label and track cells in fluorescence microscopy applications.\n- A PubMed abstract on FITC-labeled lectins says tissue sections were examined by fluorescence microscopy after incubation with fluorescein isothiocyanate labelled lectins.\n- Another PubMed abstract studies FITC and FITC-labeled BSA monolayers using TIRFM imaging and spectroscopy. TIRFM is total inte"
+  },
+  {
+   "id": "right-doe-ms-10-r14-t05",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "The Ivanpah Solar Electric Generating System, a large solar thermal power station, is located in California's Mojave Desert.",
+   "sources": [
+    "https://science.nasa.gov/earth/earth-observatory/harvesting-sunlight-in-california-83341/",
+    "https://19january2021snapshot.epa.gov/sites/static/files/documents/Ivanpah-Solar-Electric-Generating-NOI.pdf",
+    "https://asterweb.jpl.nasa.gov/gallery-detail.asp?name=ivanpah",
+    "https://en.wikipedia.org/wiki/Ivanpah_Solar_Electric_Generating_System"
+   ],
+   "searches": 1,
+   "note": "The pages support the answer line. NASA says Ivanpah solar power station sits in the Mohave Desert and became the world's largest thermal power tower system. An EPA document describes the system as three solar concentrating thermal power plants in southern California's Mojave Desert, about 4.5 miles south of Primm, Nevada. The NASA/JPL ASTER gallery also places it in southern California's Mojave Desert near the Nevada border.\n\nOn the question's wording, the pages hedge a little on \"world's largest.\" Wikipedia says Ivanpah was the world's largest solar thermal power station at the time it came "
+  },
+  {
+   "id": "right-doe-ms-14-r15-b13",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Quantum dots developed (with DOE support) to emit visible light are excited, or irradiated, with ultraviolet light.",
+   "sources": [
+    "https://newsreleases.sandia.gov/releases/2003/elect-semi-sensors/quantum.html",
+    "https://newsreleases.sandia.gov/releases/2003/elect-semi-sensors/quantum.html",
+    "https://newsreleases.sandia.gov/releases/2003/elect-semi-sensors/quantum.html"
+   ],
+   "searches": 1,
+   "note": "The Sandia National Laboratories page supports the answer line. It is a DOE laboratory, and it describes quantum dots that give off visible light when ultraviolet light excites them.\n\n- The release says the approach encapsulates semiconductor quantum dots and engineers their surfaces so they efficiently emit visible light when excited by near-ultraviolet (UV) light-emitting diodes (LEDs).\n- It adds that the quantum dots strongly absorb light in the near UV range and re-emit visible light whose color depends on their size and surface chemistry.\n- The research was done by researchers at the Depa"
+  },
+  {
+   "id": "right-doe-ms-12-r07-t16",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "A point with a negative x-coordinate and a positive y-coordinate, such as (–3, 8), lies in the second quadrant.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Cartesian_coordinate_system",
+    "https://en.wikipedia.org/wiki/Quadrant_(plane_geometry)"
+   ],
+   "searches": 1,
+   "note": "The answer line is supported. The point (–3, 8) has a negative x-coordinate and a positive y-coordinate. That puts it in quadrant II, the second quadrant.\n\nThe Wikipedia article on the Cartesian coordinate system says quadrants are numbered I (both coordinates positive), II (abscissa negative, ordinate positive), III (both negative), and IV (abscissa positive, ordinate negative). The \"Quadrant (plane geometry)\" article agrees. It gives the signs of the (x; y) coordinates as I (+; +), II (−; +), III (−; −), and IV (+; −).\n\nNothing in the pages suggests the question is out of date. The accepted "
+  },
+  {
+   "id": "right-doe-ms-09-r10-t02",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "A pencil in a glass of water appears bent because of refraction, which is the bending of light as it passes between water and air.",
+   "sources": [
+    "https://science.nasa.gov/learn/basics-of-space-flight/chapter6-6/",
+    "https://science.nasa.gov/learn/basics-of-space-flight/chapter6-6/",
+    "https://en.wikipedia.org/wiki/Refraction"
+   ],
+   "searches": 1,
+   "note": "Pages support the answer line. NASA's page on electromagnetics shows a pencil in a glass of water. Its caption says air and water have different indices of refraction. It also says refraction is the deflection or bending of electromagnetic waves when they pass from one kind of transparent medium into another. Wikipedia's \"Refraction\" article describes the same case. A slanted pencil partly in water appears to bend at the surface, due to the bending of light rays as they move from the water to the air.\n\nThe other choices don't fit. Nothing in these pages attributes the bent look to reflection, "
+  },
+  {
+   "id": "right-doe-ms-08-r08-b20",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "The refractive index (index of refraction) is the factor by which the speed of light is reduced in a material relative to its speed in vacuum.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Refractive_index",
+    "https://cosmicopia.gsfc.nasa.gov/qa_gp_sl.html",
+    "https://cosmicopia.gsfc.nasa.gov/qa_gp_sl.html",
+    "https://en.wikipedia.org/wiki/Speed_of_light"
+   ],
+   "searches": 1,
+   "note": "The answer line is supported. Several pages say that the refractive index is the factor by which light slows in a material.\n\n- A Wikipedia article on refractive index says the refractive index, n, can be seen as the factor by which the speed and the wavelength of the radiation are reduced with respect to their vacuum values.\n- NASA's Cosmicopia page, a U.S. agency source, says that every transparent material has an index of refraction, that is the ratio of the speed of light in vacuum to the speed of light in that material. It gives glass as an example: an index of about 1.5, meaning that ligh"
+  },
+  {
+   "id": "right-doe-ms-09-r11-t01",
+   "group": "right key",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Hadrons, including protons and neutrons, are composed of quarks.",
+   "sources": [
+    "https://www.energy.gov/science/doe-explainsprotons",
+    "https://www.energy.gov/science/doe-explainsprotons",
+    "https://www.energy.gov/science/doe-explainsprotons",
+    "https://en.wikipedia.org/wiki/Hadron"
+   ],
+   "searches": 1,
+   "note": "The pages support the answer line. The DOE page says that hadrons are made of two or more quarks held together by the strong interaction force. It also says that scientists refer to protons and neutrons as hadrons, and that protons contain two up quarks and one down quark, while neutrons contain one up quark and two down quarks. The Wikipedia \"Hadron\" page agrees: hadrons are categorized into two broad families: baryons, made of an odd number of quarks (usually three), and mesons, made of an even number of quarks (usually two).\n\nWikipedia and the arXiv papers also mention gluons, which bind th"
+  },
+  {
+   "id": "wrong-doe-hs-01-r05-t20",
+   "group": "wrong key",
+   "outcome": "ok",
+   "verdict": "contradicted",
+   "claim": "Nickel-cadmium cells are the all-but-obsolete battery technology that U.S. government regulation stopped because of toxicity.",
+   "sources": [
+    "https://www.epa.gov/sites/default/files/2016-03/documents/p1104.pdf",
+    "https://www.epa.gov/sites/default/files/2016-03/documents/p1104.pdf",
+    "https://pubs.usgs.gov/sir/2013/5137/pdf/sir2013-5137.pdf",
+    "https://pubs.usgs.gov/sir/2013/5137/pdf/sir2013-5137.pdf",
+    "https://www.epa.gov/sites/default/files/2016-03/documents/p1104.pdf",
+    "https://archive.epa.gov/epawaste/hazard/web/pdf/battery.pdf",
+    "https://en.wikipedia.org/wiki/Nickel-cadmium"
+   ],
+   "searches": 2,
+   "note": "**The answer line looks wrong.** The pages support mercury-oxide cells (X) as the technology that U.S. regulation stopped because of toxicity. They don't support nickel-cadmium cells (W).\n\n**Mercury-oxide cells**\n- Under the 1996 Mercury-Containing and Rechargeable Battery Management Act, no person may sell, offer for sale, or offer for promotional purposes any button cell mercuric-oxide battery for use in the United States.\n- Larger mercuric-oxide batteries may be sold only under conditions. The manufacturer or importer must identify a collection site and tell purchasers about it.\n- The USGS "
+  },
+  {
+   "id": "wrong-doe-hs-01-r10-t19",
+   "group": "wrong key",
+   "outcome": "ok",
+   "verdict": "contradicted",
+   "claim": "Aeolian sandstones form primarily from sand grain motion caused by wind.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Aeolian_sandstone",
+    "https://www.nps.gov/subjects/geology/aeolian-landforms.htm",
+    "https://www.nps.gov/subjects/geology/aeolian-landforms.htm",
+    "https://pubs.usgs.gov/of/1998/0131a/report.pdf",
+    "https://home.nps.gov/grsa/learn/nature/geology.htm"
+   ],
+   "searches": 1,
+   "note": "The pages contradict the answer line. Aeolian sandstone comes from wind, so the correct choice is Z) winds, not W) river currents.\n\n- A reference entry defines eolianite (aeolian sandstone) as any rock formed by the lithification of sediment deposited by aeolian processes; that is, the wind.\n- The National Park Service says aeolian landforms are shaped by the wind (named for the Greek God of the wind, Aeolus). It also says aeolian processes involve erosion, transportation, and deposition of sediment by the wind.\n- A USGS report says that wind-related processes and deposits are also termed eoli"
+  },
+  {
+   "id": "wrong-doe-ms-01-r07-t07",
+   "group": "wrong key",
+   "outcome": "ok",
+   "verdict": "contradicted",
+   "claim": "Streams flowing from glacier termini, with high bed load and easily erodible banks, typically form braided patterns (not oxbow).",
+   "sources": [
+    "https://www.nps.gov/articles/braided-stream.htm",
+    "https://pubs.usgs.gov/pp/0422a/report.pdf",
+    "https://pubs.usgs.gov/pp/0422a/report.pdf",
+    "https://pubs.usgs.gov/gip/capecod/textglacial.html",
+    "https://www.nps.gov/kefj/learn/nature/glaciers.htm",
+    "https://en.wikipedia.org/wiki/Bar_(river_morphology)"
+   ],
+   "searches": 1,
+   "note": "The answer line (X, oxbow) is wrong. The pages support Y, braided.\n\n- The National Park Service says that the most important factors leading to braided streams are large bed load and readily erodible bank material. That matches the question's wording closely.\n- A USGS study of a glacial stream on Mount Rainier says that braiding is favored by the presence of erodible banks and fluctuations in discharge. It also says that braided channel patterns cannot be developed without bed load.\n- The USGS Cape Cod page says that the braided pattern is characteristic of meltwater streams because sediment l"
+  },
+  {
+   "id": "wrong-doe-ms-01-r18-t07",
+   "group": "wrong key",
+   "outcome": "ok",
+   "verdict": "contradicted",
+   "claim": "Lava domes, which are compared to toothpaste being squeezed from a tube, have formed repeatedly in the Mount St. Helens crater since 1980.",
+   "sources": [
+    "https://www.usgs.gov/volcanoes/mount-st.-helens/science/explosions-and-dome-growth",
+    "https://www.usgs.gov/volcanoes/mount-st.-helens/science/explosions-and-dome-growth",
+    "https://pubs.usgs.gov/gip/msh/subsequent.html",
+    "https://pubs.usgs.gov/gip/msh/subsequent.html",
+    "https://en.wikipedia.org/wiki/1980_eruption_of_Mount_St._Helens"
+   ],
+   "searches": 1,
+   "note": "The answer line looks wrong. The USGS pages say the feature that formed in the crater was lava domes (W), not cinder cones (X).\n\n- The USGS page on explosions and dome growth says that lava domes erupted in the crater in June and August [1980], but were mostly destroyed by subsequent explosive episodes. It adds that beginning in October 1980, episodic eruptions built a new lava dome that reached nearly 305 m (1000 ft) above the crater floor.\n- The USGS summary of later activity gives the toothpaste comparison directly: the dome-building process may be pictured as the periodic squeezing of an u"
+  },
+  {
+   "id": "wrong-doe-ms-06-r08-b08",
+   "group": "wrong key",
+   "outcome": "ok",
+   "verdict": "contradicted",
+   "claim": "Basaltic lava contains roughly 45–52% silica, so the closest choice is about 50%.",
+   "sources": [
+    "https://volcanoes.usgs.gov/volcanic_ash/glossary/basalt.html",
+    "https://home.nps.gov/subjects/volcanoes/lava-flows.htm",
+    "https://home.nps.gov/subjects/volcanoes/lava-flows.htm",
+    "https://en.wikipedia.org/wiki/Felsic_lava"
+   ],
+   "searches": 1,
+   "note": "The sources contradict the answer line. They put basaltic lava at about 45–52% silica, and 50% is the closest choice. The listed answer, 60%, is too high.\n\n- The USGS Volcano Hazards glossary says basalt contains 45 to 53 percent silica.\n- The National Park Service says basaltic lavas have low silica (45-52 weight %).\n- The NPS also treats 52–66% SiO2 as intermediate lava, mostly basaltic andesite and andesite. A 60% figure therefore falls in the andesite range, not the basalt range.\n- A Wikipedia table lists andesite at 60.0% SiO2. Andesite is 60.0 and rhyolite 73.2.\n\nChoice W (50%) is the on"
+  },
+  {
+   "id": "wrong-doe-ms-08-r17-t17",
+   "group": "wrong key",
+   "outcome": "ok",
+   "verdict": "contradicted",
+   "claim": "A difference of one apparent magnitude means the brighter star appears about 3.2 times as bright as the dimmer one.",
+   "sources": [
+    "https://imagine.gsfc.nasa.gov/resources/dict_jp.html",
+    "https://spacemath.gsfc.nasa.gov/stars/2page21.pdf",
+    "https://ntrs.nasa.gov/api/citations/19660028277/downloads/19660028277.pdf",
+    "https://en.wikipedia.org/wiki/Apparent_magnitude"
+   ],
+   "searches": 1,
+   "note": "The pages contradict the answer line. A one-magnitude difference gives a brightness ratio of about 2.5, not 3.2.\n\n- NASA's Imagine the Universe dictionary says a decrease of one magnitude represents an increase in apparent brightness by a factor of 2.512.\n- NASA's SpaceMath problem set gives a worked example: a star with a magnitude of +2.0 is 2.51 times brighter than a star of magnitude +3.0.\n- A NASA technical report says one magnitude difference amounts to a light ratio of the fifth root of 100, or approximately 2.512.\n- Wikipedia's \"Apparent magnitude\" article agrees. It says an increase o"
+  },
+  {
+   "id": "wrong-doe-ms-16-r02-b17",
+   "group": "wrong key",
+   "outcome": "ok",
+   "verdict": "contradicted",
+   "claim": "Mars's seasonal polar ice caps are composed primarily of carbon monoxide.",
+   "sources": [
+    "https://mars.nasa.gov/resources/5265/seasonal-processes-omega-sublimation/",
+    "https://science.nasa.gov/resource/dry-ice-on-mars/",
+    "https://science.nasa.gov/photojournal/carbon-dioxide-frost-settling-from-seasonal-outbursts-on-mars-movie/",
+    "https://science.nasa.gov/photojournal/carbon-dioxide-frost-settling-from-seasonal-outbursts-on-mars-movie/"
+   ],
+   "searches": 1,
+   "note": "The answer line is wrong. NASA pages say Mars's seasonal polar caps are mostly carbon dioxide, which is choice X, not carbon monoxide.\n\n- A NASA Mars page says Mars's seasonal polar caps are composed primarily of carbon-dioxide frost.\n- Another NASA page says the same: the seasonal polar caps are composed of dry ice (carbon dioxide).\n- NASA's CRISM observations from the Mars Reconnaissance Orbiter show Mars' seasonal caps consist of frozen carbon dioxide. The caps also contain smaller amounts of water ice frost and dust.\n- Water ice (choice Z) is not the main seasonal component. NASA contrasts"
+  },
+  {
+   "id": "disputed-doe-hs-03-r15-t21",
+   "group": "disputed key",
+   "outcome": "ok",
+   "verdict": "contradicted",
+   "claim": "Ultraviolet is the region of the electromagnetic spectrum in which supernovae are most commonly detected.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Supernova",
+    "https://www3.nasa.gov/centers/goddard/news/topstory/2006/supernova_mugshot.html",
+    "https://www3.nasa.gov/centers/goddard/news/topstory/2006/supernova_mugshot.html"
+   ],
+   "searches": 1,
+   "note": "The pages I found don't support ULTRAVIOLET. They point to visible (optical) light as the usual way supernovae are detected.\n\n- Wikipedia's supernova article says that the luminous emission consists of optical photons.\n- A paper on radio supernovae calls Type II-P a relatively common type of supernova optically, but rarely detected at radio wavelengths.\n- A paper on neutrino detection from supernovae in nearby galaxies assumes an optical supernova is detected about once per year.\n- NASA's Swift page treats UV as a follow-up band. Swift imaged supernovae in three wavelengths: optical, ultraviol"
+  },
+  {
+   "id": "disputed-doe-hs-01-r11-b23",
+   "group": "disputed key",
+   "outcome": "ok",
+   "verdict": "contradicted",
+   "claim": "Of neutrophil, basophil, melanocyte and macrophage, only the neutrophil and basophil are leukocytes.",
+   "sources": [
+    "https://meshb.nlm.nih.gov/record/ui?name=Leukocytes",
+    "https://aidsinfo.nih.gov/understanding-hiv-aids/glossary/439/macrophage",
+    "https://en.wikipedia.org/wiki/Macrophage",
+    "https://en.wikipedia.org/wiki/Monocyte",
+    "https://en.wikipedia.org/wiki/Monocyte"
+   ],
+   "searches": 2,
+   "note": "Neutrophils and basophils are leukocytes, but the pages also treat macrophages as white blood cells. That means the answer line leaves out a correct answer.\n\n- **Neutrophil and basophil:** The NLM MeSH entry for leukocytes says they include granular leukocytes (basophils, eosinophils and neutrophils) as well as non-granular leukocytes (lymphocytes and monocytes).\n- **Macrophage:** The NIH HIV/AIDS glossary defines a macrophage as a type of white blood cell that fights infection by ingesting foreign substances. Wikipedia likewise calls macrophages a type of white blood cell of the innate immune"
+  },
+  {
+   "id": "renamed-pilot-gen-hs-r01-t04",
+   "group": "renamed lab",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "The mineral perovskite, which gave perovskite solar-cell materials their name, is calcium titanate (CaTiO3).",
+   "sources": [
+    "https://hero.epa.gov/reference/8788562/",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC7739487/",
+    "https://en.wikipedia.org/wiki/Perovskite_(structure)",
+    "https://www.energy.gov/technologycommercialization/articles/nrel-technique-leads-improved-solar-cells"
+   ],
+   "searches": 2,
+   "noticedTheNewName": false,
+   "note": "The pages support the answer line. The mineral perovskite is calcium titanate.\n\n- A reference on the history of the name says the name was coined for a mineral, calcium titanate (CaTiO3).\n- A PubMed Central article agrees. It says the term \"perovskite\" was first coined by Gustav Rose in 1839 for the CaTiO_3 mineral.\n- Another source says a perovskite is a crystalline material of formula ABX_3 with a crystal structure similar to that of the mineral perovskite, this latter consisting of calcium titanium oxide (CaTiO_3).\n- None of the other choices (silicon dioxide, iron disulfide, barium sulfate"
+  },
+  {
+   "id": "renamed-pilot-gen-hs-r01-b10",
+   "group": "renamed lab",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "In the electrolysis of water, hydrogen gas is produced at the cathode.",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Electrolysis",
+    "https://en.wikipedia.org/wiki/Anion_exchange_membrane_electrolysis",
+    "https://en.wikipedia.org/wiki/Mixed_oxidant",
+    "https://www.hydrogen.energy.gov/docs/hydrogenprogramlibraries/pdfs/review21/p196_pivovar_boardman_2021_o-pdf.pdf?Status=Master"
+   ],
+   "searches": 2,
+   "noticedTheNewName": false,
+   "note": "The answer line is supported. Hydrogen gas is produced at the cathode when water is electrolyzed.\n\n- Wikipedia's \"Electrolysis\" article says at the cathode, water is reduced to hydroxide and hydrogen gas.\n- Wikipedia's \"Anion exchange membrane electrolysis\" article says oxygen (O2) is produced at the anode and hydrogen (H2) at the cathode.\n- US patent 4470894 describes the oxidation of water at an anode to form oxygen gas and the reduction of water at the cathode to form hydrogen gas. Patents are not on the approved list of reference works, so I'm giving this less weight.\n\nThe other options ar"
+  },
+  {
+   "id": "renamed-pilot-gen-hs-r01-b16",
+   "group": "renamed lab",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "The power carried by the wind through a rotor's swept area is proportional to the swept area (rotor diameter squared) and to the cube of the wind speed, so doubling both gives 4 × 8 = 32 times the power.",
+   "sources": [
+    "https://www.energy.gov/sites/prod/files/2015/05/f22/Enabling%20Wind%20Power%20Nationwide_18MAY2015_FINAL.pdf",
+    "https://www.energy.gov/articles/test-center-powers-wind-tech"
+   ],
+   "searches": 2,
+   "noticedTheNewName": false,
+   "note": "The answer line is right: the power in the wind through the rotor goes up by a factor of 32.\n\nAn Energy Department document gives the power in the wind through the swept area as 0.5 × ρ × A × U³. It adds that this power is proportional to the swept area and varies as the cube of the wind speed. Swept area is proportional to the square of the rotor diameter, which is basic geometry and not something the pages state. Doubling the diameter therefore multiplies the area by 4, and doubling the wind speed multiplies U³ by 8. The combined factor is 4 × 8 = 32.\n\nThe question's opening sentence also ho"
+  },
+  {
+   "id": "renamed-pilot-gen-ms-r01-t04",
+   "group": "renamed lab",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Solar (photovoltaic) cells convert sunlight directly into electrical energy.",
+   "sources": [
+    "https://www.eia.gov/energyexplained/solar/photovoltaics-and-electricity.php",
+    "https://www.eia.gov/kids/history-of-energy/timelines/photovoltaic.php",
+    "https://solareis.anl.gov/guide/solar/pv/",
+    "https://www.eia.gov/kids/energy-sources/solar/index.php",
+    "https://solareis.anl.gov/guide/solar/pv/",
+    "https://www.energy.gov/cmei/articles/energy-department-renames-nrel-national-lab-rockies",
+    "https://www.nlr.gov/about/history",
+    "https://www.eia.gov/kids/history-of-energy/timelines/photovoltaic.php"
+   ],
+   "searches": 3,
+   "noticedTheNewName": true,
+   "note": "The answer line is supported. Several approved pages say that solar cells convert sunlight directly into electricity.\n\n- The EIA says a photovoltaic (PV) cell, commonly called a solar cell, is a nonmechanical device that converts sunlight directly into electricity.\n- The EIA Energy Kids timeline is closer to the question's wording. It says a photovoltaic cell, also called a PV or solar cell, is a device that converts light (radiant) energy directly into electrical energy.\n- Argonne National Laboratory's guide agrees: solar cells are devices that convert sunlight directly into electricity.\n\nThe"
+  },
+  {
+   "id": "renamed-pilot-gen-ms-r01-t16",
+   "group": "renamed lab",
+   "outcome": "ok",
+   "verdict": "supported",
+   "claim": "Geothermal energy comes mainly from heat from inside Earth.",
+   "sources": [
+    "https://www3.eia.gov/energyexplained/geothermal/",
+    "https://www3.eia.gov/energyexplained/geothermal/",
+    "https://www.energy.gov/hgeo/geothermal/geothermal-faqs",
+    "https://www.energy.gov/hgeo/geothermal/geothermal-faqs",
+    "https://en.wikipedia.org/wiki/Geothermal_heat",
+    "https://simple.wikipedia.org/wiki/Geothermal_energy",
+    "https://www.nlr.gov/news/detail/features/2023/full-steam-ahead-unearthing-the-power-of-geothermal"
+   ],
+   "searches": 2,
+   "noticedTheNewName": false,
+   "note": "**Supported.** Agency pages say geothermal energy is heat from inside Earth.\n\n- EIA says geothermal energy is heat within the earth. It adds that the slow decay of radioactive particles in the earth's core produces geothermal energy.\n- DOE says geothermal energy is heat that flows continuously from the Earth's core to the surface. It also says the heat is continually replenished by the decay of naturally occurring radioactive elements in the Earth's interior.\n- Choice X (sunlight absorbed by the ground) is weaker than W. One Wikipedia page lists absorbed solar energy as a minor contributor to "
+  }
+ ]
+}

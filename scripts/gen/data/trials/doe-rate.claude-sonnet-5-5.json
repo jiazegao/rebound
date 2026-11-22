@@ -1,0 +1,2727 @@
+{
+ "about": "The difficulty rater on a quarter of the DOE sample (scripts/gen/trials/doe.ts --rate): can it tell DOE's rounds 11 and later from its rounds 1–10 when shown four questions of each? \"separation\" is the chance that a late-round question is rated harder than an early-round one (ties count half).",
+ "model": "claude-sonnet-5-5",
+ "prompt": "fc0f1544",
+ "run": "2026-11-21",
+ "rated": 336,
+ "HS": {
+  "early": 2.19,
+  "late": 2.64,
+  "separation": 0.633
+ },
+ "MS": {
+  "early": 2.24,
+  "late": 2.68,
+  "separation": 0.624
+ },
+ "calls": {
+  "calls": 336,
+  "outcomes": {
+   "ok": 336,
+   "refused": 0,
+   "cut-off": 0,
+   "error": 0
+  },
+  "batch": true,
+  "meanTokens": {
+   "input": 112,
+   "cacheRead": 1296,
+   "cacheWrite": 233,
+   "output": 96,
+   "thinking": 0
+  },
+  "searches": 0,
+  "cost": 0.422,
+  "costPerCall": 0.001256
+ },
+ "results": [
+  {
+   "id": "doe-hs-09-r03-t01",
+   "level": "HS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-10-r02-t22",
+   "level": "HS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-13-r08-t03",
+   "level": "HS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-14-r07-t04",
+   "level": "HS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-15-r03-t02",
+   "level": "HS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-11-r05-t01",
+   "level": "HS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-17-r01-t01",
+   "level": "HS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-15-r07-b16",
+   "level": "HS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-17-r10-b18",
+   "level": "HS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-13-r07-b23",
+   "level": "HS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-11-r08-b09",
+   "level": "HS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-13-r06-b16",
+   "level": "HS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-15-r10-b12",
+   "level": "HS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-15-r10-b06",
+   "level": "HS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-15-r14-t12",
+   "level": "HS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-09-r14-t19",
+   "level": "HS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-08-r13-t21",
+   "level": "HS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-10-r17-t09",
+   "level": "HS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-10-r12-t03",
+   "level": "HS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-12-r17-t08",
+   "level": "HS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-12-r13-t19",
+   "level": "HS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-12-r16-b12",
+   "level": "HS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-15-r17-b09",
+   "level": "HS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-10-r12-b11",
+   "level": "HS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-11-r11-b07",
+   "level": "HS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-09-r11-b08",
+   "level": "HS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-11-r13-b07",
+   "level": "HS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-12-r12-b23",
+   "level": "HS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-13-r04-t07",
+   "level": "HS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-15-r08-t23",
+   "level": "HS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-08-r10-t22",
+   "level": "HS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-12-r01-t23",
+   "level": "HS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-15-r08-t01",
+   "level": "HS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-13-r09-t16",
+   "level": "HS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-10-r02-t12",
+   "level": "HS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-12-r05-b05",
+   "level": "HS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-17-r09-b05",
+   "level": "HS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-08-r08-b12",
+   "level": "HS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-10-r10-b05",
+   "level": "HS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-14-r08-b12",
+   "level": "HS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-16-r01-b05",
+   "level": "HS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-17-r02-b04",
+   "level": "HS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-15-r17-t07",
+   "level": "HS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-12-r15-t20",
+   "level": "HS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-09-r15-t01",
+   "level": "HS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-12-r16-t23",
+   "level": "HS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-17-r15-t02",
+   "level": "HS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-10-r12-t08",
+   "level": "HS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-11-r14-t01",
+   "level": "HS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-11-r13-b03",
+   "level": "HS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-08-r16-b12",
+   "level": "HS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-11-r15-b23",
+   "level": "HS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-12-r15-b01",
+   "level": "HS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-10-r17-b05",
+   "level": "HS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-17-r13-b16",
+   "level": "HS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-08-r16-b02",
+   "level": "HS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-16-r05-t09",
+   "level": "HS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-09-r02-t22",
+   "level": "HS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-13-r01-t08",
+   "level": "HS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-12-r10-t06",
+   "level": "HS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-11-r01-t21",
+   "level": "HS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-09-r02-t09",
+   "level": "HS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-17-r05-t11",
+   "level": "HS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-12-r05-b19",
+   "level": "HS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-11-r04-b12",
+   "level": "HS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-14-r04-b21",
+   "level": "HS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-17-r05-b11",
+   "level": "HS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-10-r05-b23",
+   "level": "HS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-17-r08-b03",
+   "level": "HS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-09-r02-b14",
+   "level": "HS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-09-r17-t09",
+   "level": "HS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-15-r11-t21",
+   "level": "HS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-09-r12-t03",
+   "level": "HS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-11-r14-t18",
+   "level": "HS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-15-r17-t20",
+   "level": "HS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-09-r12-t09",
+   "level": "HS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-08-r13-t05",
+   "level": "HS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-10-r15-b11",
+   "level": "HS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-09-r13-b05",
+   "level": "HS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-12-r17-b07",
+   "level": "HS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-12-r14-b07",
+   "level": "HS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-09-r17-b14",
+   "level": "HS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-15-r17-b11",
+   "level": "HS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-10-r12-b02",
+   "level": "HS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-17-r09-t01",
+   "level": "HS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-17-r02-t06",
+   "level": "HS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-09-r09-t03",
+   "level": "HS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-13-r07-t18",
+   "level": "HS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-11-r03-t09",
+   "level": "HS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-10-r04-t04",
+   "level": "HS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-13-r05-t18",
+   "level": "HS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-13-r01-b15",
+   "level": "HS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-17-r09-b01",
+   "level": "HS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-11-r05-b03",
+   "level": "HS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-12-r03-b15",
+   "level": "HS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-12-r01-b15",
+   "level": "HS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-09-r10-b08",
+   "level": "HS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-13-r09-b09",
+   "level": "HS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-15-r11-t07",
+   "level": "HS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-08-r12-t03",
+   "level": "HS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-12-r13-t01",
+   "level": "HS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-11-r13-t17",
+   "level": "HS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-11-r13-t04",
+   "level": "HS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-17-r13-t12",
+   "level": "HS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-11-r16-t17",
+   "level": "HS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-09-r15-b14",
+   "level": "HS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-10-r14-b12",
+   "level": "HS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-12-r13-b07",
+   "level": "HS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-12-r13-b14",
+   "level": "HS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-08-r16-b17",
+   "level": "HS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-10-r17-b16",
+   "level": "HS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-17-r11-b14",
+   "level": "HS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-08-r04-t20",
+   "level": "HS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-10-r07-t14",
+   "level": "HS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-12-r04-t17",
+   "level": "HS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-12-r09-t23",
+   "level": "HS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-08-r02-t11",
+   "level": "HS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-09-r03-t03",
+   "level": "HS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-12-r05-t08",
+   "level": "HS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-15-r10-b05",
+   "level": "HS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-10-r01-b05",
+   "level": "HS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-14-r01-b19",
+   "level": "HS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-08-r06-b16",
+   "level": "HS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-09-r08-b09",
+   "level": "HS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-10-r05-b15",
+   "level": "HS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-17-r09-b08",
+   "level": "HS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-09-r13-t10",
+   "level": "HS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-10-r12-t22",
+   "level": "HS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-10-r17-t14",
+   "level": "HS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-15-r11-t22",
+   "level": "HS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-15-r16-t19",
+   "level": "HS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-17-r11-t03",
+   "level": "HS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-08-r14-t09",
+   "level": "HS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-08-r17-b05",
+   "level": "HS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-17-r15-b11",
+   "level": "HS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-08-r14-b13",
+   "level": "HS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-12-r17-b17",
+   "level": "HS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-15-r14-b02",
+   "level": "HS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-09-r16-b03",
+   "level": "HS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-10-r15-b05",
+   "level": "HS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-08-r10-t19",
+   "level": "HS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-13-r06-t06",
+   "level": "HS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-12-r03-t21",
+   "level": "HS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-08-r08-t04",
+   "level": "HS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-09-r04-t10",
+   "level": "HS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-15-r03-t04",
+   "level": "HS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-11-r08-t23",
+   "level": "HS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-13-r05-b23",
+   "level": "HS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-10-r09-b03",
+   "level": "HS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-17-r05-b02",
+   "level": "HS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-hs-11-r10-b20",
+   "level": "HS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-13-r06-b20",
+   "level": "HS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-09-r09-b20",
+   "level": "HS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-09-r10-b04",
+   "level": "HS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 1
+  },
+  {
+   "id": "doe-hs-09-r16-t12",
+   "level": "HS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-15-r11-t11",
+   "level": "HS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-10-r13-t09",
+   "level": "HS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-09-r14-t10",
+   "level": "HS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-15-r11-t23",
+   "level": "HS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-17-r13-t08",
+   "level": "HS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-10-r16-t21",
+   "level": "HS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-10-r11-b05",
+   "level": "HS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-09-r15-b10",
+   "level": "HS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-08-r16-b20",
+   "level": "HS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-15-r12-b08",
+   "level": "HS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-08-r15-b19",
+   "level": "HS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-hs-17-r13-b02",
+   "level": "HS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-hs-09-r11-b04",
+   "level": "HS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-09-r09-t20",
+   "level": "MS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-11-r10-t20",
+   "level": "MS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-15-r04-t01",
+   "level": "MS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-14-r01-t01",
+   "level": "MS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-14-r03-t09",
+   "level": "MS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-10-r02-t13",
+   "level": "MS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-16-r08-t01",
+   "level": "MS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-16-r08-b07",
+   "level": "MS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-13-r09-b14",
+   "level": "MS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-11-r04-b01",
+   "level": "MS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-13-r08-b05",
+   "level": "MS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-09-r10-b16",
+   "level": "MS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-16-r06-b10",
+   "level": "MS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-12-r10-b09",
+   "level": "MS",
+   "tier": "early",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-14-r17-t22",
+   "level": "MS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-13-r17-t03",
+   "level": "MS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-13-r16-t04",
+   "level": "MS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-13-r17-t20",
+   "level": "MS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-10-r15-t15",
+   "level": "MS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-12-r17-t20",
+   "level": "MS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-09-r17-t14",
+   "level": "MS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "tossup",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-08-r14-b05",
+   "level": "MS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-13-r15-b12",
+   "level": "MS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-12-r15-b19",
+   "level": "MS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-13-r13-b21",
+   "level": "MS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-09-r17-b07",
+   "level": "MS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-11-r17-b02",
+   "level": "MS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-12-r17-b16",
+   "level": "MS",
+   "tier": "late",
+   "subject": "biology",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-13-r06-t14",
+   "level": "MS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-13-r03-t10",
+   "level": "MS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-09-r07-t15",
+   "level": "MS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-16-r04-t03",
+   "level": "MS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-15-r01-t01",
+   "level": "MS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-16-r03-t06",
+   "level": "MS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-10-r05-t16",
+   "level": "MS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-14-r10-b01",
+   "level": "MS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-08-r10-b17",
+   "level": "MS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-12-r03-b10",
+   "level": "MS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-16-r07-b07",
+   "level": "MS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-12-r03-b21",
+   "level": "MS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-16-r01-b08",
+   "level": "MS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-13-r04-b03",
+   "level": "MS",
+   "tier": "early",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-11-r11-t14",
+   "level": "MS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 5
+  },
+  {
+   "id": "doe-ms-13-r11-t16",
+   "level": "MS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-11-r13-t20",
+   "level": "MS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-10-r11-t07",
+   "level": "MS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-11-r12-t17",
+   "level": "MS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-11-r12-t08",
+   "level": "MS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-13-r16-t02",
+   "level": "MS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "tossup",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-13-r13-b23",
+   "level": "MS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-14-r16-b13",
+   "level": "MS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-11-r17-b21",
+   "level": "MS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-14-r12-b04",
+   "level": "MS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-13-r17-b18",
+   "level": "MS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-10-r14-b21",
+   "level": "MS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-12-r11-b09",
+   "level": "MS",
+   "tier": "late",
+   "subject": "chemistry",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-10-r08-t06",
+   "level": "MS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-13-r09-t23",
+   "level": "MS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-16-r03-t01",
+   "level": "MS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-11-r02-t21",
+   "level": "MS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-13-r09-t20",
+   "level": "MS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-09-r03-t16",
+   "level": "MS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-14-r04-t15",
+   "level": "MS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-08-r05-b09",
+   "level": "MS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-08-r06-b05",
+   "level": "MS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-08-r07-b22",
+   "level": "MS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-14-r01-b05",
+   "level": "MS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-12-r04-b06",
+   "level": "MS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-13-r02-b10",
+   "level": "MS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-13-r03-b23",
+   "level": "MS",
+   "tier": "early",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-09-r16-t04",
+   "level": "MS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-11-r11-t04",
+   "level": "MS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-12-r13-t16",
+   "level": "MS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-11-r16-t12",
+   "level": "MS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-10-r13-t18",
+   "level": "MS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-11-r17-t06",
+   "level": "MS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-09-r15-t18",
+   "level": "MS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-09-r14-b23",
+   "level": "MS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-11-r16-b12",
+   "level": "MS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-08-r11-b23",
+   "level": "MS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-10-r16-b10",
+   "level": "MS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-10-r17-b03",
+   "level": "MS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-11-r13-b03",
+   "level": "MS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-11-r17-b06",
+   "level": "MS",
+   "tier": "late",
+   "subject": "earth_space",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-13-r03-t07",
+   "level": "MS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-08-r05-t16",
+   "level": "MS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-08-r09-t04",
+   "level": "MS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-10-r01-t05",
+   "level": "MS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-10-r08-t04",
+   "level": "MS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-13-r08-t04",
+   "level": "MS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-10-r06-t03",
+   "level": "MS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-14-r07-b04",
+   "level": "MS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-12-r07-b13",
+   "level": "MS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-11-r10-b03",
+   "level": "MS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-08-r03-b07",
+   "level": "MS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-08-r02-b12",
+   "level": "MS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-11-r06-b02",
+   "level": "MS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-09-r03-b07",
+   "level": "MS",
+   "tier": "early",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-11-r13-t09",
+   "level": "MS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-11-r11-t07",
+   "level": "MS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-09-r15-t01",
+   "level": "MS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-09-r11-t09",
+   "level": "MS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-14-r16-t10",
+   "level": "MS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-10-r17-t01",
+   "level": "MS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-14-r11-t03",
+   "level": "MS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "tossup",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-12-r12-b04",
+   "level": "MS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-10-r14-b05",
+   "level": "MS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-12-r15-b10",
+   "level": "MS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-14-r17-b04",
+   "level": "MS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-08-r14-b19",
+   "level": "MS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-09-r16-b10",
+   "level": "MS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-14-r14-b03",
+   "level": "MS",
+   "tier": "late",
+   "subject": "energy",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-09-r10-t15",
+   "level": "MS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-13-r09-t13",
+   "level": "MS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-08-r02-t06",
+   "level": "MS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-15-r09-t05",
+   "level": "MS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-09-r05-t16",
+   "level": "MS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-08-r01-t07",
+   "level": "MS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-14-r07-t08",
+   "level": "MS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-14-r03-b18",
+   "level": "MS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-12-r08-b16",
+   "level": "MS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-09-r02-b20",
+   "level": "MS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-15-r03-b13",
+   "level": "MS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-14-r03-b08",
+   "level": "MS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-11-r01-b11",
+   "level": "MS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-14-r10-b23",
+   "level": "MS",
+   "tier": "early",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-14-r17-t07",
+   "level": "MS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-08-r14-t15",
+   "level": "MS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-12-r11-t11",
+   "level": "MS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-12-r12-t07",
+   "level": "MS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-09-r15-t12",
+   "level": "MS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-11-r17-t08",
+   "level": "MS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-13-r14-t03",
+   "level": "MS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-13-r11-b11",
+   "level": "MS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-13-r17-b15",
+   "level": "MS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-12-r15-b20",
+   "level": "MS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-14-r11-b05",
+   "level": "MS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-10-r12-b12",
+   "level": "MS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-08-r15-b01",
+   "level": "MS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-09-r12-b08",
+   "level": "MS",
+   "tier": "late",
+   "subject": "math",
+   "kind": "bonus",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-08-r10-t23",
+   "level": "MS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-15-r03-t09",
+   "level": "MS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-13-r02-t13",
+   "level": "MS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-08-r04-t07",
+   "level": "MS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-13-r08-t23",
+   "level": "MS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-14-r01-t16",
+   "level": "MS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-10-r02-t23",
+   "level": "MS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-16-r01-b06",
+   "level": "MS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-16-r05-b14",
+   "level": "MS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-13-r05-b11",
+   "level": "MS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-12-r05-b11",
+   "level": "MS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-11-r09-b10",
+   "level": "MS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-13-r10-b05",
+   "level": "MS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-11-r08-b08",
+   "level": "MS",
+   "tier": "early",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-11-r11-t20",
+   "level": "MS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-14-r13-t09",
+   "level": "MS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 3
+  },
+  {
+   "id": "doe-ms-13-r13-t07",
+   "level": "MS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-08-r16-t20",
+   "level": "MS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-08-r16-t14",
+   "level": "MS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-12-r17-t04",
+   "level": "MS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-14-r17-t21",
+   "level": "MS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "tossup",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-13-r13-b19",
+   "level": "MS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 4
+  },
+  {
+   "id": "doe-ms-09-r11-b01",
+   "level": "MS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 1
+  },
+  {
+   "id": "doe-ms-14-r13-b12",
+   "level": "MS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-10-r16-b02",
+   "level": "MS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-11-r12-b21",
+   "level": "MS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-08-r14-b13",
+   "level": "MS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 2
+  },
+  {
+   "id": "doe-ms-08-r15-b23",
+   "level": "MS",
+   "tier": "late",
+   "subject": "physics",
+   "kind": "bonus",
+   "score": 2
+  }
+ ]
+}

@@ -1,0 +1,2971 @@
+{
+ "about": "The answer matcher on alternates DOE printed (scripts/gen/trials/match.ts), each put to it as a player's answer with its own list hidden. A DO NOT ACCEPT entry that it accepts is the failure that matters. An ACCEPT entry that it refuses costs a second look; DOE accepts some of these out of leniency, which the matcher is told to refuse.",
+ "model": "claude-sonnet-5-5",
+ "prompt": "be9d2aee",
+ "run": "2026-11-21",
+ "acceptEntries": {
+  "entries": 150,
+  "accepted": 113,
+  "rejected": 20,
+  "unsure": 17,
+  "unread": 0
+ },
+ "doNotAcceptEntries": {
+  "entries": 150,
+  "accepted": 5,
+  "rejected": 132,
+  "unsure": 13,
+  "unread": 0
+ },
+ "calls": {
+  "calls": 300,
+  "outcomes": {
+   "ok": 300,
+   "refused": 0,
+   "cut-off": 0,
+   "error": 0
+  },
+  "batch": false,
+  "meanTokens": {
+   "input": 123,
+   "cacheRead": 1128,
+   "cacheWrite": 23,
+   "output": 94,
+   "thinking": 0
+  },
+  "searches": 0,
+  "cost": 0.407,
+  "costPerCall": 0.001357
+ },
+ "doNotAcceptEntriesAccepted": [
+  {
+   "id": "reject-doe-hs-15-r14-b09",
+   "from": "reject",
+   "stem": "What are the SI base units of the Hubble constant?",
+   "answerLine": "INVERSE SECONDS",
+   "said": "SEC⁻¹",
+   "verdict": "accept",
+   "why": "SEC⁻¹ is the standard notation for inverse seconds (s⁻¹), with 'sec' an ordinary abbreviation of seconds, so it names the same unit as the answer line."
+  },
+  {
+   "id": "reject-doe-ms-11-r05-b08",
+   "from": "reject",
+   "stem": "The power plant at Hoover Dam harvests what type of energy?",
+   "answerLine": "HYDROPOWER",
+   "said": "HYDROELECTRIC",
+   "verdict": "accept",
+   "why": "The answer line is HYDROPOWER, accepting HYDRO. 'Hydroelectric' names the same type of energy, namely hydroelectric power from falling water, and it is the standard term for the Hoover Dam plant. It is not listed as accepted, but it is a close synonym that a judge would most likely take. Some risk remains since it is not explicitly listed."
+  },
+  {
+   "id": "reject-doe-hs-17-r15-t07",
+   "from": "reject",
+   "stem": "Although it can theoretically affect transcription or splicing, what is the term for a single-base-pair mutation that does not end up changing the encoded amino acid?",
+   "answerLine": "SYNONYMOUS",
+   "said": "silent",
+   "verdict": "accept",
+   "why": "A silent mutation is the standard synonym for a synonymous mutation; both describe a base change that does not alter the encoded amino acid. The answer line lists no DO NOT ACCEPT items, so 'silent' names the same thing."
+  },
+  {
+   "id": "reject-doe-ms-13-r01-t02",
+   "from": "reject",
+   "stem": "Satellites that stay above the same spot on Earth while in orbit are in what type of orbit?",
+   "answerLine": "GEOSTATIONARY",
+   "said": "GEOSYNCHRONOUS",
+   "verdict": "accept",
+   "why": "The answer line accepts 'geosynchronous Earth orbit'; the player's 'geosynchronous' is the same term with only the word 'Earth orbit' omitted, which the question supplies by asking for the type of orbit. A judge would accept it."
+  },
+  {
+   "id": "reject-doe-hs-17-r05-t01",
+   "from": "reject",
+   "stem": "What is the partial derivative with respect to y of x³y⁴?",
+   "answerLine": "4x³y³",
+   "said": "x³4y³",
+   "verdict": "accept",
+   "why": "The player's 'x³4y³' is x³ times 4y³, which equals 4x³y³. It is the same expression with the factors in a different order, and a judge would read it as equivalent, though the form is unconventional."
+  }
+ ],
+ "acceptEntriesRefused": [
+  {
+   "id": "accept-doe-ms-14-r09-b23",
+   "from": "accept",
+   "stem": "During what phase of meiosis [my-OH-sis] does crossing over occur?",
+   "answerLine": "PROPHASE I",
+   "said": "PACHYTENE",
+   "verdict": "reject",
+   "why": "Pachytene is a substage of prophase I during which crossing over occurs, but the answer line requires PROPHASE I and the player named a substage, which is a different, more specific term. It is not listed as an acceptable alternative, so a judge would likely not take it as the same answer."
+  },
+  {
+   "id": "accept-doe-hs-15-r12-t17",
+   "from": "accept",
+   "stem": "What is the term for the temperature at which the relative humidity of air becomes 100%?",
+   "answerLine": "DEW POINT",
+   "said": "FROST POINT",
+   "verdict": "reject",
+   "why": "The answer line is dew point. Frost point is a related but different term: the temperature at which air becomes saturated with respect to ice, and it applies below freezing. It is a neighbouring term with a slightly different meaning, so it does not match."
+  },
+  {
+   "id": "accept-doe-ms-16-r08-b17",
+   "from": "accept",
+   "stem": "What are the radius and the coordinates of the center of the circle with equation x² + y² + 10x – 4y – 11 = 0?",
+   "answerLine": "RADIUS 2√10, CENTER (–5, 2)",
+   "said": "x = –5 AND y = 2 FOR CENTER",
+   "verdict": "reject",
+   "why": "The player gave only the center, equivalent to (-5, 2), but omitted the radius 2√10 that the question and answer line both require. The answer is incomplete."
+  },
+  {
+   "id": "accept-doe-hs-13-r07-b19",
+   "from": "accept",
+   "stem": "An erratic, such as Big Rock in Alberta, Canada, is a large boulder whose geology differs significantly from that of its current location. What carried this erratic to its current location?",
+   "answerLine": "GLACIER",
+   "said": "ICE",
+   "verdict": "reject",
+   "why": "The answer line requires GLACIER, a specific technical term for the transporting agent. 'Ice' is less specific and is only a neighbouring term (sea ice, icebergs, ice sheets also exist), so a judge would likely not accept it without prompting."
+  },
+  {
+   "id": "accept-doe-ms-11-r10-b14",
+   "from": "accept",
+   "stem": "Phagocytosis [fag-oh-sye-TOW-sis] and pinocytosis [PEE-noh-sigh-TOW-sis] are both examples of what type of general cellular process?",
+   "answerLine": "ENDOCYTOSIS",
+   "said": "ACTIVE TRANSPORT",
+   "verdict": "reject",
+   "why": "The answer line requires endocytosis. Active transport is a broader category of energy-requiring movement across membranes, and it is not the same term as endocytosis. It is less specific than the answer line requires."
+  },
+  {
+   "id": "accept-doe-hs-15-r06-t06",
+   "from": "accept",
+   "stem": "What structure in plants causes them to be turgid, rather than to lyse when immersed in a hypotonic solution?",
+   "answerLine": "CELL WALL",
+   "said": "SECONDARY CELL WALL",
+   "verdict": "reject",
+   "why": "The answer line is CELL WALL in general. The player said SECONDARY CELL WALL, which is a specific layer of the wall and is more specific than required; the primary wall also provides this function, so it names a different, narrower structure and a judge would likely not take it."
+  },
+  {
+   "id": "accept-doe-hs-10-r09-t06",
+   "from": "accept",
+   "stem": "Trans fats are produced from unsaturated fats in what chemical process?",
+   "answerLine": "HYDROGENATION",
+   "said": "ISOMERIZATION",
+   "verdict": "reject",
+   "why": "The answer line is hydrogenation (partial hydrogenation of unsaturated fats). Isomerization describes the cis-to-trans change that happens, but it is a different process from the one named, so a judge would not accept it."
+  },
+  {
+   "id": "accept-doe-hs-10-r14-t01",
+   "from": "accept",
+   "stem": "What class of barred spiral galaxies has the most tightly wound arms?",
+   "answerLine": "SBa",
+   "said": "a",
+   "verdict": "reject",
+   "why": "The answer line requires the full class designation SBa. The player said only 'a', which is a fragment of the designation and does not name the barred class. Without the 'SB' it is not clearly the same answer, so a judge would not accept it."
+  },
+  {
+   "id": "accept-doe-ms-11-r10-t14",
+   "from": "accept",
+   "stem": "During what cellular process do synapsis [sin-AP-sis] and crossing over occur?",
+   "answerLine": "MEIOSIS",
+   "said": "PROPHASE I",
+   "verdict": "reject",
+   "why": "The answer line asks for the process, MEIOSIS. The player gave prophase I, which is a specific stage within meiosis where synapsis and crossing over occur. It is a different, more specific thing than the process named, and the answer line lists no accepted alternatives, so a judge would not take it."
+  },
+  {
+   "id": "accept-doe-ms-08-r12-t05",
+   "from": "accept",
+   "stem": "Mid-ocean ridge valleys are lined with what kind of faults?",
+   "answerLine": "NORMAL",
+   "said": "DIP-SLIP",
+   "verdict": "reject",
+   "why": "The answer line requires NORMAL faults. Dip-slip is a broader class that includes both normal and reverse faults, so it is less specific than required and is not the same answer."
+  },
+  {
+   "id": "accept-doe-hs-12-r05-b08",
+   "from": "accept",
+   "stem": "What are the radius and the coordinates of the center, respectively, of the circle with equation x² + 12x + y² – 4y – 81 = 0?",
+   "answerLine": "RADIUS 11; CENTER (–6, 2)",
+   "said": "x = –6 AND y = 2 for center",
+   "verdict": "reject",
+   "why": "The player gives only the center (-6, 2), written as x = -6 and y = 2, and never gives the radius of 11. The question asks for both radius and center, so the answer is incomplete."
+  },
+  {
+   "id": "accept-doe-ms-14-r10-b03",
+   "from": "accept",
+   "stem": "Algol [AL-gawl] variables are binary star systems where the brightness of the system dips twice each orbital cycle. What phenomenon causes these dips?",
+   "answerLine": "ECLIPSES",
+   "said": "SYZYGY [sih-zih-GEE]",
+   "verdict": "reject",
+   "why": "The answer line is eclipses, where one star passes in front of the other. Syzygy means the alignment of three celestial bodies, as in the Sun, Earth and Moon, which is a different term and does not name the eclipse phenomenon for a binary system."
+  },
+  {
+   "id": "accept-doe-hs-14-r06-t07",
+   "from": "accept",
+   "stem": "The Orion Nebula is an example of what type of nebula?",
+   "answerLine": "EMISSION",
+   "said": "REFLECTION",
+   "verdict": "reject",
+   "why": "The answer line is emission nebula, while the player said reflection nebula. These are different types of nebula, so the player's answer does not match."
+  },
+  {
+   "id": "accept-doe-hs-10-r02-b20",
+   "from": "accept",
+   "stem": "The terminal side of an angle in standard position passes through the point (8, –15). Find the sine and tangent, respectively, of the angle.",
+   "answerLine": "SINE = –15/17, TANGENT = –15/8",
+   "said": "–1 7/8",
+   "verdict": "reject",
+   "why": "The answer line requires two values: sine = -15/17 and tangent = -15/8. The player gave only -1 7/8, which equals -15/8 (the tangent) in mixed-number form but omits the sine. It is incomplete, and a mixed number is not the simplest form the convention requires. Reject."
+  },
+  {
+   "id": "accept-doe-hs-10-r01-b02",
+   "from": "accept",
+   "stem": "Transesterification is a reaction used to generate biodiesel from what class of biomolecule?",
+   "answerLine": "TRIGLYCERIDES",
+   "said": "LIPIDS",
+   "verdict": "reject",
+   "why": "The answer line requires triglycerides, a specific type of lipid. 'Lipids' is the broader class and is less specific than required, so it is not the same answer."
+  },
+  {
+   "id": "accept-doe-hs-10-r03-b10",
+   "from": "accept",
+   "stem": "If a helicopter loses engine power at a sufficient height and speed, it is able to autorotate to the ground, extracting energy from the air and, sometimes, landing safely. In this case, gravitational potential energy is converted into what type of energy?",
+   "answerLine": "MECHANICAL",
+   "said": "KINETIC",
+   "verdict": "reject",
+   "why": "The answer line requires MECHANICAL energy, the general category; the player said kinetic, which is only one component of mechanical energy and is a different, less general answer. It is not listed as accepted, so a judge would not take it."
+  },
+  {
+   "id": "accept-doe-ms-09-r06-b18",
+   "from": "accept",
+   "stem": "What is the term for the total energy used to manufacture a finished product, including the energy to extract raw materials from nature, plus the energy used in primary and secondary manufacturing activities?",
+   "answerLine": "EMBODIED ENERGY",
+   "said": "EMBEDDED ENERGY",
+   "verdict": "reject",
+   "why": "The answer line requires the technical term \"embodied energy\". \"Embedded energy\" is a near-synonym that is sometimes used informally, but it is not the standard term, and the answer line lists no alternates. A judge would likely not accept it, though some might be lenient."
+  },
+  {
+   "id": "accept-doe-hs-13-r03-t04",
+   "from": "accept",
+   "stem": "What term is used to describe a hydrocarbon that only possesses carbon-carbon single bonds?",
+   "answerLine": "SATURATED",
+   "said": "ALKANE",
+   "verdict": "reject",
+   "why": "The answer line requires the term SATURATED, an adjective describing the hydrocarbon. The player said ALKANE, which is the name of the class of saturated hydrocarbons, a different term and not the technical term asked for. It is a neighbouring term, not the same answer."
+  },
+  {
+   "id": "accept-doe-hs-11-r03-t15",
+   "from": "accept",
+   "stem": "Researchers at Lawrence Berkeley National Lab are currently using statistical methods to determine the destiny of every cell in the Drosophila [droh-SAWF-il-ah] zygote [ZYE-goat] as it becomes an adult, as has been previously done for C. elegans. What is the term for this methodology?",
+   "answerLine": "FATE MAPPING",
+   "said": "CELL LINEAGE TRACING",
+   "verdict": "reject",
+   "why": "The answer line requires FATE MAPPING. Cell lineage tracing is a related but distinct technique: it follows the descendants of a labeled cell, while fate mapping charts what each region or cell of an embryo will become. The player's term is a neighbouring term, not the same one, and the answer line does not list it as acceptable."
+  },
+  {
+   "id": "accept-doe-ms-14-r05-b08",
+   "from": "accept",
+   "stem": "Rock strata exposed by the Colorado River at the Grand Canyon are separated by intervals where no net sedimentary deposition occurred. What is the general term for these unrecorded intervals of time in the rock record?",
+   "answerLine": "UNCONFORMITY",
+   "said": "DISCONFORMITY",
+   "verdict": "reject",
+   "why": "The answer line requires the general term UNCONFORMITY. Disconformity is only one specific type of unconformity, where the strata above and below are parallel, so it is less specific in kind and not the general term the question asks for. It is a neighboring term, not the same answer."
+  }
+ ],
+ "results": [
+  {
+   "id": "accept-doe-ms-11-r13-b10",
+   "from": "accept",
+   "stem": "What is the sum of the mean, median, and mode of the following list of eight numbers: 1, 2, 3, 3, 6, 9, 11, 13?",
+   "answerLine": "13.5",
+   "said": "27/2",
+   "verdict": "accept",
+   "why": "Compute: mean = 48/8 = 6, median = (3+6)/2 = 4.5, mode = 3, sum = 13.5. The player's 27/2 equals 13.5 exactly, in lowest terms. The question does not ask for a decimal or any particular rounding, so an equivalent exact fraction is accepted."
+  },
+  {
+   "id": "accept-doe-ms-15-r02-t12",
+   "from": "accept",
+   "stem": "Oak Ridge National Lab scientists are studying how certain bacteria defend themselves from foreign DNA by using enzymes that cut DNA strands when they recognize a certain sequence. What is the term for these enzymes?",
+   "answerLine": "RESTRICTION ENZYME",
+   "said": "RESTRICTION ENDONUCLEASE",
+   "verdict": "accept",
+   "why": "Restriction endonuclease is the full standard name for restriction enzyme; they are synonymous terms for the same class of enzymes that cut DNA at specific recognition sequences."
+  },
+  {
+   "id": "accept-doe-hs-15-r16-b16",
+   "from": "accept",
+   "stem": "Three nine-volt batteries are connected in series to a 10-micro-farad capacitor. In milli-coulombs, what is the magnitude of the equilibrium charge on the capacitor?",
+   "answerLine": "0.27",
+   "said": "27/100",
+   "verdict": "accept",
+   "why": "Three 9 V batteries in series give 27 V, and Q = CV = 10 µF × 27 V = 270 µC = 0.27 mC. The player's 27/100 equals 0.27 exactly, but the answer line gives a decimal and the question asks for no particular form. A fraction is an exact equivalent value, and 27/100 is in lowest terms, so a judge would likely accept it."
+  },
+  {
+   "id": "accept-doe-ms-11-r11-b01",
+   "from": "accept",
+   "stem": "What is the name of the device that uses hydrogen as a fuel and creates an electric current with the main waste product being water?",
+   "answerLine": "HYDROGEN FUEL CELL",
+   "said": "FUEL CELL",
+   "verdict": "accept",
+   "why": "The question already supplies hydrogen as the fuel, so 'fuel cell' only leaves out a word the question gives. It names the same device as 'hydrogen fuel cell'."
+  },
+  {
+   "id": "accept-doe-hs-16-r07-b11",
+   "from": "accept",
+   "stem": "Nitrification by soil bacteria results in the oxidation of ammonia. What ion is the final product of this process?",
+   "answerLine": "NITRATE",
+   "said": "NO₃-",
+   "verdict": "accept",
+   "why": "NO3- is the chemical formula of the nitrate ion, which is the same thing as the answer line NITRATE, and no other ion shares this formula."
+  },
+  {
+   "id": "accept-doe-hs-15-r09-b20",
+   "from": "accept",
+   "stem": "The energy that it takes to eject an electron from the n = 3 state is how many times that to excite an electron from the ground state to the n = 3 state?",
+   "answerLine": "1/8",
+   "said": "0.125",
+   "verdict": "accept",
+   "why": "The answer line is 1/8, which equals 0.125 exactly. But the convention says numerical answers are exact and in simplest form, fractions in lowest terms; a decimal is an exact equivalent value here, and the question does not ask for a specific form or rounding. Hence 0.125 is the same value in another exact form, so it would likely be accepted."
+  },
+  {
+   "id": "accept-doe-hs-09-r11-t08",
+   "from": "accept",
+   "stem": "What pentameric antibody is generally the first to be secreted during primary immune response and is responsible for promoting agglutination reactions?",
+   "answerLine": "IgM",
+   "said": "IMMUNOGLOBULIN M",
+   "verdict": "accept",
+   "why": "Immunoglobulin M is the full name of IgM, so the player's answer names the same antibody as the answer line."
+  },
+  {
+   "id": "accept-doe-hs-13-r07-b21",
+   "from": "accept",
+   "stem": "An object is undergoing one-dimensional motion at time t = 0. If its velocity equals 3 times the exponential of –2t, then, as times increases, what value does the total displacement of the object approach?",
+   "answerLine": "3/2",
+   "said": "1.5",
+   "verdict": "accept",
+   "why": "The player's 1.5 is the same value as 3/2 in decimal form. The question does not ask for a particular format or rounding, but the convention says fractions are the simplest exact form. 1.5 is exactly equal to 3/2, so it is an exact value in another form, not a rounded approximation. A judge would most likely accept it."
+  },
+  {
+   "id": "accept-doe-hs-12-r01-t22",
+   "from": "accept",
+   "stem": "What is the ratio of the intensity of a 30-decibel sound to that of a 20-decibel sound?",
+   "answerLine": "10",
+   "said": "10 TO 1",
+   "verdict": "accept",
+   "why": "The player's \"10 to 1\" expresses the same ratio as 10, since a ratio of 10:1 is simply 10; it only adds the harmless ratio phrasing the question asks for."
+  },
+  {
+   "id": "accept-doe-hs-12-r10-b05",
+   "from": "accept",
+   "stem": "Express the fraction with numerator 1 – 4i and denominator 3 + i in standard a + bi form.",
+   "answerLine": "–1/10 – (13/10)i",
+   "said": "–0.1 – 1.3i",
+   "verdict": "unsure",
+   "why": "The player's answer -0.1 - 1.3i equals -1/10 - (13/10)i in value, but the competition requires exact answers in simplest form, i.e. fractions, and the question does not ask for decimals. Decimal forms are equal here exactly, but the convention and the answer line's fractional form leave it doubtful whether a judge would accept the decimal form."
+  },
+  {
+   "id": "accept-doe-ms-09-r16-b04",
+   "from": "accept",
+   "stem": "What is the term for the small, atmospheric particles onto which water vapor condenses to form clouds?",
+   "answerLine": "CONDENSATION NUCLEI",
+   "said": "CLOUD CONDENSATION NUCLEI",
+   "verdict": "accept",
+   "why": "Cloud condensation nuclei (CCN) is the standard full term for condensation nuclei; the added word 'cloud' is harmless and matches the question's context, so it names the same thing."
+  },
+  {
+   "id": "accept-doe-hs-16-r03-b11",
+   "from": "accept",
+   "stem": "Researchers at SLAC National Lab are studying how gluons scatter off one another. What is the term for a particle composed entirely of gluons?",
+   "answerLine": "GLUEBALL",
+   "said": "GLUONIUM",
+   "verdict": "unsure",
+   "why": "Gluonium is a recognized synonym for glueball in particle physics, a bound state made purely of gluons. However, the answer line lists no alternates, and a judge might not accept it without checking, so there is some doubt."
+  },
+  {
+   "id": "accept-doe-ms-11-r12-t14",
+   "from": "accept",
+   "stem": "In mechanics, what name is given to the useful quantity that is equal to the sum of the kinetic energy and the potential energy of an object?",
+   "answerLine": "TOTAL ENERGY",
+   "said": "MECHANICAL ENERGY",
+   "verdict": "unsure",
+   "why": "The answer line is TOTAL ENERGY with no listed alternatives. Mechanical energy is the standard name for the sum of kinetic and potential energy in mechanics, so it names the same quantity. However, a judge strictly holding the answer line might not accept a different term, so there is some doubt."
+  },
+  {
+   "id": "accept-doe-ms-08-r16-t16",
+   "from": "accept",
+   "stem": "What is the term that refers to waves at high tide during a spring tide?",
+   "answerLine": "TIDAL SURGES",
+   "said": "TIDAL SURGE",
+   "verdict": "accept",
+   "why": "The player's answer 'tidal surge' is just the singular form of the answer line 'TIDAL SURGES'; it names the same term and differs only by number, which a judge would accept."
+  },
+  {
+   "id": "accept-doe-ms-14-r09-b23",
+   "from": "accept",
+   "stem": "During what phase of meiosis [my-OH-sis] does crossing over occur?",
+   "answerLine": "PROPHASE I",
+   "said": "PACHYTENE",
+   "verdict": "reject",
+   "why": "Pachytene is a substage of prophase I during which crossing over occurs, but the answer line requires PROPHASE I and the player named a substage, which is a different, more specific term. It is not listed as an acceptable alternative, so a judge would likely not take it as the same answer."
+  },
+  {
+   "id": "accept-doe-ms-12-r12-b01",
+   "from": "accept",
+   "stem": "What is the y-coordinate of the y-intercept of the line with slope –4/5 that contains the point (–3, 8)?",
+   "answerLine": "28/5",
+   "said": "5 3/5",
+   "verdict": "accept",
+   "why": "Line: y - 8 = -4/5(x + 3), so y-intercept is 8 - 12/5 = 28/5. The player's 5 3/5 equals 28/5 as a mixed number, the same value, but the convention requires fractions in simplest form, and mixed numbers are typically accepted in NSB as equivalent exact forms. 5 3/5 = 28/5 is exact and in lowest terms, so it is the same value."
+  },
+  {
+   "id": "accept-doe-ms-14-r03-t12",
+   "from": "accept",
+   "stem": "Edward Jenner found that inoculating patients with cowpox virus would cause a mild illness but would grant immunity to a much more deadly disease. What was this disease, which is now eradicated?",
+   "answerLine": "SMALLPOX",
+   "said": "VARIOLA",
+   "verdict": "accept",
+   "why": "Variola is the Latin/medical name for smallpox, and the virus is called variola virus; smallpox disease is also called variola. It names the same disease, though the answer line lists no alternates, so a judge might hesitate over the technical term."
+  },
+  {
+   "id": "accept-doe-ms-11-r17-t11",
+   "from": "accept",
+   "stem": "During what phase of the cell cycle do cells synthesize new DNA?",
+   "answerLine": "S PHASE",
+   "said": "S",
+   "verdict": "accept",
+   "why": "The player's answer 'S' is the standard shorthand for S phase, and the question already supplies the word 'phase', so it names the same thing as the answer line."
+  },
+  {
+   "id": "accept-doe-hs-11-r07-t19",
+   "from": "accept",
+   "stem": "What is the slope of the line with equation 3x – 8y = –24?",
+   "answerLine": "3/8",
+   "said": "0.375",
+   "verdict": "unsure",
+   "why": "The player's 0.375 equals 3/8 in value, but the competition requires numerical answers in simplest exact form, and the answer line gives the fraction 3/8; the question does not ask for a decimal. A decimal is a different form than the fraction, though terminating decimals are exact. Judges typically might accept, but the conventions here favor the fraction form, so there is some doubt."
+  },
+  {
+   "id": "accept-doe-ms-13-r17-t03",
+   "from": "accept",
+   "stem": "The ureters connect the kidneys to what other organ?",
+   "answerLine": "BLADDER",
+   "said": "URINARY BLADDER",
+   "verdict": "accept",
+   "why": "The player's 'urinary bladder' is the full anatomical name of the same organ as 'bladder'; the extra word is harmless."
+  },
+  {
+   "id": "accept-doe-ms-15-r01-t13",
+   "from": "accept",
+   "stem": "Scientists at Pacific Northwest National Lab are studying antibiotic resistance in the bacterial genus Mycobacterium. What human lung disease, which can be diagnosed with a PPD skin test, is caused by bacteria in this genus?",
+   "answerLine": "TUBERCULOSIS",
+   "said": "TB",
+   "verdict": "accept",
+   "why": "TB is the standard abbreviation for tuberculosis, so it names the same disease as the answer line."
+  },
+  {
+   "id": "accept-doe-ms-16-r02-b12",
+   "from": "accept",
+   "stem": "Brookhaven National Lab scientists are using low-energy ion-scattering spectroscopy to examine the surfaces of bismuth vanadate [VAN-ah-date] electrodes used for the water-splitting reaction. This technique involves bombarding the analyte with atoms that consist of 2 protons, 2 neutrons, and 1 electron. What atomic species does this represent?",
+   "answerLine": "HELIUM PLUS",
+   "said": "SINGLY IONIZED HELIUM",
+   "verdict": "accept",
+   "why": "The answer line is HELIUM PLUS, i.e. He+, a helium atom with 2 protons and 1 electron. 'Singly ionized helium' names the same species (He+, a helium ion with a +1 charge). It is not the bare 'helium' that the answer line refuses, because it specifies the ionization state."
+  },
+  {
+   "id": "accept-doe-hs-10-r11-t03",
+   "from": "accept",
+   "stem": "If a solar power farm doesn't operate for 28% of the time in a month, what is its month-averaged capacity factor?",
+   "answerLine": "72%",
+   "said": "0.72",
+   "verdict": "accept",
+   "why": "The player's 0.72 is the same quantity as 72%, just written as a decimal instead of a percent. The value is exact and the question does not require a particular format, so a judge would accept it."
+  },
+  {
+   "id": "accept-doe-ms-11-r08-b09",
+   "from": "accept",
+   "stem": "Lawrence Livermore Lab researchers have developed 3D-printed graphene aerogel electrodes for supercapacitors. What do supercapacitors store?",
+   "answerLine": "ELECTRICITY",
+   "said": "ELECTRICAL ENERGY",
+   "verdict": "accept",
+   "why": "The answer line is ELECTRICITY. 'Electrical energy' is what a supercapacitor stores, so it names essentially the same thing in other words. A judge would very likely accept it, though the wording is not identical."
+  },
+  {
+   "id": "accept-doe-ms-14-r12-b19",
+   "from": "accept",
+   "stem": "Vince measures a cube’s volume in liters, an SI derived unit. If he wants to express the volume in SI base units, what unit should he use?",
+   "answerLine": "METERS CUBED",
+   "said": "CUBIC METERS",
+   "verdict": "accept",
+   "why": "Cubic meters and meters cubed are the same unit (m^3), just worded differently, so the player's answer matches the answer line."
+  },
+  {
+   "id": "accept-doe-hs-13-r09-b15",
+   "from": "accept",
+   "stem": "Researchers at Oak Ridge National Lab have been examining how glaucoma drugs interact with a human enzyme that converts carbon dioxide and water to bicarbonate. What is the common name of this enzyme?",
+   "answerLine": "CARBONIC ANHYDRASE",
+   "said": "HUMAN CARBONIC ANHYDRASE",
+   "verdict": "accept",
+   "why": "The player's answer adds 'human', which the question already supplies (human enzyme), so it is a harmless extra word and names the same enzyme as carbonic anhydrase."
+  },
+  {
+   "id": "accept-doe-hs-14-r03-t19",
+   "from": "accept",
+   "stem": "A geometric sequence has second term –5 and third term 3. What is its first term?",
+   "answerLine": "25/3",
+   "said": "8 1/3",
+   "verdict": "unsure",
+   "why": "The common ratio is 3/(-5) = -3/5, so the first term is -5 / (-3/5) = 25/3, which is 8 1/3 as a mixed number. The value is the same, but the convention says fractions must be in simplest form and the answer line gives the improper fraction 25/3. Mixed numbers are often accepted in Science Bowl, yet the stated convention only mentions lowest terms and no mixed number is listed as acceptable, so a judge could go either way."
+  },
+  {
+   "id": "accept-doe-hs-15-r11-t06",
+   "from": "accept",
+   "stem": "The uppermost, white clouds on Neptune are generally composed of ices of what molecule?",
+   "answerLine": "METHANE",
+   "said": "CH₄₎",
+   "verdict": "accept",
+   "why": "The player's answer 'CH₄₎' is the chemical formula of methane, CH4, with a stray subscript bracket typo. Methane is the only compound with that formula, so the answer names the same molecule as the answer line."
+  },
+  {
+   "id": "accept-doe-hs-12-r02-t22",
+   "from": "accept",
+   "stem": "In order for tropomyosin [troh-poh-MY-oh-sin] to be removed from the myosin-binding sites on actin, troponin [TROH-poh-nin] must bind to what second messenger?",
+   "answerLine": "CALCIUM",
+   "said": "CALCIUM TWO PLUS",
+   "verdict": "accept",
+   "why": "\"Calcium two plus\" is Ca2+, the calcium ion, which is the same thing as calcium in this context (the second messenger is calcium ions). It names the same answer in another standard form."
+  },
+  {
+   "id": "accept-doe-ms-11-r15-t12",
+   "from": "accept",
+   "stem": "In electrochemistry, what electrode potential is defined as 0 volts?",
+   "answerLine": "HYDROGEN ELECTRODE",
+   "said": "STANDARD HYDROGEN ELECTRODE",
+   "verdict": "accept",
+   "why": "The player's 'standard hydrogen electrode' is the same thing as 'hydrogen electrode' in this context; it only adds the word 'standard', which is the full name of the reference electrode defined as 0 V and is not a different answer."
+  },
+  {
+   "id": "accept-doe-hs-15-r12-t17",
+   "from": "accept",
+   "stem": "What is the term for the temperature at which the relative humidity of air becomes 100%?",
+   "answerLine": "DEW POINT",
+   "said": "FROST POINT",
+   "verdict": "reject",
+   "why": "The answer line is dew point. Frost point is a related but different term: the temperature at which air becomes saturated with respect to ice, and it applies below freezing. It is a neighbouring term with a slightly different meaning, so it does not match."
+  },
+  {
+   "id": "accept-doe-hs-15-r15-b04",
+   "from": "accept",
+   "stem": "A musical instrument is made from a 2-meter tube that is open on one end and closed at the other. In meters, what is the wavelength of the first overtone of this instrument?",
+   "answerLine": "8/3",
+   "said": "2 2/3",
+   "verdict": "unsure",
+   "why": "The player's answer 2 2/3 is a mixed number equal to 8/3, so the value is the same. The convention requires fractions in lowest terms, and 8/3 is the answer line's form, but a mixed number is an exact equivalent of it. Still, a judge might consider the mixed number a different form from the improper fraction, so I am not certain it would be accepted."
+  },
+  {
+   "id": "accept-doe-ms-09-r03-b07",
+   "from": "accept",
+   "stem": "What method is currently used to produce most of the world’s renewable energy?",
+   "answerLine": "HYDROPOWER",
+   "said": "HYDROELECTRIC",
+   "verdict": "accept",
+   "why": "The player's 'hydroelectric' names the same method as 'hydropower'; hydroelectric power is the standard equivalent term, so a judge would very likely accept it."
+  },
+  {
+   "id": "accept-doe-hs-10-r05-b19",
+   "from": "accept",
+   "stem": "What quantum number determines if an orbital is s, p, d, or f?",
+   "answerLine": "AZIMUTHAL",
+   "said": "ANGULAR MOMENTUM",
+   "verdict": "accept",
+   "why": "The azimuthal quantum number (l) is also called the angular momentum quantum number; these are two standard names for the same quantum number, so the player's answer names the same thing as the answer line."
+  },
+  {
+   "id": "accept-doe-ms-12-r09-t12",
+   "from": "accept",
+   "stem": "Scientists at Oak Ridge National Lab are developing the next generation of lithium ion batteries. Identify all of the following three statements that are TRUE of these batteries: 1) They are rechargeable; 2) They use intercalation reactions; 3) The lithium ions are the charge carriers.",
+   "answerLine": "ALL",
+   "said": "1, 2, AND 3",
+   "verdict": "accept",
+   "why": "The answer line is ALL, meaning all three statements are true. The player's answer \"1, 2, and 3\" names all three statements, which is the same answer."
+  },
+  {
+   "id": "accept-doe-hs-17-r14-b05",
+   "from": "accept",
+   "stem": "Scientists at Lawrence Berkeley National Lab are studying polycyclic aromatic hydrocarbons, or PAHs. Which PAH consists of 60 carbon atoms fused into a geodesic dome-like structure?",
+   "answerLine": "BUCKMINSTERFULLERENE",
+   "said": "C60 FULLERENE",
+   "verdict": "accept",
+   "why": "C60 fullerene is the same molecule as buckminsterfullerene (the 60-carbon fullerene, also called buckyball); the formula and name together identify it uniquely, so it names the same thing in another standard way."
+  },
+  {
+   "id": "accept-doe-ms-10-r14-t22",
+   "from": "accept",
+   "stem": "What is the term for the amount of energy required to homolytically break a bond between two atoms?",
+   "answerLine": "BOND DISSOCIATION ENERGY",
+   "said": "BOND DISSOCIATION",
+   "verdict": "accept",
+   "why": "The player said 'bond dissociation' and omitted 'energy'. The question already asks for the amount of energy, so the omitted word is supplied by the question and the answer names the same term. A judge would likely accept it as a harmless omission."
+  },
+  {
+   "id": "accept-doe-hs-14-r07-b12",
+   "from": "accept",
+   "stem": "What is the monomer used to synthesize teflon?",
+   "answerLine": "TETRA-FLUORO-ETHYLENE",
+   "said": "C2F4",
+   "verdict": "accept",
+   "why": "C2F4 is the molecular formula of tetrafluoroethylene, the Teflon monomer. The convention says a formula stands for a compound only when no other compound shares it. Here C2F4 has no common isomer, since 1,1-difluoro... isomers are not realistic for C2F4 (only tetrafluoroethylene, with the rare, unstable perfluorocarbene-type species ignored). The question asks for the monomer rather than a systematic name, so the formula identifies it uniquely and should be accepted."
+  },
+  {
+   "id": "accept-doe-hs-11-r08-b07",
+   "from": "accept",
+   "stem": "In 1943, a volcano suddenly appeared in a corn field in the village of Paricutin and began erupting lava bombs and ash. What type of volcano was this?",
+   "answerLine": "CINDER CONE",
+   "said": "SCORIA CONE",
+   "verdict": "accept",
+   "why": "Scoria cone is a recognized synonym for cinder cone (same volcano type, built from scoria/cinders), though the answer line lists no alternates. It names the same thing by another standard term, so a judge would likely accept it."
+  },
+  {
+   "id": "accept-doe-hs-11-r02-b16",
+   "from": "accept",
+   "stem": "Rank the following four atoms in order of increasing atomic radius: 1) Lithium; 2) Fluorine [FLOOR-een]; 3) Sodium; 4) Chlorine.",
+   "answerLine": "2, 4, 1, 3",
+   "said": "FLUORINE, CHLORINE, LITHIUM, SODIUM",
+   "verdict": "accept",
+   "why": "The player's list names fluorine, chlorine, lithium, sodium, which corresponds to 2, 4, 1, 3. This matches the answer line in the order asked."
+  },
+  {
+   "id": "accept-doe-ms-16-r03-b17",
+   "from": "accept",
+   "stem": "The chordae tendineae [KOR-day tendin-EE-ah], which are colloquially known as the heartstrings, attach what set of structures within the heart to the heart wall?",
+   "answerLine": "VALVES",
+   "said": "ATRIOVENTRICULAR VALVES",
+   "verdict": "accept",
+   "why": "The chordae tendineae attach the atrioventricular (AV) valves (tricuspid and mitral) to the papillary muscles. The player's answer is a specific subset of 'valves', and the answer line only lists VALVES with no ACCEPT list. A judge would likely consider it correct since it is factually the precise answer, but it is more specific rather than less specific, so it still names the same structures. It is not a vaguer answer, so it should be accepted."
+  },
+  {
+   "id": "accept-doe-hs-17-r02-t02",
+   "from": "accept",
+   "stem": "A solid, spherical object is floating in equilibrium in the water with one-third of the object submerged. What is the ratio of the magnitude of the buoyant force on the object to the magnitude of the force of gravity on the object?",
+   "answerLine": "1",
+   "said": "1 TO 1",
+   "verdict": "accept",
+   "why": "The player's answer \"1 to 1\" is a ratio equal to 1, which is the same value as the answer line's 1 in another exact form, and the question asks for a ratio."
+  },
+  {
+   "id": "accept-doe-ms-16-r08-b17",
+   "from": "accept",
+   "stem": "What are the radius and the coordinates of the center of the circle with equation x² + y² + 10x – 4y – 11 = 0?",
+   "answerLine": "RADIUS 2√10, CENTER (–5, 2)",
+   "said": "x = –5 AND y = 2 FOR CENTER",
+   "verdict": "reject",
+   "why": "The player gave only the center, equivalent to (-5, 2), but omitted the radius 2√10 that the question and answer line both require. The answer is incomplete."
+  },
+  {
+   "id": "accept-doe-ms-14-r17-t22",
+   "from": "accept",
+   "stem": "The same region of DNA results in different mRNA transcripts, depending on the organ in which the gene is expressed. This is an example of what form of RNA processing?",
+   "answerLine": "SPLICING",
+   "said": "ALTERNATIVE SPLICING",
+   "verdict": "accept",
+   "why": "The player's 'alternative splicing' is a specific type of splicing and is exactly what the question describes (different mRNAs from the same gene). It names the same process as 'splicing' with a harmless added modifier, so a judge would accept it."
+  },
+  {
+   "id": "accept-doe-ms-09-r12-b08",
+   "from": "accept",
+   "stem": "What is the y-intercept of the line that contains the points (1, 4) and (5, 10)?",
+   "answerLine": "5/2",
+   "said": "2.5",
+   "verdict": "unsure",
+   "why": "The slope is 6/4 = 3/2, so y = 3/2 x + 5/2 and the y-intercept is 5/2. The player's 2.5 has the same value as 5/2, but the convention says numerical answers must be in simplest form as fractions, and a decimal is not the expected form. The question does not ask for a decimal, so the judge would probably want the fraction. This is a close call on form."
+  },
+  {
+   "id": "accept-doe-ms-13-r09-t03",
+   "from": "accept",
+   "stem": "Scientists at Oak Ridge National Lab are studying how plants respond to extreme weather events, like heat waves. In times of high ambient temperature, plants will close stomata [stow-MAH-tah] to conserve what?",
+   "answerLine": "WATER",
+   "said": "H2O",
+   "verdict": "accept",
+   "why": "H2O is the chemical formula for water, and no other common compound shares it, so it names the same thing as the answer line WATER."
+  },
+  {
+   "id": "accept-doe-ms-16-r05-t15",
+   "from": "accept",
+   "stem": "The role of cristae is to increase the surface area of the inner membrane of what eukaryotic organelle?",
+   "answerLine": "MITOCHONDRIA",
+   "said": "MITOCHONDRION",
+   "verdict": "accept",
+   "why": "Mitochondrion is the singular form of mitochondria; it names the same organelle, so a judge would accept it."
+  },
+  {
+   "id": "accept-doe-hs-08-r02-b12",
+   "from": "accept",
+   "stem": "Order the following four sources of energy from least to greatest in terms of the percentage share of total electricity generation in the United States: 1) coal; 2) nuclear; 3) petroleum; 4) hydropower.",
+   "answerLine": "3, 4, 2, 1",
+   "said": "PETROLEUM, HYDROPOWER, NUCLEAR, COAL",
+   "verdict": "accept",
+   "why": "The player's list, petroleum, hydropower, nuclear, coal, corresponds to 3, 4, 2, 1, which is the same order as the answer line."
+  },
+  {
+   "id": "accept-doe-ms-12-r12-b04",
+   "from": "accept",
+   "stem": "Scientists at SLAC [slack] are working on improving the sensitivity of what interferometer [inter-feer-AW-meh-ter] that was responsible for the first detection of gravitational waves?",
+   "answerLine": "LASER INTERFEROMETER GRAVITATIONAL-WAVE OBSERVATORY",
+   "said": "LIGO",
+   "verdict": "accept",
+   "why": "LIGO is the standard acronym for Laser Interferometer Gravitational-Wave Observatory, so the player's answer names the same thing as the answer line."
+  },
+  {
+   "id": "accept-doe-hs-13-r05-b04",
+   "from": "accept",
+   "stem": "Jan heats a kilogram of an unknown solid at a rate of 25 kilojoules per minute. The solid rises in temperature for 2 minutes, melts for a minute and a half, then rises in temperature for 6 minutes until Jan ends the experiment. In kilojoules per kilogram, what is the heat of fusion for this substance?",
+   "answerLine": "37.5",
+   "said": "37½",
+   "verdict": "accept",
+   "why": "The heat of fusion is 25 kJ/min × 1.5 min = 37.5 kJ/kg. The player's answer 37½ is the same exact value written as a mixed number, so it equals 37.5. The question does not require decimal form, and a judge would likely accept it."
+  },
+  {
+   "id": "accept-doe-ms-12-r10-t17",
+   "from": "accept",
+   "stem": "What is the slope-intercept equation of the line through the origin that contains the point (6, –24) ?",
+   "answerLine": "y = –4x",
+   "said": "y = –4x + 0",
+   "verdict": "accept",
+   "why": "The player's equation y = -4x + 0 is mathematically identical to y = -4x; the added +0 is the y-intercept written explicitly in slope-intercept form, which is a harmless difference."
+  },
+  {
+   "id": "accept-doe-hs-10-r05-t09",
+   "from": "accept",
+   "stem": "Identify all of the following four forces that are real in inertial reference frames: 1) Centrifugal; 2) Centripetal; 3) Lorentz; 4) Coriolis.",
+   "answerLine": "2, 3",
+   "said": "CENTRIPETAL, LORENTZ",
+   "verdict": "accept",
+   "why": "The player named centripetal and Lorentz, which correspond to items 2 and 3 in the answer line. This is the same set of forces, just given by name instead of number, and the order matches."
+  },
+  {
+   "id": "accept-doe-hs-12-r08-t22",
+   "from": "accept",
+   "stem": "If the probability of it raining on a given day is 0.21, what is the probability of it NOT raining?",
+   "answerLine": "0.79",
+   "said": "79/100",
+   "verdict": "accept",
+   "why": "79/100 equals 0.79 exactly, and the question does not require decimal form or any particular rounding. The answer line gives 0.79, and the fraction 79/100 is in lowest terms, so it is the same value in another exact form."
+  },
+  {
+   "id": "accept-doe-hs-12-r07-t12",
+   "from": "accept",
+   "stem": "Berkeley lab scientists are studying “gateway” proteins associated with the nuclear pore complex, which are responsible for blocking aberrant strands of what RNA-polymerase [paw-LIM-er-ace] II-synthesized macromolecule?",
+   "answerLine": "MESSENGER RNA",
+   "said": "mRNA",
+   "verdict": "accept",
+   "why": "mRNA is the standard abbreviation for messenger RNA, so it names the same thing as the answer line."
+  },
+  {
+   "id": "accept-doe-hs-11-r13-b11",
+   "from": "accept",
+   "stem": "Rank the following three stars in order of increasing surface temperature: 1) Arcturus; 2) Betelgeuse; 3) The Sun.",
+   "answerLine": "2, 1, 3",
+   "said": "BETELGEUSE, ARCTURUS, THE SUN",
+   "verdict": "accept",
+   "why": "The player listed Betelgeuse, Arcturus, the Sun, which corresponds to 2, 1, 3, the same order as the answer line."
+  },
+  {
+   "id": "accept-doe-hs-14-r07-t19",
+   "from": "accept",
+   "stem": "In the lac operon in E. coli, CAP acts as an activator protein. What second messenger must bind to CAP to activate transcription of the DNA?",
+   "answerLine": "CYCLIC AMP",
+   "said": "cAMP",
+   "verdict": "accept",
+   "why": "cAMP is the standard abbreviation for cyclic AMP (cyclic adenosine monophosphate), so it names the same second messenger as the answer line."
+  },
+  {
+   "id": "accept-doe-ms-13-r07-t04",
+   "from": "accept",
+   "stem": "Scientists at Pacific Northwest National Lab are researching the production of biofuel from marine kelp biomass. What specific biofuel, which today is made from corn and sugar cane, are they seeking to produce?",
+   "answerLine": "ETHANOL",
+   "said": "BIOETHANOL",
+   "verdict": "accept",
+   "why": "Bioethanol is ethanol produced from biomass, which is the same substance as ethanol; the prefix 'bio' is a harmless word since the question already specifies a biofuel. A judge would likely accept it."
+  },
+  {
+   "id": "accept-doe-hs-09-r13-t02",
+   "from": "accept",
+   "stem": "What is the name of the compound in which methane is sequestered into water-ice, forming a crystal structure in which water molecules create a cage for a single methane molecule?",
+   "answerLine": "METHANE CLATHRATE",
+   "said": "METHANE HYDRATE",
+   "verdict": "accept",
+   "why": "Methane hydrate is a standard synonym for methane clathrate (the same compound, also called methane ice or gas hydrate). The answer line lists no alternates and no DO NOT ACCEPT items, but the player names the same substance by a standard alternate name, so a judge would very likely accept it."
+  },
+  {
+   "id": "accept-doe-hs-11-r10-b15",
+   "from": "accept",
+   "stem": "Identify all of the following three diatomic [dye-ah-TOM-ik] compounds that MO theory predicts to be paramagnetic: 1) B₂; 2) C₂; 3) N₂.",
+   "answerLine": "1",
+   "said": "B₂",
+   "verdict": "accept",
+   "why": "The answer line is 1, which corresponds to B₂ in the question's list. The player named B₂ instead of the number, which identifies the same item. B₂ is indeed the paramagnetic one by MO theory."
+  },
+  {
+   "id": "accept-doe-hs-11-r03-t23",
+   "from": "accept",
+   "stem": "The maximal increase in the velocity of an ideal rocket is linearly proportional to what property of the rocket?",
+   "answerLine": "EXHAUST VELOCITY",
+   "said": "EXHAUST SPEED",
+   "verdict": "accept",
+   "why": "Exhaust speed is the magnitude of exhaust velocity; in the rocket equation, the effective exhaust velocity is commonly referred to as exhaust speed, so it names the same property. A judge would likely accept this synonym."
+  },
+  {
+   "id": "accept-doe-hs-13-r07-b19",
+   "from": "accept",
+   "stem": "An erratic, such as Big Rock in Alberta, Canada, is a large boulder whose geology differs significantly from that of its current location. What carried this erratic to its current location?",
+   "answerLine": "GLACIER",
+   "said": "ICE",
+   "verdict": "reject",
+   "why": "The answer line requires GLACIER, a specific technical term for the transporting agent. 'Ice' is less specific and is only a neighbouring term (sea ice, icebergs, ice sheets also exist), so a judge would likely not accept it without prompting."
+  },
+  {
+   "id": "accept-doe-ms-11-r09-t22",
+   "from": "accept",
+   "stem": "What is 36% of 3?",
+   "answerLine": "1.08",
+   "said": "27/25",
+   "verdict": "accept",
+   "why": "36% of 3 = 1.08 = 108/100 = 27/25 in lowest terms. The player's fraction is the same exact value in another form, and the question does not ask for a decimal or a specific rounding, so it is the same answer."
+  },
+  {
+   "id": "accept-doe-ms-11-r10-b14",
+   "from": "accept",
+   "stem": "Phagocytosis [fag-oh-sye-TOW-sis] and pinocytosis [PEE-noh-sigh-TOW-sis] are both examples of what type of general cellular process?",
+   "answerLine": "ENDOCYTOSIS",
+   "said": "ACTIVE TRANSPORT",
+   "verdict": "reject",
+   "why": "The answer line requires endocytosis. Active transport is a broader category of energy-requiring movement across membranes, and it is not the same term as endocytosis. It is less specific than the answer line requires."
+  },
+  {
+   "id": "accept-doe-hs-15-r16-t23",
+   "from": "accept",
+   "stem": "A zone of disrupted and fractured terrain on Mercury is located at the antipode of what large impact basin?",
+   "answerLine": "CALORIS",
+   "said": "CALORIS PLANITIA",
+   "verdict": "accept",
+   "why": "Caloris Planitia is the formal name of the Caloris Basin, the same feature as CALORIS. The extra word 'Planitia' is a harmless addition, so it names the same thing."
+  },
+  {
+   "id": "accept-doe-hs-10-r08-t18",
+   "from": "accept",
+   "stem": "Ced-3 and ced-4 are genes likely involved in what cell process?",
+   "answerLine": "APOPTOSIS",
+   "said": "PROGRAMMED CELL DEATH",
+   "verdict": "accept",
+   "why": "Programmed cell death is the standard synonym for apoptosis; ced-3 and ced-4 are the C. elegans cell death genes, so the player names the same process."
+  },
+  {
+   "id": "accept-doe-hs-17-r09-t18",
+   "from": "accept",
+   "stem": "What second-century mathematician is responsible for developing the geocentric model of the solar system that persisted for centuries until it was displaced by the heliocentric model?",
+   "answerLine": "PTOLEMY",
+   "said": "PTOLEMY OF ALEXANDRIA",
+   "verdict": "accept",
+   "why": "The player's answer names Ptolemy, adding only the harmless descriptor 'of Alexandria', which correctly identifies the same person; the last name alone is sufficient."
+  },
+  {
+   "id": "accept-doe-hs-13-r06-t22",
+   "from": "accept",
+   "stem": "Benzene demonstrates what special type of conjugation due to its 6 pi [pie] electrons?",
+   "answerLine": "AROMATICITY",
+   "said": "AROMATIC",
+   "verdict": "unsure",
+   "why": "The answer line requires AROMATICITY, the noun naming the property. The player said AROMATIC, the adjective form. Judges often accept this as the same concept, but the technical term asked for is the noun, and the adjective is a neighbouring form, so it is unclear whether a judge would take it."
+  },
+  {
+   "id": "accept-doe-ms-11-r02-t19",
+   "from": "accept",
+   "stem": "What type of microscope did van Leeuwenhoek [LOO-wen-hook] use when first observing cells?",
+   "answerLine": "LIGHT MICROSCOPE",
+   "said": "SINGLE-LENS MICROSCOPE",
+   "verdict": "unsure",
+   "why": "Van Leeuwenhoek's single-lens microscope was indeed a type of light microscope, but the answer line requires 'light microscope'. 'Single-lens' (simple microscope) is a more specific descriptor and not the same term, so a judge holding this answer line would likely not accept it without being sure."
+  },
+  {
+   "id": "accept-doe-hs-15-r06-t06",
+   "from": "accept",
+   "stem": "What structure in plants causes them to be turgid, rather than to lyse when immersed in a hypotonic solution?",
+   "answerLine": "CELL WALL",
+   "said": "SECONDARY CELL WALL",
+   "verdict": "reject",
+   "why": "The answer line is CELL WALL in general. The player said SECONDARY CELL WALL, which is a specific layer of the wall and is more specific than required; the primary wall also provides this function, so it names a different, narrower structure and a judge would likely not take it."
+  },
+  {
+   "id": "accept-doe-hs-12-r16-b13",
+   "from": "accept",
+   "stem": "What is the spin-to-orbit resonance ratio of Mercury?",
+   "answerLine": "3 TO 2",
+   "said": "1.5",
+   "verdict": "unsure",
+   "why": "The answer line is 3 to 2, which as a ratio equals 1.5, so the player's value is numerically the same. However, the answer is a ratio expressed as 3:2, and a decimal is a different form that a judge might not accept as the stated resonance ratio. The same value in another exact form is generally accepted, but it is unclear whether a judge would take 1.5 for a ratio."
+  },
+  {
+   "id": "accept-doe-hs-13-r05-b09",
+   "from": "accept",
+   "stem": "Telescope A has 2 times the light gathering power of telescope B. If telescopes A and B are of the same type of telescope, what is the ratio of the diameter of telescope A to that of telescope B?",
+   "answerLine": "√2",
+   "said": "√2 TO ONE",
+   "verdict": "accept",
+   "why": "The player's answer, √2 to one, is the ratio √2:1, which is the same value as √2. The words 'to one' are a harmless way of stating the ratio the question asks for."
+  },
+  {
+   "id": "accept-doe-hs-14-r08-b13",
+   "from": "accept",
+   "stem": "What microsatellite genetic markers do forensic scientists typically use for crime scene DNA analysis?",
+   "answerLine": "STRs",
+   "said": "SHORT TANDEM REPEATS",
+   "verdict": "accept",
+   "why": "STRs is the standard abbreviation for short tandem repeats, so the player's answer names the same thing in full."
+  },
+  {
+   "id": "accept-doe-hs-10-r09-t06",
+   "from": "accept",
+   "stem": "Trans fats are produced from unsaturated fats in what chemical process?",
+   "answerLine": "HYDROGENATION",
+   "said": "ISOMERIZATION",
+   "verdict": "reject",
+   "why": "The answer line is hydrogenation (partial hydrogenation of unsaturated fats). Isomerization describes the cis-to-trans change that happens, but it is a different process from the one named, so a judge would not accept it."
+  },
+  {
+   "id": "accept-doe-hs-10-r14-t01",
+   "from": "accept",
+   "stem": "What class of barred spiral galaxies has the most tightly wound arms?",
+   "answerLine": "SBa",
+   "said": "a",
+   "verdict": "reject",
+   "why": "The answer line requires the full class designation SBa. The player said only 'a', which is a fragment of the designation and does not name the barred class. Without the 'SB' it is not clearly the same answer, so a judge would not accept it."
+  },
+  {
+   "id": "accept-doe-hs-09-r05-b03",
+   "from": "accept",
+   "stem": "What stage of aerobic cellular respiration is most closely associated with the mitochondrial matrix?",
+   "answerLine": "KREBS CYCLE",
+   "said": "TRICARBOXYLIC ACID CYCLE",
+   "verdict": "accept",
+   "why": "The tricarboxylic acid (TCA) cycle is another standard name for the Krebs cycle (also the citric acid cycle), so the player names the same stage."
+  },
+  {
+   "id": "accept-doe-hs-13-r06-b18",
+   "from": "accept",
+   "stem": "Identify all of the following three sulfate salts that are soluble in water: 1) Zinc sulfate; 2) Aluminum sulfate; 3) Iron(III) sulfate.",
+   "answerLine": "1, 2, AND 3",
+   "said": "ALL",
+   "verdict": "accept",
+   "why": "The answer line is all three salts (1, 2, and 3). The player's 'ALL' names the same set in different words, since all three are soluble."
+  },
+  {
+   "id": "accept-doe-hs-14-r06-b13",
+   "from": "accept",
+   "stem": "Consider a yo-yo that is made by winding a string around a uniform disc of radius 1 centimeter. If the disc is allowed to fall vertically and unroll the string without slipping, then in terms of the acceleration g due to gravity, what is the acceleration of the yo-yo?",
+   "answerLine": "2g/3",
+   "said": "2/3 g",
+   "verdict": "accept",
+   "why": "The player's answer \"2/3 g\" is the same value as 2g/3, just written with the coefficient in front, so it is the same exact answer in another form."
+  },
+  {
+   "id": "accept-doe-ms-11-r10-t14",
+   "from": "accept",
+   "stem": "During what cellular process do synapsis [sin-AP-sis] and crossing over occur?",
+   "answerLine": "MEIOSIS",
+   "said": "PROPHASE I",
+   "verdict": "reject",
+   "why": "The answer line asks for the process, MEIOSIS. The player gave prophase I, which is a specific stage within meiosis where synapsis and crossing over occur. It is a different, more specific thing than the process named, and the answer line lists no accepted alternatives, so a judge would not take it."
+  },
+  {
+   "id": "accept-doe-hs-13-r01-b12",
+   "from": "accept",
+   "stem": "Consider a square ABCD where there is a one-ohm resistor on each side of the square. If there is also a one-ohm resistor bridging the AC diagonal, what is the equivalent resistance in ohms between points A and C?",
+   "answerLine": "1/2",
+   "said": "0.5",
+   "verdict": "accept",
+   "why": "0.5 is the same exact value as 1/2 in decimal form; the question does not require a fraction or specify a format, so the value is equivalent and exact."
+  },
+  {
+   "id": "accept-doe-ms-11-r14-t23",
+   "from": "accept",
+   "stem": "In humans, what type of cells are responsible for carrying oxygen to tissues?",
+   "answerLine": "ERYTHROCYTES",
+   "said": "RED BLOOD CELLS",
+   "verdict": "accept",
+   "why": "Red blood cells is the common name for erythrocytes, so the player's answer names the same cell type as the answer line."
+  },
+  {
+   "id": "accept-doe-ms-14-r08-b21",
+   "from": "accept",
+   "stem": "Consider a table resting on the surface of the Earth. Which of the four fundamental forces is responsible for resisting the pull of the gravitational force on the table?",
+   "answerLine": "ELECTROMAGNETIC",
+   "said": "EM",
+   "verdict": "accept",
+   "why": "EM is a standard abbreviation for electromagnetic (force), so it names the same answer as the answer line."
+  },
+  {
+   "id": "accept-doe-ms-12-r07-b04",
+   "from": "accept",
+   "stem": "Scientists are using the Advanced Photon Source to study the structure of cellulose, a polymer composed of what monomer?",
+   "answerLine": "GLUCOSE",
+   "said": "BETA-GLUCOSE",
+   "verdict": "accept",
+   "why": "Cellulose is built from beta-D-glucose units, so 'beta-glucose' names the same monomer as GLUCOSE, just with a more specific form that is chemically accurate. It is not a different thing, so a judge would likely accept it."
+  },
+  {
+   "id": "accept-doe-ms-08-r07-b23",
+   "from": "accept",
+   "stem": "In the arithmetic operation long division, answers are often expressed as a whole number quotient with a whole number remainder. Indicate all of the following four choices that are also commonly used to represent the result of long division: 1) improper fraction, 2) mixed fraction, 3) decimal, 4) logarithm",
+   "answerLine": "MIXED FRACTION AND DECIMAL",
+   "said": "2 AND 3",
+   "verdict": "accept",
+   "why": "The player's answer \"2 and 3\" refers to choices 2) mixed fraction and 3) decimal, which are exactly the answer line's MIXED FRACTION AND DECIMAL."
+  },
+  {
+   "id": "accept-doe-ms-08-r12-t05",
+   "from": "accept",
+   "stem": "Mid-ocean ridge valleys are lined with what kind of faults?",
+   "answerLine": "NORMAL",
+   "said": "DIP-SLIP",
+   "verdict": "reject",
+   "why": "The answer line requires NORMAL faults. Dip-slip is a broader class that includes both normal and reverse faults, so it is less specific than required and is not the same answer."
+  },
+  {
+   "id": "accept-doe-hs-10-r10-b14",
+   "from": "accept",
+   "stem": "Characterized by its \"rotten-egg smell,\" what gas released by geothermal plants is of great environmental concern?",
+   "answerLine": "HYDROGEN SULFIDE",
+   "said": "H2S",
+   "verdict": "accept",
+   "why": "H2S is the standard chemical formula for hydrogen sulfide, the rotten-egg-smelling gas, and no other common compound shares that formula, so it names the same thing as the answer line."
+  },
+  {
+   "id": "accept-doe-hs-17-r13-t15",
+   "from": "accept",
+   "stem": "In mammals, most non-shivering heat production happens in what specialized adipose [AD-ih-pohss] tissue?",
+   "answerLine": "BROWN FAT",
+   "said": "BROWN",
+   "verdict": "accept",
+   "why": "The player said \"brown,\" which drops the word \"fat\" (or \"adipose tissue\"). The question already supplies \"adipose tissue,\" so the omitted word is a harmless one and the answer names the same thing as brown fat."
+  },
+  {
+   "id": "accept-doe-ms-13-r14-b13",
+   "from": "accept",
+   "stem": "Scientists at Lawrence Berkeley National Lab are modeling the development of tropical cyclones and hurricanes. These types of storms are classified according to what severity scale?",
+   "answerLine": "SAFFIR-SIMPSON",
+   "said": "SSHWS",
+   "verdict": "accept",
+   "why": "SSHWS stands for Saffir-Simpson Hurricane Wind Scale, the standard abbreviation for the Saffir-Simpson scale, so it names the same thing as the answer line."
+  },
+  {
+   "id": "accept-doe-ms-15-r09-t08",
+   "from": "accept",
+   "stem": "Scientists at Lawrence Berkeley National Lab are making artificial mimics of the Y-shaped immune system proteins that the body uses to neutralize pathogens. What is the term for these proteins?",
+   "answerLine": "ANTIBODIES",
+   "said": "IMMUNOGLOBULINS",
+   "verdict": "accept",
+   "why": "Immunoglobulins are the scientific synonym for antibodies; they are the same Y-shaped proteins, so the player's answer names the same thing as the answer line."
+  },
+  {
+   "id": "accept-doe-ms-09-r03-b01",
+   "from": "accept",
+   "stem": "An object in free-fall on the Earth will eventually stop accelerating. What is the term for the speed of the object when it reaches this point?",
+   "answerLine": "TERMINAL VELOCITY",
+   "said": "TERMINAL SPEED",
+   "verdict": "accept",
+   "why": "The question asks for the speed at which the object stops accelerating, and 'terminal speed' is a standard, interchangeable name for 'terminal velocity'. The question itself asks about speed, so the player's wording is the same answer and not a neighbouring term."
+  },
+  {
+   "id": "accept-doe-ms-14-r16-t12",
+   "from": "accept",
+   "stem": "Many enzymes in signaling cascades are called kinases [KYE-nases], because they move what inorganic group usually from ATP onto substrates?",
+   "answerLine": "PHOSPHATE",
+   "said": "PO₄⁻",
+   "verdict": "unsure",
+   "why": "The answer line is PHOSPHATE. The player gave \"PO₄⁻\", which looks like a formula for phosphate but has the wrong charge: phosphate is PO₄³⁻, and PO₄⁻ is not a standard species. The notation is incorrect, so a judge might refuse it, though they might also read it as an attempt at the phosphate group. I can't tell which way a judge would go."
+  },
+  {
+   "id": "accept-doe-ms-14-r06-t22",
+   "from": "accept",
+   "stem": "Bacterial cells are an example of what type of cell that lacks a nucleus and membrane-bound organelles?",
+   "answerLine": "PROKARYOTIC",
+   "said": "PROKARYOTE",
+   "verdict": "accept",
+   "why": "The answer line is PROKARYOTIC (the adjective, asking for a type of cell). The player said PROKARYOTE, the noun for the same concept; \"prokaryote cell\" is a standard equivalent and the meaning is identical, though a strict judge might note the form difference. The question asks 'what type of cell', so 'prokaryote' names the same type."
+  },
+  {
+   "id": "accept-doe-ms-12-r05-b20",
+   "from": "accept",
+   "stem": "Besides carbon and oxygen, what other two elements compose the largest portion of the mass of human beings?",
+   "answerLine": "HYDROGEN AND NITROGEN",
+   "said": "H AND N",
+   "verdict": "accept",
+   "why": "H and N are the standard chemical symbols for hydrogen and nitrogen, so the player names the same two elements as the answer line."
+  },
+  {
+   "id": "accept-doe-ms-10-r05-b16",
+   "from": "accept",
+   "stem": "Wind blowing across the top of a chimney creates lower pressure in the chimney, drawing smoke up through the fireplace rather than allowing it to spread into a room. What principle does this illustrate?",
+   "answerLine": "BERNOULLI'S PRINCIPLE",
+   "said": "BERNOULLI",
+   "verdict": "accept",
+   "why": "The player's answer 'Bernoulli' gives the last name of the person, which is enough for the named principle; it clearly refers to Bernoulli's principle, with only the harmless word 'principle' (supplied by the question) omitted."
+  },
+  {
+   "id": "accept-doe-ms-14-r14-b05",
+   "from": "accept",
+   "stem": "Epinephrine [eh-pih-NEH-frin] and norepinephrine [NOR-eh-pih-NEH-frin], which are responsible for the fight or flight response, are primarily synthesized in what organ?",
+   "answerLine": "ADRENAL GLANDS",
+   "said": "SUPRARENAL GLANDS",
+   "verdict": "accept",
+   "why": "Suprarenal glands is a standard synonym for adrenal glands (they sit atop the kidneys), so it names the same organ."
+  },
+  {
+   "id": "accept-doe-hs-15-r02-t13",
+   "from": "accept",
+   "stem": "In a system consisting of two bodies acting on each other via a central force, the angular momentum of the system is constant and dependent on the reduced mass of the system, the angular velocity, and the distance squared. This statement is equivalent to which of Kepler’s Laws?",
+   "answerLine": "SECOND",
+   "said": "LAW OF EQUAL AREAS IN EQUAL TIME",
+   "verdict": "accept",
+   "why": "Kepler's second law is the law of equal areas swept in equal times, so the player's answer names the same law as SECOND by its standard descriptive name."
+  },
+  {
+   "id": "accept-doe-hs-12-r02-t11",
+   "from": "accept",
+   "stem": "What is the term for the point of origin within the Earth of seismic waves in an earthquake?",
+   "answerLine": "FOCUS",
+   "said": "HYPOCENTER",
+   "verdict": "accept",
+   "why": "Hypocenter is a standard synonym for focus: the point within the Earth where an earthquake rupture starts. The answer line gives only FOCUS with no brackets, but the player's term names the same thing, not the epicenter, which is the surface point."
+  },
+  {
+   "id": "accept-doe-hs-09-r08-b22",
+   "from": "accept",
+   "stem": "What common second messenger is released after epinephrine binds to liver GPCRs and was the subject of the 1994 Nobel Prize?",
+   "answerLine": "CYCLIC AMP",
+   "said": "cAMP",
+   "verdict": "accept",
+   "why": "cAMP is the standard abbreviation for cyclic AMP (cyclic adenosine monophosphate), so it names the same second messenger as the answer line."
+  },
+  {
+   "id": "accept-doe-hs-12-r05-b08",
+   "from": "accept",
+   "stem": "What are the radius and the coordinates of the center, respectively, of the circle with equation x² + 12x + y² – 4y – 81 = 0?",
+   "answerLine": "RADIUS 11; CENTER (–6, 2)",
+   "said": "x = –6 AND y = 2 for center",
+   "verdict": "reject",
+   "why": "The player gives only the center (-6, 2), written as x = -6 and y = 2, and never gives the radius of 11. The question asks for both radius and center, so the answer is incomplete."
+  },
+  {
+   "id": "accept-doe-ms-14-r05-t11",
+   "from": "accept",
+   "stem": "What is the x-intercept of the line with equation 5x – 6y = –60?",
+   "answerLine": "–12",
+   "said": "(–12, 0)",
+   "verdict": "accept",
+   "why": "Setting y=0 gives 5x = -60, so x = -12. The player's (-12, 0) is the same intercept written as a point; it names the same value and the y-coordinate 0 is implied by the question. A judge would very likely accept it, though the answer line gives only the number, so there is slight doubt."
+  },
+  {
+   "id": "accept-doe-ms-14-r10-b03",
+   "from": "accept",
+   "stem": "Algol [AL-gawl] variables are binary star systems where the brightness of the system dips twice each orbital cycle. What phenomenon causes these dips?",
+   "answerLine": "ECLIPSES",
+   "said": "SYZYGY [sih-zih-GEE]",
+   "verdict": "reject",
+   "why": "The answer line is eclipses, where one star passes in front of the other. Syzygy means the alignment of three celestial bodies, as in the Sun, Earth and Moon, which is a different term and does not name the eclipse phenomenon for a binary system."
+  },
+  {
+   "id": "accept-doe-ms-13-r11-b23",
+   "from": "accept",
+   "stem": "Two charges each have their magnitudes tripled, and the distance separating them is doubled. By what factor is the magnitude of the electric force between them multiplied?",
+   "answerLine": "9/4",
+   "said": "2 ¼",
+   "verdict": "unsure",
+   "why": "The player's \"2 ¼\" is the mixed number 2 and 1/4, which equals 9/4, so the value is the same. But the competition requires simplest form, and the player's form is ambiguous: \"2 ¼\" could be read as 2.25 (correct) or as 2×1/4 = 1/2 (wrong). The mixed-number form is not clearly accepted as the improper fraction 9/4, so a judge might not take it."
+  },
+  {
+   "id": "accept-doe-ms-13-r03-t10",
+   "from": "accept",
+   "stem": "What is the term for the heat required to change the phase of a solid to a liquid?",
+   "answerLine": "HEAT OF FUSION",
+   "said": "ENTHALPY OF FUSION",
+   "verdict": "accept",
+   "why": "Enthalpy of fusion is the standard synonym for heat of fusion (heat absorbed at constant pressure to melt a solid), so it names the same thing; the answer line has no DO NOT ACCEPT restrictions."
+  },
+  {
+   "id": "accept-doe-hs-14-r06-t07",
+   "from": "accept",
+   "stem": "The Orion Nebula is an example of what type of nebula?",
+   "answerLine": "EMISSION",
+   "said": "REFLECTION",
+   "verdict": "reject",
+   "why": "The answer line is emission nebula, while the player said reflection nebula. These are different types of nebula, so the player's answer does not match."
+  },
+  {
+   "id": "accept-doe-hs-17-r02-t15",
+   "from": "accept",
+   "stem": "Anterograde trafficking of proteins within a cell involves entry of proteins at the cis [sis] face and exit from the trans face of what organelle?",
+   "answerLine": "GOLGI",
+   "said": "GOLGI BODY",
+   "verdict": "accept",
+   "why": "The Golgi body is a standard alternate name for the Golgi apparatus, the same organelle as the answer GOLGI. The extra word is harmless."
+  },
+  {
+   "id": "accept-doe-hs-10-r02-b20",
+   "from": "accept",
+   "stem": "The terminal side of an angle in standard position passes through the point (8, –15). Find the sine and tangent, respectively, of the angle.",
+   "answerLine": "SINE = –15/17, TANGENT = –15/8",
+   "said": "–1 7/8",
+   "verdict": "reject",
+   "why": "The answer line requires two values: sine = -15/17 and tangent = -15/8. The player gave only -1 7/8, which equals -15/8 (the tangent) in mixed-number form but omits the sine. It is incomplete, and a mixed number is not the simplest form the convention requires. Reject."
+  },
+  {
+   "id": "accept-doe-hs-11-r13-t19",
+   "from": "accept",
+   "stem": "What is the major acidic species that forms when an acid is dissolved in water?",
+   "answerLine": "HYDRONIUM",
+   "said": "H3O+",
+   "verdict": "accept",
+   "why": "H3O+ is the standard formula for the hydronium ion, so it names the same species as the answer line HYDRONIUM, and no other species shares that formula."
+  },
+  {
+   "id": "accept-doe-hs-17-r09-t04",
+   "from": "accept",
+   "stem": "Travelers' diarrhea is most commonly caused by an enterotoxigenic [en-tur-o-tox-ih-JEN-ik] strain of what bacterium?",
+   "answerLine": "E. COLI",
+   "said": "ESCHERICHIA COLI",
+   "verdict": "accept",
+   "why": "Escherichia coli is the full name of E. coli, so the player's answer names the same bacterium as the answer line."
+  },
+  {
+   "id": "accept-doe-hs-10-r01-b02",
+   "from": "accept",
+   "stem": "Transesterification is a reaction used to generate biodiesel from what class of biomolecule?",
+   "answerLine": "TRIGLYCERIDES",
+   "said": "LIPIDS",
+   "verdict": "reject",
+   "why": "The answer line requires triglycerides, a specific type of lipid. 'Lipids' is the broader class and is less specific than required, so it is not the same answer."
+  },
+  {
+   "id": "accept-doe-hs-15-r07-t10",
+   "from": "accept",
+   "stem": "A special coin has a 3/5 probability of landing on heads, and a 2/5 probability of landing on tails. In a series of three coin flips, what is the probability of the outcome sequence heads, tails, heads?",
+   "answerLine": "18/125",
+   "said": "0.144",
+   "verdict": "unsure",
+   "why": "The correct value is (3/5)(2/5)(3/5) = 18/125, which equals 0.144 as a decimal. However, the competition requires exact answers in simplest form, and the question does not ask for a decimal, so a decimal is a different form from the required fraction. Strictly the value is the same, but the decimal is exact here, so a judge might accept it; the convention is uncertain."
+  },
+  {
+   "id": "accept-doe-ms-10-r11-t15",
+   "from": "accept",
+   "stem": "What type of radioactive decay does carbon-14 undergo to become nitrogen-14?",
+   "answerLine": "BETA",
+   "said": "BETA MINUS",
+   "verdict": "accept",
+   "why": "Carbon-14 decays to nitrogen-14 by beta-minus decay, which is the same process as plain beta decay. The extra word \"minus\" only makes the answer more specific and is not a different answer, so a judge would accept it."
+  },
+  {
+   "id": "accept-doe-hs-12-r08-b17",
+   "from": "accept",
+   "stem": "What are the coordinates of the vertex of the graph of y = –3x² – 12x – 7?",
+   "answerLine": "(–2, 5)",
+   "said": "x = –2 AND y = 5",
+   "verdict": "accept",
+   "why": "The player's answer gives x = -2 and y = 5, which are the same coordinates as (-2, 5); the vertex is -3(4)+24-7 = 5, so the values match. Only the format differs, and it is unambiguous."
+  },
+  {
+   "id": "accept-doe-ms-10-r04-t03",
+   "from": "accept",
+   "stem": "How many real solutions are there to the equation 2x² – 3x + 4 = 0?",
+   "answerLine": "0",
+   "said": "NONE",
+   "verdict": "accept",
+   "why": "The discriminant is 9 - 32 = -23 < 0, so there are zero real solutions. The player's 'none' means zero solutions, which is the same value as the answer line's 0 in words."
+  },
+  {
+   "id": "accept-doe-ms-14-r12-b16",
+   "from": "accept",
+   "stem": "What type of current is produced by a generator that produces electricity by spinning a loop of wire in a magnetic field?",
+   "answerLine": "ALTERNATING CURRENT",
+   "said": "AC",
+   "verdict": "accept",
+   "why": "AC is the standard abbreviation for alternating current, so it names the same answer as the answer line."
+  },
+  {
+   "id": "accept-doe-hs-12-r05-t04",
+   "from": "accept",
+   "stem": "The conversion of carbon-14 into nitrogen-14 is an example of what type of radioactive decay?",
+   "answerLine": "BETA DECAY",
+   "said": "BETA MINUS DECAY",
+   "verdict": "accept",
+   "why": "Carbon-14 to nitrogen-14 is beta-minus decay, which is the standard specific form of beta decay. The player's answer names the same process and is more specific, not different, so a judge would accept it."
+  },
+  {
+   "id": "accept-doe-hs-11-r16-t17",
+   "from": "accept",
+   "stem": "Scientists at Argonne National Lab are using computational chemistry to probe the catalytic properties of iridium [ih-RID-ee-um] oxide nanoparticles. What computational method, descended from Hartree-Fock theory, is most commonly used for quantum mechanical modeling?",
+   "answerLine": "DENSITY FUNCTIONAL THEORY",
+   "said": "DFT",
+   "verdict": "accept",
+   "why": "DFT is the standard abbreviation for density functional theory, so it names the same method as the answer line."
+  },
+  {
+   "id": "accept-doe-hs-11-r04-b09",
+   "from": "accept",
+   "stem": "Rank the following four elements in terms of increasing melting point: 1) Boron; 2) Sodium; 3) Lithium; 4) Tungsten.",
+   "answerLine": "2, 3, 1, 4",
+   "said": "SODIUM, LITHIUM, BORON, TUNGSTEN",
+   "verdict": "accept",
+   "why": "The player's answer names sodium, lithium, boron, tungsten, which corresponds to 2, 3, 1, 4 in the order asked. It is the same ordering as the answer line."
+  },
+  {
+   "id": "accept-doe-ms-11-r03-b23",
+   "from": "accept",
+   "stem": "Simplify the fraction with numerator 1 – √3 and denominator 1 + √3.",
+   "answerLine": "–2 + √3",
+   "said": "√3 – 2",
+   "verdict": "accept",
+   "why": "(1–√3)/(1+√3) = (1–√3)²/(1–3) = (4–2√3)/(–2) = –2+√3. The player's √3 – 2 is the same value, but the terms are in a different order. It is not a polynomial or complex number, so no standard-form ordering rule applies, and the radical expression is simplified and equal."
+  },
+  {
+   "id": "accept-doe-hs-15-r16-t07",
+   "from": "accept",
+   "stem": "Chlorosis in plant leaves can be caused by a deficiency in what metal ion, which is chelated by the organic portion of chlorophyll?",
+   "answerLine": "MAGNESIUM",
+   "said": "MAGNESIUM 2+",
+   "verdict": "accept",
+   "why": "The player said magnesium 2+, which is the Mg2+ ion of magnesium. The question asks for a metal ion, so this names the same thing as the answer line, MAGNESIUM, with the correct charge."
+  },
+  {
+   "id": "accept-doe-hs-08-r17-b08",
+   "from": "accept",
+   "stem": "By number, give all of the following three statements that are true of Carnot engines: 1) Carnot’s theorem limits the efficiency of engines to less than that of a Carnot engine; 2) The Carnot cycle consists of only reversible steps; 3) The concept of entropy arose from the limits stated by the Carnot cycle.",
+   "answerLine": "1, 2, 3",
+   "said": "ALL OF THEM",
+   "verdict": "accept",
+   "why": "The answer line is 1, 2, 3, meaning all three statements are true. The player's 'all of them' names the same set, though not by number as the question asked. It is the same answer in different words, and the question's list contains exactly those three statements, so it matches."
+  },
+  {
+   "id": "accept-doe-hs-15-r03-t22",
+   "from": "accept",
+   "stem": "Most cases of genomic imprinting involve the addition of what functional group to DNA?",
+   "answerLine": "METHYL",
+   "said": "CH₃₎",
+   "verdict": "accept",
+   "why": "The player's answer 'CH3' (with a stray bracket) is the standard chemical formula for the methyl group, so it names the same functional group as METHYL."
+  },
+  {
+   "id": "accept-doe-hs-15-r10-b03",
+   "from": "accept",
+   "stem": "Researchers at Argonne National Lab are studying the isotope nickel-68, which has 28 protons and 40 neutrons. What is the LEAST massive particle that is released in the decay of this isotope?",
+   "answerLine": "ANTINEUTRINO",
+   "said": "ELECTRON ANTINEUTRINO",
+   "verdict": "accept",
+   "why": "Ni-68 undergoes beta-minus decay, releasing an electron and an electron antineutrino. The antineutrino is the least massive particle. 'Electron antineutrino' is the specific flavor of antineutrino and names the same particle, so it is a harmless added specification."
+  },
+  {
+   "id": "accept-doe-ms-14-r07-b16",
+   "from": "accept",
+   "stem": "A piece of styrofoam has a mass of 50 grams and a volume of 200 cubic centimeters. If it is at rest while floating in water, what fraction of its volume will be above the surface of the water?",
+   "answerLine": "3/4",
+   "said": "0.75",
+   "verdict": "unsure",
+   "why": "The player's 0.75 equals 3/4 in value, but the competition convention says numerical answers must be exact and in simplest form, and the question asks for a fraction. A decimal is a different form than the fraction asked for, so a judge might not accept it; it is not clear-cut."
+  },
+  {
+   "id": "accept-doe-ms-09-r16-b08",
+   "from": "accept",
+   "stem": "Sam places 2 red shirts and one green shirt in a bag. He places 3 blue pairs of shorts and one brown pair of shorts in a separate bag. He also places 3 pairs of white socks in a third bag. If he draws once from each bag, what is the probability that he will create a red, white, and blue outfit?",
+   "answerLine": "50%",
+   "said": "½",
+   "verdict": "accept",
+   "why": "Probability: red 2/3, blue 3/4, white 1 gives 2/3 * 3/4 = 1/2. The player's answer of 1/2 equals 50%, the same value in another exact form, and the question does not require a particular format."
+  },
+  {
+   "id": "accept-doe-hs-10-r03-b10",
+   "from": "accept",
+   "stem": "If a helicopter loses engine power at a sufficient height and speed, it is able to autorotate to the ground, extracting energy from the air and, sometimes, landing safely. In this case, gravitational potential energy is converted into what type of energy?",
+   "answerLine": "MECHANICAL",
+   "said": "KINETIC",
+   "verdict": "reject",
+   "why": "The answer line requires MECHANICAL energy, the general category; the player said kinetic, which is only one component of mechanical energy and is a different, less general answer. It is not listed as accepted, so a judge would not take it."
+  },
+  {
+   "id": "accept-doe-hs-09-r17-b04",
+   "from": "accept",
+   "stem": "Nitrogen monoxide decomposes into diatomic nitrogen and oxygen at high temperatures. A one-liter reaction vessel at 2000°C contains an equilibrium mixture of 192 grams of O₂, 112 grams of N₂, and 3 grams of NO. Using values of 14 grams per mole and 16 grams per mole for the respective molar masses of atomic nitrogen and oxygen, what is the equilibrium constant for the decomposition at this temperature to two significant figures?",
+   "answerLine": "2.4x10³",
+   "said": "2400",
+   "verdict": "accept",
+   "why": "The player's 2400 is the same value as the answer line's 2.4x10³, and it is written as a plain number to two significant figures. The convention that rounding must be given as a decimal or whole number favors the player's form, and the answer line's scientific notation is just the same value written another way. The only doubt is that 2400 could be read as having ambiguous significant figures, but a judge would most likely accept it."
+  },
+  {
+   "id": "accept-doe-ms-14-r08-t06",
+   "from": "accept",
+   "stem": "What celestial object was created as the result of a collision involving the Earth approximately 4.5 billion years ago?",
+   "answerLine": "THE MOON",
+   "said": "EARTH'S MOON",
+   "verdict": "accept",
+   "why": "\"Earth's Moon\" names the same object as \"The Moon\"; the possessive only adds a harmless qualifier that the question already implies."
+  },
+  {
+   "id": "accept-doe-hs-12-r05-b16",
+   "from": "accept",
+   "stem": "In land plants, what is the term for the male gametangia [gam-ih-TAN-jee-ah]?",
+   "answerLine": "ANTHERIDIA",
+   "said": "ANTHERIDIUM",
+   "verdict": "accept",
+   "why": "Antheridium is the singular form of antheridia, naming the same structure (male gametangium). The question asks for the term in the plural, but the difference is only number, a harmless variation."
+  },
+  {
+   "id": "accept-doe-ms-09-r06-b18",
+   "from": "accept",
+   "stem": "What is the term for the total energy used to manufacture a finished product, including the energy to extract raw materials from nature, plus the energy used in primary and secondary manufacturing activities?",
+   "answerLine": "EMBODIED ENERGY",
+   "said": "EMBEDDED ENERGY",
+   "verdict": "reject",
+   "why": "The answer line requires the technical term \"embodied energy\". \"Embedded energy\" is a near-synonym that is sometimes used informally, but it is not the standard term, and the answer line lists no alternates. A judge would likely not accept it, though some might be lenient."
+  },
+  {
+   "id": "accept-doe-hs-14-r03-t20",
+   "from": "accept",
+   "stem": "Consider a planet that is orbiting the Sun in uniform circular motion and has total mechanical energy E. What is the total mechanical energy, in terms of E, of a planet orbiting at twice the radius, also in uniform circular motion?",
+   "answerLine": "E/2",
+   "said": "0.5E",
+   "verdict": "accept",
+   "why": "The player's answer 0.5E is the same value as E/2 in another exact form (a decimal coefficient), and the question does not restrict the form, so a judge would accept it."
+  },
+  {
+   "id": "accept-doe-hs-10-r15-b02",
+   "from": "accept",
+   "stem": "What unrefined chemical by-product of biodiesel production has potential uses in the manufacture of industrial chemicals and fuel additives?",
+   "answerLine": "GLYCERIN",
+   "said": "GLYCEROL",
+   "verdict": "accept",
+   "why": "Glycerol is the systematic/chemical name for the same compound as glycerin (glycerin is the common name for the commercial product, which is often crude glycerol in biodiesel). They name the same by-product, so a judge would accept it."
+  },
+  {
+   "id": "accept-doe-ms-11-r04-b09",
+   "from": "accept",
+   "stem": "Identify all of the following three quantities that, when changed, would affect the period of a pendulum: 1) Mass of the bob; 2) Density of the bob; 3) Length of the string.",
+   "answerLine": "3",
+   "said": "LENGTH OF THE STRING",
+   "verdict": "accept",
+   "why": "The answer line is item 3, which is the length of the string. The player named the length of the string, which is the same thing as option 3, so it matches."
+  },
+  {
+   "id": "accept-doe-ms-14-r12-t21",
+   "from": "accept",
+   "stem": "What is the slope-intercept equation of the line through the origin that contains the point (3, –36) ?",
+   "answerLine": "y = –12x",
+   "said": "y = –12x + 0",
+   "verdict": "accept",
+   "why": "The player's answer y = -12x + 0 is the same line in slope-intercept form, with the intercept written explicitly as 0. It is mathematically identical to y = -12x, and the extra +0 is harmless."
+  },
+  {
+   "id": "accept-doe-hs-13-r03-t04",
+   "from": "accept",
+   "stem": "What term is used to describe a hydrocarbon that only possesses carbon-carbon single bonds?",
+   "answerLine": "SATURATED",
+   "said": "ALKANE",
+   "verdict": "reject",
+   "why": "The answer line requires the term SATURATED, an adjective describing the hydrocarbon. The player said ALKANE, which is the name of the class of saturated hydrocarbons, a different term and not the technical term asked for. It is a neighbouring term, not the same answer."
+  },
+  {
+   "id": "accept-doe-ms-09-r03-t01",
+   "from": "accept",
+   "stem": "What kind of collision conserves both kinetic energy and linear momentum?",
+   "answerLine": "ELASTIC",
+   "said": "PERFECTLY ELASTIC",
+   "verdict": "accept",
+   "why": "The player's answer 'perfectly elastic' is the same as 'elastic'; the added word 'perfectly' is harmless, since an elastic collision is by definition one that conserves kinetic energy."
+  },
+  {
+   "id": "accept-doe-hs-10-r07-b07",
+   "from": "accept",
+   "stem": "The industrial production of ammonia involves a reaction that combines what two gases?",
+   "answerLine": "NITROGEN AND HYDROGEN",
+   "said": "N2 AND H2",
+   "verdict": "accept",
+   "why": "N2 and H2 are the standard formulas for nitrogen gas and hydrogen gas, which are the two gases in the answer line. The question asks for gases, so the diatomic formulas name the same things."
+  },
+  {
+   "id": "accept-doe-ms-14-r01-t13",
+   "from": "accept",
+   "stem": "What human organ system is responsible for transporting blood throughout the body?",
+   "answerLine": "CARDIOVASCULAR",
+   "said": "CIRCULATORY",
+   "verdict": "unsure",
+   "why": "The answer line is CARDIOVASCULAR with no listed alternates. 'Circulatory' is the common alternative name for the same system, but it is a different technical term. Circulatory technically includes the lymphatic system, so a judge could reject it as a neighbouring term, though many would accept it. It is uncertain whether the judge would take it."
+  },
+  {
+   "id": "accept-doe-hs-11-r03-t15",
+   "from": "accept",
+   "stem": "Researchers at Lawrence Berkeley National Lab are currently using statistical methods to determine the destiny of every cell in the Drosophila [droh-SAWF-il-ah] zygote [ZYE-goat] as it becomes an adult, as has been previously done for C. elegans. What is the term for this methodology?",
+   "answerLine": "FATE MAPPING",
+   "said": "CELL LINEAGE TRACING",
+   "verdict": "reject",
+   "why": "The answer line requires FATE MAPPING. Cell lineage tracing is a related but distinct technique: it follows the descendants of a labeled cell, while fate mapping charts what each region or cell of an embryo will become. The player's term is a neighbouring term, not the same one, and the answer line does not list it as acceptable."
+  },
+  {
+   "id": "accept-doe-hs-16-r04-b13",
+   "from": "accept",
+   "stem": "If x is proportional to y and inversely proportional to z², and if x = 3 when y = 4 and z = 8, what is the value of x when y = 6 and z = 10?",
+   "answerLine": "72/25",
+   "said": "2.88",
+   "verdict": "unsure",
+   "why": "x = k*y/z^2; 3 = k*4/64 gives k = 48; x = 48*6/100 = 72/25 = 2.88. The player's 2.88 equals the value, but the convention requires fractions in lowest terms and the answer line is 72/25; a decimal is a different form, though it is exact. The question does not ask for a decimal, so the exact fraction form is expected."
+  },
+  {
+   "id": "accept-doe-ms-14-r05-b08",
+   "from": "accept",
+   "stem": "Rock strata exposed by the Colorado River at the Grand Canyon are separated by intervals where no net sedimentary deposition occurred. What is the general term for these unrecorded intervals of time in the rock record?",
+   "answerLine": "UNCONFORMITY",
+   "said": "DISCONFORMITY",
+   "verdict": "reject",
+   "why": "The answer line requires the general term UNCONFORMITY. Disconformity is only one specific type of unconformity, where the strata above and below are parallel, so it is less specific in kind and not the general term the question asks for. It is a neighboring term, not the same answer."
+  },
+  {
+   "id": "accept-doe-hs-12-r17-t21",
+   "from": "accept",
+   "stem": "What is the name of the jelly-like fluid that fills the human eye?",
+   "answerLine": "VITREOUS HUMOR",
+   "said": "VITREOUS BODY",
+   "verdict": "accept",
+   "why": "The vitreous body is another standard anatomical name for the vitreous humor, the jelly-like substance filling the eye. The answer line has no DO NOT ACCEPT list, and the question asks for the name of the fluid, so a standard synonym should be accepted, though a strict judge could balk at the wording."
+  },
+  {
+   "id": "accept-doe-ms-13-r02-t04",
+   "from": "accept",
+   "stem": "Scientists at the National Energy Technology Lab are studying the use of anhydrous, nonvolatile solvents for carbon capture. What specific compound is being captured?",
+   "answerLine": "CARBON DIOXIDE",
+   "said": "CO2",
+   "verdict": "accept",
+   "why": "CO2 is the standard chemical formula for carbon dioxide, and no other compound shares that formula, so it names the same thing as the answer line."
+  },
+  {
+   "id": "accept-doe-hs-11-r14-b04",
+   "from": "accept",
+   "stem": "Using the harmonic oscillator model, and assuming the force constant is unchanged between the two molecules, what is the ratio of the fundamental vibrational frequency of hydrogen to that of deuterium?",
+   "answerLine": "√2",
+   "said": "√2 TO 1",
+   "verdict": "accept",
+   "why": "The player's answer \"√2 to 1\" expresses the ratio √2:1, which equals √2, the same value as the answer line, in a ratio form the question asks for. The extra \"to 1\" is a harmless wording of the ratio."
+  },
+  {
+   "id": "accept-doe-hs-10-r02-b22",
+   "from": "accept",
+   "stem": "The term capnophile, used to describe a microbe, refers to the microbe's preference for environments high in what?",
+   "answerLine": "CARBON DIOXIDE",
+   "said": "CARBON DIOXIDE GAS",
+   "verdict": "accept",
+   "why": "The player's answer 'carbon dioxide gas' names the same substance as 'carbon dioxide'; the added word 'gas' is harmless and does not change the meaning."
+  },
+  {
+   "id": "accept-doe-hs-11-r13-b08",
+   "from": "accept",
+   "stem": "In the Grand Unified Theory, which of its three unified forces separates from the other two earliest on?",
+   "answerLine": "STRONG",
+   "said": "STRONG NUCLEAR",
+   "verdict": "accept",
+   "why": "The player's 'strong nuclear' is a standard name for the strong force, so it names the same thing as 'STRONG'. The extra word 'nuclear' is harmless."
+  },
+  {
+   "id": "accept-doe-ms-11-r13-t15",
+   "from": "accept",
+   "stem": "What earthquake intensity scale classifies earthquakes based on the damage they cause?",
+   "answerLine": "MODIFIED-MERCALLI SCALE",
+   "said": "MERCALLI INDEX",
+   "verdict": "accept",
+   "why": "The Mercalli intensity scale is the same thing as the Modified Mercalli scale; \"Mercalli index\" names it by a common alternate term for the scale, dropping only the harmless word \"Modified\". A judge would likely accept it, though \"index\" instead of \"scale\" and the missing \"Modified\" leave slight doubt."
+  },
+  {
+   "id": "accept-doe-hs-15-r14-t06",
+   "from": "accept",
+   "stem": "Lawrence Berkeley National Lab researchers are studying the oxygen-evolving complex in photosystem II. This complex creates oxygen gas by oxidizing what molecule?",
+   "answerLine": "WATER",
+   "said": "H_(2O)",
+   "verdict": "accept",
+   "why": "The player's answer 'H_(2O)' is a garbled rendering of H2O, the chemical formula for water. Only water has the formula H2O, so it names the same molecule as the answer line WATER."
+  },
+  {
+   "id": "accept-doe-hs-16-r10-b01",
+   "from": "accept",
+   "stem": "A theoretical circuit has an infinite number of resistors placed in parallel. The first resistor has a resistance of one ohm, and each following resistor has twice the resistance of the previous one. In ohms, what is the total resistance across the circuit?",
+   "answerLine": "1/2",
+   "said": "0.5",
+   "verdict": "accept",
+   "why": "Conductances sum to 1+1/2+1/4+... = 2, so the total resistance is 1/2 ohm. The player's 0.5 is the same exact value in decimal form. The question does not ask for a particular format, and a terminating decimal is exact, so it should be accepted."
+  },
+  {
+   "id": "accept-doe-hs-10-r13-b21",
+   "from": "accept",
+   "stem": "Identify all of the following four plant structures that are determinate: 1) Leaves; 2) Shoot apical meristems; 3) Root apical meristems; 4) Flowers.",
+   "answerLine": "1, 4",
+   "said": "LEAVES, FLOWERS",
+   "verdict": "accept",
+   "why": "The answer line is items 1 and 4, which are Leaves and Flowers. The player named leaves and flowers, the same two structures, so it is the same answer in different form."
+  },
+  {
+   "id": "accept-doe-ms-14-r14-b01",
+   "from": "accept",
+   "stem": "The Cambrian Explosion documents the sudden increase in diversity primarily in what kingdom of life?",
+   "answerLine": "ANIMALIA",
+   "said": "ANIMALS",
+   "verdict": "accept",
+   "why": "The player's 'animals' names the same kingdom as Animalia, just using the common English name for it. The question asks for a kingdom, and 'animals' is the standard common name for kingdom Animalia, so a judge would most likely accept it."
+  },
+  {
+   "id": "accept-doe-ms-11-r14-b14",
+   "from": "accept",
+   "stem": "At what value of y does the line that contains the points (2, 4) and (5, 12) cross the y-axis?",
+   "answerLine": "–4/3",
+   "said": "–1 1/3",
+   "verdict": "unsure",
+   "why": "The line has slope 8/3, so the y-intercept is 4 - 16/3 = -4/3. The player's answer, -1 1/3, equals -4/3 as a mixed number. The competition requires fractions in simplest form, and it is unclear whether a judge would take a mixed number in place of an improper fraction."
+  },
+  {
+   "id": "reject-doe-ms-13-r06-t17",
+   "from": "reject",
+   "stem": "What is the adjective for a force that acts on a circularly-traveling object and is directed towards the center of rotation?",
+   "answerLine": "CENTRIPETAL",
+   "said": "CENTRIFUGAL",
+   "verdict": "reject",
+   "why": "Centrifugal means directed away from the center, which is the opposite of centripetal (toward the center). It is a different technical term, so it does not match the answer line."
+  },
+  {
+   "id": "reject-doe-ms-13-r06-b21",
+   "from": "reject",
+   "stem": "Solve the following equation for x: the square root of open parenthesis 3x – 8 close parenthesis = x – 6.",
+   "answerLine": "11",
+   "said": "4",
+   "verdict": "reject",
+   "why": "Squaring gives 3x-8 = x^2-12x+36, so x^2-15x+44=0, giving x=4 or x=11. Checking x=4: sqrt(4)=2 but x-6=-2, so it is extraneous. The player's 4 is a different value from 11 and does not satisfy the equation, so it is rejected."
+  },
+  {
+   "id": "reject-doe-ms-13-r02-t19",
+   "from": "reject",
+   "stem": "What is the term for a chunk of interplanetary debris that lands on the surface of the Earth?",
+   "answerLine": "METEORITE",
+   "said": "METEOR",
+   "verdict": "reject",
+   "why": "The answer line requires METEORITE, the technical term for debris that reaches Earth's surface. A meteor is the streak of light seen as debris burns up in the atmosphere, which is a different term with a different meaning, so it is not accepted."
+  },
+  {
+   "id": "reject-doe-ms-14-r09-b20",
+   "from": "reject",
+   "stem": "Most bacteria undergo a form of asexual reproduction in which the cells divide into two. What is the term for this type of reproduction?",
+   "answerLine": "FISSION",
+   "said": "MITOSIS",
+   "verdict": "reject",
+   "why": "The answer line requires fission (binary fission). Mitosis is eukaryotic nuclear division, a different process that bacteria do not undergo, so it is a different term."
+  },
+  {
+   "id": "reject-doe-hs-13-r02-t22",
+   "from": "reject",
+   "stem": "Mature plant cells have the ability to de-differentiate and then give rise to all of the cell types found in the adult organism. What is the term for this potential?",
+   "answerLine": "TOTIPOTENT",
+   "said": "PLURIPOTENT",
+   "verdict": "reject",
+   "why": "The answer line requires TOTIPOTENT (or totipotency). Pluripotent is a neighbouring but distinct term, meaning the ability to form most but not all cell types, so it is a different answer."
+  },
+  {
+   "id": "reject-doe-hs-10-r08-b11",
+   "from": "reject",
+   "stem": "What compounds, examples of which include glyceraldehyde [glih-ser-AL-de-hide] and mannose, are formally polyhydroxy [polly-high-DROX-ee] ketones with empirical formula CH2O and are the basic energy, storage, and structural molecules of life?",
+   "answerLine": "CARBOHYDRATES",
+   "said": "POLYSACCHARIDES",
+   "verdict": "reject",
+   "why": "The answer line is CARBOHYDRATES, accepting sugars and monosaccharides. Polysaccharides are a specific subclass of carbohydrates (polymers), not the same thing, and glyceraldehyde and mannose are monosaccharides, so this is not on the accept list and is the wrong specificity."
+  },
+  {
+   "id": "reject-doe-hs-08-r15-t16",
+   "from": "reject",
+   "stem": "What type of device is used to quantitatively measure the heat released by chemical reactions and physical changes at constant volume?",
+   "answerLine": "BOMB CALORIMETER",
+   "said": "CALORIMETER",
+   "verdict": "reject",
+   "why": "The answer line requires BOMB CALORIMETER, the specific device for constant-volume measurements. 'Calorimeter' is the broader class (it also covers constant-pressure coffee-cup calorimeters), so it is less specific than required, and the question's wording does not supply the missing word 'bomb'."
+  },
+  {
+   "id": "reject-doe-ms-08-r13-b11",
+   "from": "reject",
+   "stem": "Two proteins share similar tertiary structure and function, but do NOT have a common ancestor. What specific evolutionary phenomenon can account for their similarity?",
+   "answerLine": "CONVERGENT EVOLUTION",
+   "said": "EVOLUTION",
+   "verdict": "reject",
+   "why": "The answer line requires CONVERGENT EVOLUTION, the specific phenomenon. The player said only \"evolution\", which is the general class and omits the key specifying word, so it is less specific than required."
+  },
+  {
+   "id": "reject-doe-hs-16-r09-b14",
+   "from": "reject",
+   "stem": "What nuclide has the lowest average nuclear binding energy per nucleon?",
+   "answerLine": "HYDROGEN-1",
+   "said": "HYDROGEN",
+   "verdict": "reject",
+   "why": "The question asks for a specific nuclide, and the answer line requires hydrogen-1 (H-1 or protium). The player said only \"hydrogen\", which names the element and does not specify the isotope. Deuterium and tritium have nonzero binding energy per nucleon, so \"hydrogen\" is less specific than the answer line requires. A judge might take it, but the question asks for a nuclide, so it is probably rejected."
+  },
+  {
+   "id": "reject-doe-ms-14-r02-t19",
+   "from": "reject",
+   "stem": "What is the term for the feature separating adjacent drainage basins?",
+   "answerLine": "DIVIDE",
+   "said": "WATERSHED",
+   "verdict": "reject",
+   "why": "The answer line is DIVIDE, accepting 'watershed boundary' and similar. 'Watershed' alone commonly means the drainage basin itself (or in British usage the divide), so it is a neighbouring term with a different meaning and is not on the accepted list. A judge would likely reject it."
+  },
+  {
+   "id": "reject-doe-ms-14-r04-b04",
+   "from": "reject",
+   "stem": "What element, while not strictly essential for humans, is needed to maintain healthy tooth structure?",
+   "answerLine": "FLUORINE",
+   "said": "FLUORIDE",
+   "verdict": "unsure",
+   "why": "The answer line is FLUORINE, the element, with no accepted alternates listed. The player said fluoride, which is the ionic form of fluorine and is technically a different term from the element the question asks for. A judge might accept it as the form found in the body, but it is not clearly the same, and the question asks for an element."
+  },
+  {
+   "id": "reject-doe-ms-14-r04-t01",
+   "from": "reject",
+   "stem": "What is the term for a rock fragment that originated from an asteroid or planetesimal, passed through Earth's atmosphere, and landed on the surface?",
+   "answerLine": "METEORITE",
+   "said": "METEOR",
+   "verdict": "reject",
+   "why": "The answer line requires METEORITE, the rock that lands on Earth's surface. A meteor is the streak of light seen while the object passes through the atmosphere, which is a different term, so the player's answer is a neighboring term and not the same thing."
+  },
+  {
+   "id": "reject-doe-hs-15-r08-b19",
+   "from": "reject",
+   "stem": "Two complex numbers have absolute values of 5√2 and 3√3, and angles of 257 degrees and 136 degrees, respectively. What are the absolute value and the angle degree measure of their product?",
+   "answerLine": "ABSOLUTE VALUE = 15√6; ANGLE = 33",
+   "said": "393",
+   "verdict": "reject",
+   "why": "The product has modulus 5√2·3√3 = 15√6 and angle 257+136 = 393, which reduces to 33 degrees mod 360. The player gave only 393, with no absolute value, and 393 is not the reduced angle 33 the answer line requires. It is also not the absolute value. So the answer is incomplete and different."
+  },
+  {
+   "id": "reject-doe-ms-10-r04-t11",
+   "from": "reject",
+   "stem": "What specific fuel is predominantly used in modern blast furnaces?",
+   "answerLine": "COKE",
+   "said": "COAL",
+   "verdict": "reject",
+   "why": "The answer line is COKE, a carbon-rich fuel made by heating coal. Coal is the raw material, a different and less specific thing than coke, and the question asks for the specific fuel. This is a neighbouring term, not the same answer."
+  },
+  {
+   "id": "reject-doe-hs-15-r14-b09",
+   "from": "reject",
+   "stem": "What are the SI base units of the Hubble constant?",
+   "answerLine": "INVERSE SECONDS",
+   "said": "SEC⁻¹",
+   "verdict": "accept",
+   "why": "SEC⁻¹ is the standard notation for inverse seconds (s⁻¹), with 'sec' an ordinary abbreviation of seconds, so it names the same unit as the answer line."
+  },
+  {
+   "id": "reject-doe-hs-10-r17-b04",
+   "from": "reject",
+   "stem": "What compound, traditionally added as an anti-knocking additive to gasoline, was banned in the United States in 1996 due to health and environmental concerns?",
+   "answerLine": "TETRAETHYL LEAD",
+   "said": "LEAD",
+   "verdict": "reject",
+   "why": "The answer line requires the specific compound tetraethyl lead (or TEL). The player said only \"lead\", which names the element and is less specific than the compound the question asks for, so a judge would not accept it."
+  },
+  {
+   "id": "reject-doe-ms-16-r02-b12",
+   "from": "reject",
+   "stem": "Brookhaven National Lab scientists are using low-energy ion-scattering spectroscopy to examine the surfaces of bismuth vanadate [VAN-ah-date] electrodes used for the water-splitting reaction. This technique involves bombarding the analyte with atoms that consist of 2 protons, 2 neutrons, and 1 electron. What atomic species does this represent?",
+   "answerLine": "HELIUM PLUS",
+   "said": "helium",
+   "verdict": "reject",
+   "why": "The answer line requires the ionized species, helium plus (He+), since the particle has 2 protons and 1 electron. The player said just 'helium', which is neutral helium and omits the charge, so it is less specific than required."
+  },
+  {
+   "id": "reject-doe-hs-17-r01-b09",
+   "from": "reject",
+   "stem": "What type of object did Jocelyn Bell discover in 1967 that emitted bursts of radio waves at very precise intervals?",
+   "answerLine": "PULSAR",
+   "said": "neutron star",
+   "verdict": "reject",
+   "why": "The answer line requires PULSAR. A neutron star is the broader class, and a pulsar is a specific type of rotating neutron star. 'Neutron star' is less specific than the technical term required, so a judge would not take it."
+  },
+  {
+   "id": "reject-doe-hs-14-r05-b09",
+   "from": "reject",
+   "stem": "Scientists at Pacific Northwest National Lab are studying the production of lipid metabolites by fungi. These metabolites are produced by the oxidation of simpler lipids by cytochrome [SIGH-tow-krohm] P450 enzymes in what double-membrane-bound organelle?",
+   "answerLine": "SMOOTH ENDOPLASMIC RETICULUM",
+   "said": "ROUGH ER",
+   "verdict": "reject",
+   "why": "The answer line is smooth endoplasmic reticulum, and it also accepts plain endoplasmic reticulum or ER. The player said rough ER, which is a specific, different subtype (ribosome-studded) and not the smooth ER where P450 oxidation occurs. The generic 'ER' is accepted, but the added 'rough' makes it a different thing."
+  },
+  {
+   "id": "reject-doe-ms-10-r16-t19",
+   "from": "reject",
+   "stem": "What is the term for the change in direction that a wave experiences when it goes from one medium to another?",
+   "answerLine": "REFRACTION",
+   "said": "REFLECTION",
+   "verdict": "reject",
+   "why": "Reflection is the bouncing of a wave back off a boundary, while refraction is the bending of a wave as it passes into another medium. These are different phenomena, so the player's answer does not match the answer line."
+  },
+  {
+   "id": "reject-doe-hs-09-r11-t03",
+   "from": "reject",
+   "stem": "What is the limit as x approaches zero of the fraction with numerator x + 1 and denominator x?",
+   "answerLine": "DOES NOT EXIST",
+   "said": "INFINITY",
+   "verdict": "reject",
+   "why": "The limit of (x+1)/x as x approaches 0 does not exist because the one-sided limits are +infinity and -infinity. The answer line is DOES NOT EXIST, with DNE and a misspelling accepted. 'Infinity' is a different answer, since it claims a specific limit value and is not on the accept list."
+  },
+  {
+   "id": "reject-doe-ms-13-r11-b06",
+   "from": "reject",
+   "stem": "In the fight-or-flight response, there is a release of what neurotransmitter that is directly synthesized from dopamine [DOPE-ah-meen]?",
+   "answerLine": "NOREPINEPHRINE",
+   "said": "ADRENALINE",
+   "verdict": "reject",
+   "why": "The answer line is norepinephrine (noradrenaline), which is made directly from dopamine. Adrenaline (epinephrine) is a different molecule, made from norepinephrine, so it is not the same answer and is not accepted."
+  },
+  {
+   "id": "reject-doe-hs-10-r01-t01",
+   "from": "reject",
+   "stem": "Planck was able to describe the color change of black bodies at different temperatures by introducing what concept?",
+   "answerLine": "QUANTUM",
+   "said": "PHOTON",
+   "verdict": "reject",
+   "why": "The answer line is quantum (quanta, quantization). A photon is a quantum of light, a related but distinct concept that Einstein introduced later; it is not among the accepted forms, so a judge would not take it."
+  },
+  {
+   "id": "reject-doe-hs-15-r15-b23",
+   "from": "reject",
+   "stem": "A seismic wave denoted as PKP is detected following a seismic event. The K in PKP denotes that this wave has traveled through what layer of the Earth’s interior?",
+   "answerLine": "OUTER CORE",
+   "said": "CORE",
+   "verdict": "reject",
+   "why": "The answer line requires the outer core specifically; 'core' is less specific, since it includes the inner core (which is denoted by I), so it does not name the same layer."
+  },
+  {
+   "id": "reject-doe-hs-12-r08-t17",
+   "from": "reject",
+   "stem": "How many exterior angles does an octagon have?",
+   "answerLine": "16",
+   "said": "8",
+   "verdict": "reject",
+   "why": "The answer line is 16, counting two exterior angles at each vertex of the octagon. The player said 8, which is a different value. Eight is the count if one exterior angle is taken per vertex, but the judge holds the answer line of 16, so it is rejected."
+  },
+  {
+   "id": "reject-doe-ms-09-r14-t05",
+   "from": "reject",
+   "stem": "What type of rechargeable battery, often used in cell phones and laptop computers, includes a lithium-cobalt oxide cathode and a carbon cathode?",
+   "answerLine": "LITHIUM-ION",
+   "said": "LITHIUM",
+   "verdict": "reject",
+   "why": "The answer line requires LITHIUM-ION, the specific battery type. The player's 'LITHIUM' omits 'ion', which is the distinguishing word: lithium batteries (non-rechargeable lithium metal) differ from lithium-ion batteries, and the question does not supply 'ion'. So it is less specific and a judge would likely not accept it."
+  },
+  {
+   "id": "reject-doe-hs-08-r06-b01",
+   "from": "reject",
+   "stem": "The large intestine is made of six parts starting with the cecum [SEE-kuhm] and ending with the rectum. Name the other four parts, in order from the cecum to the rectum.",
+   "answerLine": "ASCENDING COLON, TRANSVERSE COLON, DESCENDING COLON, SIGMOID COLON",
+   "said": "LEFT (SPLENIC) COLIC FLEXURE",
+   "verdict": "reject",
+   "why": "The answer line requires four parts in order: ascending, transverse, descending, and sigmoid colon. The player gave only the splenic (left colic) flexure, which is a bend between the transverse and descending colon, not one of the four listed parts, so it is a different answer."
+  },
+  {
+   "id": "reject-doe-ms-12-r03-t09",
+   "from": "reject",
+   "stem": "SN 1987A was what type of cosmic event?",
+   "answerLine": "SUPERNOVA",
+   "said": "TYPE-ONE SUPERNOVA",
+   "verdict": "reject",
+   "why": "The answer line accepts supernova or a type-two supernova. The player said a type-one supernova, which is a different classification and contradicts the accepted type-two form, so a judge would not accept it."
+  },
+  {
+   "id": "reject-doe-ms-11-r05-b08",
+   "from": "reject",
+   "stem": "The power plant at Hoover Dam harvests what type of energy?",
+   "answerLine": "HYDROPOWER",
+   "said": "HYDROELECTRIC",
+   "verdict": "accept",
+   "why": "The answer line is HYDROPOWER, accepting HYDRO. 'Hydroelectric' names the same type of energy, namely hydroelectric power from falling water, and it is the standard term for the Hoover Dam plant. It is not listed as accepted, but it is a close synonym that a judge would most likely take. Some risk remains since it is not explicitly listed."
+  },
+  {
+   "id": "reject-doe-hs-08-r11-b04",
+   "from": "reject",
+   "stem": "A uniform magnetic field is applied perpendicularly to the velocity vector of a moving charged particle. What shape will the path of the charged particle be?",
+   "answerLine": "CIRCLE",
+   "said": "HELICAL",
+   "verdict": "reject",
+   "why": "The answer line is a circle, which is the path when the field is exactly perpendicular to the velocity. A helical path arises only when the velocity has a component along the field, so it is a different shape."
+  },
+  {
+   "id": "reject-doe-ms-08-r10-b19",
+   "from": "reject",
+   "stem": "In an experiment, you expect a plant to photosynthesize optimally with 440 nm of light. Instead you observe optimal photosynthesis at 460 nm. This is most likely due to the presence of what pigment?",
+   "answerLine": "CHLOROPHYLL B",
+   "said": "CHLOROPHYLL ALONE",
+   "verdict": "reject",
+   "why": "The answer line requires chlorophyll b. The player said \"chlorophyll alone\", which is not specific to chlorophyll b. It could mean chlorophyll a or chlorophyll in general, so it is less specific than required."
+  },
+  {
+   "id": "reject-doe-hs-13-r04-t20",
+   "from": "reject",
+   "stem": "What is the name of the largest canyon on the planet Mars?",
+   "answerLine": "VALLES MARINERIS",
+   "said": "MARINER VALLEY",
+   "verdict": "unsure",
+   "why": "Valles Marineris is the proper name, and \"Mariner Valley\" is an English translation of it. The competition requires the name itself, and the answer line lists no accepted alternates. A judge might take the translation, but that is uncertain, so it should be checked again."
+  },
+  {
+   "id": "reject-doe-hs-13-r01-t04",
+   "from": "reject",
+   "stem": "When performing a titration [tie-TRAY-shun], what point is defined as the point at which the indicator changes color?",
+   "answerLine": "ENDPOINT",
+   "said": "EQUIVALENCE POINT",
+   "verdict": "reject",
+   "why": "The answer line is endpoint, where the indicator changes color. The player said equivalence point, which is the stoichiometric point of the titration and is a different, neighbouring term, so it does not match."
+  },
+  {
+   "id": "reject-doe-hs-15-r15-t21",
+   "from": "reject",
+   "stem": "ACTH and FSH are examples of what type of hormones that exclusively target other endocrine tissues?",
+   "answerLine": "TROPIC",
+   "said": "TROPHIC",
+   "verdict": "unsure",
+   "why": "The answer line is TROPIC; 'trophic' is a commonly used variant spelling of 'tropic' hormones (tropic/trophic hormones are used interchangeably for hormones that stimulate other endocrine glands). However, strictly, 'trophic' means nourishing, and a judge might see it as a different term, so there is some doubt."
+  },
+  {
+   "id": "reject-doe-hs-16-r10-t01",
+   "from": "reject",
+   "stem": "An arch supported only by its own strength will be strongest if the shape of the arch follows what mathematical curve?",
+   "answerLine": "CATENARY",
+   "said": "PARABOLA",
+   "verdict": "reject",
+   "why": "The answer line requires a catenary (or inverted catenary, hyperbolic cosine). A parabola is a different curve, not an accepted alternative, even though it is the shape for a uniformly loaded suspension bridge."
+  },
+  {
+   "id": "reject-doe-hs-15-r02-t12",
+   "from": "reject",
+   "stem": "Researchers at the National Energy Technology Laboratory are developing membranes that can capture carbon dioxide from the air before it is emitted from power plants. What is the term for the process by which gas molecules adhere to the surface of a solid?",
+   "answerLine": "ADSORPTION",
+   "said": "ABSORPTION",
+   "verdict": "reject",
+   "why": "Absorption means molecules are taken up into the bulk of a material, while adsorption means they adhere to the surface. The question asks for the term for surface adherence, so 'absorption' is a neighbouring but different term and does not match 'adsorption'."
+  },
+  {
+   "id": "reject-doe-ms-16-r08-b05",
+   "from": "reject",
+   "stem": "Solve the following equation for x: x – 5 equals the square root of open parenthesis, 4x + 1, close parenthesis.",
+   "answerLine": "12",
+   "said": "2",
+   "verdict": "reject",
+   "why": "Squaring gives x^2 - 10x + 25 = 4x + 1, so x^2 - 14x + 24 = 0, with roots 12 and 2. Checking x = 2: 2 - 5 = -3, but sqrt(9) = 3, so 2 is extraneous. The answer line is 12, and the player's 2 is a different value that does not satisfy the equation."
+  },
+  {
+   "id": "reject-doe-ms-12-r07-b18",
+   "from": "reject",
+   "stem": "What are the two most abundant ions in seawater?",
+   "answerLine": "CHLORIDE AND SODIUM",
+   "said": "CHLORINE",
+   "verdict": "reject",
+   "why": "The answer line requires both chloride and sodium. The player gave only chlorine, which is the element rather than the chloride ion, and it omits sodium entirely. That is incomplete and not an accepted form."
+  },
+  {
+   "id": "reject-doe-ms-14-r14-t01",
+   "from": "reject",
+   "stem": "Inflammation can be driven by what signaling molecule that is contained within mast cells, and whose inhibitors are commonly used as allergy medications?",
+   "answerLine": "HISTAMINE",
+   "said": "HISTIDINE",
+   "verdict": "reject",
+   "why": "Histidine is an amino acid that is the precursor of histamine, not the signaling molecule stored in mast cells. It is a different compound from histamine, so the answer is wrong."
+  },
+  {
+   "id": "reject-doe-ms-13-r01-t08",
+   "from": "reject",
+   "stem": "The Milky Way, Andromeda, and Maffei 1 [MAF-eye-one] are examples of what systems that can be found in space?",
+   "answerLine": "GALAXY",
+   "said": "SPIRAL GALAXY",
+   "verdict": "reject",
+   "why": "The answer line is GALAXY. The player said SPIRAL GALAXY, which is more specific. Maffei 1 is an elliptical galaxy, so it is not a spiral and the added qualifier is wrong for one of the examples. The question asks for the general system type, so this is a different answer."
+  },
+  {
+   "id": "reject-doe-hs-10-r04-b16",
+   "from": "reject",
+   "stem": "Special water for a 600-liter aquarium is only sold in 35-liter containers. What is the minimum number of these 35-liter containers you would need to buy to be able to completely fill the tank?",
+   "answerLine": "18",
+   "said": "17 1/7",
+   "verdict": "reject",
+   "why": "600/35 = 17 1/7 is the exact quotient, but the question asks for the minimum whole number of containers, which is 18. The player's answer of 17 1/7 is a different value and is not a whole number of containers, so it does not match."
+  },
+  {
+   "id": "reject-doe-ms-16-r07-b10",
+   "from": "reject",
+   "stem": "Two complex numbers have absolute values of 5√3 and 2√3, and angles of 263 degrees and 158 degrees, respectively. What are the absolute value and the angle degree measure of their product?",
+   "answerLine": "ABSOLUTE VALUE = 30; ANGLE = 61",
+   "said": "421",
+   "verdict": "reject",
+   "why": "The product has modulus 5√3 · 2√3 = 30 and angle 263 + 158 = 421°, which reduces to 61° mod 360. The player said only '421', which is neither 30 nor 61. It gives no absolute value and the unreduced angle, so it does not match the answer line."
+  },
+  {
+   "id": "reject-doe-ms-11-r16-t07",
+   "from": "reject",
+   "stem": "If an object is moving in uniform circular motion, there is a force vector pointing towards the center of the circle. What is the name of this force?",
+   "answerLine": "CENTRIPETAL FORCE",
+   "said": "CENTRIFUGAL FORCE",
+   "verdict": "reject",
+   "why": "The answer line requires centripetal force, which points toward the center. Centrifugal force is a different term, a fictitious force pointing outward, so the player's answer names a different thing."
+  },
+  {
+   "id": "reject-doe-hs-16-r06-b15",
+   "from": "reject",
+   "stem": "Scientists at Brookhaven National Lab are studying a quantum-mechanical phase of matter that is a gas composed of only bosons. What is the term for this type of gas?",
+   "answerLine": "BOSE GAS",
+   "said": "BOSE EINSTEIN CONDENSATE",
+   "verdict": "reject",
+   "why": "The answer line is a Bose gas, a gas of bosons. A Bose-Einstein condensate is a specific phase that a Bose gas can form at very low temperature, so it is a different and more specific thing, not the general term asked for."
+  },
+  {
+   "id": "reject-doe-ms-14-r12-b22",
+   "from": "reject",
+   "stem": "What is the term for the bending of a wave as it moves from one medium to another?",
+   "answerLine": "REFRACTION",
+   "said": "DIFFRACTION",
+   "verdict": "reject",
+   "why": "The answer line is refraction, the bending of a wave when it passes between media. The player said diffraction, which is the spreading of waves around obstacles or through openings. That is a different term for a different phenomenon."
+  },
+  {
+   "id": "reject-doe-hs-11-r09-b17",
+   "from": "reject",
+   "stem": "What is the limit as x approaches 0 of the fraction with numerator eˣ – 1 and denominator x⁵?",
+   "answerLine": "INFINITY",
+   "said": "DOES NOT EXIST",
+   "verdict": "reject",
+   "why": "The answer line is infinity (or positive infinity), whereas the player said the limit does not exist. Since x⁵ changes sign, the two-sided limit is actually DNE, but I must judge against the answer line, and 'does not exist' is a different answer from infinity and is not listed as acceptable."
+  },
+  {
+   "id": "reject-doe-hs-08-r01-t07",
+   "from": "reject",
+   "stem": "What form of transport across membranes is mediated by channel proteins and requires no input of energy?",
+   "answerLine": "FACILITATED DIFFUSION",
+   "said": "SIMPLE DIFFUSION",
+   "verdict": "reject",
+   "why": "Simple diffusion moves molecules directly through the lipid bilayer without channel proteins, so it is a different process from facilitated diffusion and is not among the accepted alternatives."
+  },
+  {
+   "id": "reject-doe-hs-10-r17-t18",
+   "from": "reject",
+   "stem": "What allotrope of carbon is known for its strong bonds within the plane, but weak bonds between planes?",
+   "answerLine": "GRAPHITE",
+   "said": "GRAPHENE",
+   "verdict": "reject",
+   "why": "The answer line is graphite, the layered allotrope with weak bonds between planes. Graphene is a single layer of graphite, so it has no interplanar bonds. It is a different thing, so the answer is wrong."
+  },
+  {
+   "id": "reject-doe-ms-13-r05-t10",
+   "from": "reject",
+   "stem": "Identify all of the following three statements that are TRUE of vaccines: 1) Vaccines can only be used to prevent viral diseases; 2) Some vaccines require multiple injections; 3) The measles-mumps-rubella vaccine is linked to the development of autism.",
+   "answerLine": "2",
+   "said": "3",
+   "verdict": "reject",
+   "why": "The answer line is statement 2 only. The player answered 3, which is a different statement (and a false one, since the MMR vaccine is not linked to autism), so it does not match."
+  },
+  {
+   "id": "reject-doe-ms-12-r14-b12",
+   "from": "reject",
+   "stem": "Solve the following equation for x: the square root of open parenthesis 3x + 1 close parenthesis = x – 3",
+   "answerLine": "8",
+   "said": "1",
+   "verdict": "reject",
+   "why": "The answer line is 8. Checking: sqrt(3*8+1)=5 and 8-3=5, so 8 works. The player's answer 1 gives sqrt(4)=2 against 1-3=-2, so it is an extraneous root and a different value from 8."
+  },
+  {
+   "id": "reject-doe-ms-08-r07-b01",
+   "from": "reject",
+   "stem": "What four categories of biological macromolecules make up cells?",
+   "answerLine": "PROTEINS, NUCLEIC ACIDS, CARBOHYDRATES, AND LIPIDS",
+   "said": "FATS",
+   "verdict": "reject",
+   "why": "The question asks for four categories of macromolecules, but the player gave only one word, 'fats', which is a subset of lipids and does not list the four categories. It is incomplete and less specific than required."
+  },
+  {
+   "id": "reject-doe-hs-17-r15-t04",
+   "from": "reject",
+   "stem": "Researchers at Ames Lab are developing algorithms to search the space of possible elemental combinations for optimal high-entropy alloys. Their method uses what type of algorithm, which is inspired by mutations and natural selection in biological systems?",
+   "answerLine": "EVOLUTIONARY ALGORITHM",
+   "said": "NEURAL NETWORKS",
+   "verdict": "reject",
+   "why": "The answer line is evolutionary algorithm (genetic algorithm also accepted), which is inspired by mutation and natural selection. A neural network is a different type of algorithm, inspired by the brain, and is not on the accepted list."
+  },
+  {
+   "id": "reject-doe-ms-12-r02-t14",
+   "from": "reject",
+   "stem": "During what phase of the cell cycle does a eukaryotic [YOU-care-ee-AW-tic] cell divide into two genetically identical daughter cells?",
+   "answerLine": "MITOSIS",
+   "said": "TELOPHASE",
+   "verdict": "reject",
+   "why": "The answer line requires MITOSIS (or mitotic, M phase). Telophase is only one sub-stage of mitosis, so it is a different and more specific answer, and it is not on the accept list."
+  },
+  {
+   "id": "reject-doe-ms-11-r13-b07",
+   "from": "reject",
+   "stem": "What is the name of the effect for the Earth's axis slightly shifting due to the gravitational tug of the moon as it orbits the Earth?",
+   "answerLine": "NUTATION",
+   "said": "PRECESSION",
+   "verdict": "reject",
+   "why": "The answer line requires NUTATION, the small wobble superimposed on the Earth's axial motion. Precession is the slow, larger conical motion of the axis, which is a neighbouring but different term, so it is not the same answer."
+  },
+  {
+   "id": "reject-doe-ms-14-r01-b13",
+   "from": "reject",
+   "stem": "What is the term for the genetic interaction in which two alleles are both equally expressed, resulting in a phenotype such as AB blood type that has properties of both traits?",
+   "answerLine": "CODOMINANCE",
+   "said": "INCOMPLETE DOMINANCE",
+   "verdict": "reject",
+   "why": "Incomplete dominance produces a blended intermediate phenotype, whereas codominance expresses both alleles fully and equally, as in AB blood type. The player gave a different, neighboring term, so it does not match the answer line."
+  },
+  {
+   "id": "reject-doe-ms-08-r12-t10",
+   "from": "reject",
+   "stem": "The galactic center appears in which constellation?",
+   "answerLine": "SAGITTARIUS",
+   "said": "SAGITTA",
+   "verdict": "reject",
+   "why": "Sagitta is a different constellation (the Arrow) from Sagittarius (the Archer), though the names are similar. The galactic center lies in Sagittarius, so the player's answer is a different thing."
+  },
+  {
+   "id": "reject-doe-ms-14-r09-t07",
+   "from": "reject",
+   "stem": "While most complexes in the cell are made of proteins, ribosomes are mostly composed of protein and what other macromolecule?",
+   "answerLine": "NUCLEIC ACIDS",
+   "said": "DNA",
+   "verdict": "reject",
+   "why": "The answer line wants nucleic acids, specifically RNA (rRNA). DNA is a different nucleic acid and not on the accept list; ribosomes are not composed of DNA, so it is a different answer."
+  },
+  {
+   "id": "reject-doe-ms-14-r03-t07",
+   "from": "reject",
+   "stem": "What is the term for the force that is necessary for keeping an object in uniform circular motion?",
+   "answerLine": "CENTRIPETAL",
+   "said": "CENTRIFUGAL",
+   "verdict": "reject",
+   "why": "The answer line requires centripetal force, the real inward force that keeps an object in circular motion. Centrifugal is a different term, referring to the apparent outward force in a rotating frame, so it is a neighbouring term with a different meaning."
+  },
+  {
+   "id": "reject-doe-hs-17-r09-t12",
+   "from": "reject",
+   "stem": "Losing streams are streams whose surface is above what hydrologic feature?",
+   "answerLine": "WATER TABLE",
+   "said": "AQUIFERS",
+   "verdict": "reject",
+   "why": "The answer line requires WATER TABLE. An aquifer is a water-bearing rock unit, which is a different feature from the water table (the upper surface of the saturated zone). Losing streams lie above the water table, so 'aquifers' is a different answer."
+  },
+  {
+   "id": "reject-doe-hs-10-r10-b02",
+   "from": "reject",
+   "stem": "What type of learning involves an animal associating a behavioral response with punishment or reward?",
+   "answerLine": "OPERANT LEARNING",
+   "said": "CLASSICAL CONDITIONING",
+   "verdict": "reject",
+   "why": "Classical conditioning associates two stimuli, whereas the answer line requires operant learning, where a behavior is linked to reward or punishment. It is a different concept and not on the accept list."
+  },
+  {
+   "id": "reject-doe-ms-15-r07-t03",
+   "from": "reject",
+   "stem": "What theory, proposed by Einstein, explains gravity in terms of the properties of space and time?",
+   "answerLine": "GENERAL THEORY OF RELATIVITY",
+   "said": "THEORY OF RELATIVITY",
+   "verdict": "reject",
+   "why": "The answer line requires the general theory of relativity. The player's 'theory of relativity' is less specific, since it could also mean special relativity, so a judge would not accept it as naming the general theory."
+  },
+  {
+   "id": "reject-doe-hs-10-r15-b16",
+   "from": "reject",
+   "stem": "What is the molecular geometry about the nitrogen atoms in hydrazine [HIGH-drah-zeen]?",
+   "answerLine": "TRIGONAL PYRAMIDAL",
+   "said": "PYRAMIDAL",
+   "verdict": "reject",
+   "why": "The answer line requires TRIGONAL PYRAMIDAL (or TRIPOD). 'Pyramidal' alone omits 'trigonal' and could also mean square pyramidal, a different geometry, so it is less specific than required and a judge would likely not accept it without prompting."
+  },
+  {
+   "id": "reject-doe-hs-15-r03-b02",
+   "from": "reject",
+   "stem": "Levels of what gas in the blood are most responsible for regulating respiratory rate in humans?",
+   "answerLine": "CARBON DIOXIDE",
+   "said": "BICARBONATE",
+   "verdict": "reject",
+   "why": "The answer line is carbon dioxide (CO2). The player said bicarbonate, an ion that carries CO2 in the blood, not the gas itself. The question asks for a gas, so this is a different thing."
+  },
+  {
+   "id": "reject-doe-hs-11-r17-t15",
+   "from": "reject",
+   "stem": "In 1967, Jocelyn Bell detected a regularly pulsing radio signal, which she called LGM. What type of celestial object produced this signal?",
+   "answerLine": "PULSAR",
+   "said": "NEUTRON STAR",
+   "verdict": "reject",
+   "why": "The answer line requires PULSAR. A pulsar is a rotating neutron star, but 'neutron star' is the broader class and the question asks for the technical type of object; a judge would likely not accept it as the same term."
+  },
+  {
+   "id": "reject-doe-hs-13-r05-t15",
+   "from": "reject",
+   "stem": "What is the name of the climate phenomenon in which high atmospheric pressure builds in the Western Pacific, causing the trade winds to weaken or reverse direction?",
+   "answerLine": "EL NIÑO",
+   "said": "LA NIÑA",
+   "verdict": "reject",
+   "why": "The answer line is El Niño, where trade winds weaken or reverse. La Niña is the opposite phase, with strengthened trade winds, so it is a different phenomenon and not an accepted form."
+  },
+  {
+   "id": "reject-doe-hs-08-r08-t06",
+   "from": "reject",
+   "stem": "The Bowman’s capsule and the glomerulus [gloh-MER-yuh-luhs] compose what part of the mammalian kidney?",
+   "answerLine": "MALPIGHIAN BODY",
+   "said": "MALPIGHIAN",
+   "verdict": "unsure",
+   "why": "The answer line is MALPIGHIAN BODY, and the player said only \"Malpighian\". The missing word \"body\" is not supplied by the question, which asks what part of the kidney. \"Malpighian\" alone is an adjective that could also point to other structures, such as Malpighian tubules. A judge might accept it as shorthand, but it is not clearly the same answer, so I am unsure."
+  },
+  {
+   "id": "reject-doe-ms-15-r03-t10",
+   "from": "reject",
+   "stem": "When Earth passes through the orbit of a comet, large amounts of debris may fall into Earth's atmosphere. With what observational event is this associated?",
+   "answerLine": "METEOR SHOWER",
+   "said": "SHOOTING STAR",
+   "verdict": "reject",
+   "why": "The answer line requires the technical term METEOR SHOWER. 'Shooting star' is a popular nickname for a single meteor, not the shower of many, so it is a neighbouring everyday term and a different answer."
+  },
+  {
+   "id": "reject-doe-hs-17-r04-t09",
+   "from": "reject",
+   "stem": "What is the adjective for a harmonic oscillator that is acted upon by a frictional force proportional to its velocity?",
+   "answerLine": "DAMPED",
+   "said": "DAMPENED",
+   "verdict": "unsure",
+   "why": "The answer line requires the technical term DAMPED. \"Dampened\" is a common variant often used for the same idea, but strictly it means made moist or reduced in enthusiasm, a neighbouring word rather than the technical term. A judge would likely not accept it, though some might be lenient, so I am not certain."
+  },
+  {
+   "id": "reject-doe-hs-12-r03-b14",
+   "from": "reject",
+   "stem": "Simplify the following expression involving the complex number i: 4i + 3i² + 2i³ + i⁴",
+   "answerLine": "–2 + 2i",
+   "said": "2i – 2",
+   "verdict": "reject",
+   "why": "Computing: 4i - 3 - 2i + 1 = -2 + 2i. The player's 2i - 2 has the same value, but the convention requires a complex number in the form a + bi, and the same quantity with terms in another order is not accepted."
+  },
+  {
+   "id": "reject-doe-ms-11-r02-t12",
+   "from": "reject",
+   "stem": "What is the adjective for the type of formal reasoning that leads to a conclusion that logically follows from a set of premises?",
+   "answerLine": "DEDUCTIVE",
+   "said": "DEDUCTION",
+   "verdict": "reject",
+   "why": "The question asks for the adjective, and the answer line is DEDUCTIVE. The player said DEDUCTION, which is the noun form. Under the rule that a technical term is required and a neighbouring form is a different answer, the noun does not meet the adjective requirement."
+  },
+  {
+   "id": "reject-doe-ms-08-r16-t21",
+   "from": "reject",
+   "stem": "In ecology, GPP is the amount of light energy that is converted to chemical energy via photosynthesis per unit of time. In this case, for what is GPP an abbreviation?",
+   "answerLine": "GROSS PRIMARY PRODUCTION",
+   "said": "GROSS PRIMARY PRODUCTIVITY",
+   "verdict": "unsure",
+   "why": "The player said 'gross primary productivity' while the answer line is 'gross primary production'. In ecology the two terms are used interchangeably for GPP, and the question asks what GPP abbreviates. The difference is minor, but a strict judge might want the exact wording, so it is not certain."
+  },
+  {
+   "id": "reject-doe-hs-08-r09-b12",
+   "from": "reject",
+   "stem": "Of the nonradioactive halides found in natural abundance, which is the strongest reducing agent?",
+   "answerLine": "IODIDE",
+   "said": "IODINE",
+   "verdict": "reject",
+   "why": "The answer line requires iodide (the I⁻ ion), the halide that acts as the reducing agent. Iodine is the neutral element I2, a different species and an oxidizing agent, so it is not the same answer and is not on the accepted list."
+  },
+  {
+   "id": "reject-doe-hs-14-r02-b09",
+   "from": "reject",
+   "stem": "High atmospheric CO2 concentrations contribute to death of plants by carbon starvation because the resulting high temperatures cause the plants to close their stomata [stow-MAH-tah]. This mechanism is an adaptation to regulate what biological process?",
+   "answerLine": "TRANSPIRATION",
+   "said": "PHOTORESPIRATION",
+   "verdict": "reject",
+   "why": "The answer line is transpiration (water loss through stomata). Photorespiration is a different process, so the player's answer does not match."
+  },
+  {
+   "id": "reject-doe-ms-14-r09-b23",
+   "from": "reject",
+   "stem": "During what phase of meiosis [my-OH-sis] does crossing over occur?",
+   "answerLine": "PROPHASE I",
+   "said": "PROPHASE",
+   "verdict": "reject",
+   "why": "The answer line requires Prophase I, with Pachytene also accepted. The player said only 'Prophase', which does not say whether it is I or II. Crossing over occurs only in Prophase I, so the answer is less specific than the answer line requires."
+  },
+  {
+   "id": "reject-doe-hs-12-r14-b05",
+   "from": "reject",
+   "stem": "Solve the following equation for x: 4x + 2 equals the absolute value of open parenthesis 3x – 5 close parenthesis.",
+   "answerLine": "3/7",
+   "said": "–7",
+   "verdict": "reject",
+   "why": "Solving 4x+2=|3x-5|: case 1: 4x+2=3x-5 gives x=-7, but then 4x+2=-26, which is negative, so it is extraneous. Case 2: 4x+2=-3x+5 gives x=3/7, which works. The answer line is 3/7, and the player's -7 is a different value (and extraneous)."
+  },
+  {
+   "id": "reject-doe-ms-14-r05-b08",
+   "from": "reject",
+   "stem": "Rock strata exposed by the Colorado River at the Grand Canyon are separated by intervals where no net sedimentary deposition occurred. What is the general term for these unrecorded intervals of time in the rock record?",
+   "answerLine": "UNCONFORMITY",
+   "said": "THE GREAT UNCONFORMITY",
+   "verdict": "reject",
+   "why": "The question asks for the general term for gaps in the rock record, which is 'unconformity'. 'The Great Unconformity' names one specific, famous unconformity (at the Grand Canyon), not the general term. It is more specific than required and a different thing from the general class, so a judge would likely not accept it, though some might allow it since it contains 'unconformity'."
+  },
+  {
+   "id": "reject-doe-hs-10-r02-t19",
+   "from": "reject",
+   "stem": "What subsurface phenomenon, defined as soil that is perennially frozen, occurs beneath much of the state of Alaska and, as it melts, causes extensive damage of roads, trains, and pipelines?",
+   "answerLine": "PERMAFROST",
+   "said": "CRYOTIC SOIL",
+   "verdict": "unsure",
+   "why": "The answer line accepts 'perennially cryotic soil' as an alternate form of permafrost. The player said 'cryotic soil', which omits 'perennially', the word that makes it permanent frozen ground. Cryotic soil alone just means soil at or below 0°C, which could be seasonal, so it is less specific and not the listed form. A judge might take it as close, but it is not clearly equivalent."
+  },
+  {
+   "id": "reject-doe-ms-14-r16-t05",
+   "from": "reject",
+   "stem": "What physical quantity measures the product of a force on an object and the object’s displacement in the direction the force was applied?",
+   "answerLine": "WORK",
+   "said": "ENERGY",
+   "verdict": "reject",
+   "why": "The answer line is WORK, the product of force and displacement along the force. Energy is a related but different quantity (the capacity to do work), so it is a neighbouring term and not the same answer."
+  },
+  {
+   "id": "reject-doe-ms-10-r09-t12",
+   "from": "reject",
+   "stem": "Kinetic energy of an object is determined by what two properties of the object?",
+   "answerLine": "SPEED and MASS",
+   "said": "WEIGHT",
+   "verdict": "reject",
+   "why": "The answer line requires speed (or velocity) and mass. The player said only 'weight', which is a different quantity from mass, and gave no speed or velocity, so it is incomplete and incorrect."
+  },
+  {
+   "id": "reject-doe-hs-10-r03-b10",
+   "from": "reject",
+   "stem": "If a helicopter loses engine power at a sufficient height and speed, it is able to autorotate to the ground, extracting energy from the air and, sometimes, landing safely. In this case, gravitational potential energy is converted into what type of energy?",
+   "answerLine": "MECHANICAL",
+   "said": "POTENTIAL",
+   "verdict": "reject",
+   "why": "The answer line wants mechanical energy, accepting kinetic or rotational forms. The player said 'potential', which is the starting energy type named in the question, not what it is converted into, and it is not on the accepted list."
+  },
+  {
+   "id": "reject-doe-hs-14-r05-b20",
+   "from": "reject",
+   "stem": "A damped harmonic oscillator’s position function is x of t equals A times e to the minus t. At what time t does the oscillator reach one-half of its original amplitude?",
+   "answerLine": "NATURAL LOG OF 2",
+   "said": "LOG OF 2",
+   "verdict": "reject",
+   "why": "\"Log of 2\" is ambiguous: it usually means base-10 log (about 0.301), which is not ln 2 (about 0.693). The answer line requires natural log or log base e, and the player did not specify the base, so it is not clearly the same answer."
+  },
+  {
+   "id": "reject-doe-ms-10-r05-t16",
+   "from": "reject",
+   "stem": "An element's atomic number represents the quantity per atom of what subatomic particle?",
+   "answerLine": "PROTON",
+   "said": "ELECTRON",
+   "verdict": "reject",
+   "why": "The answer line is PROTON, since atomic number is the number of protons per atom. The player said ELECTRON, which is a different particle. Electrons equal protons only in a neutral atom, so this is not the same answer."
+  },
+  {
+   "id": "reject-doe-ms-10-r10-b18",
+   "from": "reject",
+   "stem": "Solve the following equation for x: the square root of open parenthesis x + 20 close parenthesis = x",
+   "answerLine": "5",
+   "said": "-4",
+   "verdict": "reject",
+   "why": "Squaring gives x^2 - x - 20 = 0, so x = 5 or x = -4. But x = -4 is extraneous because sqrt(16) = 4, not -4. The answer line is 5, and the player's -4 is a different value."
+  },
+  {
+   "id": "reject-doe-hs-09-r04-b10",
+   "from": "reject",
+   "stem": "The reason you are safe in your car during a lightning storm is because the body of the car forms an enclosure that blocks external electric fields. What is the name used to describe this type of enclosure?",
+   "answerLine": "FARADAY CAGE",
+   "said": "SHIELDING",
+   "verdict": "reject",
+   "why": "The answer line requires the named enclosure, a Faraday cage. 'Shielding' describes the general effect or technique of blocking fields, not the named device, so it is a neighbouring term and not the required name."
+  },
+  {
+   "id": "reject-doe-hs-15-r06-t23",
+   "from": "reject",
+   "stem": "During what phase of meiosis [my-OH-sis] do sister chromatids separate?",
+   "answerLine": "ANAPHASE II",
+   "said": "ANAPHASE",
+   "verdict": "reject",
+   "why": "The answer line requires Anaphase II, the specific phase in meiosis where sister chromatids separate. The player said only 'Anaphase', which is less specific and could also mean Anaphase I, where homologous chromosomes separate. The question does not supply the 'II', so the missing numeral is not a harmless omission."
+  },
+  {
+   "id": "reject-doe-hs-15-r12-t09",
+   "from": "reject",
+   "stem": "The spinal cord is enclosed by three layers of membranes collectively called what?",
+   "answerLine": "MENINGES",
+   "said": "DURA",
+   "verdict": "reject",
+   "why": "The answer line is MENINGES, the collective term for all three membrane layers. The player said 'dura', which is only the outermost layer (dura mater), so it is a part, not the whole collective term."
+  },
+  {
+   "id": "reject-doe-hs-13-r07-t21",
+   "from": "reject",
+   "stem": "Which of Maxwell’s equations directly enforces the postulate that magnetic monopoles do not exist?",
+   "answerLine": "GAUSS’S LAW FOR MAGNETISM",
+   "said": "GAUSS’S LAW",
+   "verdict": "reject",
+   "why": "The answer line requires Gauss's law for magnetism specifically. The player said only \"Gauss's law\", which usually means Gauss's law for electricity and does not say which of the two Gauss laws is meant. It is less specific than required, so a judge would reject it."
+  },
+  {
+   "id": "reject-doe-ms-11-r17-t17",
+   "from": "reject",
+   "stem": "What specific theory, proposed by Einstein, describes how masses warp space-time?",
+   "answerLine": "GENERAL RELATIVITY",
+   "said": "SPECIAL RELATIVITY",
+   "verdict": "reject",
+   "why": "The answer line is general relativity, which describes gravity as the warping of space-time by mass. Special relativity is a different theory that does not cover gravity or curvature, so the player's answer is a different thing."
+  },
+  {
+   "id": "reject-doe-hs-11-r06-b12",
+   "from": "reject",
+   "stem": "Suppose the Earth’s radius were decreased by half but its mass remained the same. To one decimal place, by what factor will the surface escape velocity be multiplied?",
+   "answerLine": "1.4",
+   "said": "√2",
+   "verdict": "reject",
+   "why": "The question asks for the factor to one decimal place, so the answer must be given as the decimal 1.4. The player's exact form √2 is the same value in another form, which the convention rejects when decimal places are specified."
+  },
+  {
+   "id": "reject-doe-hs-10-r05-t23",
+   "from": "reject",
+   "stem": "At what type of plate boundary is there no destruction or creation of lithosphere due to the relative motion being in the horizontal direction?",
+   "answerLine": "TRANSFORM",
+   "said": "STRIKE-SLIP",
+   "verdict": "unsure",
+   "why": "Strike-slip describes the type of fault that occurs at transform boundaries, not the name of the boundary itself. The answer line requires TRANSFORM or CONSERVATIVE, and a judge would likely treat strike-slip as a neighbouring term rather than the required one, so it is not clearly the same answer."
+  },
+  {
+   "id": "reject-doe-hs-16-r01-t13",
+   "from": "reject",
+   "stem": "Argonne National Lab researchers are studying photocatalysts made of Cu₂O to reduce carbon dioxide into methanol. What is the IUPAC [EYE-you-pack] name for Cu₂O?",
+   "answerLine": "COPPER (I) OXIDE",
+   "said": "CUPROUS OXIDE",
+   "verdict": "reject",
+   "why": "The question asks for the IUPAC (systematic) name, and the answer line is copper(I) oxide. Cuprous oxide is the older traditional name for the same compound, and under the competition's convention an older or common name is a different answer when a systematic name is requested."
+  },
+  {
+   "id": "reject-doe-ms-10-r02-t04",
+   "from": "reject",
+   "stem": "What fundamental law states that “energy can be neither created nor destroyed?”",
+   "answerLine": "CONSERVATION OF ENERGY",
+   "said": "1ST LAW OF THERMODYNAMICS",
+   "verdict": "unsure",
+   "why": "The answer line is conservation of energy. The first law of thermodynamics is the thermodynamic statement of energy conservation, but it is a differently named law and not listed as acceptable. A judge holding this answer line would likely reject it, though some might accept it as the same principle."
+  },
+  {
+   "id": "reject-doe-ms-12-r15-t23",
+   "from": "reject",
+   "stem": "What method for identifying protein structures involves the interpretation of diffraction patterns of proteins in the solid state?",
+   "answerLine": "X-RAY CRYSTALLOGRAPHY",
+   "said": "X-RAY",
+   "verdict": "reject",
+   "why": "The player said only \"X-ray\", which is incomplete. The answer line requires X-ray crystallography or X-ray diffraction, and \"X-ray\" alone does not name the method. It could also refer to other X-ray techniques such as X-ray spectroscopy or imaging, so it is less specific than required."
+  },
+  {
+   "id": "reject-doe-hs-15-r15-b09",
+   "from": "reject",
+   "stem": "The Department of Energy supports scientists studying the high thermal conductivity of boron arsenide. This high thermal conductivity is due to heat transmission within boron arsenide being mediated by quantized collective vibrations in its crystal structure. This is an example of what quasiparticle [KWAH-zye-particle]?",
+   "answerLine": "PHONON",
+   "said": "PHOTON",
+   "verdict": "reject",
+   "why": "The answer line is phonon, the quasiparticle for quantized lattice vibrations. A photon is a quantum of the electromagnetic field and is not a quasiparticle of crystal vibrations, so it is a different thing."
+  },
+  {
+   "id": "reject-doe-hs-17-r15-t07",
+   "from": "reject",
+   "stem": "Although it can theoretically affect transcription or splicing, what is the term for a single-base-pair mutation that does not end up changing the encoded amino acid?",
+   "answerLine": "SYNONYMOUS",
+   "said": "silent",
+   "verdict": "accept",
+   "why": "A silent mutation is the standard synonym for a synonymous mutation; both describe a base change that does not alter the encoded amino acid. The answer line lists no DO NOT ACCEPT items, so 'silent' names the same thing."
+  },
+  {
+   "id": "reject-doe-hs-12-r05-b01",
+   "from": "reject",
+   "stem": "Special water for a 650-liter aquarium is only sold in 42-liter containers. What is the minimum number of these 42-liter containers you would need to buy to be able to completely fill the tank?",
+   "answerLine": "16",
+   "said": "15 10/21",
+   "verdict": "reject",
+   "why": "650/42 is about 15.48, so 15 10/21 is the exact quotient, but the question asks for the minimum whole number of containers, which is 16. The player's mixed number is a different value and does not answer the question as asked."
+  },
+  {
+   "id": "reject-doe-hs-09-r15-t03",
+   "from": "reject",
+   "stem": "What phenomenon explains why certain metals produce small amounts of electric current when exposed to light at or above a threshold frequency?",
+   "answerLine": "PHOTOELECTRIC EFFECT",
+   "said": "PHOTOVOLTAIC EFFECT",
+   "verdict": "reject",
+   "why": "The answer line is the photoelectric effect, in which metals emit electrons above a threshold frequency. The photovoltaic effect is a related but different phenomenon: voltage or current generation in a semiconductor junction. It is a neighbouring term, not the same answer, so it is not accepted."
+  },
+  {
+   "id": "reject-doe-hs-10-r16-b08",
+   "from": "reject",
+   "stem": "In the process of peptide synthesis by ribosomes, what specific macromolecule catalyzes the amide bond formation?",
+   "answerLine": "RNA",
+   "said": "RIBOZYME",
+   "verdict": "unsure",
+   "why": "The answer line is RNA (or ribonucleic acid), specifically rRNA catalyzing peptide bond formation. 'Ribozyme' names a class of catalytic RNA molecules, which is a neighboring term, not the listed answer. It is arguably equivalent in meaning, but it is not on the accept list and a judge might treat it as different or as a different level of specificity, so I can't be sure."
+  },
+  {
+   "id": "reject-doe-ms-15-r09-b12",
+   "from": "reject",
+   "stem": "In 1979, scientists discovered that two images of the same quasar were visible in the sky, separated by a few arc-seconds. What phenomenon produced this observation?",
+   "answerLine": "GRAVITATIONAL LENSING",
+   "said": "MICROLENSING",
+   "verdict": "reject",
+   "why": "The answer line requires gravitational lensing. Microlensing is a specific subtype of gravitational lensing, where the images are too close to resolve, so it is a narrower and different term. The 1979 Twin Quasar was produced by strong lensing from a galaxy, not microlensing, so the answer is not the same thing."
+  },
+  {
+   "id": "reject-doe-hs-12-r03-t23",
+   "from": "reject",
+   "stem": "What type of well has water coming out of the ground freely because the pressure surface is above ground level?",
+   "answerLine": "FLOWING ARTESIAN",
+   "said": "ARTESIAN",
+   "verdict": "reject",
+   "why": "The answer line requires FLOWING ARTESIAN, the specific type of artesian well that flows freely at the surface. The player's 'artesian' is the broader class and also includes non-flowing artesian wells, so it is less specific than required."
+  },
+  {
+   "id": "reject-doe-ms-14-r10-t03",
+   "from": "reject",
+   "stem": "Most long-period comets are thought to originate in what part of the solar system?",
+   "answerLine": "OORT CLOUD",
+   "said": "KUIPER [KYE-pur] BELT",
+   "verdict": "reject",
+   "why": "The answer line is the Oort Cloud, the source of long-period comets. The player said the Kuiper Belt, which is the source of short-period comets. That is a different region, so it is wrong."
+  },
+  {
+   "id": "reject-doe-hs-15-r15-b06",
+   "from": "reject",
+   "stem": "Researchers at Fermilab are working with CERN to detect long-lived particles in the Large Hadron Collider. One potential source of these particles is the decay of what particle, whose field is thought to give mass to other particles?",
+   "answerLine": "HIGGS BOSON",
+   "said": "GOD PARTICLE",
+   "verdict": "reject",
+   "why": "'God particle' is a popular nickname for the Higgs boson. The conventions treat a nickname as a different answer from the technical term, and it is not on the accepted list, so a judge would not accept it."
+  },
+  {
+   "id": "reject-doe-hs-12-r13-t21",
+   "from": "reject",
+   "stem": "What mineral can be found on the continuous branch of Bowen's reaction series?",
+   "answerLine": "PLAGIOCLASE FELDSPAR",
+   "said": "FELDSPAR",
+   "verdict": "reject",
+   "why": "The answer line requires plagioclase feldspar (plagioclase accepted). The player said only 'feldspar', which is a broader class that also includes potassium feldspar (orthoclase), found on the discontinuous/other branch, so it is less specific than required."
+  },
+  {
+   "id": "reject-doe-hs-13-r04-t17",
+   "from": "reject",
+   "stem": "What is 2 times 5 squared?",
+   "answerLine": "50",
+   "said": "100",
+   "verdict": "reject",
+   "why": "2 times 5 squared is 2 × 25 = 50. The player's answer of 100 is the value of (2×5) squared, a different value from the answer line's 50."
+  },
+  {
+   "id": "reject-doe-ms-16-r01-b01",
+   "from": "reject",
+   "stem": "What enzyme is responsible for transcribing DNA to RNA in bacteria?",
+   "answerLine": "RNA POLYMERASE",
+   "said": "RNA polymerase II",
+   "verdict": "reject",
+   "why": "RNA polymerase II is the eukaryotic enzyme that transcribes mRNA, not the bacterial enzyme. The answer line asks for plain RNA polymerase (or RNAP) in bacteria, so the player's answer names a more specific and different enzyme."
+  },
+  {
+   "id": "reject-doe-ms-10-r05-b12",
+   "from": "reject",
+   "stem": "What category of molecular transport across membranes requires the input of energy in order to move a molecule against its concentration gradient?",
+   "answerLine": "ACTIVE TRANSPORT",
+   "said": "BULK TRANSPORT",
+   "verdict": "reject",
+   "why": "The answer line is active transport. Bulk transport (endocytosis and exocytosis) is a different category of transport that moves large particles in vesicles. It is not the same term and is not listed as an accepted alternative."
+  },
+  {
+   "id": "reject-doe-ms-11-r07-b23",
+   "from": "reject",
+   "stem": "Meltwater streams leaving glaciers tend to be very cloudy. What is present in the water causing the cloudy appearance?",
+   "answerLine": "ROCK FLOUR",
+   "said": "SEDIMENT",
+   "verdict": "reject",
+   "why": "The answer line requires the specific term rock flour (glacial flour), finely ground rock produced by glacial abrasion. 'Sediment' is a broader class, less specific than required, and is not on the accept list."
+  },
+  {
+   "id": "reject-doe-ms-12-r11-b01",
+   "from": "reject",
+   "stem": "The Rio Tinto river in Spain is so named because of its red hue, which is derived from what abundant dissolved ion?",
+   "answerLine": "IRON THREE )",
+   "said": "IRON",
+   "verdict": "reject",
+   "why": "The answer line requires iron(III), the Fe3+ ion, with accepted forms iron three plus or ferric iron. The player said only \"iron\", which does not give the oxidation state or charge. That is less specific than required, since iron(II) is also a dissolved ion of iron."
+  },
+  {
+   "id": "reject-doe-hs-08-r01-t16",
+   "from": "reject",
+   "stem": "If the radius of a sphere is doubled, by what percent does the volume increase?",
+   "answerLine": "700 %",
+   "said": "800%",
+   "verdict": "reject",
+   "why": "Doubling the radius multiplies volume by 8, which is an increase of 700%. The player's 800% is a different value (it is the new volume as a percent of the original, not the increase), so it does not match."
+  },
+  {
+   "id": "reject-doe-hs-17-r10-b10",
+   "from": "reject",
+   "stem": "Two complex numbers have absolute values of 5√3 and 2√3, and angles of 263 degrees and 158 degrees, respectively. What are the absolute value and the angle degree measure of their product?",
+   "answerLine": "ABSOLUTE VALUE = 30; ANGLE = 61",
+   "said": "421",
+   "verdict": "reject",
+   "why": "The product has modulus 5√3 · 2√3 = 30 and angle 263 + 158 = 421°, which reduces to 61° mod 360. The player gave only 421, with no absolute value, and 421 is not the answer line's angle of 61. The player's answer is also not equal to 30, so it does not match either part of the answer line."
+  },
+  {
+   "id": "reject-doe-ms-13-r02-t10",
+   "from": "reject",
+   "stem": "In the rock cycle, what is the adjective for the type of rock that forms as magma cools and solidifies?",
+   "answerLine": "IGNEOUS",
+   "said": "EXTRUSIVE IGNEOUS",
+   "verdict": "reject",
+   "why": "The answer line is IGNEOUS and also accepts INTRUSIVE IGNEOUS, the type that forms from magma cooling underground. The player said EXTRUSIVE IGNEOUS, which is the lava-cooled-at-surface subtype, a different and more specific term that is not on the accept list. Although it contains the word igneous, the added qualifier names a different subtype, and the judge would likely not accept it."
+  },
+  {
+   "id": "reject-doe-ms-15-r04-t13",
+   "from": "reject",
+   "stem": "A wave is generated by moving one end of a rope up and down, so that the displacement of the rope is perpendicular to the direction of travel of the wave. What is the term for this type of wave?",
+   "answerLine": "TRANSVERSE",
+   "said": "SINUSOIDAL",
+   "verdict": "reject",
+   "why": "The answer line requires TRANSVERSE, the wave type with displacement perpendicular to travel. Sinusoidal describes a wave's shape, not its direction of oscillation, so it is a different term and not accepted."
+  },
+  {
+   "id": "reject-doe-hs-11-r06-t12",
+   "from": "reject",
+   "stem": "On a standing wave, what term refers to the points at which the amplitude is maximized?",
+   "answerLine": "ANTI-NODE",
+   "said": "PEAK",
+   "verdict": "reject",
+   "why": "The answer line requires the technical term antinode. \"Peak\" is an everyday word for a high point of a wave (a crest) and does not name the standing-wave position of maximum amplitude, so it is a different answer."
+  },
+  {
+   "id": "reject-doe-hs-08-r05-b04",
+   "from": "reject",
+   "stem": "Identify both the general habitat and type of organisms that are represented by the oldest fossils of the Paleozoic [pay-lee-uh-ZOH-ik] Era.",
+   "answerLine": "MARINE INVERTEBRATES",
+   "said": "INVERTEBRATES",
+   "verdict": "reject",
+   "why": "The question asks for both the habitat and the type of organism. The answer line is MARINE INVERTEBRATES, but the player said only 'invertebrates' and left out the marine habitat. That makes it less specific than required, since half of the answer is missing."
+  },
+  {
+   "id": "reject-doe-ms-14-r16-t09",
+   "from": "reject",
+   "stem": "During the light-dependent reactions of photosynthesis, absorption of light drives a series of electron transfer events resulting in the production of ATP and what reduced energy-carrying product?",
+   "answerLine": "NADPH",
+   "said": "NADP",
+   "verdict": "reject",
+   "why": "The answer line requires NADPH, the reduced form. NADP (NADP+) is the oxidized electron acceptor, a different species from the reduced product the question asks for, so it is not the same answer."
+  },
+  {
+   "id": "reject-doe-hs-09-r10-t05",
+   "from": "reject",
+   "stem": "Recombinant DNA can be introduced to eukaryotic cells by briefly shocking them. What is this technique called?",
+   "answerLine": "ELECTROPORATION",
+   "said": "TRANSFECTION",
+   "verdict": "reject",
+   "why": "The answer line requires electroporation, the specific technique of using an electric shock to introduce DNA. Transfection is the broader term for introducing nucleic acids into eukaryotic cells by any method, so it is less specific than required and is a different term."
+  },
+  {
+   "id": "reject-doe-hs-15-r05-b18",
+   "from": "reject",
+   "stem": "Physicists at the Thomas Jefferson National Accelerator Lab found that increasing the number of neutrons in a nucleus caused protons to pair and get closer together. What massive virtual particles are being exchanged by these protons?",
+   "answerLine": "PION",
+   "said": "CHARGED PION",
+   "verdict": "reject",
+   "why": "The answer line accepts PION, pi-zero, neutral pion, and virtual pion. 'Charged pion' is a specific kind of pion (pi-plus or pi-minus), not the neutral one listed. It is not on the accept list, and the neutral pion is what proton-proton exchange involves, so a judge would likely not take it, though the generic 'pion' is accepted."
+  },
+  {
+   "id": "reject-doe-ms-13-r08-t11",
+   "from": "reject",
+   "stem": "Physicists at Lawrence Berkeley National Lab are studying distortions in the cosmic microwave background radiation to gain a better understanding of filaments that do not produce any electromagnetic radiation. Of what are these filaments believed to be made?",
+   "answerLine": "DARK MATTER",
+   "said": "DARK ENERGY",
+   "verdict": "reject",
+   "why": "The answer line is dark matter; the player said dark energy, which is a different concept (the cause of accelerating expansion, not the matter making up filaments). It is not an acceptable variant."
+  },
+  {
+   "id": "reject-doe-ms-15-r06-t01",
+   "from": "reject",
+   "stem": "Scientists at Fermi National Accelerator Lab are studying what substance that is thought to be the reason that the expansion of the universe is accelerating?",
+   "answerLine": "DARK ENERGY",
+   "said": "DARK MATTER",
+   "verdict": "reject",
+   "why": "The answer line is dark energy, the proposed cause of the universe's accelerating expansion. Dark matter is a different thing, a form of unseen mass that affects gravity and structure formation. The player's answer is therefore wrong."
+  },
+  {
+   "id": "reject-doe-hs-14-r07-t23",
+   "from": "reject",
+   "stem": "What principle posits the requirement that the laws of physics must be equivalent in all inertial [in-UR-shul] reference frames?",
+   "answerLine": "RELATIVITY",
+   "said": "GENERAL RELATIVITY",
+   "verdict": "reject",
+   "why": "The answer line accepts Relativity or Special Relativity, which concerns inertial frames. General Relativity is a different theory, covering non-inertial frames and gravity, and is not on the accept list, so it is a different answer."
+  },
+  {
+   "id": "reject-doe-hs-10-r15-t06",
+   "from": "reject",
+   "stem": "What is the molecular geometry of SOCl2?",
+   "answerLine": "TRIGONAL PYRAMIDAL",
+   "said": "PYRAMIDAL",
+   "verdict": "unsure",
+   "why": "The answer line requires TRIGONAL PYRAMIDAL (or TRIPOD). 'Pyramidal' alone omits 'trigonal', which makes it less specific, since a pyramid could have a square or other base; it is not a listed accepted form, so a judge would likely not take it, though some might consider it a harmless shortening."
+  },
+  {
+   "id": "reject-doe-hs-08-r03-t20",
+   "from": "reject",
+   "stem": "Gypsum wallboard, commonly known as drywall, is a laminar, composite material composed of front and back paper with a hydrated gypsum core. What is the chemical formula for the hydrated gypsum?",
+   "answerLine": "CaSO₄ · 2 H₂O",
+   "said": "CALCIUM SULFATE AND 2 MOLECULES OF WATER",
+   "verdict": "reject",
+   "why": "The question asks for the chemical formula, and the answer line is CaSO4·2H2O. The player gave a verbal description (calcium sulfate and 2 molecules of water) rather than a formula. It conveys the right composition, but the formula was asked for, and a name or description is not the formula. A judge would likely not accept it, though some might be lenient."
+  },
+  {
+   "id": "reject-doe-ms-11-r09-b23",
+   "from": "reject",
+   "stem": "At what specific area of the cell is rRNA transcribed?",
+   "answerLine": "NUCLEOLUS",
+   "said": "NUCLEUS",
+   "verdict": "reject",
+   "why": "The answer line requires the nucleolus, a specific region within the nucleus. The player said 'nucleus', which is less specific than the question's 'specific area' demands, so a judge would not accept it."
+  },
+  {
+   "id": "reject-doe-ms-13-r01-t02",
+   "from": "reject",
+   "stem": "Satellites that stay above the same spot on Earth while in orbit are in what type of orbit?",
+   "answerLine": "GEOSTATIONARY",
+   "said": "GEOSYNCHRONOUS",
+   "verdict": "accept",
+   "why": "The answer line accepts 'geosynchronous Earth orbit'; the player's 'geosynchronous' is the same term with only the word 'Earth orbit' omitted, which the question supplies by asking for the type of orbit. A judge would accept it."
+  },
+  {
+   "id": "reject-doe-ms-08-r07-t17",
+   "from": "reject",
+   "stem": "The solar wind is essentially the Sun's atmosphere boiling off. What ion makes up 96% of the solar wind?",
+   "answerLine": "HYDROGEN",
+   "said": "ALPHA PARTICLES",
+   "verdict": "reject",
+   "why": "The answer line is hydrogen (H⁺, i.e. protons). Alpha particles are helium nuclei, which make up only about 4% of the solar wind, so this is a different thing."
+  },
+  {
+   "id": "reject-doe-hs-15-r06-t09",
+   "from": "reject",
+   "stem": "The Department of Energy is supporting research on identifying new drugs to treat strep throat, which is a disease caused by what genus of bacteria?",
+   "answerLine": "STREPTOCOCCUS",
+   "said": "STREPTOCOCCI",
+   "verdict": "unsure",
+   "why": "Streptococci is the plural form of Streptococcus, referring to the same genus of bacteria; the question asks for a genus and the plural is a harmless variation, though a strict judge might note it differs in form from the genus name."
+  },
+  {
+   "id": "reject-doe-hs-15-r08-b17",
+   "from": "reject",
+   "stem": "If it is 31 degrees Celsius outside, then, in degrees Fahrenheit, what is the temperature outside?",
+   "answerLine": "87.8",
+   "said": "88",
+   "verdict": "reject",
+   "why": "The exact conversion is 31 × 9/5 + 32 = 87.8. The player gave 88, which is a rounded, different value. The question does not ask for rounding, so the answer must be exact."
+  },
+  {
+   "id": "reject-doe-ms-14-r07-b23",
+   "from": "reject",
+   "stem": "What is the name given to the sum of the numbers of protons and neutrons for a given nuclide?",
+   "answerLine": "MASS NUMBER",
+   "said": "ATOMIC MASS",
+   "verdict": "reject",
+   "why": "The answer line requires MASS NUMBER (or nucleon number). \"Atomic mass\" is a neighbouring term that means the actual mass of an atom (in amu), not the integer count of protons plus neutrons, so it is a different answer."
+  },
+  {
+   "id": "reject-doe-ms-11-r15-b13",
+   "from": "reject",
+   "stem": "What structure does a male bird use to pass sperm to a female bird?",
+   "answerLine": "CLOACA",
+   "said": "INTROMITTENT ORGAN",
+   "verdict": "reject",
+   "why": "The answer line requires CLOACA, the structure birds use for sperm transfer (cloacal kiss). An intromittent organ is a penis-like organ, which most birds lack, so it names a different structure and is not the cloaca."
+  },
+  {
+   "id": "reject-doe-hs-10-r11-b05",
+   "from": "reject",
+   "stem": "Water flowing out of a 2.0 centimeter diameter pipe can fill a 300- liter bathtub in 5 minutes. In meters cubed per second, what is the flow rate of the pipe?",
+   "answerLine": "0.001",
+   "said": "1x10⁻³",
+   "verdict": "reject",
+   "why": "The player's 1x10^-3 equals 0.001, the same value, but it is written in scientific notation. The competition's conventions say scientific notation is not accepted unless the question asks for it, and this question does not. The answer line accepts only 0.001 and 1/1000."
+  },
+  {
+   "id": "reject-doe-hs-10-r12-t06",
+   "from": "reject",
+   "stem": "What class of molecules is characterized by the functional group containing atoms C-O-O-H?",
+   "answerLine": "CARBOXYLIC ACID",
+   "said": "ORGANIC ACID",
+   "verdict": "reject",
+   "why": "The answer line is carboxylic acid. 'Organic acid' is a broader class that includes carboxylic acids, sulfonic acids, phenols and others, so it is less specific than required and a judge would not take it."
+  },
+  {
+   "id": "reject-doe-hs-08-r07-b18",
+   "from": "reject",
+   "stem": "A Carnot [kahr-NOH] engine takes 2000 joules of heat from a reservoir at 500 kelvin, does some work, and then discards some heat to a reservoir [REZ-er-vwahr] at 300 kelvin. How much heat, in joules, is discarded by the Carnot engine?",
+   "answerLine": "1200 JOULES",
+   "said": "-1200",
+   "verdict": "reject",
+   "why": "The answer line is 1200 joules, the magnitude of the heat discarded. The player said -1200, a different value because of the sign. The question asks how much heat is discarded, which is a positive amount, so a judge would likely not accept a negative value."
+  },
+  {
+   "id": "reject-doe-ms-14-r16-t23",
+   "from": "reject",
+   "stem": "How many valence electrons does the sodium plus ion possess?",
+   "answerLine": "EIGHT",
+   "said": "ZERO",
+   "verdict": "reject",
+   "why": "The answer line says EIGHT valence electrons, counting the full n=2 shell of Na+. The player said ZERO, which is a different value. Although some conventions say Na+ has no valence electrons, the judge holds the answer line, so this is a different answer and is rejected."
+  },
+  {
+   "id": "reject-doe-hs-10-r14-b21",
+   "from": "reject",
+   "stem": "What instrument is designed to measure the presence, direction, and strength of an electric current in a conductor, with its earliest versions simply consisting of a compass surrounded by a wire coil?",
+   "answerLine": "GALVANOMETER",
+   "said": "AMMETER",
+   "verdict": "reject",
+   "why": "The answer line requires GALVANOMETER, the instrument that detects the presence, direction, and strength of current and began as a compass inside a wire coil. An ammeter is a neighbouring but different instrument that measures current magnitude, so the player's answer is a different term and not accepted."
+  },
+  {
+   "id": "reject-doe-hs-10-r07-t12",
+   "from": "reject",
+   "stem": "Fiber optic cables have revolutionized the information age with the ability to transfer data at much higher rates than conventional electric cables. Fiber optic cables work because of total internal reflection, which results from a difference in what optical property between the cable and surrounding medium?",
+   "answerLine": "REFRACTIVE INDEX",
+   "said": "SPEED OF LIGHT",
+   "verdict": "reject",
+   "why": "The answer line requires refractive index (index of refraction). The player said speed of light, which is related (index = c/v) but is a different property, not the named technical term. Different answer."
+  },
+  {
+   "id": "reject-doe-ms-10-r02-b16",
+   "from": "reject",
+   "stem": "Which one of the solar system's rocky planets rotates in the opposite direction from all the others?",
+   "answerLine": "VENUS",
+   "said": "URANUS",
+   "verdict": "reject",
+   "why": "The answer line is Venus, the rocky planet with retrograde rotation. Uranus is a gas/ice giant, not a rocky planet, and is a different planet."
+  },
+  {
+   "id": "reject-doe-ms-10-r04-b19",
+   "from": "reject",
+   "stem": "What is the term for a solution containing more dissolved material than would be possible at normal conditions?",
+   "answerLine": "SUPERSATURATED",
+   "said": "SATURATED",
+   "verdict": "reject",
+   "why": "The answer line requires SUPERSATURATED, a solution holding more solute than normally possible. SATURATED means holding the maximum amount at equilibrium, which is a different, neighboring term."
+  },
+  {
+   "id": "reject-doe-hs-12-r04-b06",
+   "from": "reject",
+   "stem": "Human vision occurs due to the photoisomerization [photo-eye-saw-mer-ih-ZAY-shun] of what molecule?",
+   "answerLine": "RETINAL",
+   "said": "RETINOL – if you can tell the difference",
+   "verdict": "reject",
+   "why": "The answer line requires retinal (retinaldehyde). The player said retinol, which is vitamin A, the alcohol form. It is a related but different molecule, and it is not the one that undergoes photoisomerization in vision. The player's remark about telling the difference does not change the answer."
+  },
+  {
+   "id": "reject-doe-ms-10-r17-b15",
+   "from": "reject",
+   "stem": "What is the specific name of the law that states that a line segment connecting a planet and the Sun will sweep out equal areas during equal intervals of time?",
+   "answerLine": "KEPLER'S SECOND LAW",
+   "said": "KEPLER’S LAW",
+   "verdict": "reject",
+   "why": "The question asks for the specific name of the law, which is Kepler's Second Law. The player said only \"Kepler's law\", which does not say which of the three laws and is less specific than the answer line requires."
+  },
+  {
+   "id": "reject-doe-ms-13-r11-t23",
+   "from": "reject",
+   "stem": "A proton is being repelled by a certain charged particle that is a distance D away from it. If the proton is moved to distance 2D, by what factor is the force on the proton multiplied?",
+   "answerLine": "ONE-FOURTH",
+   "said": "FOUR",
+   "verdict": "reject",
+   "why": "The force falls off as 1/r^2, so doubling the distance multiplies the force by 1/4. The player said four, which is the reciprocal and a different value."
+  },
+  {
+   "id": "reject-doe-hs-17-r05-t01",
+   "from": "reject",
+   "stem": "What is the partial derivative with respect to y of x³y⁴?",
+   "answerLine": "4x³y³",
+   "said": "x³4y³",
+   "verdict": "accept",
+   "why": "The player's 'x³4y³' is x³ times 4y³, which equals 4x³y³. It is the same expression with the factors in a different order, and a judge would read it as equivalent, though the form is unconventional."
+  },
+  {
+   "id": "reject-doe-hs-09-r16-t09",
+   "from": "reject",
+   "stem": "What type of styrofoam device is used in school laboratories to quantitatively collect data to calculate the heat released by chemical reactions and physical changes at constant-pressure?",
+   "answerLine": "COFFEE-CUP CALORIMETER",
+   "said": "CALORIMETER",
+   "verdict": "reject",
+   "why": "The answer line requires the specific type, a coffee-cup calorimeter. The player said only 'calorimeter', which is the general class and omits the distinguishing word. The question asks 'what type', so the type-specifying word is needed and the answer is less specific than required."
+  },
+  {
+   "id": "reject-doe-hs-15-r01-t04",
+   "from": "reject",
+   "stem": "Scientists at Idaho National Lab are studying cyanobacteria. These organisms perform photosynthesis in what flattened sacs?",
+   "answerLine": "THYLAKOIDS",
+   "said": "GRANA",
+   "verdict": "reject",
+   "why": "Grana are stacks of thylakoids, not the flattened sacs themselves, so the player's answer names a different structure than THYLAKOIDS. Cyanobacteria also lack grana, since their thylakoids are not stacked into them."
+  },
+  {
+   "id": "reject-doe-hs-15-r16-t20",
+   "from": "reject",
+   "stem": "Akin to hibernation, some animals slow their metabolism during the summer. What is the term for this state?",
+   "answerLine": "ESTIVATION",
+   "said": "TORPOR",
+   "verdict": "reject",
+   "why": "The answer line requires ESTIVATION or SUMMER TORPOR. The player said only 'torpor', which is a broader term covering any state of reduced metabolic activity, including daily torpor and winter torpor, so it is less specific than the answer line requires and does not name the summer-specific state."
+  },
+  {
+   "id": "reject-doe-hs-12-r02-b21",
+   "from": "reject",
+   "stem": "What is the term for objects that revolve around the Sun between the orbits of Jupiter and Neptune and are thought to be scattered Kuiper [KYE-pur] Belt objects?",
+   "answerLine": "CENTAURS",
+   "said": "NEPTUNE TROJANS",
+   "verdict": "reject",
+   "why": "The answer line is Centaurs, small bodies orbiting between Jupiter and Neptune. Neptune trojans are a different group that shares Neptune's orbit at its Lagrange points, so the player's answer names a different thing."
+  },
+  {
+   "id": "reject-doe-ms-08-r17-t20",
+   "from": "reject",
+   "stem": "What fictitious curved motion force is present only in rotating reference frames?",
+   "answerLine": "CENTRIFUGAL",
+   "said": "CENTRIPETAL",
+   "verdict": "reject",
+   "why": "The answer line requires centrifugal, the fictitious outward force in rotating frames. Centripetal is the real inward net force toward the center, a different and opposite concept, and it is not on the accept list."
+  },
+  {
+   "id": "reject-doe-ms-13-r07-t10",
+   "from": "reject",
+   "stem": "What constellation contains the north celestial pole?",
+   "answerLine": "URSA MINOR",
+   "said": "LITTLE DIPPER",
+   "verdict": "reject",
+   "why": "The Little Dipper is an asterism within Ursa Minor, not the constellation itself. The question asks for a constellation, so the technical term is required, and the Little Dipper is a popular name for a neighbouring but different thing. The answer line lists no accepted alternatives."
+  },
+  {
+   "id": "reject-doe-ms-14-r11-b21",
+   "from": "reject",
+   "stem": "Solve the following equation for x: the square root of open parenthesis x + 13 close parenthesis = x + 7.",
+   "answerLine": "–4",
+   "said": "–9",
+   "verdict": "reject",
+   "why": "Squaring gives x+13 = x^2+14x+49, so x^2+13x+36=0, so x=-4 or x=-9. Checking x=-9: sqrt(4)=2 but x+7=-2, so it is extraneous. The valid solution is -4, and the player's -9 is a different value, not the answer line's."
+  },
+  {
+   "id": "reject-doe-hs-08-r03-t16",
+   "from": "reject",
+   "stem": "What is the chemical formula of the most stable ionic compound that forms between aluminum and sulfur?",
+   "answerLine": "Al₂S₃",
+   "said": "ALUMINUM SULFIDE",
+   "verdict": "unsure",
+   "why": "The player gave the name aluminum sulfide, which is the compound with formula Al2S3; the formula uniquely identifies this compound and the name denotes the same thing, though the question asks for the chemical formula."
+  },
+  {
+   "id": "reject-doe-hs-10-r02-t15",
+   "from": "reject",
+   "stem": "What property of concentration in chemistry is defined as moles of solute per kilograms of solvent and is useful when calculating freezing-point depression and boiling-point elevation?",
+   "answerLine": "MOLALITY",
+   "said": "MOLARITY",
+   "verdict": "reject",
+   "why": "Molarity is moles of solute per liter of solution, which is a different concentration measure from molality (moles of solute per kilogram of solvent). The player's answer is a neighbouring term with a different meaning, so it is not the answer line."
+  }
+ ]
+}

@@ -4,9 +4,10 @@ import type { QuestionText } from '../types';
 import { draftText, isRepeat, JUDGE_PROMPT, JUDGE_SCHEMA, judgeRequest, readJudgment } from './judge';
 import { rateRequest, readRating } from './rate';
 import { asRead, asReadWithAnswer, onOneLine, promptVersion } from './show';
-import { compare, readSolution, solveRequest, unacceptedAnswers, type Solution } from './solve';
+import { matchRequest, readMatch, settled } from './match';
+import { compare, readings, readSolution, SOLVE_SCHEMA, solveRequest, unacceptedAnswers, type Solution } from './solve';
 
-const reply = (json: unknown, more: Partial<ModelReply> = {}): ModelReply => ({ id: 'x', step: 'test', model: 'claude-sonnet-5-5', at: '2026-11-21T00:00:00.000Z', outcome: 'ok', text: JSON.stringify(json), json, citations: [], usage: NO_USAGE, batch: false, cost: 0, ...more });
+const reply = (json: unknown, more: Partial<ModelReply> = {}): ModelReply => ({ id: 'x', step: 'test', model: 'claude-sonnet-5-5', at: '2026-11-21T00:00:00.000Z', outcome: 'ok', text: JSON.stringify(json), json, citations: [], codeRuns: 0, usage: NO_USAGE, batch: false, cost: 0, ...more });
 
 const lichen: QuestionText = { kind: 'bonus', subject: 'biology', format: 'short_answer', stem: 'A lichen is a partnership between a fungus and what other kind of organism that carries out photosynthesis?', answer: 'ALGAE', accept: ['GREEN ALGAE', 'CYANOBACTERIA'], reject: ['MOSS'] };
 const gas: QuestionText = { kind: 'tossup', subject: 'chemistry', format: 'multiple_choice', stem: 'Which of the following elements is a noble gas?', choices: { W: 'Argon', X: 'Chlorine', Y: 'Sodium', Z: 'Sulfur' }, answerLetter: 'W', answer: 'ARGON', accept: [], reject: [] };
@@ -81,7 +82,7 @@ describe('the duplicate judge', () => {
 });
 
 describe('the blind solver', () => {
-  const solved = (more: Partial<Solution>): Solution => ({ answer: '', letter: '', confidence: 5, otherAnswers: [], problems: [], seconds: 3, difficulty: 2, ...more });
+  const solved = (more: Partial<Solution>): Solution => ({ answer: '', letter: '', confidence: 5, otherAnswers: [], problems: [], remarks: [], seconds: 3, difficulty: 2, ...more });
 
   it('is given the question as read and nothing that could give the answer away', () => {
     const r = solveRequest('H001', lichen, 'MS', 'claude-sonnet-5-5');
@@ -93,8 +94,10 @@ describe('the blind solver', () => {
   });
 
   it('reads a reply, and tidies what is out of range', () => {
-    const s = readSolution(reply({ answer: ' Algae ', letter: '', confidence: 9, otherAnswers: ['cyanobacteria', ''], problems: [{ kind: 'ambiguous', note: 'two partners are possible' }, { kind: 'made-up', note: 'x' }], seconds: 4, difficulty: 2 }));
-    expect(s).toEqual({ answer: 'Algae', letter: '', confidence: 5, otherAnswers: ['cyanobacteria'], problems: [{ kind: 'ambiguous', note: 'two partners are possible' }], seconds: 4, difficulty: 2 });
+    const s = readSolution(reply({ answer: ' Algae ', letter: '', confidence: 9, otherAnswers: ['cyanobacteria', ''], problems: [{ kind: 'ambiguous', note: 'two partners are possible' }, { kind: 'giveaway', note: 'a matter of style is not a fault' }], remarks: ['The stem is long.', ' '], seconds: 4, difficulty: 2 }));
+    expect(s).toEqual({ answer: 'Algae', letter: '', confidence: 5, otherAnswers: ['cyanobacteria'], problems: [{ kind: 'ambiguous', note: 'two partners are possible' }], remarks: ['The stem is long.'], seconds: 4, difficulty: 2 });
+    // A reply with no remarks still reads.
+    expect(readSolution(reply({ answer: 'Algae', letter: '', confidence: 4, otherAnswers: [], problems: [], seconds: 3, difficulty: 1 }))).toMatchObject({ remarks: [] });
     expect(readSolution(reply({ letter: 'W' }))).toBeNull();
     expect(readSolution(reply(undefined, { outcome: 'cut-off' }))).toBeNull();
   });
@@ -110,8 +113,49 @@ describe('the blind solver', () => {
     expect(compare(gas, solved({ answer: 'Argon', letter: 'X' }))).toBe('disagrees');
   });
 
+  it('does not ask the solver to write out its working, which the API refuses as extracting its reasoning', () => {
+    expect(Object.keys(SOLVE_SCHEMA.properties)).not.toContain('working');
+    expect(solveRequest('x', lichen, 'HS', 'claude-sonnet-5-5').effort).toBe('high');
+  });
+
+  it('reads an answer that carries a second form in brackets as either form', () => {
+    expect(readings('Sodium (Na+)')).toEqual(['Sodium (Na+)', 'Sodium', 'Na+']);
+    expect(readings('LIGO [Laser Interferometer Gravitational-Wave Observatory]')).toEqual(['LIGO [Laser Interferometer Gravitational-Wave Observatory]', 'LIGO', 'Laser Interferometer Gravitational-Wave Observatory']);
+    expect(readings(' algae ')).toEqual(['algae']);
+    expect(compare(lichen, solved({ answer: 'Algae (the photobiont)' }))).toBe('agrees');
+    expect(compare(lichen, solved({ answer: 'a photobiont (cyanobacteria)' }))).toBe('agrees');
+    expect(compare(lichen, solved({ answer: 'Moss (a bryophyte)' }))).toBe('disagrees');
+  });
+
   it('points out a defensible answer the answer line would mark wrong', () => {
     expect(unacceptedAnswers(lichen, solved({ answer: 'algae', otherAnswers: ['cyanobacteria', 'a photobiont'] }))).toEqual(['a photobiont']);
+  });
+});
+
+describe('matching an answer to the answer line', () => {
+  it('is shown the question with its answer line and what the player said', () => {
+    const r = matchRequest('m1', lichen, ' photobiont ', 'MS', 'claude-haiku-5-5');
+    expect(r.step).toBe('match');
+    expect(r.user).toBe(`<question>\n${asReadWithAnswer(lichen)}\n</question>\n\n<player_answer>\nphotobiont\n</player_answer>`);
+    expect(r.system).toContain('Do not decide whether the answer line itself is right.');
+    expect(() => toParams(r)).not.toThrow();
+  });
+
+  it('reads the verdict, which comes after the comparison', () => {
+    expect(readMatch(reply({ compare: 'The same organism by another name.', verdict: 'accept' }))).toEqual({ verdict: 'accept', why: 'The same organism by another name.' });
+    expect(readMatch(reply({ compare: 'x', verdict: 'maybe' }))).toBeNull();
+    expect(readMatch(reply(undefined, { outcome: 'error' }))).toBeNull();
+  });
+
+  it('settles what the answer checker could not', () => {
+    expect(settled('agrees', null)).toBe('agrees');
+    expect(settled('agrees', { verdict: 'reject', why: '' })).toBe('agrees');
+    expect(settled('disagrees', { verdict: 'accept', why: '' })).toBe('agrees');
+    expect(settled('close', { verdict: 'reject', why: '' })).toBe('disagrees');
+    expect(settled('disagrees', { verdict: 'unsure', why: '' })).toBe('close');
+    // With no ruling, the checker's own verdict stands.
+    expect(settled('disagrees', null)).toBe('disagrees');
+    expect(settled('close', null)).toBe('close');
   });
 });
 

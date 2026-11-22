@@ -44,7 +44,7 @@ Rate the question on this scale:
 
 What makes a question hard here is what a player must know and do within the time: how advanced or uncommon the knowledge is for ${LEVEL_NAME[level]} students, how many steps of reasoning or arithmetic it takes without a calculator (5 seconds for a toss-up, 20 for a bonus), and how close the wrong choices are. Length and unfamiliar wording alone do not make it hard.
 
-Reply with the score and one sentence giving the main reason.`;
+Reply with one sentence saying what a player must know and do to answer the question, and then the score.`;
 }
 
 export const RATE_PROMPT = promptVersion(rateSystem('HS', 'biology', { early: [], late: [] }));
@@ -52,8 +52,9 @@ export const RATE_PROMPT = promptVersion(rateSystem('HS', 'biology', { early: []
 export const RATE_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['score', 'reason'],
-  properties: { score: { type: 'integer', enum: [1, 2, 3, 4, 5] }, reason: { type: 'string' } },
+  // The sentence comes first, so the score follows from it.
+  required: ['reason', 'score'],
+  properties: { reason: { type: 'string' }, score: { type: 'integer', enum: [1, 2, 3, 4, 5] } },
 };
 
 export function rateRequest(id: string, question: Shown | QuestionText, level: Level, anchors: Anchors, model: string): ModelRequest {

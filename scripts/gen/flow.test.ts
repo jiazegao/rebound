@@ -55,7 +55,7 @@ describe.skipIf(!libraryBuilt())('the flow from slots to checked drafts', () => 
       asked[stage] = requests;
       return new Map(requests.map((r): [string, ModelReply] => {
         const json = answer(r.user, r.system);
-        return [r.id, { id: r.id, step: r.step, model: r.model, at: '2026-11-21T00:00:00.000Z', outcome: 'ok', text: JSON.stringify(json), json, citations: [], usage: { ...NO_USAGE, input: 1000, output: 100 }, batch: false, cost: 0.01 }];
+        return [r.id, { id: r.id, step: r.step, model: r.model, at: '2026-11-21T00:00:00.000Z', outcome: 'ok', text: JSON.stringify(json), json, citations: [], codeRuns: 0, usage: { ...NO_USAGE, input: 1000, output: 100 }, batch: false, cost: 0.01 }];
       }));
     };
     return { send, asked };
@@ -71,7 +71,7 @@ describe.skipIf(!libraryBuilt())('the flow from slots to checked drafts', () => 
     slot('t05', { subject: 'physics', topic: 'physics.fluids', form: 'multiple_choice', letter: 'Z' }),
     slot('b05', { subject: 'physics', topic: 'physics.fluids' }),
   ];
-  const models = { writer: 'claude-opus-5-5', ideaJudge: 'claude-haiku-5-5', checker: 'claude-sonnet-5-5' };
+  const models = { writer: 'claude-opus-5-5', ideaJudge: 'claude-haiku-5-5', matcher: 'claude-haiku-5-5', checker: 'claude-sonnet-5-5' };
 
   it('takes every slot from ideas to a solved draft when nothing goes wrong', async () => {
     const { send, asked } = sender({});
@@ -105,7 +105,7 @@ describe.skipIf(!libraryBuilt())('the flow from slots to checked drafts', () => 
       brokenOnce: new Set(['t02']),
       brokenTwice: new Set(['b02']),
       textRepeats: new Set(['t03']),
-      solverWrong: new Set(['b03']),
+      solverWrong: new Set(['b03', 'b05']),
       solverFlags: new Set(['t05']),
       rating: 2,
     });
@@ -127,7 +127,13 @@ describe.skipIf(!libraryBuilt())('the flow from slots to checked drafts', () => 
     expect(by.b03!.doubts[0]).toBe('A solver who saw only the question answered 1, 2, 3, with confidence 3 of 5.');
     expect(by.t05!.outcome).toBe('second-look');
     expect(by.t05!.doubts).toEqual(['A solver reported a fault (ambiguous): Two readings.']);
-    expect(by.b05!.outcome).toBe('passed');
+    // A short answer the checker refuses goes to the matcher, which here rules it a different answer.
+    // (A "Rank" question is a short answer too, so its wrong list is asked about as well.)
+    expect(asked.match!.map((r) => r.id)).toEqual(['match-b03', 'match-b05']);
+    expect(asked.match![1]!.user).toContain('<player_answer>\nsomething else\n</player_answer>');
+    expect(by.b05!.match).toEqual({ verdict: 'reject', why: 'By rule.' });
+    expect(by.b05!.outcome).toBe('second-look');
+    expect(by.b05!.doubts).toEqual(['A solver who saw only the question answered something else, with confidence 3 of 5.']);
     // Only what came through is solved and rated.
     expect(asked.solve!.map((r) => r.id)).toEqual(['solve-t01', 'solve-t02', 'solve-b03', 'solve-t05', 'solve-b05']);
     expect(asked.rate).toHaveLength(5);

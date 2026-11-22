@@ -94,7 +94,7 @@ export function score(writer: string, checker: string, result: FlowResult) {
     written: written.length,
     style: { passedFirstTime: written.filter((r) => !r.repaired).length, repaired: written.filter((r) => r.repaired && r.ended?.stage !== 'style').length, failedTwice: ended('style'), notWritten: ended('write') },
     textScreen: { repeats: ended('text-screen'), relationsOfTheRest: Object.fromEntries(['template', 'related', 'new'].map((rel) => [rel, through.filter((r) => r.judgment?.relation === rel).length])) },
-    solver: { unanswered: ended('solve'), passed: passed.length, toSecondLook: through.length - passed.length },
+    solver: { unanswered: through.filter((r) => r.written && r.solution === null).length, passed: passed.length, toSecondLook: through.length - passed.length },
     passed: passed.length,
     passedShare: share(passed.length, runs.length),
     passedBySubject: bySubject(passed),
@@ -151,7 +151,7 @@ export async function writersTrial(library: LibraryQuestion[], options: WritersO
   const scores = [];
   for (const writer of options.writers) {
     const checker = checkerFor(writer);
-    const result = await makeDrafts(slots, { writer, ideaJudge: IDEA_JUDGE, checker }, {
+    const result = await makeDrafts(slots, { writer, ideaJudge: IDEA_JUDGE, matcher: IDEA_JUDGE, checker }, {
       library,
       index,
       byId,

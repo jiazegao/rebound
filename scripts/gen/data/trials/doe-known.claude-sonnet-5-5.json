@@ -1,0 +1,136 @@
+{
+ "about": "The blind solver on keys known to be wrong (scripts/gen/trials/doe.ts --known): seven answer letters DOE misprinted, which Rebound corrected, and two keys the November 2026 pilot disputed against sources.",
+ "model": "claude-sonnet-5-5",
+ "prompt": "7e36c7f4",
+ "run": "2026-11-21",
+ "caught": 9,
+ "of": 9,
+ "calls": {
+  "calls": 9,
+  "outcomes": {
+   "ok": 9,
+   "refused": 0,
+   "cut-off": 0,
+   "error": 0
+  },
+  "batch": false,
+  "meanTokens": {
+   "input": 97,
+   "cacheRead": 565,
+   "cacheWrite": 1131,
+   "output": 162,
+   "thinking": 0
+  },
+  "searches": 0,
+  "cost": 0.0423,
+  "costPerCall": 0.004699
+ },
+ "results": [
+  {
+   "id": "doe-hs-01-r05-t20",
+   "kind": "misprinted letter",
+   "printed": "W",
+   "key": "W) MERCURY-OXIDE CELLS",
+   "answer": "X) mercury-oxide cells",
+   "caught": true,
+   "otherAnswers": [
+    "nickel-cadmium cells"
+   ],
+   "problems": [
+    {
+     "kind": "ambiguous",
+     "note": "Both mercury-oxide and nickel-cadmium cells were curtailed over toxicity; NiCd is restricted (EU ban, US recycling rules) but still used, while mercury-oxide was banned by the 1996 US Battery Act, so 'all but obsolete' favors mercury."
+    }
+   ]
+  },
+  {
+   "id": "doe-hs-01-r10-t19",
+   "kind": "misprinted letter",
+   "printed": "W",
+   "key": "W) WINDS",
+   "answer": "Z) winds",
+   "caught": true,
+   "otherAnswers": [],
+   "problems": []
+  },
+  {
+   "id": "doe-ms-01-r07-t07",
+   "kind": "misprinted letter",
+   "printed": "X",
+   "key": "X) BRAIDED",
+   "answer": "Y) braided",
+   "caught": true,
+   "otherAnswers": [],
+   "problems": []
+  },
+  {
+   "id": "doe-ms-01-r18-t07",
+   "kind": "misprinted letter",
+   "printed": "X",
+   "key": "X) LAVA DOMES",
+   "answer": "W) lava domes",
+   "caught": true,
+   "otherAnswers": [],
+   "problems": []
+  },
+  {
+   "id": "doe-ms-06-r08-b08",
+   "kind": "misprinted letter",
+   "printed": "X",
+   "key": "X) 50%",
+   "answer": "W) 50%",
+   "caught": true,
+   "otherAnswers": [],
+   "problems": []
+  },
+  {
+   "id": "doe-ms-08-r17-t17",
+   "kind": "misprinted letter",
+   "printed": "Y",
+   "key": "Y) 2.5",
+   "answer": "X) 2.5",
+   "caught": true,
+   "otherAnswers": [],
+   "problems": []
+  },
+  {
+   "id": "doe-ms-16-r02-b17",
+   "kind": "misprinted letter",
+   "printed": "W",
+   "key": "W) CARBON DIOXIDE",
+   "answer": "X) Carbon dioxide",
+   "caught": true,
+   "otherAnswers": [],
+   "problems": []
+  },
+  {
+   "id": "doe-hs-03-r15-t21",
+   "kind": "disputed key",
+   "printed": "",
+   "key": "ULTRAVIOLET (ACCEPT: UV)",
+   "answer": "Visible light",
+   "caught": true,
+   "otherAnswers": [
+    "Optical"
+   ],
+   "problems": [
+    {
+     "kind": "ambiguous",
+     "note": "Supernovae are most commonly discovered by optical surveys, but they emit across the spectrum (X-ray, gamma, radio, neutrinos), and a player could argue for gamma rays or X-rays; 'most commonly detected' is vague."
+    }
+   ]
+  },
+  {
+   "id": "doe-hs-01-r11-b23",
+   "kind": "disputed key",
+   "printed": "",
+   "key": "NEUTROPHIL; BASOPHIL",
+   "answer": "neutrophil, basophil, macrophage",
+   "caught": true,
+   "otherAnswers": [
+    "neutrophil, basophil"
+   ],
+   "problems": []
+  }
+ ]
+}

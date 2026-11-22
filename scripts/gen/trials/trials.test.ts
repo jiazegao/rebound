@@ -19,6 +19,7 @@ if (BANK_DIR !== bank) throw new Error('The bank folder was fixed before this te
 const { seeded, separation, shuffled, trialArgs } = await import('./common');
 const { anchorsFor, known, rate, sampleDoe, solve } = await import('./doe');
 const { items: judgeItems, judgeTrial, secondReading } = await import('./judge');
+const { matchItems, matchTrial } = await import('./match');
 
 describe('the trials’ arithmetic', () => {
   it('draws the same random numbers for the same seed', () => {
@@ -92,18 +93,37 @@ describe.skipIf(!libraryBuilt())('a trial run without the API', () => {
   it('scores a blind solver that is right nine times in ten', async () => {
     const chosen = every(48);
     const byText = new Map(chosen.map((s, i) => [asRead(s.question), { s, i }]));
-    const api = fake((user) => {
+    let matcherAsked = 0;
+    const api = fake((user, system) => {
+      // The matcher: asked only about a short answer the checker refused. "Not the answer at all" is a
+      // different answer; a right answer in another form is the same one.
+      if (system.includes('You help judge answers')) {
+        matcherAsked += 1;
+        return user.includes('<player_answer>\nnot the answer at all\n') ? { compare: 'A different answer.', verdict: 'reject' } : { compare: 'The same answer in another form.', verdict: 'accept' };
+      }
       const { s, i } = byText.get(user)!;
-      const wrong = i % 10 === 0;
       const q = s.question;
+      // Every tenth is wrong; every seventh gives the right short answer with words round it that the checker will not take.
+      const wrong = i % 10 === 0;
+      const wordy = !wrong && i % 7 === 0 && q.format === 'short_answer';
       const letter = q.format === 'multiple_choice' ? (wrong ? (q.answerLetter === 'W' ? 'X' : 'W') : q.answerLetter) : '';
-      return { answer: wrong ? 'not the answer at all' : q.format === 'multiple_choice' ? q.choices![q.answerLetter!] : q.answer, letter, confidence: wrong ? 2 : 5, otherAnswers: [], problems: wrong ? [{ kind: 'ambiguous', note: 'unsure' }] : [], seconds: 4, difficulty: s.tier === 'late' ? 4 : 2 };
+      const right = q.format === 'multiple_choice' ? q.choices![q.answerLetter!] : q.answer;
+      return { answer: wrong ? 'not the answer at all' : wordy ? `the thing that is called ${right}, as taught` : right, letter, confidence: wrong ? 2 : 5, otherAnswers: [], problems: wrong ? [{ kind: 'ambiguous', note: 'unsure' }] : [], remarks: ['A remark.'], seconds: 4, difficulty: s.tier === 'late' ? 4 : 2 };
     });
     const summary = await solve(chosen, args(['--mode', 'batch']), api);
-    expect(api.calls).toBe(48);
+    const wrongShort = chosen.filter((s, i) => i % 10 === 0 && s.question.format === 'short_answer').length;
     expect(summary.answered).toBe(48);
+    // The matcher is asked about every short answer the checker did not accept, and settles each.
+    expect(summary.matcher.asked).toBe(matcherAsked);
+    expect(summary.matcher.rejected).toBe(wrongShort);
+    expect(summary.matcher.accepted).toBe(matcherAsked - wrongShort);
+    expect(summary.matcher.accepted).toBeGreaterThan(0);
+    expect(api.calls).toBe(48 + matcherAsked);
+    // After the matcher, only the five wrong answers disagree; by the checker alone, the wordy right ones did too.
     expect(summary.all.disagrees).toBeCloseTo(5 / 48, 2);
-    expect(summary.all.agrees + summary.all.close).toBeCloseTo(43 / 48, 2);
+    expect(summary.all.agrees).toBeCloseTo(43 / 48, 2);
+    expect(summary.byTheAnswerCheckerAlone.agrees).toBeLessThan(summary.all.agrees);
+    expect(summary.disagreements).toHaveLength(5);
     expect(summary.flagged.questions).toBe(5);
     expect(summary.flagged.amongDisagreements).toBe(1);
     expect(summary.difficulty.HS.separation).toBe(1);
@@ -111,7 +131,7 @@ describe.skipIf(!libraryBuilt())('a trial run without the API', () => {
     expect(summary.calls.costPerCall).toBeCloseTo((100 * 2 + 400 * 10 + 700 * 0.1) / 1e6 / 2, 6);
     // Asked again, nothing is sent: the replies are on file.
     await solve(chosen, args(['--mode', 'batch']), api);
-    expect(api.calls).toBe(48);
+    expect(api.calls).toBe(48 + matcherAsked);
   }, 60_000);
 
   it('scores a rater that follows the tiers', async () => {
@@ -130,7 +150,7 @@ describe.skipIf(!libraryBuilt())('a trial run without the API', () => {
     const byText = new Map([...byId.values()].map((q) => [asRead(q), q]));
     const api = fake((user) => {
       const q = byText.get(user)!;
-      return { answer: q.choices?.[q.answerLetter!] ?? q.answer, letter: q.answerLetter ?? '', confidence: 5, otherAnswers: [], problems: [], seconds: 3, difficulty: 2 };
+      return { answer: q.choices?.[q.answerLetter!] ?? q.answer, letter: q.answerLetter ?? '', confidence: 5, otherAnswers: [], problems: [], remarks: [], seconds: 3, difficulty: 2 };
     });
     const summary = await known(library, args([]), api);
     expect(summary.of).toBe(9);
@@ -158,6 +178,29 @@ describe.skipIf(!libraryBuilt())('a trial run without the API', () => {
     // Against the second reading: three of the 55 are set aside as arguable, and a judge that throws everything away keeps nothing.
     expect(summary.afterSecondReading.repeats.pilotLabelled).toEqual({ drafts: 52, thrownAway: 52 });
     expect(summary.afterSecondReading.different.kept).toBe(0);
+  }, 60_000);
+
+  it('puts DOE’s own alternates to the matcher with their list hidden, and counts a refused entry it accepts', async () => {
+    const items = matchItems(library, 20);
+    expect(items.filter((it) => it.from === 'accept')).toHaveLength(20);
+    expect(items.filter((it) => it.from === 'reject')).toHaveLength(20);
+    for (const it of items) {
+      const original = library.find((x) => x.question.id === it.id.slice(it.from.length + 1))!.question;
+      expect(it.from === 'accept' ? original.accept : original.reject).toContain(it.said);
+      // The list the entry came from is hidden; the other is shown.
+      expect(it.from === 'accept' ? it.question.accept : it.question.reject).toEqual([]);
+      expect(it.from === 'accept' ? it.question.reject : it.question.accept).toEqual(it.from === 'accept' ? original.reject : original.accept);
+    }
+    expect(matchItems(library, 20).map((it) => it.id)).toEqual(items.map((it) => it.id));
+    // A matcher that accepts everything: every ACCEPT entry right, every DO NOT ACCEPT entry wrong.
+    const api = fake((user) => {
+      expect(user).toContain('<player_answer>');
+      return { compare: 'test', verdict: 'accept' };
+    });
+    const summary = await matchTrial(library, trialArgs({ model: 'claude-haiku-5-5', mode: 'live' }, ['--limit', '40']), api);
+    expect(summary.acceptEntries).toMatchObject({ entries: 20, accepted: 20 });
+    expect(summary.doNotAcceptEntries).toMatchObject({ entries: 20, accepted: 20, rejected: 0 });
+    expect(summary.doNotAcceptEntriesAccepted).toHaveLength(20);
   }, 60_000);
 
   it('has a second reading that matches the drafts it names', () => {
